@@ -67,6 +67,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-mcp-integration.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-wp-mcp-server.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-oauth.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-core-ai.php';
 		$this->loader = new AI_Chat_Bedrock_Loader();
 	}
 
@@ -158,6 +159,10 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'init', $abilities, 'register_abilities', 20 );
 		$this->loader->add_filter( 'ai_chat_bedrock_message_payload', $abilities, 'add_ability_tools', 20, 2 );
 		$this->loader->add_filter( 'ai_chat_bedrock_process_response', $abilities, 'execute_ability_tools', 20, 2 );
+
+		// Offer this site's Bedrock configuration through core's own AI API, where core
+		// has one. Guarded internally, so nothing happens on WordPress without it.
+		AI_Chat_Bedrock_Core_AI::init();
 
 		$site_abilities = new AI_Chat_Bedrock_Site_Abilities();
 		$this->loader->add_action( 'abilities_api_init', $site_abilities, 'register' );

@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.29.0
+Stable tag: 1.30.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -44,8 +44,8 @@ Credentials are resolved in this order: `wp-config.php` constants, encrypted Wor
 * Built-in WordPress MCP routes require authentication unless public read-only access is deliberately enabled.
 * Chat and public MCP requests are rate limited per minute and per profile, with optional per-role limits so staff and anonymous visitors need not share one cap.
 * The chat is not shown to visitors until it can actually answer, so a half-finished setup is never public.
-* A visitor can stop a long answer, and the server stops the Bedrock request with it rather than paying for text nobody will read.
-* Diagnostics generates the least-privilege IAM policy this site needs, and the dashboard checklist reads the site rather than guessing, so it can be finished and then says what is left worth configuring.
+* A visitor can stop a long answer, and the server stops the Bedrock request with it.
+* Diagnostics generates the least-privilege IAM policy this site needs, and the dashboard checklist reads the site.
 * A configuration can be downloaded and applied on another site. Credentials are never written to the file.
 * Input, history, token, tool-call, redirect and remote-response limits are enforced server-side.
 * MCP destinations must use public HTTPS URLs; private, loopback, link-local, credential-bearing and unsafe redirect targets are rejected.
@@ -78,11 +78,11 @@ Point the chat at a prompt in Amazon Bedrock Prompt Management and its text repl
 
 = Semantic search =
 
-Keyword search only finds passages that share words with the question, so "when will my parcel arrive" misses a page titled "Getting parcels to you". Choose an embedding model and the plugin indexes your published content, then matches questions by meaning. Indexing runs in small batches from the settings screen, or unattended: switch on background indexing to let WP-Cron finish the job, and use `wp ai-chat-bedrock index` on a large site. Editing a post marks it for re-indexing, and keyword search still runs whenever nothing relevant is found. Questions about subjects your site does not cover return no context at all rather than an unrelated passage.
+Keyword search only finds passages that share words with the question, so "when will my parcel arrive" misses a page titled "Getting parcels to you". Choose an embedding model and the plugin indexes your published content, then matches questions by meaning. Indexing runs in small batches from the settings screen, or unattended through WP-Cron, or with `wp ai-chat-bedrock index` on a large site. Editing a post marks it for re-indexing, and keyword search still runs whenever nothing relevant is found. Questions your site does not cover return no context rather than an unrelated passage.
 
 = Fallback model =
 
-Model access is the most common reason a Bedrock chat stops answering: a model is not enabled in the account, a request is throttled, or the service is briefly unreachable. Choose a fallback model and those requests are retried once on it, with the reply stating which model answered. A model identifier Bedrock does not recognize is treated the same way, since another model may well work. Requests rejected for any other reason, including an invalid payload, missing credentials or the site's own daily limit, are never retried because a second model would fail the same way. A stream is only retried while nothing has reached the browser, so text is never duplicated.
+Model access is the most common reason a Bedrock chat stops answering: a model is not enabled in the account, a request is throttled, or the service is briefly unreachable. Choose a fallback model and those requests are retried once on it, with the reply stating which model answered. An identifier Bedrock does not recognize is treated the same way. Requests rejected for any other reason, including an invalid payload, missing credentials or the daily limit, are never retried. A stream is retried only before anything reaches the browser, so text is never duplicated.
 
 = Chat experience =
 
@@ -116,6 +116,16 @@ All content tools are optional, require the capability to edit the item, and are
 * **Excerpts**: summarize the current post into the excerpt field for review before saving.
 * **Site pages**: describe the business and get a first set of pages as drafts, with titles you can edit before anything is written. Nothing is published, a title that already exists is left alone, and the theme and menus are never touched.
 * **Content gaps**: the questions visitors asked that no site content answered, or that they marked unhelpful, grouped and counted. Each one links straight to the generator with the subject filled in.
+
+= Use Bedrock through WordPress's own AI API =
+
+On WordPress 7.0 and later, Bedrock is registered with core's AI Client, so
+`wp_ai_client_prompt()` reaches it from any plugin that knows nothing about AWS.
+Those calls use this plugin's request path, so the guardrail, model, region, token ceiling,
+daily limit and usage accounting configured here apply to them.
+
+On 7.1 it also appears in Settings > Connectors, declared as storing no credential: Bedrock
+signs with IAM, not an API key this site must keep.
 
 = Connect AI clients to this site =
 
@@ -263,6 +273,13 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 13. A setup checklist that reads the site's own state, followed by the improvements still worth making.
 
 == Changelog ==
+
+= 1.30.0 =
+* Registered Amazon Bedrock with the AI Client that WordPress 7.0 added, so `wp_ai_client_prompt()` reaches it from any plugin. Those calls go through this plugin's request path, so the guardrail, model, region, token ceiling, daily limit and usage accounting a site has already configured apply to them as well.
+* Registered Bedrock in Settings > Connectors on WordPress 7.1, declared as storing no credential. Bedrock signs with IAM, and the alternative would have put a field in front of site owners inviting them to paste a long-lived key into the database.
+* The pre-flight check spends nothing, because WordPress runs it for support probes as well as generations; a plugin asking whether a feature exists cannot consume a visitor's budget. Tokens are still counted where they are spent.
+* The provider declares only the options it honours, with their real limits, so WordPress reports no matching model rather than handing over a request that is then quietly ignored.
+* Nothing loads on WordPress without the AI Client, so 6.x installations are unaffected.
 
 = 1.29.0 =
 * Updated the MCP server and client to protocol revision 2026-07-28, which removes the initialize handshake and protocol-level sessions and carries the version, capabilities and identity on each request. WordPress is stateless anyway, so this fits it better than what came before.
@@ -526,6 +543,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.30.0 =
+On WordPress 7.0+, any plugin's wp_ai_client_prompt() call now reaches Bedrock under this site's guardrail, limits and usage accounting. Older WordPress is unaffected.
 
 = 1.29.0 =
 Speaks MCP revision 2026-07-28, so clients built on the current SDKs can connect. Older clients are unaffected.
