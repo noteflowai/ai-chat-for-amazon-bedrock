@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.28.0\n"
+"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.29.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-14T13:14:48+00:00\n"
+"POT-Creation-Date: 2026-09-14T13:51:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -2689,45 +2689,45 @@ msgstr ""
 msgid "This tool is not allowed by the site policy."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-mcp-transport.php:33
+#: includes/class-ai-chat-bedrock-mcp-transport.php:80
 msgid "The MCP endpoint must be a public HTTPS URL."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-mcp-transport.php:38
+#: includes/class-ai-chat-bedrock-mcp-transport.php:85
 msgid "The MCP method name is invalid."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-mcp-transport.php:49
+#: includes/class-ai-chat-bedrock-mcp-transport.php:109
 msgid "The MCP request payload is invalid or too large."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-mcp-transport.php:77
+#: includes/class-ai-chat-bedrock-mcp-transport.php:141
 msgid "The MCP endpoint could not be reached."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-mcp-transport.php:84
+#: includes/class-ai-chat-bedrock-mcp-transport.php:148
 msgid "The MCP endpoint rejected the credentials."
 msgstr ""
 
 #. translators: %d: HTTP status code returned by the MCP endpoint.
-#: includes/class-ai-chat-bedrock-mcp-transport.php:88
+#: includes/class-ai-chat-bedrock-mcp-transport.php:152
 #, php-format
 msgid "The MCP endpoint returned HTTP %d."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-mcp-transport.php:97
+#: includes/class-ai-chat-bedrock-mcp-transport.php:161
 msgid "The MCP endpoint returned an error."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-mcp-transport.php:159
+#: includes/class-ai-chat-bedrock-mcp-transport.php:223
 msgid "The MCP bearer token is missing or could not be decrypted."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-mcp-transport.php:181
+#: includes/class-ai-chat-bedrock-mcp-transport.php:245
 msgid "The MCP endpoint returned an empty response."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-mcp-transport.php:196
+#: includes/class-ai-chat-bedrock-mcp-transport.php:260
 msgid "The MCP endpoint returned invalid JSON."
 msgstr ""
 
@@ -3192,52 +3192,59 @@ msgstr ""
 msgid "The file contains no settings to apply."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wp-mcp-server.php:193
+#: includes/class-ai-chat-bedrock-wp-mcp-server.php:220
 msgid "Authentication is required for the MCP endpoint."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wp-mcp-server.php:196
+#: includes/class-ai-chat-bedrock-wp-mcp-server.php:223
 msgid "MCP request limit exceeded."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wp-mcp-server.php:228
+#: includes/class-ai-chat-bedrock-wp-mcp-server.php:255
 msgid "Parse error."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wp-mcp-server.php:256
+#: includes/class-ai-chat-bedrock-wp-mcp-server.php:287
 msgid "Invalid request."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wp-mcp-server.php:272
+#. translators: %s: comma separated protocol revisions.
+#: includes/class-ai-chat-bedrock-wp-mcp-server.php:302
+#, php-format
+msgid "Unsupported protocol version. This server speaks %s."
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-wp-mcp-server.php:318
+#: includes/class-ai-chat-bedrock-wp-mcp-server.php:331
 msgid "Read-only WordPress content tools. Draft creation is available only when the site enables it and the account has permission."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wp-mcp-server.php:300
+#: includes/class-ai-chat-bedrock-wp-mcp-server.php:368
 msgid "Method not found."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wp-mcp-server.php:310
-#: includes/class-ai-chat-bedrock-wp-mcp-server.php:406
+#: includes/class-ai-chat-bedrock-wp-mcp-server.php:378
+#: includes/class-ai-chat-bedrock-wp-mcp-server.php:476
 msgid "Unknown tool."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wp-mcp-server.php:382
+#: includes/class-ai-chat-bedrock-wp-mcp-server.php:452
 msgid "This tool is not enabled on this site."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wp-mcp-server.php:389
+#: includes/class-ai-chat-bedrock-wp-mcp-server.php:459
 msgid "This account cannot analyse content."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wp-mcp-server.php:395
+#: includes/class-ai-chat-bedrock-wp-mcp-server.php:465
 msgid "This account cannot create drafts."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wp-mcp-server.php:401
+#: includes/class-ai-chat-bedrock-wp-mcp-server.php:471
 msgid "This account cannot read products."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wp-mcp-server.php:558
+#: includes/class-ai-chat-bedrock-wp-mcp-server.php:712
 msgid "Published post not found."
 msgstr ""
 

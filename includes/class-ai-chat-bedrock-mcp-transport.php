@@ -15,8 +15,32 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class AI_Chat_Bedrock_MCP_Transport {
 
-	const PROTOCOL_VERSION = '2025-06-18';
-	const MAX_RESPONSE     = 1048576;
+	/**
+	 * Revision this client speaks by default.
+	 *
+	 * 2026-07-28 carries the version, capabilities and identity in _meta on every request
+	 * instead of negotiating once, which is why nothing here needs a handshake.
+	 */
+	const PROTOCOL_VERSION = '2026-07-28';
+
+	/**
+	 * Revision to retry with when a server refuses the modern one.
+	 */
+	const FALLBACK_VERSION = '2025-06-18';
+
+	const MAX_RESPONSE = 1048576;
+
+	/**
+	 * _meta keys defined by the 2026-07-28 revision.
+	 */
+	const META_PROTOCOL_VERSION    = 'io.modelcontextprotocol/protocolVersion';
+	const META_CLIENT_INFO         = 'io.modelcontextprotocol/clientInfo';
+	const META_CLIENT_CAPABILITIES = 'io.modelcontextprotocol/clientCapabilities';
+
+	/**
+	 * UnsupportedProtocolVersion, which is what an older server answers a modern request with.
+	 */
+	const ERROR_UNSUPPORTED_VERSION = -32022;
 
 	/**
 	 * Call an MCP method.
@@ -29,6 +53,29 @@ class AI_Chat_Bedrock_MCP_Transport {
 	 * @return array|WP_Error Decoded result payload.
 	 */
 	public static function call( $endpoint, $method, $params = array(), $auth = array(), $timeout = 10 ) {
+		$result = self::call_with_version( $endpoint, $method, $params, $auth, $timeout, self::PROTOCOL_VERSION );
+
+		// A server on an older revision refuses the modern one by code. Retry once rather
+		// than making every caller know about protocol revisions.
+		if ( is_wp_error( $result ) && 'aicfab_mcp_error_' . abs( self::ERROR_UNSUPPORTED_VERSION ) === $result->get_error_code() ) {
+			return self::call_with_version( $endpoint, $method, $params, $auth, $timeout, self::FALLBACK_VERSION );
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Call an MCP method using a specific protocol revision.
+	 *
+	 * @param string $endpoint Absolute HTTPS endpoint.
+	 * @param string $method   JSON-RPC method, for example tools/list.
+	 * @param array  $params   Method parameters.
+	 * @param array  $auth     Authentication configuration.
+	 * @param int    $timeout  Request timeout in seconds.
+	 * @param string $version  Protocol revision to declare.
+	 * @return array|WP_Error Decoded result payload.
+	 */
+	private static function call_with_version( $endpoint, $method, $params = array(), $auth = array(), $timeout = 10, $version = self::PROTOCOL_VERSION ) {
 		if ( ! AI_Chat_Bedrock_Security::is_safe_mcp_url( $endpoint ) ) {
 			return new WP_Error( 'aicfab_mcp_unsafe_url', __( 'The MCP endpoint must be a public HTTPS URL.', 'ai-chat-for-amazon-bedrock' ) );
 		}
@@ -38,11 +85,24 @@ class AI_Chat_Bedrock_MCP_Transport {
 			return new WP_Error( 'aicfab_mcp_invalid_method', __( 'The MCP method name is invalid.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
+		$params = is_array( $params ) ? $params : array();
+
+		// From 2026-07-28 there is no handshake, so every request states what it speaks and
+		// who is asking. Servers on older revisions ignore an unknown _meta.
+		$meta                                   = isset( $params['_meta'] ) && is_array( $params['_meta'] ) ? $params['_meta'] : array();
+		$meta[ self::META_PROTOCOL_VERSION ]    = $version;
+		$meta[ self::META_CLIENT_INFO ]         = array(
+			'name'    => 'ai-chat-for-amazon-bedrock',
+			'version' => defined( 'AI_CHAT_BEDROCK_VERSION' ) ? AI_CHAT_BEDROCK_VERSION : '',
+		);
+		$meta[ self::META_CLIENT_CAPABILITIES ] = new stdClass();
+		$params['_meta']                        = $meta;
+
 		$request = array(
 			'jsonrpc' => '2.0',
 			'id'      => wp_generate_uuid4(),
 			'method'  => $method,
-			'params'  => is_array( $params ) ? $params : array(),
+			'params'  => $params,
 		);
 		$body    = wp_json_encode( $request, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
 		if ( ! is_string( $body ) || strlen( $body ) > 65536 ) {
@@ -52,7 +112,11 @@ class AI_Chat_Bedrock_MCP_Transport {
 		$headers = array(
 			'Content-Type'         => 'application/json',
 			'Accept'               => 'application/json, text/event-stream',
-			'MCP-Protocol-Version' => self::protocol_version(),
+			// Still sent for servers on revisions that read the header rather than _meta.
+			'MCP-Protocol-Version' => $version,
+			// Required on a Streamable HTTP POST from 2026-07-28, and useful to a proxy that
+			// routes on the method without parsing the body.
+			'Mcp-Method'           => $method,
 		);
 		$headers = self::apply_auth( $headers, $endpoint, $body, $auth );
 		if ( is_wp_error( $headers ) ) {

@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.28.0
+Stable tag: 1.29.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -122,7 +122,7 @@ All content tools are optional, require the capability to edit the item, and are
 The plugin exposes this WordPress site as an MCP server, so clients such as Claude Code, Cursor, VS Code or an agent framework can read it.
 
 * Endpoint: `https://example.com/wp-json/ai-chat-bedrock/v1/mcp`
-* Transport: JSON-RPC 2.0 over Streamable HTTP, with `initialize`, `tools/list` and `tools/call`
+* Transport: JSON-RPC 2.0 over Streamable HTTP on protocol revision 2026-07-28, with `server/discover`, `tools/list` and `tools/call`. Clients on 2025-11-25 and 2025-06-18 are still answered
 * Authentication: a WordPress Application Password works out of the box, over HTTPS
 * Tools: five read-only content tools, plus SEO suggestions, WooCommerce lookup and draft creation when site abilities are on. Every call is capability-checked and audited.
 
@@ -263,6 +263,12 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 13. A setup checklist that reads the site's own state, followed by the improvements still worth making.
 
 == Changelog ==
+
+= 1.29.0 =
+* Updated the MCP server and client to protocol revision 2026-07-28, which removes the initialize handshake and protocol-level sessions and carries the version, capabilities and identity on each request. WordPress is stateless anyway, so this fits it better than what came before.
+* Added server/discover, which the revision requires, plus deterministic tool ordering and cache hints on list results.
+* Clients on 2025-11-25 and 2025-06-18 keep working and receive exactly what they received before. A revision this site does not speak is refused with the error code the specification reserves for it.
+* The client declares its revision on every request and retries once on an older one if a server refuses.
 
 = 1.28.0 =
 * Added configuration transfer: download everything except credentials as a file, and apply it on another site. Useful for moving a staging setup into production without retyping thirty five fields.
@@ -520,6 +526,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.29.0 =
+Speaks MCP revision 2026-07-28, so clients built on the current SDKs can connect. Older clients are unaffected.
 
 = 1.28.0 =
 Adds configuration export and import for moving a setup between sites. Credentials are never included in the file.

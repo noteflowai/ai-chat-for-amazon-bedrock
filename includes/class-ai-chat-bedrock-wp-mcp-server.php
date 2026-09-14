@@ -22,8 +22,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class AI_Chat_Bedrock_WP_MCP_Server {
 
-	const NAMESPACE_V1     = 'ai-chat-bedrock/v1';
-	const PROTOCOL_VERSION = '2025-06-18';
+	const NAMESPACE_V1 = 'ai-chat-bedrock/v1';
+	/**
+	 * Preferred protocol revision.
+	 *
+	 * 2026-07-28 removed the initialize handshake and protocol-level sessions: every request
+	 * carries its version, capabilities and identity in _meta, and a server advertises itself
+	 * through server/discover. That suits WordPress, which is stateless anyway.
+	 */
+	const PROTOCOL_VERSION = '2026-07-28';
+
+	/**
+	 * Revisions this server answers, newest first.
+	 *
+	 * The older two are kept because clients on them are still in use and still expect the
+	 * handshake. Results are shaped for whichever revision the caller asked for, so an older
+	 * client sees exactly what it saw before.
+	 */
+	const SUPPORTED_VERSIONS = array( '2026-07-28', '2025-11-25', '2025-06-18' );
+
+	/**
+	 * _meta keys defined by the 2026-07-28 revision.
+	 */
+	const META_PROTOCOL_VERSION = 'io.modelcontextprotocol/protocolVersion';
+	const META_SERVER_INFO      = 'io.modelcontextprotocol/serverInfo';
+
+	/**
+	 * UnsupportedProtocolVersion, from the range the specification reserves for itself.
+	 */
+	const ERROR_UNSUPPORTED_VERSION = -32022;
 
 	private $tools = array();
 
@@ -228,11 +255,15 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 			return $this->rpc_error( null, -32700, __( 'Parse error.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
+		// Revisions before 2026-07-28 state their version in a header on every request, which
+		// is the only way a stateless server can know a client is on an older one.
+		$header = (string) $request->get_header( 'mcp-protocol-version' );
+
 		// Batched requests are answered in order.
 		if ( isset( $payload[0] ) && is_array( $payload[0] ) ) {
 			$responses = array();
 			foreach ( array_slice( $payload, 0, 20 ) as $single ) {
-				$response = $this->dispatch( is_array( $single ) ? $single : array() );
+				$response = $this->dispatch( is_array( $single ) ? $single : array(), $header );
 				if ( null !== $response ) {
 					$responses[] = $response;
 				}
@@ -240,14 +271,14 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 			return rest_ensure_response( $responses );
 		}
 
-		$response = $this->dispatch( $payload );
+		$response = $this->dispatch( $payload, $header );
 		if ( null === $response ) {
 			return new WP_REST_Response( null, 202 );
 		}
 		return rest_ensure_response( $response );
 	}
 
-	private function dispatch( $payload ) {
+	private function dispatch( $payload, $header_version = '' ) {
 		$id     = isset( $payload['id'] ) && ( is_string( $payload['id'] ) || is_int( $payload['id'] ) ) ? $payload['id'] : null;
 		$method = isset( $payload['method'] ) ? (string) $payload['method'] : '';
 		$params = isset( $payload['params'] ) && is_array( $payload['params'] ) ? $payload['params'] : array();
@@ -261,8 +292,36 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 			return null;
 		}
 
+		$version = $this->requested_version( $payload, $header_version );
+		if ( '' === $version ) {
+			return $this->rpc_error_body(
+				$id,
+				self::ERROR_UNSUPPORTED_VERSION,
+				sprintf(
+					/* translators: %s: comma separated protocol revisions. */
+					__( 'Unsupported protocol version. This server speaks %s.', 'ai-chat-for-amazon-bedrock' ),
+					implode( ', ', self::SUPPORTED_VERSIONS )
+				)
+			);
+		}
+
 		switch ( $method ) {
+			case 'server/discover':
+				// Required from 2026-07-28. A client may also use it as a probe to find out
+				// what an unknown server speaks before committing to a revision.
+				return $this->rpc_result(
+					$id,
+					array(
+						'protocolVersions' => array_values( self::SUPPORTED_VERSIONS ),
+						'capabilities'     => $this->capabilities(),
+						'serverInfo'       => $this->server_info(),
+						'instructions'     => __( 'Read-only WordPress content tools. Draft creation is available only when the site enables it and the account has permission.', 'ai-chat-for-amazon-bedrock' ),
+					),
+					$version
+				);
+
 			case 'initialize':
+				// Removed in 2026-07-28, kept for the revisions that still require it.
 				return $this->rpc_result(
 					$id,
 					array(
@@ -270,11 +329,13 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 						'capabilities'    => $this->capabilities(),
 						'serverInfo'      => $this->server_info(),
 						'instructions'    => __( 'Read-only WordPress content tools. Draft creation is available only when the site enables it and the account has permission.', 'ai-chat-for-amazon-bedrock' ),
-					)
+					),
+					$version
 				);
 
 			case 'ping':
-				return $this->rpc_result( $id, new stdClass() );
+				// Removed in 2026-07-28. Answered anyway so older clients keep working.
+				return $this->rpc_result( $id, new stdClass(), $version );
 
 			case 'tools/list':
 				$tools = array();
@@ -285,23 +346,30 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 						'inputSchema' => $tool['parameters'],
 					);
 				}
-				return $this->rpc_result( $id, array( 'tools' => $tools ) );
+				// A deterministic order lets a client cache the list and helps prompt caches.
+				usort(
+					$tools,
+					static function ( $left, $right ) {
+						return strcmp( $left['name'], $right['name'] );
+					}
+				);
+				return $this->rpc_result( $id, $this->cacheable( array( 'tools' => $tools ), $version ), $version );
 
 			case 'tools/call':
-				return $this->call_tool( $id, $params );
+				return $this->call_tool( $id, $params, $version );
 
 			case 'resources/list':
-				return $this->rpc_result( $id, array( 'resources' => array() ) );
+				return $this->rpc_result( $id, $this->cacheable( array( 'resources' => array() ), $version ), $version );
 
 			case 'prompts/list':
-				return $this->rpc_result( $id, array( 'prompts' => array() ) );
+				return $this->rpc_result( $id, $this->cacheable( array( 'prompts' => array() ), $version ), $version );
 
 			default:
 				return $this->rpc_error_body( $id, -32601, __( 'Method not found.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 	}
 
-	private function call_tool( $id, $params ) {
+	private function call_tool( $id, $params, $version = '' ) {
 		$name      = isset( $params['name'] ) ? sanitize_key( $params['name'] ) : '';
 		$arguments = isset( $params['arguments'] ) && is_array( $params['arguments'] ) ? $params['arguments'] : array();
 		$tools     = $this->available_tools();
@@ -337,7 +405,8 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 							'text' => $result->get_error_message(),
 						),
 					),
-				)
+				),
+				$version
 			);
 		}
 
@@ -360,7 +429,8 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 				),
 				'structuredContent' => $result,
 				'isError'           => false,
-			)
+			),
+			$version
 		);
 	}
 
@@ -408,7 +478,72 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 
 	private function negotiate_version( $params ) {
 		$requested = isset( $params['protocolVersion'] ) ? (string) $params['protocolVersion'] : '';
-		return preg_match( '/^\d{4}-\d{2}-\d{2}$/', $requested ) ? $requested : self::PROTOCOL_VERSION;
+		return in_array( $requested, self::SUPPORTED_VERSIONS, true ) ? $requested : self::PROTOCOL_VERSION;
+	}
+
+	/**
+	 * The revision a request is speaking.
+	 *
+	 * A modern client states it in _meta on every request. An older one states it once, in
+	 * initialize, and this server has no session to remember it in, so an absent _meta means
+	 * the caller is on the revision it was built against.
+	 *
+	 * @param array  $payload        Decoded JSON-RPC payload.
+	 * @param string $header_version Value of the MCP-Protocol-Version header.
+	 * @return string Revision, or an empty string when one was stated that is not supported.
+	 */
+	private function requested_version( $payload, $header_version = '' ) {
+		$meta = array();
+		if ( isset( $payload['params']['_meta'] ) && is_array( $payload['params']['_meta'] ) ) {
+			$meta = $payload['params']['_meta'];
+		}
+
+		// Stated per request from 2026-07-28.
+		$stated = isset( $meta[ self::META_PROTOCOL_VERSION ] ) ? (string) $meta[ self::META_PROTOCOL_VERSION ] : '';
+
+		// Older revisions state it in the header instead, on every request.
+		if ( '' === $stated ) {
+			$stated = trim( (string) $header_version );
+		}
+
+		// A client that opens with the handshake is on an older revision by definition.
+		if ( '' === $stated ) {
+			$method = isset( $payload['method'] ) ? (string) $payload['method'] : '';
+			if ( in_array( $method, array( 'initialize', 'notifications/initialized' ), true ) ) {
+				return $this->negotiate_version( isset( $payload['params'] ) && is_array( $payload['params'] ) ? $payload['params'] : array() );
+			}
+			return self::PROTOCOL_VERSION;
+		}
+
+		return in_array( $stated, self::SUPPORTED_VERSIONS, true ) ? $stated : '';
+	}
+
+	/**
+	 * Whether a revision expects the stateless shape.
+	 *
+	 * @param string $version Revision.
+	 * @return bool
+	 */
+	private function is_modern( $version ) {
+		return '' !== $version && $version >= '2026-07-28';
+	}
+
+	/**
+	 * Add the freshness hints the 2026-07-28 revision requires on list results.
+	 *
+	 * @param array  $result  Result payload.
+	 * @param string $version Negotiated revision.
+	 * @return array
+	 */
+	private function cacheable( $result, $version ) {
+		if ( ! $this->is_modern( $version ) ) {
+			return $result;
+		}
+
+		$result['ttlMs'] = 60000;
+		// The list depends on the caller's capabilities, so a shared cache must not keep it.
+		$result['cacheScope'] = 'private';
+		return $result;
 	}
 
 	private function capabilities() {
@@ -426,7 +561,26 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 		);
 	}
 
-	private function rpc_result( $id, $result ) {
+	/**
+	 * Wrap a result, shaped for the revision the caller asked for.
+	 *
+	 * From 2026-07-28 every result carries resultType and the server identifies itself in
+	 * _meta. Older clients are sent exactly what they were sent before, so nothing they
+	 * parse changes.
+	 *
+	 * @param mixed  $id      Request id.
+	 * @param mixed  $result  Result payload.
+	 * @param string $version Negotiated revision.
+	 * @return array
+	 */
+	private function rpc_result( $id, $result, $version = '' ) {
+		if ( $this->is_modern( $version ) && is_array( $result ) ) {
+			$result['resultType']           = 'complete';
+			$meta                           = isset( $result['_meta'] ) && is_array( $result['_meta'] ) ? $result['_meta'] : array();
+			$meta[ self::META_SERVER_INFO ] = $this->server_info();
+			$result['_meta']                = $meta;
+		}
+
 		return array(
 			'jsonrpc' => '2.0',
 			'id'      => $id,
