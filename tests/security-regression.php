@@ -192,6 +192,37 @@ check(
 	'uninstall removes every meta key the plugin writes, missing: ' . implode( ', ', $aicfab_left_behind )
 );
 
+// --- Saving settings says so ---------------------------------------------------
+
+// The settings page calls settings_errors() filtered to this plugin's slug. WordPress
+// registers its own "Settings saved" against the 'general' slug, so that call showed
+// nothing: the page came back silently and there was no way to tell the save had worked.
+// Registering the message during validation is what makes it appear.
+$aicfab_admin_source = file_get_contents( __DIR__ . '/../admin/class-ai-chat-bedrock-admin.php' );
+check(
+	false !== strpos( $aicfab_admin_source, "add_settings_error(\n\t\t\t'ai_chat_bedrock_settings',\n\t\t\t'aicfab_settings_saved'," ),
+	'saving settings registers a confirmation under the slug the page displays'
+);
+check(
+	false !== strpos( $aicfab_admin_source, "'success'" ),
+	'the confirmation is a success notice rather than an error'
+);
+
+$aicfab_settings_view = file_get_contents( __DIR__ . '/../admin/partials/ai-chat-bedrock-admin-settings.php' );
+check(
+	false !== strpos( $aicfab_settings_view, "settings_errors( 'ai_chat_bedrock_settings' )" ),
+	'the settings page displays notices for its own slug'
+);
+
+// The confirmation has to be registered inside the validator, since that is what runs
+// during the save. Registering it anywhere else would never reach the following page.
+$aicfab_validate_at = strpos( $aicfab_admin_source, 'public function validate_settings( $input ) {' );
+$aicfab_notice_at   = strpos( $aicfab_admin_source, "'aicfab_settings_saved'" );
+check(
+	false !== $aicfab_validate_at && false !== $aicfab_notice_at && $aicfab_notice_at > $aicfab_validate_at,
+	'the confirmation is registered from the validator'
+);
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

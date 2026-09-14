@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.25.0
+Stable tag: 1.25.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 
 == Changelog ==
 
+= 1.25.1 =
+* Saving settings now confirms it. The page displayed notices for its own slug while WordPress registers the built-in confirmation under another, so a save came back silently with no way to tell whether it had worked.
+
 = 1.25.0 =
 * The chat title is now a second level heading instead of a third, which skipped a level under the page title on the front end and on the Test Chat screen.
 * The editor assistant sidebar no longer uses WordPress APIs deprecated in 6.6, so it will not quietly disappear when they are removed. Older versions still work through a fallback.
@@ -501,6 +504,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.25.1 =
+Saving settings now shows a confirmation instead of returning silently.
 
 = 1.25.0 =
 Accessibility and forward-compatibility fixes: the chat title no longer skips a heading level, and the editor sidebar stops relying on deprecated WordPress APIs.

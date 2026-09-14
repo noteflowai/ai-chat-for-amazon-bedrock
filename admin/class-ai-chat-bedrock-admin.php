@@ -1045,6 +1045,16 @@ class AI_Chat_Bedrock_Admin {
 			$output = $merged;
 		}
 
+		// WordPress registers its own "Settings saved" against the 'general' slug, which a
+		// settings_errors() call filtered to this plugin's slug never shows. Without this the
+		// page came back silently and there was no way to tell whether the save worked.
+		add_settings_error(
+			'ai_chat_bedrock_settings',
+			'aicfab_settings_saved',
+			__( 'Settings saved.', 'ai-chat-for-amazon-bedrock' ),
+			'success'
+		);
+
 		return $output;
 	}
 
