@@ -48,7 +48,7 @@
 	border-bottom: 1px solid var(--aicfab-border);
 }
 
-.ai-chat-bedrock-header h3 {
+.ai-chat-bedrock-header .ai-chat-bedrock-title {
 	margin: 0;
 	font-size: 1.02em;
 	font-weight: 600;

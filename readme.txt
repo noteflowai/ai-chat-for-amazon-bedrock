@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.24.0
+Stable tag: 1.25.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,10 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 
 == Changelog ==
 
+= 1.25.0 =
+* The chat title is now a second level heading instead of a third, which skipped a level under the page title on the front end and on the Test Chat screen.
+* The editor assistant sidebar no longer uses WordPress APIs deprecated in 6.6, so it will not quietly disappear when they are removed. Older versions still work through a fallback.
+
 = 1.24.0 =
 * Fixed the Amazon Bedrock Chat block, which could not be inserted in the block editor at all. Its editor script was registered without dependencies, so it ran before the editor libraries existed and failed silently.
 * The block now offers a menu of the chat profiles that exist, instead of asking for a profile key typed from memory.
@@ -497,6 +501,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.25.0 =
+Accessibility and forward-compatibility fixes: the chat title no longer skips a heading level, and the editor sidebar stops relying on deprecated WordPress APIs.
 
 = 1.24.0 =
 Fixes the chat block, which could not be inserted in the block editor. If you have been using the shortcode because the block did not appear, the block works now.

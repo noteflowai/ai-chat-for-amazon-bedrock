@@ -1,7 +1,11 @@
-( function ( plugins, editPost, element, components, data, apiFetch, i18n ) {
+( function ( plugins, editPost, editor, element, components, data, apiFetch, i18n ) {
 	'use strict';
 
-	if ( ! plugins || ! editPost || ! element || ! components ) {
+	// wp.editPost.PluginSidebar was deprecated in WordPress 6.6 in favour of wp.editor.
+	// Prefer the current one and fall back, since this plugin supports 6.4 and 6.5 as well.
+	var host = ( editor && editor.PluginSidebar ) ? editor : editPost;
+
+	if ( ! plugins || ! host || ! element || ! components ) {
 		return;
 	}
 
@@ -11,8 +15,8 @@
 	var el = element.createElement;
 	var useState = element.useState;
 
-	var PluginSidebar = editPost.PluginSidebar;
-	var PluginSidebarMoreMenuItem = editPost.PluginSidebarMoreMenuItem;
+	var PluginSidebar = host.PluginSidebar;
+	var PluginSidebarMoreMenuItem = host.PluginSidebarMoreMenuItem;
 	var PanelBody = components.PanelBody;
 	var TextareaControl = components.TextareaControl;
 	var TextControl = components.TextControl;
@@ -301,6 +305,7 @@
 } )(
 	window.wp.plugins,
 	window.wp.editPost,
+	window.wp.editor,
 	window.wp.element,
 	window.wp.components,
 	window.wp.data,

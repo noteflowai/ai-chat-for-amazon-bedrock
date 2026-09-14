@@ -120,6 +120,43 @@ expect_true(
 	'the block previews through the server rather than saving markup from the editor'
 );
 
+// --- Heading levels and editor APIs ------------------------------------------
+
+// The chat title was an h3 directly under the page h1, which skips a level on the front end
+// and on the Test Chat screen. It is an h2, styled by class so the level can move again
+// without touching CSS.
+$aicfab_chat_view = file_get_contents( __DIR__ . '/../public/partials/ai-chat-bedrock-public-display.php' );
+expect_true(
+	false !== strpos( $aicfab_chat_view, '<h2 class="ai-chat-bedrock-title">' ),
+	'the chat title is an h2 so it does not skip a level under the page title'
+);
+expect_true(
+	false === strpos( $aicfab_chat_view, '<h3>' ),
+	'no bare h3 is left in the chat markup'
+);
+$aicfab_chat_css = file_get_contents( __DIR__ . '/../public/css/ai-chat-bedrock-public.css' );
+expect_true(
+	false !== strpos( $aicfab_chat_css, '.ai-chat-bedrock-title' ),
+	'the title is styled by class rather than by tag name'
+);
+
+// wp.editPost.PluginSidebar was deprecated in WordPress 6.6. Using it still works but will
+// stop, and the sidebar would then vanish without a word.
+$aicfab_editor_js = file_get_contents( __DIR__ . '/../admin/js/ai-chat-bedrock-editor.js' );
+expect_true(
+	false !== strpos( $aicfab_editor_js, 'var host = ( editor && editor.PluginSidebar ) ? editor : editPost;' ),
+	'the assistant prefers wp.editor and falls back to wp.editPost'
+);
+expect_true(
+	false === strpos( $aicfab_editor_js, 'editPost.PluginSidebarMoreMenuItem' ),
+	'the deprecated menu item reference is gone'
+);
+$aicfab_assistant_php = file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock-editor-assistant.php' );
+expect_true(
+	false !== strpos( $aicfab_assistant_php, "'wp-editor'" ),
+	'wp-editor is declared as a dependency, since the script now reads window.wp.editor'
+);
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

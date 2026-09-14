@@ -28,7 +28,11 @@ $launcher        = isset( $atts['launcher'] ) ? $atts['launcher'] : __( 'Chat', 
 	<div class="ai-chat-bedrock-popup-panel" id="<?php echo esc_attr( $panel_id ); ?>" hidden>
 <?php endif; ?>
 <div class="ai-chat-bedrock-container<?php echo 'popup' === $aicfab_mode ? ' is-popup' : ''; ?>" data-profile="<?php echo esc_attr( $profile ); ?>" style="width: <?php echo esc_attr( $atts['width'] ); ?>;">
-	<div class="ai-chat-bedrock-header"><h3><?php echo esc_html( $atts['title'] ); ?></h3></div>
+	<?php
+	// A page title is h1, so the chat title is h2. It used to be h3, which skipped a
+	// level both here and on the Test Chat screen.
+	?>
+	<div class="ai-chat-bedrock-header"><h2 class="ai-chat-bedrock-title"><?php echo esc_html( $atts['title'] ); ?></h2></div>
 	<?php
 	// Streaming rewrites the answer on every chunk. Announcing the message list
 	// therefore repeated the whole growing answer to a screen reader dozens of times, so
