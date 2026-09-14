@@ -247,8 +247,33 @@ class AI_Chat_Bedrock_MCP_Client {
 	}
 
 	public function is_server_available( $server_name ) {
-		if ( ! isset( $this->servers[ $server_name ] ) || ! $this->server_is_safe( $server_name ) ) {
-			return false;
+		$status = $this->server_status( $server_name );
+		return ! empty( $status['available'] );
+	}
+
+	/**
+	 * Whether a server answers, and why it does not.
+	 *
+	 * The reason was being thrown away: the transport already distinguishes an unreachable
+	 * host, rejected credentials, an HTTP error and a JSON-RPC error, but the caller reduced
+	 * all of it to false and the screen could only say "Unavailable". That leaves an
+	 * administrator guessing between a typo, a firewall and a bad token.
+	 *
+	 * @param string $server_name Registered server name.
+	 * @return array Array with available and reason keys.
+	 */
+	public function server_status( $server_name ) {
+		if ( ! isset( $this->servers[ $server_name ] ) ) {
+			return array(
+				'available' => false,
+				'reason'    => __( 'The server is not registered.', 'ai-chat-for-amazon-bedrock' ),
+			);
+		}
+		if ( ! $this->server_is_safe( $server_name ) ) {
+			return array(
+				'available' => false,
+				'reason'    => __( 'The stored URL is not a public HTTPS address.', 'ai-chat-for-amazon-bedrock' ),
+			);
 		}
 
 		$result = AI_Chat_Bedrock_MCP_Transport::call(
@@ -259,13 +284,32 @@ class AI_Chat_Bedrock_MCP_Client {
 			5
 		);
 		if ( ! is_wp_error( $result ) ) {
-			return true;
+			return array(
+				'available' => true,
+				'reason'    => '',
+			);
 		}
+
+		// Keep the reason from the first attempt: the legacy health path rarely exists and
+		// its failure says less than the protocol call already did.
+		$reason = $result->get_error_message();
 
 		$args            = $this->request_args();
 		$args['timeout'] = 5;
 		$response        = wp_safe_remote_get( trailingslashit( $this->servers[ $server_name ]['url'] ) . 'mcp/health', $args );
-		return ! is_wp_error( $response ) && 200 === (int) wp_remote_retrieve_response_code( $response );
+		if ( ! is_wp_error( $response ) && 200 === (int) wp_remote_retrieve_response_code( $response ) ) {
+			return array(
+				'available' => true,
+				'reason'    => '',
+			);
+		}
+
+		return array(
+			'available' => false,
+			// A remote server controls part of this text, so it is trimmed and inserted as
+			// text rather than markup by the screen that shows it.
+			'reason'    => AI_Chat_Bedrock_Security::string_substr( wp_strip_all_tags( (string) $reason ), 0, 200 ),
+		);
 	}
 
 	private function request_args() {

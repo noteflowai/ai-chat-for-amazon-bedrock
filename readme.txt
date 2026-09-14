@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.25.1
+Stable tag: 1.26.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,10 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 
 == Changelog ==
 
+= 1.26.0 =
+* An MCP server that does not answer now says why. The status column said only "Unavailable" while the reason, whether the host was unreachable, the credentials were rejected or the endpoint returned an HTTP error, was being discarded.
+* The reason is length limited and inserted as text, since a remote server controls part of it.
+
 = 1.25.1 =
 * Saving settings now confirms it. The page displayed notices for its own slug while WordPress registers the built-in confirmation under another, so a save came back silently with no way to tell whether it had worked.
 
@@ -504,6 +508,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.26.0 =
+An unavailable MCP server now reports why instead of only that it is unavailable.
 
 = 1.25.1 =
 Saving settings now shows a confirmation instead of returning silently.

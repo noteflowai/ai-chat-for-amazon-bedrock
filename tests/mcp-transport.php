@@ -141,6 +141,54 @@ check_mcp( 'bedrock-agentcore' === $default_auth['service'], 'SigV4 must default
 check_mcp( array( 'type' => 'none' ) === AI_Chat_Bedrock_MCP_Transport::sanitize_auth( array( 'type' => 'bearer', 'token' => '' ) ), 'Empty bearer tokens must fall back to no authentication.' );
 check_mcp( array( 'type' => 'none' ) === AI_Chat_Bedrock_MCP_Transport::sanitize_auth( array( 'type' => 'unknown' ) ), 'Unknown auth types must fall back to no authentication.' );
 
+// --- Why a server is unavailable ---------------------------------------------
+
+// The health check reduced a WP_Error to a boolean, so the screen could only say
+// "Unavailable" while the transport already knew whether the host was unreachable, the
+// credentials were rejected, or the endpoint answered with an HTTP error. An administrator
+// was left choosing between a typo, a firewall and a bad token.
+$aicfab_client_source = file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock-mcp-client.php' );
+check_mcp(
+	false !== strpos( $aicfab_client_source, 'public function server_status( $server_name ) {' ),
+	'the client reports a status with a reason'
+);
+check_mcp(
+	false !== strpos( $aicfab_client_source, '$reason = $result->get_error_message();' ),
+	'the reason comes from the transport error rather than being invented'
+);
+check_mcp(
+	false !== strpos( $aicfab_client_source, "\$status = \$this->server_status( \$server_name );" ),
+	'is_server_available delegates so both answers cannot drift apart'
+);
+// A remote server controls part of that text, so it must be trimmed and stripped.
+check_mcp(
+	false !== strpos( $aicfab_client_source, 'AI_Chat_Bedrock_Security::string_substr( wp_strip_all_tags( (string) $reason ), 0, 200 )' ),
+	'the remote portion of the reason is stripped and length limited'
+);
+
+$aicfab_integration = file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock-mcp-integration.php' );
+check_mcp(
+	false !== strpos( $aicfab_integration, "\$server['reason']" ),
+	'the reason reaches the server list the screen renders'
+);
+
+$aicfab_mcp_js = file_get_contents( __DIR__ . '/../admin/js/ai-chat-bedrock-mcp.js' );
+// Assert the expression that actually renders it. Checking only that "server.reason"
+// appears somewhere passed even when the branch was disabled.
+check_mcp(
+	false !== strpos( $aicfab_mcp_js, "config.i18n.unavailable + ' \xe2\x80\x94 ' + String(server.reason)" ),
+	'the screen renders the reason next to the status'
+);
+check_mcp(
+	false !== strpos( $aicfab_mcp_js, 'server.reason ? config.i18n.unavailable' ),
+	'the reason is shown whenever there is one'
+);
+// It has to be set as text: the reason can contain whatever a remote server sent.
+check_mcp(
+	false === strpos( $aicfab_mcp_js, 'html: config.i18n.unavailable' ) && false !== strpos( $aicfab_mcp_js, 'text: server.available' ),
+	'the status cell is set as text rather than markup'
+);
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

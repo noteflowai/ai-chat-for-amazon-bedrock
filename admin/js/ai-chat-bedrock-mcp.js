@@ -33,7 +33,11 @@
             $row.append($('<td>').text(server.url));
             $row.append($('<td>').append($('<span>', {
                 'class': 'ai-chat-bedrock-server-status ' + (server.available ? 'status-available' : 'status-unavailable'),
-                text: server.available ? config.i18n.available : config.i18n.unavailable
+                // Say why it is unavailable. Part of this text comes from the remote server,
+                // so it is set as text and never as markup.
+                text: server.available
+                    ? config.i18n.available
+                    : (server.reason ? config.i18n.unavailable + ' — ' + String(server.reason) : config.i18n.unavailable)
             })));
             const $tools = $('<td>');
             $tools.append($('<button>', { type: 'button', 'class': 'button ai-chat-bedrock-view-tools', text: config.i18n.view_tools }).attr('data-server', name));

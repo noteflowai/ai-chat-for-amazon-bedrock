@@ -91,7 +91,9 @@ class AI_Chat_Bedrock_MCP_Integration {
 		$this->authorize_admin_request();
 		$servers = $this->mcp_client->get_servers();
 		foreach ( $servers as $name => &$server ) {
-			$server['available'] = $this->mcp_client->is_server_available( $name );
+			$status              = $this->mcp_client->server_status( $name );
+			$server['available'] = ! empty( $status['available'] );
+			$server['reason']    = isset( $status['reason'] ) ? (string) $status['reason'] : '';
 			if ( isset( $server['auth']['token'] ) ) {
 				$server['auth']['token'] = '';
 			}

@@ -466,3 +466,10 @@
     display: block;
     font-weight: 600;
 }
+
+/* Why an MCP server is unavailable, shown next to its status */
+.ai-chat-bedrock-server-status.status-unavailable {
+    color: #8a2424;
+    display: inline-block;
+    max-width: 32em;
+}
