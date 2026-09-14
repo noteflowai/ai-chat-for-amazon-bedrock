@@ -122,6 +122,56 @@ ANNOUNCEMENT_PROBE = r"""
 })()
 """
 
+
+NAMES_PROBE = r"""
+(function () {
+  var root = window.aicfabRoot ? window.aicfabRoot() : document;
+
+  function name(el) {
+    if (el.getAttribute('aria-label')) return el.getAttribute('aria-label').trim();
+    var by = el.getAttribute('aria-labelledby');
+    if (by) {
+      var parts = by.split(/\s+/).map(function (id) {
+        var n = document.getElementById(id);
+        return n ? n.textContent.trim() : '';
+      }).filter(Boolean);
+      if (parts.length) return parts.join(' ');
+    }
+    if (el.id) {
+      var lab = document.querySelector('label[for="' + CSS.escape(el.id) + '"]');
+      if (lab && lab.textContent.trim()) return lab.textContent.trim();
+    }
+    var wrap = el.closest('label');
+    if (wrap && wrap.textContent.trim()) return wrap.textContent.trim();
+    if (el.textContent && el.textContent.trim()) return el.textContent.trim();
+    if (el.value) return String(el.value).trim();
+    if (el.getAttribute('title')) return el.getAttribute('title').trim();
+    return '';
+  }
+
+  var unnamed = [];
+  var total = 0;
+  var duplicates = {};
+  root.querySelectorAll('button, a[href], input, select, textarea, [role="button"]').forEach(function (el) {
+    if (el.disabled || el.hidden || el.type === 'hidden') return;
+    var box = el.getBoundingClientRect();
+    if (box.width === 0 && box.height === 0) return;
+    total++;
+    var label = name(el);
+    if (!label) {
+      unnamed.push({ tag: el.tagName.toLowerCase(), cls: el.className, type: el.type || '' });
+      return;
+    }
+    duplicates[label] = (duplicates[label] || 0) + 1;
+  });
+
+  var repeated = Object.keys(duplicates).filter(function (k) { return duplicates[k] > 1; })
+    .map(function (k) { return k.substring(0, 30) + ' x' + duplicates[k]; });
+
+  return JSON.stringify({ total: total, unnamed: unnamed, repeated: repeated });
+})()
+"""
+
 LAYOUT_PROBE = r"""
 (function () {
   var root = document.querySelector('.ai-chat-bedrock-container') || document.querySelector('.ai-chat-bedrock-messages');
@@ -210,6 +260,13 @@ def main():
             "var last=m[m.length-1];return last?last.textContent.trim().length:0;})()"
         ))
         print("  aria-busy after finishing:", tab.ev("window.aicfabRoot().getAttribute('aria-busy')"))
+
+        report = json.loads(tab.ev(NAMES_PROBE) or '{}')
+        print("  controls after an answer:", report.get("total"))
+        print("  without an accessible name:", report.get("unnamed") or "none")
+        # Several controls sharing one name is what made the admin page unusable by keyboard
+        # navigation, so it is worth reporting even though it is not strictly a failure.
+        print("  names used by more than one control:", report.get("repeated") or "none")
         print("  a dedicated status region exists:", tab.ev("!!window.aicfabRoot().querySelector('.ai-chat-bedrock-announce')"))
         # Whether the announcement was actually made is not measured here: attempts to read
         # it from this harness disagreed with a simpler direct check, so the number would

@@ -113,16 +113,67 @@ class AI_Chat_Bedrock_Public {
 		return $this->display_chat_interface( $atts );
 	}
 
+	/**
+	 * Whether the chat can actually answer.
+	 *
+	 * Without this the chat rendered on a fresh install and failed on the first message,
+	 * so visitors met a broken feature rather than nothing at all.
+	 *
+	 * @param array $options Resolved settings for this instance.
+	 * @return bool
+	 */
+	private function chat_is_ready( $options ) {
+		$options = is_array( $options ) ? $options : array();
+		$model   = isset( $options['model_id'] ) ? trim( (string) $options['model_id'] ) : '';
+		if ( '' === $model ) {
+			return false;
+		}
+
+		$aws = new AI_Chat_Bedrock_AWS();
+		if ( ! $aws->has_credentials() ) {
+			return false;
+		}
+
+		/**
+		 * Filter whether the chat is ready to render.
+		 *
+		 * @param bool  $ready   Whether the chat will render.
+		 * @param array $options Resolved settings.
+		 */
+		return (bool) apply_filters( 'ai_chat_bedrock_chat_is_ready', true, $options );
+	}
+
+	/**
+	 * What to show in place of a chat that cannot answer.
+	 *
+	 * Nothing at all for visitors: a public page should not advertise a broken feature.
+	 * Administrators get told what is missing, since they are the ones who can fix it.
+	 *
+	 * @return string
+	 */
+	private function unavailable_notice() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return '';
+		}
+
+		return sprintf(
+			'<div class="ai-chat-bedrock-unavailable notice notice-warning"><p>%1$s <a href="%2$s">%3$s</a></p></div>',
+			esc_html__( 'The chat is not shown to visitors yet: Amazon Bedrock credentials or a model are still missing. Only administrators see this message.', 'ai-chat-for-amazon-bedrock' ),
+			esc_url( admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock' ) ),
+			esc_html__( 'Finish the setup', 'ai-chat-for-amazon-bedrock' )
+		);
+	}
+
 	public function display_chat_interface( $atts ) {
 		$this->enqueue_styles();
 		$this->enqueue_scripts();
 		wp_enqueue_style( $this->plugin_name );
 		wp_enqueue_script( $this->plugin_name );
 
-		$requested        = isset( $atts['profile'] ) ? AI_Chat_Bedrock_Profiles::sanitize_key( $atts['profile'] ) : '';
-		$options          = AI_Chat_Bedrock_Profiles::resolve( $requested );
-		$profile          = isset( $options['profile'] ) ? $options['profile'] : '';
-		$atts             = shortcode_atts(
+		$requested       = isset( $atts['profile'] ) ? AI_Chat_Bedrock_Profiles::sanitize_key( $atts['profile'] ) : '';
+		$options         = AI_Chat_Bedrock_Profiles::resolve( $requested );
+		$profile         = isset( $options['profile'] ) ? $options['profile'] : '';
+		$atts            = shortcode_atts(
 			array(
 				'profile'     => $profile,
 				'mode'        => 'inline',
@@ -137,10 +188,16 @@ class AI_Chat_Bedrock_Public {
 			$atts,
 			'ai_chat_bedrock'
 		);
-		$atts['width']    = $this->sanitize_dimension( $atts['width'], '100%' );
-		$atts['height']   = $this->sanitize_dimension( $atts['height'], '500px' );
-		$atts['profile']  = AI_Chat_Bedrock_Profiles::sanitize_key( isset( $atts['profile'] ) ? $atts['profile'] : '' );
-		$atts['mode']     = in_array( isset( $atts['mode'] ) ? $atts['mode'] : 'inline', array( 'inline', 'popup' ), true ) ? $atts['mode'] : 'inline';
+		$atts['width']   = $this->sanitize_dimension( $atts['width'], '100%' );
+		$atts['height']  = $this->sanitize_dimension( $atts['height'], '500px' );
+		$atts['profile'] = AI_Chat_Bedrock_Profiles::sanitize_key( isset( $atts['profile'] ) ? $atts['profile'] : '' );
+		$atts['mode']    = in_array( isset( $atts['mode'] ) ? $atts['mode'] : 'inline', array( 'inline', 'popup' ), true ) ? $atts['mode'] : 'inline';
+
+		if ( ! $this->chat_is_ready( $options ) ) {
+			// The floating widget lives in the footer, where a notice would just be odd.
+			// Where an author deliberately placed the chat, say why it is not there.
+			return 'popup' === $atts['mode'] ? '' : $this->unavailable_notice();
+		}
 		$atts['launcher'] = sanitize_text_field( isset( $atts['launcher'] ) ? $atts['launcher'] : __( 'Chat', 'ai-chat-for-amazon-bedrock' ) );
 
 		ob_start();

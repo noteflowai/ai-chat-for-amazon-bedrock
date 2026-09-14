@@ -118,6 +118,44 @@ foreach ( array( 'max_tokens', 'temperature', 'system_prompt', 'suggested_questi
 $mcp_source = file_get_contents( dirname( __DIR__ ) . '/admin/partials/ai-chat-bedrock-admin-mcp-tab.php' );
 check( false !== strpos( $mcp_source, 'SigV4 signing region' ), 'The MCP signing region input has an accessible name.' );
 
+// --- A chat that cannot answer is not shown to visitors ----------------------
+
+// Before this, a fresh install rendered a working-looking chat that failed on the first
+// message, so the public met a broken feature. The rules asserted here: visitors see
+// nothing, administrators are told what is missing, and the footer widget stays silent.
+$aicfab_public_source = file_get_contents( __DIR__ . '/../public/class-ai-chat-bedrock-public.php' );
+
+check(
+	false !== strpos( $aicfab_public_source, 'private function chat_is_ready( $options ) {' ),
+	'the public class decides whether the chat can answer before rendering'
+);
+check(
+	false !== strpos( $aicfab_public_source, "if ( ! \$this->chat_is_ready( \$options ) ) {" ),
+	'the render path consults it'
+);
+check(
+	false !== strpos( $aicfab_public_source, "! \$aws->has_credentials()" ),
+	'readiness depends on credentials actually resolving'
+);
+check(
+	false !== strpos( $aicfab_public_source, "if ( ! current_user_can( 'manage_options' ) ) {\n\t\t\treturn '';" ),
+	'a visitor is shown nothing rather than an explanation they cannot act on'
+);
+check(
+	false !== strpos( $aicfab_public_source, "'popup' === \$atts['mode'] ? '' : \$this->unavailable_notice()" ),
+	'the footer widget renders nothing rather than a stray notice'
+);
+
+// The check has to run after the mode is validated, or it reads an unvalidated value.
+// Matched by pattern rather than exact spacing, since the formatter realigns assignments.
+preg_match( '/\$atts\[.mode.\]\s*=\s*in_array\(/', $aicfab_public_source, $aicfab_m, PREG_OFFSET_CAPTURE );
+$aicfab_mode_at  = isset( $aicfab_m[0][1] ) ? $aicfab_m[0][1] : false;
+$aicfab_ready_at = strpos( $aicfab_public_source, 'chat_is_ready( $options ) ) {' );
+check(
+	false !== $aicfab_mode_at && false !== $aicfab_ready_at && $aicfab_mode_at < $aicfab_ready_at,
+	'the mode is validated before the readiness check compares it'
+);
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

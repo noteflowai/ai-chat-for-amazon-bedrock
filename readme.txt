@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.22.0
+Stable tag: 1.23.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -43,6 +43,7 @@ Credentials are resolved in this order: `wp-config.php` constants, encrypted Wor
 * External MCP tools are unavailable to anonymous visitors by default.
 * Built-in WordPress MCP routes require authentication unless public read-only access is deliberately enabled.
 * Chat and public MCP requests are rate limited per minute and per profile, with optional per-role limits so staff and anonymous visitors need not share one cap.
+* The chat is not shown to visitors until it can actually answer, so a half-finished setup is never public.
 * A visitor can stop a long answer, and the server stops the Bedrock request with it rather than paying for text nobody will read.
 * Diagnostics generates the least-privilege IAM policy this site needs, and the dashboard checklist reads the site rather than guessing, so it can be finished and then says what is left worth configuring.
 * Input, history, token, tool-call, redirect and remote-response limits are enforced server-side.
@@ -261,6 +262,11 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 13. A setup checklist that reads the site's own state, followed by the improvements still worth making.
 
 == Changelog ==
+
+= 1.23.0 =
+* The chat no longer renders for visitors when it cannot answer. Until now a fresh install showed a working-looking chat that failed on the first message.
+* Administrators see a short message in its place saying what is still missing, with a link to finish the setup. Visitors see nothing at all.
+* The floating widget stays silent in that state rather than putting a notice in the footer.
 
 = 1.22.0 =
 * Added a Stop button while an answer is streaming. Whatever has arrived is kept, and stopping is not reported as an error.
@@ -486,6 +492,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.23.0 =
+A chat that cannot answer is no longer shown to visitors. Configured sites are unaffected.
 
 = 1.22.0 =
 Visitors can stop a long answer, and the Bedrock request stops with it. A visitor closing the tab now also stops the request instead of it running to completion unread.
