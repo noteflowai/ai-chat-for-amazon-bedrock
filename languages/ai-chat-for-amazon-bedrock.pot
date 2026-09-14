@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.18.1\n"
+"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.19.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-14T07:44:40+00:00\n"
+"POT-Creation-Date: 2026-09-14T08:17:17+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -135,7 +135,7 @@ msgid "Writing “%s”…"
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:90
-#: admin/partials/ai-chat-bedrock-admin-generator.php:97
+#: admin/partials/ai-chat-bedrock-admin-generator.php:104
 msgid "Generate draft"
 msgstr ""
 
@@ -402,7 +402,7 @@ msgstr ""
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:46
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:95
 #: admin/partials/ai-chat-bedrock-admin-test.php:27
-#: includes/class-ai-chat-bedrock-conversations.php:361
+#: includes/class-ai-chat-bedrock-conversations.php:363
 msgid "Model"
 msgstr ""
 
@@ -850,142 +850,187 @@ msgid "Storing the most recent %1$d exchanges for up to %2$d days. Inform your v
 msgstr ""
 
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:84
+msgid "Content gaps"
+msgstr ""
+
+#. translators: 1: number of questions asked, 2: number with no site content behind them, 3: percentage, 4: number of days.
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:93
+#, php-format
+msgid "Of %1$s questions in the last %4$s days, %2$s had no site content behind the answer (%3$s%%). Those are subjects visitors expect you to cover."
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:104
+msgid "Nothing to report yet. Gaps appear once visitors ask something the site has no content for, or mark an answer unhelpful."
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:110
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:231
+#: includes/class-ai-chat-bedrock-conversations.php:367
+msgid "Question"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:111
+msgid "Asked"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:112
+msgid "No content found"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:113
+msgid "Marked unhelpful"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:114
+msgid "Action"
+msgstr ""
+
+#. translators: %s: the question a draft would be written about.
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:128
+#, php-format
+msgid "Draft an answer about: %s"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:133
+msgid "Draft an answer"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:142
+msgid "Questions built from the same significant words are counted as one gap, in any order. Drafting opens the content generator with the subject filled in; the draft is yours to review before publishing."
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:146
 msgid "Stored exchanges"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:86
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:148
 msgid "entries"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:87
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:149
 #: admin/partials/ai-chat-bedrock-admin-display.php:108
 msgid "input tokens"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:88
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:150
 #: admin/partials/ai-chat-bedrock-admin-display.php:109
 msgid "output tokens"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:89
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:151
 msgid "rated helpful"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:90
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:152
 msgid "rated unhelpful"
 msgstr ""
 
 #. translators: %s: date of the oldest stored entry.
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:97
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:159
 #, php-format
 msgid "Oldest entry: %s"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:109
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:171
 msgid "Search conversations"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:110
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:172
 msgid "Search questions and answers"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:112
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:167
-#: includes/class-ai-chat-bedrock-conversations.php:357
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:174
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:229
+#: includes/class-ai-chat-bedrock-conversations.php:359
 msgid "Source"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:114
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:176
 msgid "All sources"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:120
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:171
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:182
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:233
 msgid "Rating"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:122
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:184
 msgid "Any rating"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:123
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:180
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:185
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:242
 #: public/class-ai-chat-bedrock-public.php:50
 msgid "Helpful"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:124
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:180
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:186
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:242
 #: public/class-ai-chat-bedrock-public.php:51
 msgid "Not helpful"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:125
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:187
 msgid "Not rated"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:128
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:190
 msgid "Filter"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:130
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:192
 msgid "Reset"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:138
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:200
 msgid "Export CSV"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:144
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:206
 msgid "Delete all stored conversations"
 msgstr ""
 
 #. translators: 1: number of matching entries, 2: current page, 3: total pages.
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:155
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:217
 #, php-format
 msgid "%1$d matching entries, page %2$d of %3$d."
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:166
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:228
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:250
 msgid "Time"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:168
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:230
 msgid "User"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:169
-#: includes/class-ai-chat-bedrock-conversations.php:365
-msgid "Question"
-msgstr ""
-
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:170
-#: includes/class-ai-chat-bedrock-conversations.php:369
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:232
+#: includes/class-ai-chat-bedrock-conversations.php:371
 msgid "Answer"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:172
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:234
 msgid "Tokens"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:185
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:247
 msgid "Guest"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:205
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:267
 msgid "Previous"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:206
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:268
 msgid "Next"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:217
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:279
 msgid "No conversations match these filters."
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-conversations.php:219
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:281
 msgid "No conversations recorded yet."
 msgstr ""
 
@@ -1321,39 +1366,39 @@ msgstr ""
 msgid "Topic"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-generator.php:64
+#: admin/partials/ai-chat-bedrock-admin-generator.php:71
 msgid "How to choose a refund policy for a small shop"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-generator.php:68
+#: admin/partials/ai-chat-bedrock-admin-generator.php:75
 msgid "Tone"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-generator.php:75
+#: admin/partials/ai-chat-bedrock-admin-generator.php:82
 msgid "Length"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-generator.php:84
+#: admin/partials/ai-chat-bedrock-admin-generator.php:91
 msgid "Language"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-generator.php:86
+#: admin/partials/ai-chat-bedrock-admin-generator.php:93
 msgid "Leave empty to match the topic language"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-generator.php:90
+#: admin/partials/ai-chat-bedrock-admin-generator.php:97
 msgid "Source notes"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-generator.php:92
+#: admin/partials/ai-chat-bedrock-admin-generator.php:99
 msgid "Optional facts the draft should rely on. Treated as data, never as instructions."
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-generator.php:93
+#: admin/partials/ai-chat-bedrock-admin-generator.php:100
 msgid "The model is instructed not to invent statistics, quotes, prices, dates or named sources. Review every draft before publishing."
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-generator.php:101
+#: admin/partials/ai-chat-bedrock-admin-generator.php:108
 msgid "Generated draft"
 msgstr ""
 
@@ -2135,7 +2180,7 @@ msgstr ""
 msgid "You are a helpful AI assistant powered by Amazon Bedrock."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-chat-request.php:172
+#: includes/class-ai-chat-bedrock-chat-request.php:177
 msgid "I used the available tools to gather information."
 msgstr ""
 
@@ -2171,13 +2216,13 @@ msgstr ""
 msgid "The model returned no content."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-conversations.php:304
-#: includes/class-ai-chat-bedrock-conversations.php:318
-#: includes/class-ai-chat-bedrock-conversations.php:349
+#: includes/class-ai-chat-bedrock-conversations.php:306
+#: includes/class-ai-chat-bedrock-conversations.php:320
+#: includes/class-ai-chat-bedrock-conversations.php:351
 msgid "AI chat conversations"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-conversations.php:353
+#: includes/class-ai-chat-bedrock-conversations.php:355
 msgid "Date"
 msgstr ""
 

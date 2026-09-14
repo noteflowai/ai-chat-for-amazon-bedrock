@@ -106,9 +106,13 @@ class AI_Chat_Bedrock_Chat_Request {
 			),
 		);
 
+		// Whether site content was found for this question. An answer with nothing behind
+		// it is the signal that the site is missing a page on the subject.
+		$grounded = false;
 		if ( class_exists( 'AI_Chat_Bedrock_Retrieval' ) ) {
 			$context = AI_Chat_Bedrock_Retrieval::context( $message, $options );
 			if ( '' !== $context ) {
+				$grounded   = true;
 				$messages[] = array(
 					'role'    => 'system',
 					'content' => $context,
@@ -130,6 +134,7 @@ class AI_Chat_Bedrock_Chat_Request {
 		return array(
 			'messages' => $messages,
 			'message'  => $message,
+			'grounded' => $grounded,
 		);
 	}
 

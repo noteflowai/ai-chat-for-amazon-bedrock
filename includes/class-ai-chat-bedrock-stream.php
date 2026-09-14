@@ -135,9 +135,10 @@ class AI_Chat_Bedrock_Stream {
 			$built['message'],
 			$answer,
 			array(
-				'usage'  => isset( $response['usage'] ) ? $response['usage'] : array(),
-				'source' => 'stream',
-				'model'  => isset( $options['model_id'] ) ? $options['model_id'] : '',
+				'usage'    => isset( $response['usage'] ) ? $response['usage'] : array(),
+				'source'   => 'stream',
+				'grounded' => ! empty( $built['grounded'] ),
+				'model'    => isset( $options['model_id'] ) ? $options['model_id'] : '',
 			)
 		);
 

@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.18.1
+Stable tag: 1.19.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -112,6 +112,7 @@ All content tools are optional, require the capability to edit the item, and are
 * **Image alt text**: describe an image with a Bedrock vision model and store the result in the standard WordPress alt text field, one image at a time or as a media library bulk action. Existing alt text is never replaced unless you ask, and only JPEG, PNG, GIF and WebP files are accepted.
 * **Excerpts**: summarize the current post into the excerpt field for review before saving.
 * **Site pages**: describe the business and get a first set of pages as drafts, with titles you can edit before anything is written. Nothing is published, a title that already exists is left alone, and the theme and menus are never touched.
+* **Content gaps**: the questions visitors asked that no site content answered, or that they marked unhelpful, grouped and counted. Each one links straight to the generator with the subject filled in.
 
 = Connect AI clients to this site =
 
@@ -255,8 +256,15 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 9. Per-role request limits, so editors and administrators can be given more requests per minute than anonymous visitors.
 10. The least-privilege IAM policy generated for this site's own configuration, ready to paste into AWS.
 11. Drafting a first set of pages from a description of the business. Every page is a draft, and nothing existing is touched.
+12. Content gaps: the questions visitors asked that the site has no content for, each with a shortcut to draft an answer.
 
 == Changelog ==
+
+= 1.19.0 =
+* Added a content gap report to the Conversations screen: the questions visitors asked that no site content answered, or that they marked unhelpful, grouped by subject and counted.
+* Each gap links to the content generator with the subject filled in, so the loop from question to draft is one click.
+* Each stored exchange now records whether site content was found for the question, and the CSV export carries that column.
+* Similar wordings are grouped without stemming, so two subjects are never merged into one; the same subject may appear twice if worded very differently.
 
 = 1.18.1 =
 * Fixed accessibility on the Site Pages screen: every row of the proposed page list exposed the same name, so a screen reader could not tell the title fields apart. Names now carry the page title and follow it as you edit.
@@ -459,6 +467,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.19.0 =
+Adds a content gap report showing what visitors asked that your site does not answer. Gaps appear for exchanges recorded from this version on.
 
 = 1.18.1 =
 Accessibility fixes for the Site Pages screen. Recommended if anyone uses a screen reader with it.

@@ -80,6 +80,7 @@ class AI_Chat_Bedrock_Conversations {
 			'answer'        => AI_Chat_Bedrock_Security::string_substr( wp_strip_all_tags( $answer ), 0, self::MAX_TEXT ),
 			'input_tokens'  => isset( $usage['input_tokens'] ) ? (int) $usage['input_tokens'] : 0,
 			'output_tokens' => isset( $usage['output_tokens'] ) ? (int) $usage['output_tokens'] : 0,
+			'grounded'      => ! empty( $context['grounded'] ) ? 1 : 0,
 		);
 
 		$entries   = self::all();
@@ -232,7 +233,7 @@ class AI_Chat_Bedrock_Conversations {
 	 */
 	public static function export_rows() {
 		$rows = array(
-			array( 'time_utc', 'user_id', 'source', 'model', 'input_tokens', 'output_tokens', 'rating', 'question', 'answer' ),
+			array( 'time_utc', 'user_id', 'source', 'model', 'input_tokens', 'output_tokens', 'rating', 'grounded', 'question', 'answer' ),
 		);
 		foreach ( array_reverse( self::all() ) as $entry ) {
 			$rows[] = array(
@@ -243,6 +244,7 @@ class AI_Chat_Bedrock_Conversations {
 				(int) ( $entry['input_tokens'] ?? 0 ),
 				(int) ( $entry['output_tokens'] ?? 0 ),
 				(int) ( $entry['rating'] ?? 0 ),
+				empty( $entry['grounded'] ) ? 0 : 1,
 				(string) ( $entry['question'] ?? '' ),
 				(string) ( $entry['answer'] ?? '' ),
 			);
@@ -472,6 +474,7 @@ class AI_Chat_Bedrock_Conversations {
 				'output_tokens' => isset( $entry['output_tokens'] ) ? (int) $entry['output_tokens'] : 0,
 				'rating'        => in_array( (int) ( $entry['rating'] ?? 0 ), array( 1, -1 ), true ) ? (int) $entry['rating'] : 0,
 				'rating_time'   => isset( $entry['rating_time'] ) ? (int) $entry['rating_time'] : 0,
+				'grounded'      => ! empty( $entry['grounded'] ) ? 1 : 0,
 			);
 		}
 

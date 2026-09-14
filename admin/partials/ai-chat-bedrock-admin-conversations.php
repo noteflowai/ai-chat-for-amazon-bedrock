@@ -81,6 +81,68 @@ $filter_url = add_query_arg(
 
 	<div class="aicfab-cards">
 		<div class="aicfab-card">
+			<h2><?php esc_html_e( 'Content gaps', 'ai-chat-for-amazon-bedrock' ); ?></h2>
+			<?php
+			$aicfab_gap_summary = AI_Chat_Bedrock_Insights::summary( 30 );
+			$aicfab_gaps        = AI_Chat_Bedrock_Insights::content_gaps( array( 'days' => 30 ) );
+			?>
+			<p>
+				<?php
+				printf(
+					/* translators: 1: number of questions asked, 2: number with no site content behind them, 3: percentage, 4: number of days. */
+					esc_html__( 'Of %1$s questions in the last %4$s days, %2$s had no site content behind the answer (%3$s%%). Those are subjects visitors expect you to cover.', 'ai-chat-for-amazon-bedrock' ),
+					esc_html( number_format_i18n( $aicfab_gap_summary['asked'] ) ),
+					esc_html( number_format_i18n( $aicfab_gap_summary['ungrounded'] ) ),
+					esc_html( number_format_i18n( $aicfab_gap_summary['percent'] ) ),
+					esc_html( number_format_i18n( $aicfab_gap_summary['days'] ) )
+				);
+				?>
+			</p>
+
+			<?php if ( empty( $aicfab_gaps ) ) : ?>
+				<p class="description">
+					<?php esc_html_e( 'Nothing to report yet. Gaps appear once visitors ask something the site has no content for, or mark an answer unhelpful.', 'ai-chat-for-amazon-bedrock' ); ?>
+				</p>
+			<?php else : ?>
+				<table class="widefat striped">
+					<thead>
+						<tr>
+							<th scope="col"><?php esc_html_e( 'Question', 'ai-chat-for-amazon-bedrock' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Asked', 'ai-chat-for-amazon-bedrock' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'No content found', 'ai-chat-for-amazon-bedrock' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Marked unhelpful', 'ai-chat-for-amazon-bedrock' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Action', 'ai-chat-for-amazon-bedrock' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+					<?php foreach ( $aicfab_gaps as $aicfab_gap ) : ?>
+						<tr>
+							<td><?php echo esc_html( $aicfab_gap['question'] ); ?></td>
+							<td><?php echo esc_html( number_format_i18n( $aicfab_gap['asked'] ) ); ?></td>
+							<td><?php echo esc_html( number_format_i18n( $aicfab_gap['ungrounded'] ) ); ?></td>
+							<td><?php echo esc_html( number_format_i18n( $aicfab_gap['disliked'] ) ); ?></td>
+							<td>
+								<?php if ( current_user_can( 'edit_posts' ) ) : ?>
+									<?php
+									/* translators: %s: the question a draft would be written about. */
+									$aicfab_gap_label = sprintf( __( 'Draft an answer about: %s', 'ai-chat-for-amazon-bedrock' ), $aicfab_gap['question'] );
+									?>
+									<a class="button button-small"
+										href="<?php echo esc_url( AI_Chat_Bedrock_Insights::draft_link( $aicfab_gap['question'] ) ); ?>"
+										aria-label="<?php echo esc_attr( $aicfab_gap_label ); ?>">
+										<?php esc_html_e( 'Draft an answer', 'ai-chat-for-amazon-bedrock' ); ?>
+									</a>
+								<?php endif; ?>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+					</tbody>
+				</table>
+				<p class="description">
+					<?php esc_html_e( 'Questions built from the same significant words are counted as one gap, in any order. Drafting opens the content generator with the subject filled in; the draft is yours to review before publishing.', 'ai-chat-for-amazon-bedrock' ); ?>
+				</p>
+			<?php endif; ?>
+
 			<h2><?php esc_html_e( 'Stored exchanges', 'ai-chat-for-amazon-bedrock' ); ?></h2>
 			<div class="aicfab-metrics">
 				<div><span class="aicfab-metric"><?php echo esc_html( number_format_i18n( $summary['count'] ) ); ?></span><span class="aicfab-metric-label"><?php esc_html_e( 'entries', 'ai-chat-for-amazon-bedrock' ); ?></span></div>

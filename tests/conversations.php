@@ -218,7 +218,12 @@ $beyond = AI_Chat_Bedrock_Conversations::query( array( 'per_page' => 10, 'page' 
 check_conv( 3 === $beyond['page'], 'A page beyond the end is clamped.' );
 
 $rows = AI_Chat_Bedrock_Conversations::export_rows();
-check_conv( 'time_utc' === $rows[0][0] && 9 === count( $rows[0] ), 'The export starts with a header row.' );
+check_conv( 'time_utc' === $rows[0][0] && 10 === count( $rows[0] ), 'The export starts with a header row.' );
+// Named rather than counted, so adding a column is a deliberate change and a renamed one
+// is caught. The grounding column is what the content gap report reads.
+foreach ( array( 'time_utc', 'user_id', 'source', 'model', 'input_tokens', 'output_tokens', 'rating', 'grounded', 'question', 'answer' ) as $aicfab_column ) {
+	check_conv( in_array( $aicfab_column, $rows[0], true ), "The export has a $aicfab_column column." );
+}
 check_conv( count( $rows ) === 28, 'The export contains every stored entry.' );
 check_conv( false === strpos( implode( ',', $rows[0] ), 'rating_time' ), 'The export does not expose internal fields.' );
 

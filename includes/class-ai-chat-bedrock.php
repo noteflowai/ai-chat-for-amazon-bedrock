@@ -32,6 +32,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-iam-policy.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-bedrock-errors.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-scaffold.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-insights.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-aws-credentials.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-event-stream.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-usage.php';

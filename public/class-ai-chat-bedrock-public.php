@@ -187,9 +187,10 @@ class AI_Chat_Bedrock_Public {
 				$built['message'],
 				isset( $response['data']['message'] ) ? $response['data']['message'] : '',
 				array(
-					'usage'  => isset( $response['usage'] ) ? $response['usage'] : array(),
-					'source' => 'chat',
-					'model'  => isset( $options['model_id'] ) ? $options['model_id'] : '',
+					'usage'    => isset( $response['usage'] ) ? $response['usage'] : array(),
+					'source'   => 'chat',
+					'grounded' => ! empty( $built['grounded'] ),
+					'model'    => isset( $options['model_id'] ) ? $options['model_id'] : '',
 				)
 			);
 			if ( is_string( $entry ) && '' !== $entry ) {

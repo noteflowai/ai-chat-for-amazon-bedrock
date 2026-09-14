@@ -61,7 +61,14 @@ $lengths        = AI_Chat_Bedrock_Content_Generator::lengths();
 				<tr>
 					<th scope="row"><label for="aicfab_topic"><?php esc_html_e( 'Topic', 'ai-chat-for-amazon-bedrock' ); ?></label></th>
 					<td>
-						<input type="text" id="aicfab_topic" name="topic" class="large-text" maxlength="300" required placeholder="<?php esc_attr_e( 'How to choose a refund policy for a small shop', 'ai-chat-for-amazon-bedrock' ); ?>">
+						<?php
+						// Arrives from the content gap panel. Read-only use, so a nonce would add
+						// nothing: it only prefills a field the author then edits and submits.
+						// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+						$aicfab_prefill = isset( $_GET['aicfab_topic'] ) ? sanitize_text_field( wp_unslash( $_GET['aicfab_topic'] ) ) : '';
+						$aicfab_prefill = AI_Chat_Bedrock_Security::string_substr( $aicfab_prefill, 0, 300 );
+						?>
+						<input type="text" id="aicfab_topic" name="topic" class="large-text" maxlength="300" required value="<?php echo esc_attr( $aicfab_prefill ); ?>" placeholder="<?php esc_attr_e( 'How to choose a refund policy for a small shop', 'ai-chat-for-amazon-bedrock' ); ?>">
 					</td>
 				</tr>
 				<tr>
