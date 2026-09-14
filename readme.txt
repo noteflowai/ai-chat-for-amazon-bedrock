@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.20.0
+Stable tag: 1.21.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -42,9 +42,8 @@ Credentials are resolved in this order: `wp-config.php` constants, encrypted Wor
 * Only signed-in users can chat until guest access is explicitly enabled.
 * External MCP tools are unavailable to anonymous visitors by default.
 * Built-in WordPress MCP routes require authentication unless public read-only access is deliberately enabled.
-* Public read-only MCP requests and chat requests are rate limited, per minute and per profile, with optional per-role limits so staff and anonymous visitors need not share one cap.
-* The dashboard checklist reads the site rather than guessing, so it can actually be finished, and then suggests what is still worth configuring.
-* Diagnostics generates the least-privilege IAM policy this site actually needs, so you can avoid a broad managed policy.
+* Chat and public MCP requests are rate limited per minute and per profile, with optional per-role limits so staff and anonymous visitors need not share one cap.
+* Diagnostics generates the least-privilege IAM policy this site needs, and the dashboard checklist reads the site rather than guessing, so it can be finished and then says what is left worth configuring.
 * Input, history, token, tool-call, redirect and remote-response limits are enforced server-side.
 * MCP destinations must use public HTTPS URLs; private, loopback, link-local, credential-bearing and unsafe redirect targets are rejected.
 * Debug mode records redacted operational metadata, not prompts, responses, credentials or authorization headers.
@@ -262,6 +261,12 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 
 == Changelog ==
 
+= 1.21.0 =
+* Fixed the chat being close to unusable with a screen reader. Streaming rewrote the whole answer into a live region on every chunk, so one short answer was read out fifteen times over. Answers are announced once now, when complete, from a dedicated region.
+* Announcements use the rendered text rather than the raw reply, so a screen reader no longer reads markdown asterisks aloud.
+* When Amazon Bedrock refuses a request the message now names the credential source that was used, and warns when temporary credentials are in use that nothing will renew.
+* Checked the visitor chat at phone width: no horizontal overflow and no tap target under 24 pixels.
+
 = 1.20.0 =
 * Fixed the dashboard checklist. The last step was written as permanently incomplete, so the list could never be finished however the site was configured. It now detects the chat block, the shortcode and the floating button, and says which one it found.
 * The checklist shows progress, and once setup is done it lists what is still worth configuring: grounding, conversation recording, a fallback model, and a guest limit when guest chat is on.
@@ -475,6 +480,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.21.0 =
+Recommended if any of your visitors use a screen reader: streamed answers were announced repeatedly and are announced once now. Bedrock refusals also name the credential source in use.
 
 = 1.20.0 =
 The dashboard checklist now reflects the site instead of being permanently unfinished, and suggests what is worth configuring next.

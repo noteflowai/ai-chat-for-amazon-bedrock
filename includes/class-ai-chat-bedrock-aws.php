@@ -49,6 +49,18 @@ class AI_Chat_Bedrock_AWS {
 	 *
 	 * @return string
 	 */
+	/**
+	 * What is known about the credentials in use, for error messages.
+	 *
+	 * @return array
+	 */
+	private function credential_context() {
+		return array(
+			'source'    => $this->credential_source,
+			'temporary' => '' !== $this->session_token,
+		);
+	}
+
 	public function credential_source() {
 		return $this->credential_source;
 	}
@@ -549,7 +561,7 @@ class AI_Chat_Bedrock_AWS {
 
 		if ( $status >= 400 ) {
 			// The streaming body is consumed by the write callback, so classify what it captured.
-			$explained = AI_Chat_Bedrock_Bedrock_Errors::explain( $status, $state['raw'], $model_id, $this->region );
+			$explained = AI_Chat_Bedrock_Bedrock_Errors::explain( $status, $state['raw'], $model_id, $this->region, $this->credential_context() );
 			$failure   = $this->error(
 				$explained['message'],
 				'aicfab_http_error',
@@ -782,7 +794,7 @@ class AI_Chat_Bedrock_AWS {
 			)
 		);
 		if ( $status < 200 || $status >= 300 ) {
-			$explained = AI_Chat_Bedrock_Bedrock_Errors::explain( $status, wp_remote_retrieve_body( $response ), $model_id, $this->region );
+			$explained = AI_Chat_Bedrock_Bedrock_Errors::explain( $status, wp_remote_retrieve_body( $response ), $model_id, $this->region, $this->credential_context() );
 			$failure   = $this->error(
 				$explained['message'],
 				'aicfab_http_error',

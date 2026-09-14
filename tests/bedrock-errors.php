@@ -120,6 +120,74 @@ check_error(
 // The role ARN is operational detail that should not be echoed at a site visitor.
 check_error( false === strpos( $result['message'], 'assumed-role' ), 'the identity ARN is not echoed back' );
 
+// --- Which credentials were used ---------------------------------------------
+
+// This came from a real incident: a container held expired temporary credentials in its
+// environment, which take precedence over the instance role by AWS convention. Bedrock
+// answered 403 and the advice sent the reader to the IAM policy, which was fine. Naming
+// the source is what would have shortened that.
+$expired_env = AI_Chat_Bedrock_Bedrock_Errors::explain(
+	403,
+	'{}',
+	'a-model',
+	'us-east-1',
+	array(
+		'source'    => 'environment',
+		'temporary' => true,
+	)
+);
+check_error( 'forbidden' === $expired_env['kind'], 'a bare 403 is still a permissions hint' );
+check_error( false !== strpos( $expired_env['message'], 'environment variables' ), 'the message names the credential source, got: ' . $expired_env['message'] );
+check_error( false !== stripos( $expired_env['message'], 'nothing renews once they expire' ), 'temporary credentials outside a role are called out' );
+
+// A role renews itself, so that warning would be wrong.
+$role = AI_Chat_Bedrock_Bedrock_Errors::explain(
+	403,
+	'{}',
+	'a-model',
+	'us-east-1',
+	array(
+		'source'    => 'instance_role',
+		'temporary' => true,
+	)
+);
+check_error( false !== strpos( $role['message'], 'instance IAM role' ), 'a role is named too' );
+check_error( false === stripos( $role['message'], 'nothing renews once they expire' ), 'a role is not accused of expiring unrenewed' );
+
+// Long-lived keys in wp-config are not temporary.
+$constants = AI_Chat_Bedrock_Bedrock_Errors::explain(
+	403,
+	'{}',
+	'a-model',
+	'us-east-1',
+	array(
+		'source'    => 'constants',
+		'temporary' => false,
+	)
+);
+check_error( false !== strpos( $constants['message'], 'wp-config.php constants' ), 'constants are named' );
+check_error( false === stripos( $constants['message'], 'nothing renews once they expire' ), 'permanent keys get no expiry warning' );
+
+// An IAM denial names both the action and the source.
+$denied_with_source = AI_Chat_Bedrock_Bedrock_Errors::explain(
+	403,
+	'{"message":"User: arn:aws:iam::111122223333:user/site is not authorized to perform: bedrock:InvokeModel on resource: x"}',
+	'a-model',
+	'us-east-1',
+	array(
+		'source'    => 'settings',
+		'temporary' => false,
+	)
+);
+check_error( false !== strpos( $denied_with_source['message'], 'bedrock:InvokeModel' ), 'the refused action is still named' );
+check_error( false !== strpos( $denied_with_source['message'], 'stored in the settings' ), 'the source is named alongside it' );
+
+// Nothing known about the credentials must not produce a dangling sentence.
+$unknown = AI_Chat_Bedrock_Bedrock_Errors::explain( 403, '{}', 'a-model', 'us-east-1' );
+check_error( false === strpos( $unknown['message'], 'credentials from' ), 'no source means no claim about one' );
+$bogus = AI_Chat_Bedrock_Bedrock_Errors::explain( 403, '{}', '', '', array( 'source' => 'made-up' ) );
+check_error( false === strpos( $bogus['message'], 'credentials from' ), 'an unrecognised source is not echoed' );
+
 // --- Status-only cases ------------------------------------------------------
 
 check_error( 'throttled' === AI_Chat_Bedrock_Bedrock_Errors::explain( 429, '{}', '', '' )['kind'], 'throttling is recognised' );

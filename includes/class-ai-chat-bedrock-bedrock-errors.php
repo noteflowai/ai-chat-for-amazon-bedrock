@@ -20,13 +20,14 @@ class AI_Chat_Bedrock_Bedrock_Errors {
 	/**
 	 * Classify a failure and describe the fix.
 	 *
-	 * @param int    $status HTTP status.
-	 * @param string $body   Raw response body.
-	 * @param string $model  Model identifier that was called.
-	 * @param string $region Region that was called.
+	 * @param int    $status      HTTP status.
+	 * @param string $body        Raw response body.
+	 * @param string $model       Model identifier that was called.
+	 * @param string $region      Region that was called.
+	 * @param array  $credentials Optional source and whether they are temporary.
 	 * @return array Array with kind, message and optional model_hint keys.
 	 */
-	public static function explain( $status, $body, $model = '', $region = '' ) {
+	public static function explain( $status, $body, $model = '', $region = '', $credentials = array() ) {
 		$status = (int) $status;
 		$body   = (string) $body;
 		$model  = trim( (string) $model );
@@ -95,14 +96,15 @@ class AI_Chat_Bedrock_Bedrock_Errors {
 		if ( false !== strpos( $haystack, 'is not authorized to perform' ) ) {
 			return array(
 				'kind'    => 'iam_denied',
-				'message' => self::denied_action_message( $detail ),
+				'message' => self::denied_action_message( $detail ) . self::credential_note( $credentials ),
 			);
 		}
 
 		if ( 403 === $status || 401 === $status ) {
 			return array(
 				'kind'    => 'forbidden',
-				'message' => __( 'Amazon Bedrock refused the request. Attach the generated IAM policy from the Diagnostics screen, and confirm model access is granted in this region.', 'ai-chat-for-amazon-bedrock' ),
+				'message' => __( 'Amazon Bedrock refused the request. Attach the generated IAM policy from the Diagnostics screen, and confirm model access is granted in this region.', 'ai-chat-for-amazon-bedrock' )
+					. self::credential_note( $credentials ),
 			);
 		}
 
@@ -128,6 +130,46 @@ class AI_Chat_Bedrock_Bedrock_Errors {
 				$status
 			),
 		);
+	}
+
+	/**
+	 * Say which credentials were used, and warn when they cannot be refreshed.
+	 *
+	 * A refusal is often not about the policy at all. Temporary credentials pasted into
+	 * the environment or into wp-config.php expire and nothing renews them, so the site
+	 * works and then starts answering 403 with no configuration having changed. Naming the
+	 * source turns a confusing refusal into somewhere to look.
+	 *
+	 * @param array $credentials Source and whether a session token is in use.
+	 * @return string Sentence to append, empty when nothing is known.
+	 */
+	private static function credential_note( $credentials ) {
+		if ( ! is_array( $credentials ) || empty( $credentials['source'] ) ) {
+			return '';
+		}
+
+		$labels = array(
+			'constants'      => __( 'wp-config.php constants', 'ai-chat-for-amazon-bedrock' ),
+			'environment'    => __( 'environment variables', 'ai-chat-for-amazon-bedrock' ),
+			'container_role' => __( 'the container IAM role', 'ai-chat-for-amazon-bedrock' ),
+			'instance_role'  => __( 'the instance IAM role', 'ai-chat-for-amazon-bedrock' ),
+			'settings'       => __( 'keys stored in the settings', 'ai-chat-for-amazon-bedrock' ),
+		);
+		$source = (string) $credentials['source'];
+		if ( ! isset( $labels[ $source ] ) ) {
+			return '';
+		}
+
+		/* translators: %s: where the AWS credentials came from. */
+		$note = ' ' . sprintf( __( 'The request used credentials from %s.', 'ai-chat-for-amazon-bedrock' ), $labels[ $source ] );
+
+		// A role refreshes itself. Anything else carrying a session token does not.
+		$is_role = in_array( $source, array( 'container_role', 'instance_role' ), true );
+		if ( ! $is_role && ! empty( $credentials['temporary'] ) ) {
+			$note .= ' ' . __( 'Those are temporary credentials, which nothing renews once they expire. Replace them, or use an IAM role instead.', 'ai-chat-for-amazon-bedrock' );
+		}
+
+		return $note;
 	}
 
 	/**

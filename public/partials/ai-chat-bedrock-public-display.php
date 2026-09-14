@@ -29,7 +29,13 @@ $launcher        = isset( $atts['launcher'] ) ? $atts['launcher'] : __( 'Chat', 
 <?php endif; ?>
 <div class="ai-chat-bedrock-container<?php echo 'popup' === $aicfab_mode ? ' is-popup' : ''; ?>" data-profile="<?php echo esc_attr( $profile ); ?>" style="width: <?php echo esc_attr( $atts['width'] ); ?>;">
 	<div class="ai-chat-bedrock-header"><h3><?php echo esc_html( $atts['title'] ); ?></h3></div>
-	<div class="ai-chat-bedrock-messages" style="height: <?php echo esc_attr( $atts['height'] ); ?>;" aria-live="polite" aria-atomic="false">
+	<?php
+	// Streaming rewrites the answer on every chunk. Announcing the message list
+	// therefore repeated the whole growing answer to a screen reader dozens of times, so
+	// announcements are made here once, when the answer is complete.
+	?>
+	<div class="ai-chat-bedrock-announce screen-reader-text" role="status" aria-live="polite" aria-atomic="true"></div>
+	<div class="ai-chat-bedrock-messages" style="height: <?php echo esc_attr( $atts['height'] ); ?>;">
 		<div class="ai-chat-bedrock-welcome-message">
 			<div class="ai-chat-bedrock-message ai-message">
 				<div class="ai-chat-bedrock-avatar" aria-hidden="true">AI</div>

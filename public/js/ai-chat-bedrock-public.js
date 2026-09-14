@@ -391,6 +391,28 @@
             $textarea.trigger('focus');
         }
 
+        /**
+         * Say something once, for assistive technology.
+         *
+         * The message list is not a live region: streaming replaces the whole answer on
+         * every chunk, so announcing the list read the growing answer out repeatedly.
+         */
+        function announce(text) {
+            const value = $.trim(String(text || ''));
+            if (!value) {
+                return;
+            }
+            const $region = $container.find('.ai-chat-bedrock-announce').first();
+            if (!$region.length) {
+                return;
+            }
+            // Set it synchronously. Clearing and setting on a timer raced with anything
+            // that re-rendered the conversation, which left the announcement unmade.
+            // A trailing space forces a change when the same answer comes back twice,
+            // since an unchanged region is not announced again.
+            $region.text($.trim($region.text()) === value ? value + '\u00a0' : value);
+        }
+
         function sendBuffered(message, requestHistory) {
             const $typing = typingIndicator();
 
@@ -410,6 +432,9 @@
                 $messages.find('.ai-chat-bedrock-status').remove();
                 if (response && response.success && response.data && typeof response.data.message === 'string') {
                     const bubble = addMessage(response.data.message, false);
+                    // The message list is not a live region, so a buffered answer is
+                    // announced here just as a streamed one is when it completes.
+                    announce(bubble && bubble.content ? bubble.content.text() : response.data.message);
                     attachNote(bubble, fallbackNote(response.data.fallback_model));
                     attachSteps(bubble, response.data.steps, response.data.steps_truncated);
                     attachFeedback(bubble, response.data.entry);
@@ -503,6 +528,9 @@
                     attachFeedback(state.bubble, payload.entry);
                 }
                 showUsage(payload.usage);
+                // The rendered text, not the raw reply: announcing markdown makes a screen
+                // reader read "star star Blue star star".
+                announce(state.bubble ? state.bubble.content.text() : state.text);
             }
         }
 

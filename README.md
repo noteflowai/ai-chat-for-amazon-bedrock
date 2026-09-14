@@ -103,6 +103,13 @@ every row of a generated table exposed the same name, so a screen reader user co
 tell the fields apart. Static analysis found neither, because both only exist once the
 page is rendered.
 
+`bin/audit-frontend.py` does the same for the visitor-facing chat: it counts live-region
+updates during one streamed answer and checks the layout at phone width. It found that
+streaming rewrote the answer into an aria-live region on every chunk, so a 77 character
+answer produced fifteen updates and a screen reader read the growing answer out each time.
+Its known limitation is documented in the file: it does not report the announced text,
+because reading that from the harness disagreed with a simpler direct check.
+
 ## Continuous integration
 
 `.github/workflows/gate.yml` runs on every push and pull request:
