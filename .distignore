@@ -1,0 +1,10 @@
+/tests/
+/composer.json
+/README.md
+/SECURITY.md
+/.distignore
+/bin/
+/phpcs.xml.dist
+/.tools/
+/dist/
+/.gitignore

@@ -1,0 +1,42 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "ai-chat-bedrock/chat",
+	"title": "Amazon Bedrock Chat",
+	"category": "widgets",
+	"icon": "format-chat",
+	"description": "Add a secured Amazon Bedrock chat powered by your own AWS account.",
+	"textdomain": "ai-chat-for-amazon-bedrock",
+	"keywords": [ "ai", "bedrock", "chat", "claude", "aws" ],
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ],
+		"spacing": {
+			"margin": true,
+			"padding": true
+		}
+	},
+	"attributes": {
+		"profile": {
+			"type": "string",
+			"default": ""
+		},
+		"title": {
+			"type": "string",
+			"default": ""
+		},
+		"placeholder": {
+			"type": "string",
+			"default": ""
+		},
+		"height": {
+			"type": "string",
+			"default": "500px"
+		},
+		"width": {
+			"type": "string",
+			"default": "100%"
+		}
+	},
+	"editorScript": "file:./editor.js"
+}

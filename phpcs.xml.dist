@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<ruleset name="AI Agents &amp; Chat for Amazon Bedrock">
+	<description>WordPress coding standards for this plugin. Run: phpcs (uses this file automatically).</description>
+
+	<!-- What to scan. Tests are development-only and are not shipped. -->
+	<file>.</file>
+	<exclude-pattern>/tests/*</exclude-pattern>
+	<exclude-pattern>/.tools/*</exclude-pattern>
+	<exclude-pattern>/dist/*</exclude-pattern>
+	<exclude-pattern>/bin/*</exclude-pattern>
+	<exclude-pattern>/vendor/*</exclude-pattern>
+	<exclude-pattern>/node_modules/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="ps"/>
+
+	<!-- Match the plugin header: the oldest WordPress and PHP we claim to support. -->
+	<config name="minimum_wp_version" value="6.4"/>
+	<config name="testVersion" value="7.4-"/>
+
+	<rule ref="WordPress">
+		<!--
+		 Formatting-only rules are excluded deliberately. This project keeps the WordPress
+		 conventions that affect correctness, security and translation, and leaves purely
+		 cosmetic layout to review rather than to a hard gate.
+		-->
+		<exclude name="Squiz.Commenting.FileComment.MissingPackageTag"/>
+		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
+		<exclude name="Generic.Commenting.DocComment.MissingShort"/>
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+		<exclude name="Universal.Operators.DisallowShortTernary.Found"/>
+	</rule>
+
+	<!-- Every translatable string must use this plugin's text domain. -->
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="ai-chat-for-amazon-bedrock"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Globals declared by this plugin must carry a recognizable prefix. -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="ai_chat_bedrock"/>
+				<element value="AI_Chat_Bedrock"/>
+				<element value="AICFAB"/>
+			</property>
+		</properties>
+	</rule>
+	<!--
+	 Documentation sniffs stay enabled but at a lower severity: they report real gaps
+	 worth closing over time, and they should not mask a security or correctness finding
+	 in day to day output. Raise severity to 5 to work through them.
+	-->
+	<rule ref="Squiz.Commenting.FunctionComment.Missing">
+		<severity>3</severity>
+	</rule>
+	<rule ref="Squiz.Commenting.ClassComment.Missing">
+		<severity>3</severity>
+	</rule>
+	<rule ref="Squiz.Commenting.VariableComment.Missing">
+		<severity>3</severity>
+	</rule>
+	<rule ref="Squiz.Commenting.FileComment.WrongStyle">
+		<severity>3</severity>
+	</rule>
+	<rule ref="Squiz.Commenting.FunctionComment.MissingParamTag">
+		<severity>3</severity>
+	</rule>
+</ruleset>

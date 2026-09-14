@@ -1,0 +1,9 @@
+# Pinned linters installed by bin/setup-tools.sh.
+/.tools/
+
+# Build output.
+/dist/
+
+# Editor and OS noise.
+.DS_Store
+*.swp

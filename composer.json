@@ -1,0 +1,27 @@
+{
+  "name": "noteflow-ai/ai-chat-for-amazon-bedrock",
+  "description": "Production validation for the AI Chat for Amazon Bedrock WordPress plugin",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "php": ">=7.4"
+  },
+  "scripts": {
+    "test": [
+      "@php tests/security-regression.php",
+      "@php tests/bootstrap-smoke.php",
+      "@php tests/aws-payload.php",
+      "@php tests/mcp-transport.php",
+      "@php tests/site-abilities.php",
+      "@php tests/wp-mcp-server.php",
+      "@php tests/oauth.php",
+      "@php tests/conversations.php",
+      "@php tests/profiles.php",
+      "@php tests/content-generator.php && php tests/media-assistant.php && php tests/tool-runner.php && php tests/tool-ownership.php && php tests/usage.php && php tests/embeddings.php && php tests/prompts.php"
+    ],
+    "lint": "@php .tools/PHP_CodeSniffer-3.13.6/bin/phpcs --standard=phpcs.xml.dist",
+    "gate": "bin/prerelease.sh",
+    "package": "bin/build-package.py",
+    "setup-tools": "bin/setup-tools.sh"
+  }
+}

@@ -1,0 +1,408 @@
+/**
+ * AI Chat for Amazon Bedrock - admin styles.
+ * Uses WordPress admin design tokens so the UI feels native.
+ */
+
+.aicfab-dashboard .aicfab-lede {
+	max-width: 70ch;
+	margin: .4em 0 1.6em;
+	font-size: 14px;
+	color: #50575e;
+}
+
+/* Status cards */
+.aicfab-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 16px;
+	margin-bottom: 24px;
+}
+
+.aicfab-card {
+	padding: 16px 18px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+}
+
+.aicfab-card h2 {
+	margin: 0 0 10px;
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: .05em;
+	color: #646970;
+}
+
+.aicfab-card-detail {
+	margin: 6px 0 0;
+	font-size: 13px;
+	color: #50575e;
+	overflow-wrap: anywhere;
+}
+
+.aicfab-card-usage {
+	grid-column: span 2;
+}
+
+/* Status pills */
+.aicfab-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0;
+	padding: 3px 10px;
+	font-size: 12px;
+	font-weight: 600;
+	border-radius: 999px;
+	background: #f0f0f1;
+	color: #3c434a;
+}
+
+.aicfab-pill::before {
+	content: "";
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: currentColor;
+}
+
+.aicfab-pill.is-good {
+	background: #edfaef;
+	color: #00713c;
+}
+
+.aicfab-pill.is-warn {
+	background: #fcf4e4;
+	color: #8a5700;
+}
+
+.aicfab-pill.is-bad {
+	background: #fcf0f1;
+	color: #b32d2e;
+}
+
+.aicfab-pill.is-neutral {
+	background: #f0f0f1;
+	color: #50575e;
+}
+
+/* Metrics */
+.aicfab-metrics {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 22px;
+	margin: 4px 0 2px;
+}
+
+.aicfab-metrics > div {
+	display: flex;
+	flex-direction: column;
+}
+
+.aicfab-metric {
+	font-size: 24px;
+	font-weight: 600;
+	line-height: 1.2;
+	color: #1d2327;
+	font-variant-numeric: tabular-nums;
+}
+
+.aicfab-metric-label {
+	font-size: 12px;
+	color: #646970;
+}
+
+/* Two column layout */
+.aicfab-columns {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	gap: 16px;
+	align-items: start;
+}
+
+.aicfab-panel {
+	padding: 4px 20px 18px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 8px;
+}
+
+.aicfab-panel h2 {
+	font-size: 14px;
+	margin: 18px 0 10px;
+}
+
+.aicfab-panel code {
+	padding: 3px 7px;
+	background: #f0f0f1;
+	border-radius: 4px;
+}
+
+.aicfab-list {
+	margin: 0 0 12px;
+	padding-left: 18px;
+	font-size: 13px;
+	color: #50575e;
+}
+
+.aicfab-list li {
+	margin-bottom: 6px;
+}
+
+/* Quick start checklist */
+.aicfab-steps {
+	margin: 0 0 16px;
+	padding: 0;
+	list-style: none;
+	counter-reset: none;
+}
+
+.aicfab-steps li {
+	display: flex;
+	gap: 12px;
+	padding: 11px 0;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.aicfab-steps li:last-child {
+	border-bottom: 0;
+}
+
+.aicfab-step-index {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	font-size: 12px;
+	font-weight: 600;
+	color: #50575e;
+	background: #f0f0f1;
+	border-radius: 50%;
+}
+
+.aicfab-steps li.is-done .aicfab-step-index {
+	color: #fff;
+	background: #00713c;
+}
+
+.aicfab-step-body {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.aicfab-step-body a {
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.aicfab-step-help {
+	font-size: 12px;
+	color: #646970;
+}
+
+/* Diagnostics table */
+#aicfab-diagnostics-table td {
+	vertical-align: middle;
+}
+
+.aicfab-status {
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.aicfab-status-pass {
+	color: #00713c;
+}
+
+.aicfab-status-warn {
+	color: #8a5700;
+}
+
+.aicfab-status-fail {
+	color: #b32d2e;
+}
+
+#aicfab-refresh-models-status,
+#aicfab-diagnostics-status {
+	margin-left: 8px;
+	font-size: 13px;
+	color: #646970;
+}
+
+/* Settings screen polish */
+.ai-chat-bedrock-settings-info {
+	max-width: 780px;
+	margin-top: 26px;
+	padding: 4px 20px 16px;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-left: 4px solid #2271b1;
+	border-radius: 6px;
+}
+
+.ai-chat-bedrock-settings-info h2 {
+	font-size: 14px;
+}
+
+.ai-chat-bedrock-settings-info ul {
+	margin-left: 18px;
+	font-size: 13px;
+	color: #50575e;
+	list-style: disc;
+}
+
+/* Tool log */
+.aicfab-tool-log-empty {
+	padding: 14px;
+	font-style: italic;
+	color: #646970;
+}
+
+@media screen and (max-width: 782px) {
+	.aicfab-card-usage {
+		grid-column: span 1;
+	}
+
+	.aicfab-metric {
+		font-size: 20px;
+	}
+}
+
+/* MCP settings sections */
+.aicfab-mcp-nav {
+    margin-bottom: 0;
+}
+
+.aicfab-mcp-section {
+    padding-top: 4px;
+}
+
+.aicfab-mcp-section > h2:first-child {
+    margin-top: 16px;
+}
+
+/* Conversation log filters and actions */
+.aicfab-log-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 0 10px;
+}
+
+.aicfab-log-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 16px;
+}
+
+.aicfab-log-count {
+    color: #50575e;
+    margin: 0 0 8px;
+}
+
+/* Streaming content generator */
+.aicfab-generator-stream {
+    margin-top: 20px;
+}
+
+.aicfab-generator-status {
+    color: #50575e;
+    font-weight: 600;
+}
+
+.aicfab-generator-output {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 14px 16px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 8px 0 12px;
+}
+
+.aicfab-generator-output:empty {
+    display: none;
+}
+
+/* Usage trend */
+.aicfab-usage-series {
+    margin: 0 0 16px;
+    padding: 0;
+    list-style: none;
+}
+
+.aicfab-usage-series li {
+    display: grid;
+    grid-template-columns: 58px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 6px;
+    font-size: 12px;
+}
+
+.aicfab-usage-day {
+    color: #50575e;
+}
+
+.aicfab-usage-bar {
+    background: #f0f0f1;
+    border-radius: 3px;
+    display: block;
+    height: 10px;
+    overflow: hidden;
+}
+
+.aicfab-usage-bar > span {
+    background: #2271b1;
+    display: block;
+    height: 100%;
+}
+
+.aicfab-usage-count {
+    color: #50575e;
+    white-space: nowrap;
+}
+
+.aicfab-usage-models code {
+    font-size: 11px;
+}
+
+@media screen and (max-width: 782px) {
+    .aicfab-usage-series li {
+        grid-template-columns: 52px 1fr;
+    }
+
+    .aicfab-usage-count {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Managed prompt preview */
+.aicfab-prompt-preview {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    margin: 6px 0 10px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 12px 14px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.aicfab-prompt-error {
+    margin: 8px 0;
+}
