@@ -156,8 +156,13 @@ SUITES=0
 for suite in tests/*.php; do
 	[ -f "$suite" ] || continue
 	SUITES=$((SUITES + 1))
-	if OUTPUT="$("$PHP_BIN" "$suite" 2>&1)"; then
-		ok "$(basename "$suite")"
+	# Marked so a suite that drives this script can recognise the situation and skip,
+	# instead of running the gate inside the gate.
+	if OUTPUT="$( AICFAB_GATE_SELFTEST=1 "$PHP_BIN" "$suite" 2>&1 )"; then
+		case "$OUTPUT" in
+			SKIP:*) skip "$(basename "$suite"): ${OUTPUT#SKIP: }" ;;
+			*) ok "$(basename "$suite")" ;;
+		esac
 	else
 		printf '%s\n' "$OUTPUT" | head -8
 		bad "$(basename "$suite")"

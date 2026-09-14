@@ -1,0 +1,116 @@
+name: Quality gate
+
+# Everything a release must pass, on every push and pull request. The same script runs
+# locally, so a green run here means the same thing a developer sees.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: Release gate on PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest version the plugin header claims, and a current one.
+        php: ['7.4', '8.3']
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          # phpcs needs these; a minimal build does not have them.
+          extensions: tokenizer, xmlwriter, simplexml, mbstring
+          coverage: none
+          tools: none
+
+      - name: Cache the pinned linters
+        uses: actions/cache@v4
+        with:
+          path: .tools
+          key: tools-${{ hashFiles('bin/setup-tools.sh') }}
+
+      - name: Install the pinned linters
+        run: bin/setup-tools.sh
+
+      - name: Run the gate
+        run: bin/prerelease.sh --php "$(which php)"
+
+      # The gate skips this suite while running, because it drives the gate itself.
+      - name: Test the release tooling
+        run: php tests/tooling.php
+
+      - name: Build the package
+        run: |
+          bin/build-package.py
+          bin/build-package.py --verify "dist/ai-chat-for-amazon-bedrock.$(grep -m1 -oP '^\s*\*\s*Version:\s*\K[0-9.]+' ai-chat-for-amazon-bedrock.php).zip"
+
+      - name: Keep the package for inspection
+        if: matrix.php == '8.3'
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-package
+          path: dist/*.zip
+          retention-days: 14
+
+  plugin-check:
+    name: Official Plugin Check
+    runs-on: ubuntu-latest
+    # A real WordPress install is needed, so this runs separately from the gate matrix.
+    services:
+      mysql:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: wordpress
+          MARIADB_DATABASE: wordpress
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysqli, tokenizer, xmlwriter, simplexml, mbstring
+          coverage: none
+          tools: wp-cli
+
+      - name: Install WordPress
+        run: |
+          wp core download --path=/tmp/wp --version=latest
+          wp config create --path=/tmp/wp --dbname=wordpress --dbuser=root \
+            --dbpass=wordpress --dbhost=127.0.0.1:3306
+          wp core install --path=/tmp/wp --url=http://localhost --title="Gate" \
+            --admin_user=admin --admin_password="$(openssl rand -hex 16)" \
+            --admin_email=gate@example.invalid --skip-email
+
+      - name: Install this plugin into it
+        run: |
+          mkdir -p /tmp/wp/wp-content/plugins/ai-chat-for-amazon-bedrock
+          rsync -a --exclude=.git --exclude=.tools --exclude=dist \
+            ./ /tmp/wp/wp-content/plugins/ai-chat-for-amazon-bedrock/
+
+      - name: Run the official Plugin Check
+        run: |
+          bin/setup-tools.sh
+          bin/prerelease.sh --php "$(which php)" \
+            --wp-cli "wp --path=/tmp/wp --allow-root"
