@@ -92,6 +92,17 @@ notices.
 The gate marks its environment with `AICFAB_GATE_SELFTEST=1` so this suite skips rather
 than running the gate inside the gate. CI runs it as a separate step.
 
+## Accessibility
+
+`bin/audit-accessibility.py` checks the admin screens for controls without an accessible
+name, skipped heading levels and tables without scoped headers. It drives a real browser,
+so it needs a running site and is a manual check rather than a gate step.
+
+It has earned its place twice: once finding twenty unnamed controls, and once finding that
+every row of a generated table exposed the same name, so a screen reader user could not
+tell the fields apart. Static analysis found neither, because both only exist once the
+page is rendered.
+
 ## Continuous integration
 
 `.github/workflows/gate.yml` runs on every push and pull request:

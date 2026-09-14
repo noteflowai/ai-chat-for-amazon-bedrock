@@ -44,20 +44,25 @@
 		box.type = 'checkbox';
 		box.checked = true;
 		box.className = 'aicfab-scaffold-include';
-		var boxLabel = document.createElement('label');
-		boxLabel.className = 'screen-reader-text';
-		boxLabel.textContent = settings.i18n.includeLabel + ' ' + page.title;
-		box.setAttribute('aria-label', settings.i18n.includeLabel + ' ' + page.title);
 		include.appendChild(box);
-		include.appendChild(boxLabel);
 
 		var title = document.createElement('td');
 		var field = document.createElement('input');
 		field.type = 'text';
 		field.className = 'regular-text aicfab-scaffold-title';
 		field.value = page.title;
-		field.setAttribute('aria-label', settings.i18n.titleLabel);
 		title.appendChild(field);
+
+		// Every row holds the same two controls, so the names have to carry the page title
+		// or a screen reader reads four identical "Page title" fields. Kept in step with
+		// the field, since the title is editable.
+		function label() {
+			var current = field.value.trim() || page.title;
+			box.setAttribute('aria-label', settings.i18n.includeLabel + ' ' + current);
+			field.setAttribute('aria-label', settings.i18n.titleLabel + ': ' + current);
+		}
+		label();
+		field.addEventListener('input', label);
 
 		var purpose = document.createElement('td');
 		purpose.textContent = page.purpose || '';

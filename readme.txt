@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.18.0
+Stable tag: 1.18.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -144,11 +144,9 @@ Reads never return draft, private or password-protected content. The only write 
 
 = Stored data and privacy =
 
-Chat messages and the configured system prompt are sent to Amazon Bedrock. When an authenticated user invokes MCP tools, relevant tool parameters go to the configured MCP server and tool results go to Bedrock to complete the answer.
+No custom database table is created. The conversation log is optional and off by default; when enabled it holds the 200 most recent exchanges in a WordPress option, with retention from 1 to 90 days, and can be searched, filtered, exported to CSV and deleted per user or in full.
 
-No custom database table is created. The conversation log is optional and disabled by default; when enabled, questions and answers are stored in a WordPress option, capped at the 200 most recent exchanges, with retention configurable from 1 to 90 days. The log can be searched, filtered by source and rating, paginated and exported to CSV, and entries can be deleted for one user or all at once. Stored conversations are also reachable through WordPress' own **Tools > Export Personal Data** and **Erase Personal Data** screens.
-
-Review AWS and each configured MCP provider's privacy terms. Site administrators are responsible for informing users about these data flows, for disclosing conversation logging before enabling it, and for obtaining any consent their deployment requires.
+The Privacy Policy section below sets out what is sent where, what is stored and what administrators are responsible for disclosing.
 
 == Installation ==
 
@@ -259,6 +257,11 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 11. Drafting a first set of pages from a description of the business. Every page is a draft, and nothing existing is touched.
 
 == Changelog ==
+
+= 1.18.1 =
+* Fixed accessibility on the Site Pages screen: every row of the proposed page list exposed the same name, so a screen reader could not tell the title fields apart. Names now carry the page title and follow it as you edit.
+* Removed stray hidden labels from that list which were read out as loose text.
+* Shortened the description, which repeated what the Privacy Policy section already states.
 
 = 1.18.0 =
 * Added Site Pages: describe the business, review the proposed page list, and get each page as a draft. Output is always a draft, an existing title is skipped rather than overwritten, and the theme, menus and options are untouched.
@@ -456,6 +459,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.18.1 =
+Accessibility fixes for the Site Pages screen. Recommended if anyone uses a screen reader with it.
 
 = 1.18.0 =
 Adds Site Pages for drafting a starting set of pages, and replaces the generic Bedrock error message with the specific fix for each cause. Nothing is published automatically.
