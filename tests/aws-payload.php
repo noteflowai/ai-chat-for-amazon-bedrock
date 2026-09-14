@@ -263,6 +263,59 @@ $partial_events = AI_Chat_Bedrock_Event_Stream::extract_events( $partial_buffer 
 check_aws( 3 === count( $partial_events ), 'a trailing partial frame is not parsed early' );
 check_aws( 10 === strlen( $partial_buffer ), 'the partial frame stays in the buffer, got ' . strlen( $partial_buffer ) );
 
+// --- A consumer can stop a stream --------------------------------------------
+
+// Returning false from the delta callback means "stop". The chain that carries that answer
+// back is easy to break by ignoring a return value, which would leave a visitor who closed
+// the tab still paying for the rest of the answer.
+$aicfab_stream_source = file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock-aws.php' );
+
+check_aws(
+	false !== strpos( $aicfab_stream_source, 'if ( false === call_user_func( $on_delta, $delta ) ) {' ),
+	'the write callback stops when the consumer returns false'
+);
+check_aws(
+	false !== strpos( $aicfab_stream_source, "\$state['stopped'] = true;" ),
+	'a deliberate stop is recorded'
+);
+// Returning 0 from a cURL write callback is what tears the transfer down.
+$aicfab_stop_block = substr(
+	$aicfab_stream_source,
+	strpos( $aicfab_stream_source, 'if ( false === call_user_func( $on_delta, $delta ) ) {' ),
+	160
+);
+check_aws(
+	false !== strpos( $aicfab_stop_block, 'return 0;' ),
+	'stopping returns 0 so the transfer is torn down rather than merely ignored'
+);
+check_aws(
+	false !== strpos( $aicfab_stream_source, 'return call_user_func( $on_delta, $delta );' ),
+	'the observer forwards the consumer answer instead of swallowing it'
+);
+check_aws(
+	false !== strpos( $aicfab_stream_source, "if ( ! \$stopped && false === \$completed" ),
+	'a deliberate stop is not reported as an interrupted stream'
+);
+check_aws(
+	false !== strpos( $aicfab_stream_source, "\$result['stopped'] = true;" ),
+	'the result says the answer is partial by design'
+);
+
+$aicfab_route_source = file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock-stream.php' );
+check_aws(
+	false !== strpos( $aicfab_route_source, 'connection_aborted()' ),
+	'the streaming route notices when the visitor has gone'
+);
+$aicfab_emit_block = substr(
+	$aicfab_route_source,
+	strpos( $aicfab_route_source, 'connection_aborted()' ),
+	120
+);
+check_aws(
+	false !== strpos( $aicfab_emit_block, 'return false;' ),
+	'noticing the visitor has gone asks the Bedrock stream to stop'
+);
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

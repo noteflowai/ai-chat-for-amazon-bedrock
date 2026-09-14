@@ -105,6 +105,13 @@ class AI_Chat_Bedrock_Stream {
 		$aws   = new AI_Chat_Bedrock_AWS( AI_Chat_Bedrock_Profiles::overrides_for_client( $options ) );
 		$emit  = function ( $delta ) {
 			$this->send_event( 'delta', array( 'text' => (string) $delta ) );
+
+			// Nobody is reading any more, so stop paying for the rest of the answer.
+			// Returning false asks the Bedrock stream to be torn down.
+			if ( connection_aborted() ) {
+				return false;
+			}
+			return true;
 		};
 		$round = function ( $number, $tools, $names = array(), $labels = array() ) {
 			$this->send_event(

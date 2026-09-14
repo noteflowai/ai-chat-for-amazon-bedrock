@@ -42,6 +42,7 @@ class AI_Chat_Bedrock_Public {
 				'max_message_chars' => 4000,
 				'i18n'              => array(
 					'generic_error'     => __( 'The request could not be completed. Please try again.', 'ai-chat-for-amazon-bedrock' ),
+					'stopped'           => __( 'Answer stopped.', 'ai-chat-for-amazon-bedrock' ),
 					'clear_confirm'     => __( 'Clear this conversation?', 'ai-chat-for-amazon-bedrock' ),
 					'copy'              => __( 'Copy', 'ai-chat-for-amazon-bedrock' ),
 					'copied'            => __( 'Copied', 'ai-chat-for-amazon-bedrock' ),

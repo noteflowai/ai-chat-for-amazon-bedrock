@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.21.0\n"
+"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.22.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-14T10:12:57+00:00\n"
+"POT-Creation-Date: 2026-09-14T10:24:52+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -85,7 +85,7 @@ msgstr ""
 #: includes/class-ai-chat-bedrock-media-assistant.php:190
 #: includes/class-ai-chat-bedrock-media-assistant.php:256
 #: includes/class-ai-chat-bedrock-scaffold.php:64
-#: includes/class-ai-chat-bedrock-stream.php:128
+#: includes/class-ai-chat-bedrock-stream.php:135
 msgid "The request could not be completed."
 msgstr ""
 
@@ -352,7 +352,7 @@ msgstr ""
 #: admin/class-ai-chat-bedrock-admin.php:535
 #: includes/class-ai-chat-bedrock-mcp-integration.php:353
 #: includes/class-ai-chat-bedrock-stream.php:65
-#: public/class-ai-chat-bedrock-public.php:155
+#: public/class-ai-chat-bedrock-public.php:156
 msgid "Security check failed."
 msgstr ""
 
@@ -815,8 +815,8 @@ msgid "AWS"
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:1115
-#: public/class-ai-chat-bedrock-public.php:128
-#: public/class-ai-chat-bedrock-public.php:143
+#: public/class-ai-chat-bedrock-public.php:129
+#: public/class-ai-chat-bedrock-public.php:144
 #: public/partials/ai-chat-bedrock-public-display.php:20
 msgid "Chat"
 msgstr ""
@@ -960,13 +960,13 @@ msgstr ""
 
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:185
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:242
-#: public/class-ai-chat-bedrock-public.php:50
+#: public/class-ai-chat-bedrock-public.php:51
 msgid "Helpful"
 msgstr ""
 
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:186
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:242
-#: public/class-ai-chat-bedrock-public.php:51
+#: public/class-ai-chat-bedrock-public.php:52
 msgid "Not helpful"
 msgstr ""
 
@@ -1880,7 +1880,7 @@ msgid "Rotate AWS credentials immediately if database or WordPress administrator
 msgstr ""
 
 #: admin/partials/ai-chat-bedrock-admin-test.php:14
-#: public/class-ai-chat-bedrock-public.php:129
+#: public/class-ai-chat-bedrock-public.php:130
 msgid "Chat with AI"
 msgstr ""
 
@@ -1940,11 +1940,11 @@ msgstr ""
 #: includes/class-ai-chat-bedrock-aws-credentials.php:72
 #: includes/class-ai-chat-bedrock-aws.php:188
 #: includes/class-ai-chat-bedrock-aws.php:337
-#: includes/class-ai-chat-bedrock-aws.php:949
-#: includes/class-ai-chat-bedrock-aws.php:1018
-#: includes/class-ai-chat-bedrock-aws.php:1093
-#: includes/class-ai-chat-bedrock-aws.php:1156
-#: includes/class-ai-chat-bedrock-aws.php:1216
+#: includes/class-ai-chat-bedrock-aws.php:965
+#: includes/class-ai-chat-bedrock-aws.php:1034
+#: includes/class-ai-chat-bedrock-aws.php:1109
+#: includes/class-ai-chat-bedrock-aws.php:1172
+#: includes/class-ai-chat-bedrock-aws.php:1232
 msgid "Amazon Bedrock credentials are not configured."
 msgstr ""
 
@@ -1998,15 +1998,15 @@ msgid "Amazon Bedrock returned no embedding."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-aws.php:341
-#: includes/class-ai-chat-bedrock-aws.php:1028
-#: includes/class-ai-chat-bedrock-aws.php:1097
-#: includes/class-ai-chat-bedrock-aws.php:1160
-#: includes/class-ai-chat-bedrock-aws.php:1222
+#: includes/class-ai-chat-bedrock-aws.php:1044
+#: includes/class-ai-chat-bedrock-aws.php:1113
+#: includes/class-ai-chat-bedrock-aws.php:1176
+#: includes/class-ai-chat-bedrock-aws.php:1238
 msgid "The configured AWS region is invalid."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-aws.php:354
-#: includes/class-ai-chat-bedrock-aws.php:958
+#: includes/class-ai-chat-bedrock-aws.php:974
 msgid "The configured model ID is invalid."
 msgstr ""
 
@@ -2014,90 +2014,90 @@ msgstr ""
 msgid "Streaming is not available on this server."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:452
-#: includes/class-ai-chat-bedrock-aws.php:758
+#: includes/class-ai-chat-bedrock-aws.php:454
+#: includes/class-ai-chat-bedrock-aws.php:774
 msgid "The Bedrock request could not be encoded."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:577
+#: includes/class-ai-chat-bedrock-aws.php:589
 msgid "The Bedrock response stream was interrupted."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:598
-#: includes/class-ai-chat-bedrock-aws.php:1393
+#: includes/class-ai-chat-bedrock-aws.php:610
+#: includes/class-ai-chat-bedrock-aws.php:1409
 msgid "Amazon Bedrock returned no usable content."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:635
+#: includes/class-ai-chat-bedrock-aws.php:651
 msgid "No valid chat messages were supplied."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:785
-#: includes/class-ai-chat-bedrock-aws.php:989
-#: includes/class-ai-chat-bedrock-aws.php:1178
+#: includes/class-ai-chat-bedrock-aws.php:801
+#: includes/class-ai-chat-bedrock-aws.php:1005
+#: includes/class-ai-chat-bedrock-aws.php:1194
 msgid "Amazon Bedrock could not be reached."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:810
-#: includes/class-ai-chat-bedrock-aws.php:1191
+#: includes/class-ai-chat-bedrock-aws.php:826
+#: includes/class-ai-chat-bedrock-aws.php:1207
 msgid "Amazon Bedrock returned an invalid response."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:997
+#: includes/class-ai-chat-bedrock-aws.php:1013
 msgid "Amazon Bedrock responded successfully."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1022
+#: includes/class-ai-chat-bedrock-aws.php:1038
 msgid "The knowledge base ID is invalid."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1025
+#: includes/class-ai-chat-bedrock-aws.php:1041
 msgid "A search query is required."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1040
+#: includes/class-ai-chat-bedrock-aws.php:1056
 msgid "The retrieval request could not be encoded."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1056
+#: includes/class-ai-chat-bedrock-aws.php:1072
 msgid "The Amazon Bedrock knowledge base could not be reached."
 msgstr ""
 
 #. translators: %d: HTTP status code returned by Amazon Bedrock.
-#: includes/class-ai-chat-bedrock-aws.php:1062
+#: includes/class-ai-chat-bedrock-aws.php:1078
 #, php-format
 msgid "The knowledge base returned HTTP %d."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1067
+#: includes/class-ai-chat-bedrock-aws.php:1083
 msgid "The knowledge base returned an invalid response."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1119
+#: includes/class-ai-chat-bedrock-aws.php:1135
 msgid "AWS Security Token Service could not be reached."
 msgstr ""
 
 #. translators: %d: HTTP status code returned by AWS STS.
-#: includes/class-ai-chat-bedrock-aws.php:1127
+#: includes/class-ai-chat-bedrock-aws.php:1143
 #, php-format
 msgid "AWS Security Token Service returned HTTP %d."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1143
+#: includes/class-ai-chat-bedrock-aws.php:1159
 msgid "AWS Security Token Service returned an unexpected response."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1182
+#: includes/class-ai-chat-bedrock-aws.php:1198
 msgid "The AWS identity is not authorized for this Amazon Bedrock operation."
 msgstr ""
 
 #. translators: %d: HTTP status code returned by Amazon Bedrock.
-#: includes/class-ai-chat-bedrock-aws.php:1186
+#: includes/class-ai-chat-bedrock-aws.php:1202
 #, php-format
 msgid "Amazon Bedrock returned HTTP %d."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1213
+#: includes/class-ai-chat-bedrock-aws.php:1229
 msgid "The AWS service name is invalid."
 msgstr ""
 
@@ -2470,7 +2470,7 @@ msgstr ""
 
 #. translators: 1: input tokens, 2: output tokens.
 #: includes/class-ai-chat-bedrock-editor-assistant.php:240
-#: public/class-ai-chat-bedrock-public.php:68
+#: public/class-ai-chat-bedrock-public.php:69
 #, php-format
 msgid "Tokens: %1$d in / %2$d out"
 msgstr ""
@@ -3039,7 +3039,7 @@ msgid "stream open"
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-stream.php:71
-#: public/class-ai-chat-bedrock-public.php:161
+#: public/class-ai-chat-bedrock-public.php:162
 msgid "Please sign in to use the chat."
 msgstr ""
 
@@ -3048,11 +3048,11 @@ msgid "Streaming is disabled on this site."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-stream.php:82
-#: public/class-ai-chat-bedrock-public.php:169
+#: public/class-ai-chat-bedrock-public.php:170
 msgid "Too many requests. Please wait a minute and try again."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-stream.php:126
+#: includes/class-ai-chat-bedrock-stream.php:133
 msgid "Streaming is unavailable; retrying without streaming."
 msgstr ""
 
@@ -3115,88 +3115,92 @@ msgid "The request could not be completed. Please try again."
 msgstr ""
 
 #: public/class-ai-chat-bedrock-public.php:45
-msgid "Clear this conversation?"
+msgid "Answer stopped."
 msgstr ""
 
 #: public/class-ai-chat-bedrock-public.php:46
-msgid "Copy"
+msgid "Clear this conversation?"
 msgstr ""
 
 #: public/class-ai-chat-bedrock-public.php:47
-msgid "Copied"
+msgid "Copy"
 msgstr ""
 
 #: public/class-ai-chat-bedrock-public.php:48
-msgid "Try again"
+msgid "Copied"
 msgstr ""
 
 #: public/class-ai-chat-bedrock-public.php:49
+msgid "Try again"
+msgstr ""
+
+#: public/class-ai-chat-bedrock-public.php:50
 msgid "Was this helpful?"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:52
+#: public/class-ai-chat-bedrock-public.php:53
 msgid "Thanks for the feedback."
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:53
+#: public/class-ai-chat-bedrock-public.php:54
 msgid "Your message is too long."
 msgstr ""
 
 #. translators: %d: number of tools being used.
-#: public/class-ai-chat-bedrock-public.php:55
+#: public/class-ai-chat-bedrock-public.php:56
 #, php-format
 msgid "Using %d tool(s) to gather information…"
 msgstr ""
 
 #. translators: %s: comma separated list of tool names.
-#: public/class-ai-chat-bedrock-public.php:57
+#: public/class-ai-chat-bedrock-public.php:58
 #, php-format
 msgid "Using %s…"
 msgstr ""
 
 #. translators: %d: number of tool calls the agent made.
-#: public/class-ai-chat-bedrock-public.php:59
+#: public/class-ai-chat-bedrock-public.php:60
 #, php-format
 msgid "Agent steps (%d)"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:60
+#: public/class-ai-chat-bedrock-public.php:61
 msgid "succeeded"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:61
+#: public/class-ai-chat-bedrock-public.php:62
 msgid "failed"
 msgstr ""
 
 #. translators: %d: tool round number.
-#: public/class-ai-chat-bedrock-public.php:63
+#: public/class-ai-chat-bedrock-public.php:64
 #, php-format
 msgid "round %d"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:64
+#: public/class-ai-chat-bedrock-public.php:65
 msgid "The round limit was reached, so the answer was written with the information gathered so far."
 msgstr ""
 
 #. translators: %s: model identifier that answered instead of the main model.
-#: public/class-ai-chat-bedrock-public.php:66
+#: public/class-ai-chat-bedrock-public.php:67
 #, php-format
 msgid "The main model was unavailable, so %s answered."
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:130
+#: public/class-ai-chat-bedrock-public.php:131
 msgid "Type your message here…"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:131
+#: public/class-ai-chat-bedrock-public.php:132
 msgid "Send"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:132
+#: public/class-ai-chat-bedrock-public.php:133
 msgid "Clear chat"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:152
+#: public/class-ai-chat-bedrock-public.php:153
 msgid "Method not allowed."
 msgstr ""
 
@@ -3204,7 +3208,11 @@ msgstr ""
 msgid "Chat message"
 msgstr ""
 
-#: public/partials/ai-chat-bedrock-public-display.php:64
+#: public/partials/ai-chat-bedrock-public-display.php:60
+msgid "Stop"
+msgstr ""
+
+#: public/partials/ai-chat-bedrock-public-display.php:65
 msgid "Powered by Amazon Bedrock"
 msgstr ""
 

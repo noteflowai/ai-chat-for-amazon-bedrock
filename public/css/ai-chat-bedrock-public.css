@@ -825,3 +825,12 @@
         border-left-color: #d97706;
     }
 }
+
+/* Stop button, shown only while an answer is arriving */
+.ai-chat-bedrock-stop[hidden] {
+    display: none;
+}
+
+.ai-chat-bedrock-stop {
+    margin-left: 6px;
+}

@@ -403,8 +403,10 @@ class AI_Chat_Bedrock_AWS {
 		$observer = function ( $delta ) use ( $on_delta, &$emitted ) {
 			$emitted = true;
 			if ( is_callable( $on_delta ) ) {
-				call_user_func( $on_delta, $delta );
+				// Pass the answer through: false means the consumer wants to stop.
+				return call_user_func( $on_delta, $delta );
 			}
+			return true;
 		};
 
 		$response = $this->stream_once( $observer, $prepared );
@@ -464,6 +466,7 @@ class AI_Chat_Bedrock_AWS {
 		$state   = array(
 			'buffer'     => '',
 			'raw'        => '',
+			'stopped'    => false,
 			'text'       => '',
 			'bytes'      => 0,
 			'tools'      => array(),
@@ -518,7 +521,13 @@ class AI_Chat_Bedrock_AWS {
 						if ( '' !== $delta ) {
 							$state['text'] .= $delta;
 							if ( is_callable( $on_delta ) ) {
-								call_user_func( $on_delta, $delta );
+								// A consumer that returns false is asking to stop, which is
+								// how a visitor closing the tab stops the paid request
+								// instead of it running to completion unseen.
+								if ( false === call_user_func( $on_delta, $delta ) ) {
+									$state['stopped'] = true;
+									return 0;
+								}
 							}
 						}
 
@@ -547,6 +556,7 @@ class AI_Chat_Bedrock_AWS {
 		);
 
 		$completed = curl_exec( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_exec
+		$stopped   = ! empty( $state['stopped'] );
 		$status    = (int) curl_getinfo( $handle, CURLINFO_RESPONSE_CODE ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_getinfo
 		$errno     = curl_errno( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_errno
 		curl_close( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_close
@@ -573,7 +583,9 @@ class AI_Chat_Bedrock_AWS {
 			}
 			return $failure;
 		}
-		if ( false === $completed && 0 !== $errno && '' === $state['text'] ) {
+		// Stopping on purpose is not an interruption: cURL reports a write error because the
+		// callback asked it to stop, and whatever arrived is a real partial answer.
+		if ( ! $stopped && false === $completed && 0 !== $errno && '' === $state['text'] ) {
 			return $this->error( __( 'The Bedrock response stream was interrupted.', 'ai-chat-for-amazon-bedrock' ), 'aicfab_stream_interrupted' );
 		}
 
@@ -607,6 +619,10 @@ class AI_Chat_Bedrock_AWS {
 		}
 		if ( ! empty( $state['usage'] ) ) {
 			$result['usage'] = $state['usage'];
+		}
+		if ( $stopped ) {
+			// The caller asked to stop, so the answer is partial by design.
+			$result['stopped'] = true;
 		}
 		$this->record_usage( $state['usage'], $model_id );
 		return $result;

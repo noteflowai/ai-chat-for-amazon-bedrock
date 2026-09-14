@@ -57,6 +57,7 @@ $launcher        = isset( $atts['launcher'] ) ? $atts['launcher'] : __( 'Chat', 
 			<div class="ai-chat-bedrock-buttons">
 				<button type="button" class="ai-chat-bedrock-clear button button-secondary"><?php echo esc_html( $atts['clear_text'] ); ?></button>
 				<button type="submit" class="ai-chat-bedrock-submit button button-primary"><?php echo esc_html( $atts['button_text'] ); ?></button>
+				<button type="button" class="ai-chat-bedrock-stop button button-secondary" hidden><?php esc_html_e( 'Stop', 'ai-chat-for-amazon-bedrock' ); ?></button>
 			</div>
 		</form>
 	</div>

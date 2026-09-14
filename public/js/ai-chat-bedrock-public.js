@@ -379,14 +379,47 @@
             scrollToBottom();
         }
 
+        const $stop = $container.find('.ai-chat-bedrock-stop').first();
+        let controller = null;
+        let stopped = false;
+
         function setPending(value) {
             pending = value;
             $textarea.prop('disabled', value);
             $submit.prop('disabled', value);
             $container.attr('aria-busy', value ? 'true' : 'false');
+            refreshStop();
+        }
+
+        /**
+         * Offer Stop only while there is something to stop that can be aborted.
+         */
+        function refreshStop() {
+            $stop.prop('hidden', !(pending && controller));
+        }
+
+        /**
+         * Abort the request in flight, keeping whatever answer has arrived.
+         *
+         * The server notices the connection has gone and tears down the Bedrock stream,
+         * so stopping also stops paying for the rest of the answer.
+         */
+        function stopAnswering() {
+            if (!controller) {
+                return;
+            }
+
+        $stop.on('click', stopAnswering);
+            stopped = true;
+            try {
+                controller.abort();
+            } catch (error) {
+                // An already-finished request cannot be aborted, which is fine.
+            }
         }
 
         function finish() {
+            controller = null;
             setPending(false);
             $textarea.trigger('focus');
         }
@@ -564,9 +597,16 @@
                 body.set('profile', profile);
             }
 
+            controller = window.AbortController ? new window.AbortController() : null;
+            stopped = false;
+            // setPending ran before this existed, so the button has to be refreshed here
+            // or it would stay hidden for the whole answer.
+            refreshStop();
+
             return window.fetch(params.stream_url, {
                 method: 'POST',
                 credentials: 'same-origin',
+                signal: controller ? controller.signal : undefined,
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                     Accept: 'text/event-stream',
@@ -621,10 +661,43 @@
                 }
                 if (state.text) {
                     remember('assistant', state.text);
+                    if (stopped) {
+                        announce(state.bubble ? state.bubble.content.text() : state.text);
+                    }
+                } else if (stopped) {
+                    // Stopped before anything arrived: drop the empty bubble quietly.
+                    if (state.bubble) {
+                        state.bubble.message.remove();
+                    }
+                    announce(params.i18n.stopped || '');
                 } else if (!state.done) {
                     showError(params.i18n.generic_error);
                 }
                 return null;
+            }).catch(function (error) {
+                // Aborting rejects the fetch. That is the visitor's own doing, so it must
+                // not be reported as a failure.
+                if (stopped) {
+                    if (state.typing) {
+                        state.typing.remove();
+                        state.typing = null;
+                    }
+                    $messages.find('.ai-chat-bedrock-status').remove();
+                    if (state.bubble) {
+                        state.bubble.content.removeClass('is-streaming');
+                    }
+                    if (state.text) {
+                        remember('assistant', state.text);
+                        announce(state.bubble ? state.bubble.content.text() : state.text);
+                    } else {
+                        if (state.bubble) {
+                            state.bubble.message.remove();
+                        }
+                        announce(params.i18n.stopped || '');
+                    }
+                    return null;
+                }
+                throw error;
             });
         }
 

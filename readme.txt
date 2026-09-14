@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.21.0
+Stable tag: 1.22.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -43,6 +43,7 @@ Credentials are resolved in this order: `wp-config.php` constants, encrypted Wor
 * External MCP tools are unavailable to anonymous visitors by default.
 * Built-in WordPress MCP routes require authentication unless public read-only access is deliberately enabled.
 * Chat and public MCP requests are rate limited per minute and per profile, with optional per-role limits so staff and anonymous visitors need not share one cap.
+* A visitor can stop a long answer, and the server stops the Bedrock request with it rather than paying for text nobody will read.
 * Diagnostics generates the least-privilege IAM policy this site needs, and the dashboard checklist reads the site rather than guessing, so it can be finished and then says what is left worth configuring.
 * Input, history, token, tool-call, redirect and remote-response limits are enforced server-side.
 * MCP destinations must use public HTTPS URLs; private, loopback, link-local, credential-bearing and unsafe redirect targets are rejected.
@@ -260,6 +261,11 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 13. A setup checklist that reads the site's own state, followed by the improvements still worth making.
 
 == Changelog ==
+
+= 1.22.0 =
+* Added a Stop button while an answer is streaming. Whatever has arrived is kept, and stopping is not reported as an error.
+* Stopping now stops the Amazon Bedrock request too. Measured on a 3,939 character answer: stopping after 222 characters took 1.3 seconds instead of 8.9, so the rest was never generated or billed.
+* A visitor closing the tab has the same effect. Until now the server carried on consuming the answer nobody was reading.
 
 = 1.21.0 =
 * Fixed the chat being close to unusable with a screen reader. Streaming rewrote the whole answer into a live region on every chunk, so one short answer was read out fifteen times over. Answers are announced once now, when complete, from a dedicated region.
@@ -480,6 +486,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.22.0 =
+Visitors can stop a long answer, and the Bedrock request stops with it. A visitor closing the tab now also stops the request instead of it running to completion unread.
 
 = 1.21.0 =
 Recommended if any of your visitors use a screen reader: streamed answers were announced repeatedly and are announced once now. Bedrock refusals also name the credential source in use.
