@@ -188,6 +188,26 @@ check_error( false === strpos( $unknown['message'], 'credentials from' ), 'no so
 $bogus = AI_Chat_Bedrock_Bedrock_Errors::explain( 403, '{}', '', '', array( 'source' => 'made-up' ) );
 check_error( false === strpos( $bogus['message'], 'credentials from' ), 'an unrecognised source is not echoed' );
 
+// --- A guardrail that Bedrock will not accept --------------------------------
+
+// Both messages captured from real calls. Bedrock fails closed on a wrong guardrail, so
+// every request stops; the generic advice used to send the reader to the IAM policy.
+foreach ( array(
+	'{"message":"The provided guardrail identifier is invalid."}',
+	'{"message":"The guardrail identifier or version provided in the request does not exist."}',
+) as $aicfab_guardrail_body ) {
+	$aicfab_g = AI_Chat_Bedrock_Bedrock_Errors::explain( 400, $aicfab_guardrail_body, 'a-model', 'us-east-1' );
+	check_error( 'guardrail_invalid' === $aicfab_g['kind'], 'a rejected guardrail is recognised, got ' . $aicfab_g['kind'] );
+	check_error( false !== stripos( $aicfab_g['message'], 'guardrail' ), 'the message names the guardrail' );
+	check_error( false === stripos( $aicfab_g['message'], 'IAM policy' ), 'it is not blamed on the IAM policy' );
+}
+
+// A guardrail message must not be mistaken for an unknown model.
+check_error(
+	'unknown_model' === AI_Chat_Bedrock_Bedrock_Errors::explain( 400, '{"message":"The provided model identifier is invalid."}', '', '' )['kind'],
+	'an unknown model is still recognised as such'
+);
+
 // --- Status-only cases ------------------------------------------------------
 
 check_error( 'throttled' === AI_Chat_Bedrock_Bedrock_Errors::explain( 429, '{}', '', '' )['kind'], 'throttling is recognised' );

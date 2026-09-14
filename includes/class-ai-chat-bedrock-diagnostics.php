@@ -96,6 +96,8 @@ class AI_Chat_Bedrock_Diagnostics {
 		$checks[] = $this->check_encryption();
 		$checks[] = $this->check_public_access( $options );
 		$checks[] = $this->check_mcp();
+		$checks[] = $this->check_guardrail( $options );
+		$checks[] = $this->check_knowledge_base( $options );
 
 		if ( $include_live ) {
 			$checks[] = $this->check_live_invocation( $options );
@@ -204,6 +206,119 @@ class AI_Chat_Bedrock_Diagnostics {
 				max( 1, $guest_limit )
 			)
 		);
+	}
+
+	/**
+	 * Whether a configured guardrail actually exists and is ready.
+	 *
+	 * Bedrock fails closed here: a wrong identifier makes every request fail with a
+	 * ValidationException, so the chat stops working entirely. Nothing checked it before,
+	 * which meant finding out from a visitor.
+	 *
+	 * @param array $options Plugin settings.
+	 * @return array
+	 */
+	private function check_guardrail( $options ) {
+		$label      = __( 'Guardrail', 'ai-chat-for-amazon-bedrock' );
+		$identifier = isset( $options['guardrail_id'] ) ? trim( (string) $options['guardrail_id'] ) : '';
+		if ( '' === $identifier ) {
+			return $this->result( 'guardrail', $label, 'pass', __( 'No guardrail is configured, so nothing is filtered by Amazon Bedrock.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		$version = isset( $options['guardrail_version'] ) ? trim( (string) $options['guardrail_version'] ) : '';
+		$aws     = new AI_Chat_Bedrock_AWS();
+		if ( ! $aws->has_credentials() ) {
+			return $this->result( 'guardrail', $label, 'warn', __( 'A guardrail is configured but credentials are missing, so it cannot be verified.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		$guardrail = $aws->get_guardrail( $identifier, $version );
+		if ( is_wp_error( $guardrail ) ) {
+			return $this->result(
+				'guardrail',
+				$label,
+				'fail',
+				sprintf(
+					/* translators: %s: reason the guardrail could not be read. */
+					__( 'The configured guardrail could not be read, so every chat request will be refused: %s', 'ai-chat-for-amazon-bedrock' ),
+					$guardrail->get_error_message()
+				)
+			);
+		}
+
+		if ( '' !== $guardrail['status'] && 'READY' !== strtoupper( $guardrail['status'] ) ) {
+			return $this->result(
+				'guardrail',
+				$label,
+				'warn',
+				sprintf(
+					/* translators: 1: guardrail name, 2: guardrail status reported by AWS. */
+					__( 'Guardrail "%1$s" is %2$s rather than READY.', 'ai-chat-for-amazon-bedrock' ),
+					$guardrail['name'],
+					$guardrail['status']
+				)
+			);
+		}
+
+		return $this->result(
+			'guardrail',
+			$label,
+			'pass',
+			sprintf(
+				/* translators: 1: guardrail name, 2: guardrail version. */
+				__( 'Guardrail "%1$s" is ready, version %2$s.', 'ai-chat-for-amazon-bedrock' ),
+				$guardrail['name'],
+				'' !== $guardrail['version'] ? $guardrail['version'] : 'DRAFT'
+			)
+		);
+	}
+
+	/**
+	 * Whether a configured knowledge base ID can work.
+	 *
+	 * The identifier has a fixed shape, so an obvious typo is caught without calling AWS at
+	 * all. Anything that could be real is then tried for real, since a plausible but wrong
+	 * ID otherwise fails silently the first time a visitor asks something.
+	 *
+	 * @param array $options Plugin settings.
+	 * @return array
+	 */
+	private function check_knowledge_base( $options ) {
+		$label = __( 'Knowledge base', 'ai-chat-for-amazon-bedrock' );
+		$id    = isset( $options['knowledge_base_id'] ) ? trim( (string) $options['knowledge_base_id'] ) : '';
+		if ( '' === $id ) {
+			return $this->result( 'knowledge_base', $label, 'pass', __( 'No Amazon Bedrock knowledge base is configured.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		// AWS requires ten alphanumeric characters, or a knowledge base ARN.
+		if ( ! preg_match( '#^[0-9a-zA-Z]{10}$#', $id ) && ! preg_match( '#^arn:aws(-[^:]+)?:bedrock:[a-z0-9-]{1,20}:[0-9]{12}:knowledge-base/[0-9a-zA-Z]{10}$#', $id ) ) {
+			return $this->result(
+				'knowledge_base',
+				$label,
+				'fail',
+				__( 'The knowledge base ID is not the right shape. AWS expects ten letters or digits, or a knowledge base ARN.', 'ai-chat-for-amazon-bedrock' )
+			);
+		}
+
+		$aws = new AI_Chat_Bedrock_AWS();
+		if ( ! $aws->has_credentials() ) {
+			return $this->result( 'knowledge_base', $label, 'warn', __( 'A knowledge base is configured but credentials are missing, so it cannot be verified.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		$result = $aws->retrieve_from_knowledge_base( $id, 'test', 1 );
+		if ( is_wp_error( $result ) ) {
+			return $this->result(
+				'knowledge_base',
+				$label,
+				'fail',
+				sprintf(
+					/* translators: %s: reason the knowledge base could not be queried. */
+					__( 'The knowledge base could not be queried: %s', 'ai-chat-for-amazon-bedrock' ),
+					$result->get_error_message()
+				)
+			);
+		}
+
+		return $this->result( 'knowledge_base', $label, 'pass', __( 'The knowledge base answered a test query.', 'ai-chat-for-amazon-bedrock' ) );
 	}
 
 	private function check_mcp() {

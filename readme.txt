@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.26.0
+Stable tag: 1.27.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -263,6 +263,11 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 
 == Changelog ==
 
+= 1.27.0 =
+* Diagnostics now checks a configured guardrail and reports its name, version and readiness. Amazon Bedrock refuses every request when the guardrail identifier is wrong, so this used to be discovered by a visitor rather than on the settings screen.
+* Diagnostics also checks a configured knowledge base. An identifier of the wrong shape is caught without calling AWS, and anything plausible is tried for real.
+* A rejected guardrail now produces a message naming the guardrail instead of pointing at the IAM policy.
+
 = 1.26.0 =
 * An MCP server that does not answer now says why. The status column said only "Unavailable" while the reason, whether the host was unreachable, the credentials were rejected or the endpoint returned an HTTP error, was being discarded.
 * The reason is length limited and inserted as text, since a remote server controls part of it.
@@ -508,6 +513,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.27.0 =
+Diagnostics now verifies a configured guardrail and knowledge base, and a rejected guardrail says so instead of blaming permissions.
 
 = 1.26.0 =
 An unavailable MCP server now reports why instead of only that it is unavailable.

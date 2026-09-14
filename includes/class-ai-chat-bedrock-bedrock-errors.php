@@ -48,6 +48,17 @@ class AI_Chat_Bedrock_Bedrock_Errors {
 		}
 		$haystack = strtolower( $detail );
 
+		// Observed with a wrong guardrail: ValidationException, either "The provided guardrail
+		// identifier is invalid." or "The guardrail identifier or version provided in the
+		// request does not exist." Bedrock fails closed, so every request stops until it is
+		// corrected, and the generic advice pointed at IAM instead.
+		if ( false !== strpos( $haystack, 'guardrail' ) ) {
+			return array(
+				'kind'    => 'guardrail_invalid',
+				'message' => __( 'The configured guardrail was rejected, so Amazon Bedrock refused the request. Check the guardrail ID and version on the settings screen; the Diagnostics screen reports whether it exists.', 'ai-chat-for-amazon-bedrock' ),
+			);
+		}
+
 		// Observed: ValidationException, "Invocation of model ID <id> with on-demand
 		// throughput isn't supported. Retry your request with the ID or ARN of an
 		// inference profile that contains this model." The apostrophe is a typographic

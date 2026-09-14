@@ -179,6 +179,44 @@ class AI_Chat_Bedrock_AWS {
 	 * @param string $model_id Embedding model identifier.
 	 * @return array|WP_Error List of floats, or an error.
 	 */
+	/**
+	 * Read a guardrail so a misconfiguration is caught before a visitor hits it.
+	 *
+	 * Bedrock fails closed on a wrong guardrail identifier: every request is refused with a
+	 * ValidationException, so the whole chat stops working. Checking here turns that into a
+	 * sentence on the Diagnostics screen instead.
+	 *
+	 * @param string $identifier Guardrail ID or ARN.
+	 * @param string $version    Guardrail version, or DRAFT.
+	 * @return array|WP_Error Array with name, status and version.
+	 */
+	public function get_guardrail( $identifier, $version = '' ) {
+		$identifier = trim( (string) $identifier );
+		if ( ! preg_match( '#^[a-zA-Z0-9]{1,64}$|^arn:aws[a-zA-Z0-9:/._-]{1,2000}$#', $identifier ) ) {
+			return new WP_Error( 'aicfab_invalid_guardrail', __( 'The guardrail identifier is not in a usable format.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		$path    = '/guardrails/' . rawurlencode( $identifier );
+		$version = trim( (string) $version );
+		if ( '' !== $version && 'DRAFT' !== strtoupper( $version ) ) {
+			if ( ! preg_match( '/^[0-9]{1,8}$/', $version ) ) {
+				return new WP_Error( 'aicfab_invalid_guardrail_version', __( 'The guardrail version must be DRAFT or a number.', 'ai-chat-for-amazon-bedrock' ) );
+			}
+			$path .= '?guardrailVersion=' . rawurlencode( $version );
+		}
+
+		$data = $this->control_plane_get( $path );
+		if ( is_wp_error( $data ) ) {
+			return $data;
+		}
+
+		return array(
+			'name'    => isset( $data['name'] ) ? sanitize_text_field( (string) $data['name'] ) : '',
+			'status'  => isset( $data['status'] ) ? sanitize_text_field( (string) $data['status'] ) : '',
+			'version' => isset( $data['version'] ) ? sanitize_text_field( (string) $data['version'] ) : '',
+		);
+	}
+
 	public function embed( $text, $model_id ) {
 		$text = trim( (string) $text );
 		if ( '' === $text ) {
