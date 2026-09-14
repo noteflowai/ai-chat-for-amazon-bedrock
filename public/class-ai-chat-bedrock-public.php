@@ -88,9 +88,36 @@ class AI_Chat_Bedrock_Public {
 			return;
 		}
 
-		register_block_type(
+		$type = register_block_type(
 			$directory,
 			array( 'render_callback' => array( $this, 'render_chat_block' ) )
+		);
+
+		// The editor asked authors to type a profile key from memory. Give it the real
+		// list so the choice is a menu instead of a guess.
+		$handle = ( $type && ! empty( $type->editor_script_handles ) )
+			? $type->editor_script_handles[0]
+			: ( $type && ! empty( $type->editor_script ) ? $type->editor_script : '' );
+
+		if ( '' === $handle ) {
+			return;
+		}
+
+		$choices = array();
+		foreach ( AI_Chat_Bedrock_Profiles::choices() as $key => $label ) {
+			$choices[] = array(
+				'value' => (string) $key,
+				'label' => (string) $label,
+			);
+		}
+
+		wp_localize_script(
+			$handle,
+			'aicfabBlock',
+			array(
+				'profiles'    => $choices,
+				'settingsUrl' => admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-profiles' ),
+			)
 		);
 	}
 

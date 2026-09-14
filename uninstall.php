@@ -37,8 +37,9 @@ $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LI
 $ai_chat_bedrock_model_timeout_pattern = $wpdb->esc_like( '_transient_timeout_aicfab_models_' ) . '%';
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $ai_chat_bedrock_model_timeout_pattern ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 
-// Vectors live in post meta, so they are removed by key rather than by option name.
-foreach ( array( '_aicfab_embedding', '_aicfab_embedding_model', '_aicfab_embedding_hash' ) as $ai_chat_bedrock_meta_key ) {
+// Post meta this plugin wrote, removed by key rather than by option name. Every key the
+// plugin writes has to appear here; tests/security-regression.php checks that it does.
+foreach ( array( '_aicfab_embedding', '_aicfab_embedding_model', '_aicfab_embedding_hash', '_aicfab_scaffolded' ) as $ai_chat_bedrock_meta_key ) {
 	delete_post_meta_by_key( $ai_chat_bedrock_meta_key );
 }
 

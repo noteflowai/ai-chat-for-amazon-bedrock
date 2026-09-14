@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.23.0\n"
+"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.24.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-14T10:47:25+00:00\n"
+"POT-Creation-Date: 2026-09-14T11:16:57+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -352,7 +352,7 @@ msgstr ""
 #: admin/class-ai-chat-bedrock-admin.php:535
 #: includes/class-ai-chat-bedrock-mcp-integration.php:353
 #: includes/class-ai-chat-bedrock-stream.php:65
-#: public/class-ai-chat-bedrock-public.php:213
+#: public/class-ai-chat-bedrock-public.php:240
 msgid "Security check failed."
 msgstr ""
 
@@ -815,8 +815,8 @@ msgid "AWS"
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:1115
-#: public/class-ai-chat-bedrock-public.php:180
-#: public/class-ai-chat-bedrock-public.php:201
+#: public/class-ai-chat-bedrock-public.php:207
+#: public/class-ai-chat-bedrock-public.php:228
 #: public/partials/ai-chat-bedrock-public-display.php:20
 msgid "Chat"
 msgstr ""
@@ -1835,7 +1835,7 @@ msgid "Clear anything you do not want, edit the titles if you like, then create 
 msgstr ""
 
 #: admin/partials/ai-chat-bedrock-admin-scaffold.php:44
-#: blocks/chat/editor.js:34
+#: blocks/chat/editor.js:47
 msgid "Title"
 msgstr ""
 
@@ -1880,7 +1880,7 @@ msgid "Rotate AWS credentials immediately if database or WordPress administrator
 msgstr ""
 
 #: admin/partials/ai-chat-bedrock-admin-test.php:14
-#: public/class-ai-chat-bedrock-public.php:181
+#: public/class-ai-chat-bedrock-public.php:208
 msgid "Chat with AI"
 msgstr ""
 
@@ -3039,7 +3039,7 @@ msgid "stream open"
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-stream.php:71
-#: public/class-ai-chat-bedrock-public.php:219
+#: public/class-ai-chat-bedrock-public.php:246
 msgid "Please sign in to use the chat."
 msgstr ""
 
@@ -3048,7 +3048,7 @@ msgid "Streaming is disabled on this site."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-stream.php:82
-#: public/class-ai-chat-bedrock-public.php:227
+#: public/class-ai-chat-bedrock-public.php:254
 msgid "Too many requests. Please wait a minute and try again."
 msgstr ""
 
@@ -3188,27 +3188,27 @@ msgstr ""
 msgid "The main model was unavailable, so %s answered."
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:161
+#: public/class-ai-chat-bedrock-public.php:188
 msgid "The chat is not shown to visitors yet: Amazon Bedrock credentials or a model are still missing. Only administrators see this message."
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:163
+#: public/class-ai-chat-bedrock-public.php:190
 msgid "Finish the setup"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:182
+#: public/class-ai-chat-bedrock-public.php:209
 msgid "Type your message here…"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:183
+#: public/class-ai-chat-bedrock-public.php:210
 msgid "Send"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:184
+#: public/class-ai-chat-bedrock-public.php:211
 msgid "Clear chat"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:210
+#: public/class-ai-chat-bedrock-public.php:237
 msgid "Method not allowed."
 msgstr ""
 
@@ -3224,47 +3224,55 @@ msgstr ""
 msgid "Powered by Amazon Bedrock"
 msgstr ""
 
-#: blocks/chat/editor.js:24
+#: blocks/chat/editor.js:25
 msgid "Chat settings"
 msgstr ""
 
-#: blocks/chat/editor.js:26
+#: blocks/chat/editor.js:30
+msgid "Chat profile"
+msgstr ""
+
+#: blocks/chat/editor.js:31
+msgid "Profiles are managed on the Chat Profiles screen."
+msgstr ""
+
+#: blocks/chat/editor.js:39
 msgid "Chat profile key"
 msgstr ""
 
-#: blocks/chat/editor.js:27
+#: blocks/chat/editor.js:40
 msgid "Leave empty to use the site default settings."
 msgstr ""
 
-#: blocks/chat/editor.js:35
+#: blocks/chat/editor.js:48
 msgid "Leave empty to use the title from the plugin settings."
 msgstr ""
 
-#: blocks/chat/editor.js:42
+#: blocks/chat/editor.js:55
 msgid "Input placeholder"
 msgstr ""
 
-#: blocks/chat/editor.js:49
+#: blocks/chat/editor.js:62
 msgid "Height"
 msgstr ""
 
-#: blocks/chat/editor.js:50
+#: blocks/chat/editor.js:63
 msgid "For example 500px or 60vh."
 msgstr ""
 
-#: blocks/chat/editor.js:57
+#: blocks/chat/editor.js:70
 msgid "Width"
 msgstr ""
 
-#: blocks/chat/editor.js:58
+#: blocks/chat/editor.js:71
 msgid "For example 100% or 720px."
 msgstr ""
 
-#: blocks/chat/editor.js:76
+#: blocks/chat/editor.js:89
 msgid "Amazon Bedrock chat renders on the published page."
 msgstr ""
 
-#: blocks/chat/editor.js:84
+#: blocks/chat/editor.js:97
 msgid "Messages are sent to Amazon Bedrock using your own AWS account. Requests are only possible for visitors you allow in the plugin settings."
 msgstr ""
 

@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.23.0
+Stable tag: 1.24.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -77,7 +77,7 @@ Point the chat at a prompt in Amazon Bedrock Prompt Management and its text repl
 
 = Semantic search =
 
-Keyword search only finds passages that share words with the question, so "when will my parcel arrive" misses a page titled "Getting parcels to you". Choose an embedding model and the plugin indexes your published content, then matches questions by meaning. Vectors are stored in post meta, so no custom table is created and uninstalling removes them. Indexing runs in small batches from the settings screen, or unattended: switch on background indexing to let WP-Cron finish the job, and use `wp ai-chat-bedrock index` on a large site. Editing a post marks it for re-indexing, and keyword search still runs whenever nothing relevant is found. Questions about subjects your site does not cover return no context at all rather than an unrelated passage.
+Keyword search only finds passages that share words with the question, so "when will my parcel arrive" misses a page titled "Getting parcels to you". Choose an embedding model and the plugin indexes your published content, then matches questions by meaning. Indexing runs in small batches from the settings screen, or unattended: switch on background indexing to let WP-Cron finish the job, and use `wp ai-chat-bedrock index` on a large site. Editing a post marks it for re-indexing, and keyword search still runs whenever nothing relevant is found. Questions about subjects your site does not cover return no context at all rather than an unrelated passage.
 
 = Fallback model =
 
@@ -262,6 +262,11 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 13. A setup checklist that reads the site's own state, followed by the improvements still worth making.
 
 == Changelog ==
+
+= 1.24.0 =
+* Fixed the Amazon Bedrock Chat block, which could not be inserted in the block editor at all. Its editor script was registered without dependencies, so it ran before the editor libraries existed and failed silently.
+* The block now offers a menu of the chat profiles that exist, instead of asking for a profile key typed from memory.
+* Uninstall now removes the marker left on scaffolded pages, which was being left behind.
 
 = 1.23.0 =
 * The chat no longer renders for visitors when it cannot answer. Until now a fresh install showed a working-looking chat that failed on the first message.
@@ -492,6 +497,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.24.0 =
+Fixes the chat block, which could not be inserted in the block editor. If you have been using the shortcode because the block did not appear, the block works now.
 
 = 1.23.0 =
 A chat that cannot answer is no longer shown to visitors. Configured sites are unaffected.

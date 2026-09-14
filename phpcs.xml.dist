@@ -71,4 +71,12 @@
 	<rule ref="Squiz.Commenting.FunctionComment.MissingParamTag">
 		<severity>3</severity>
 	</rule>
+	<!--
+		register_block_type() looks for "<script>.asset.php" beside the script, so this one
+		file cannot follow the hyphenated-lowercase naming rule.
+	-->
+	<rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
+		<exclude-pattern>*/blocks/*/*.asset.php</exclude-pattern>
+	</rule>
+
 </ruleset>

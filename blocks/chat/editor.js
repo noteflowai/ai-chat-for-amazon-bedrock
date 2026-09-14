@@ -7,6 +7,7 @@
 	var InspectorControls = blockEditor.InspectorControls;
 	var PanelBody = components.PanelBody;
 	var TextControl = components.TextControl;
+	var SelectControl = components.SelectControl;
 	var Notice = components.Notice;
 	var ServerSideRender = serverSideRender && serverSideRender.default ? serverSideRender.default : serverSideRender;
 
@@ -22,14 +23,26 @@
 				el(
 					PanelBody,
 					{ title: __( 'Chat settings', 'ai-chat-for-amazon-bedrock' ), initialOpen: true },
-					el( TextControl, {
-						label: __( 'Chat profile key', 'ai-chat-for-amazon-bedrock' ),
-						help: __( 'Leave empty to use the site default settings.', 'ai-chat-for-amazon-bedrock' ),
-						value: attributes.profile,
-						onChange: function ( value ) {
-							setAttributes( { profile: value } );
-						}
-					} ),
+					// A menu of the profiles that exist, rather than a key typed from memory.
+					// Falls back to a text field if the list could not be provided.
+					( window.aicfabBlock && window.aicfabBlock.profiles && window.aicfabBlock.profiles.length )
+						? el( SelectControl, {
+							label: __( 'Chat profile', 'ai-chat-for-amazon-bedrock' ),
+							help: __( 'Profiles are managed on the Chat Profiles screen.', 'ai-chat-for-amazon-bedrock' ),
+							value: attributes.profile,
+							options: window.aicfabBlock.profiles,
+							onChange: function ( value ) {
+								setAttributes( { profile: value } );
+							}
+						} )
+						: el( TextControl, {
+							label: __( 'Chat profile key', 'ai-chat-for-amazon-bedrock' ),
+							help: __( 'Leave empty to use the site default settings.', 'ai-chat-for-amazon-bedrock' ),
+							value: attributes.profile,
+							onChange: function ( value ) {
+								setAttributes( { profile: value } );
+							}
+						} ),
 					el( TextControl, {
 						label: __( 'Title', 'ai-chat-for-amazon-bedrock' ),
 						help: __( 'Leave empty to use the title from the plugin settings.', 'ai-chat-for-amazon-bedrock' ),

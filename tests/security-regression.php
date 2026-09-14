@@ -156,6 +156,42 @@ check(
 	'the mode is validated before the readiness check compares it'
 );
 
+// --- Uninstall removes every meta key the plugin writes ----------------------
+
+// The scaffold marker added in 1.18.0 was never added to the uninstall list, so it would
+// have been left on every drafted page. Rather than fixing that one key, this compares the
+// keys the source writes with the keys uninstall removes, so the next one cannot be missed.
+$aicfab_meta_written = array();
+foreach ( array_merge( glob( __DIR__ . '/../includes/*.php' ), glob( __DIR__ . '/../admin/*.php' ), glob( __DIR__ . '/../public/*.php' ) ) as $aicfab_file ) {
+	$aicfab_body = file_get_contents( $aicfab_file );
+	// Only keys actually passed to a meta write, not every string that looks like one.
+	if ( preg_match_all( "/(?:update|add)_post_meta\\(\\s*[^,]+,\\s*'(_aicfab[a-z_]*)'/", $aicfab_body, $aicfab_hits ) ) {
+		foreach ( $aicfab_hits[1] as $aicfab_key ) {
+			$aicfab_meta_written[ $aicfab_key ] = true;
+		}
+	}
+	// Constants holding a meta key, used by the embeddings index.
+	if ( preg_match_all( "/const\\s+META_[A-Z_]*\\s*=\\s*'(_aicfab[a-z_]*)'/", $aicfab_body, $aicfab_consts ) ) {
+		foreach ( $aicfab_consts[1] as $aicfab_key ) {
+			$aicfab_meta_written[ $aicfab_key ] = true;
+		}
+	}
+}
+
+$aicfab_uninstall = file_get_contents( __DIR__ . '/../uninstall.php' );
+check( count( $aicfab_meta_written ) >= 3, 'meta keys were found in the source, got ' . count( $aicfab_meta_written ) );
+
+$aicfab_left_behind = array();
+foreach ( array_keys( $aicfab_meta_written ) as $aicfab_key ) {
+	if ( false === strpos( $aicfab_uninstall, "'" . $aicfab_key . "'" ) ) {
+		$aicfab_left_behind[] = $aicfab_key;
+	}
+}
+check(
+	array() === $aicfab_left_behind,
+	'uninstall removes every meta key the plugin writes, missing: ' . implode( ', ', $aicfab_left_behind )
+);
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );
