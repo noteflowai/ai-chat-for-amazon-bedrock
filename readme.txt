@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.30.0
+Stable tag: 1.30.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -40,16 +40,16 @@ Credentials are resolved in this order: `wp-config.php` constants, encrypted Wor
 = Security and cost defaults =
 
 * Only signed-in users can chat until guest access is explicitly enabled.
-* External MCP tools are unavailable to anonymous visitors by default.
-* Built-in WordPress MCP routes require authentication unless public read-only access is deliberately enabled.
-* Chat and public MCP requests are rate limited per minute and per profile, with optional per-role limits so staff and anonymous visitors need not share one cap.
-* The chat is not shown to visitors until it can actually answer, so a half-finished setup is never public.
+* External MCP tools are unavailable to visitors by default.
+* Built-in WordPress MCP routes require authentication unless public read-only access is enabled.
+* Chat and public MCP requests are rate limited per minute and per profile, with optional per-role limits so staff and visitors need not share one cap.
+* The chat is not shown to visitors until it can answer, so a half-finished setup is never public.
 * A visitor can stop a long answer, and the server stops the Bedrock request with it.
 * Diagnostics generates the least-privilege IAM policy this site needs, and the dashboard checklist reads the site.
-* A configuration can be downloaded and applied on another site. Credentials are never written to the file.
-* Input, history, token, tool-call, redirect and remote-response limits are enforced server-side.
-* MCP destinations must use public HTTPS URLs; private, loopback, link-local, credential-bearing and unsafe redirect targets are rejected.
-* Debug mode records redacted operational metadata, not prompts, responses, credentials or authorization headers.
+* A configuration can be downloaded and applied on another site, never including credentials.
+* Input, history, token, tool-call and redirect limits are enforced server-side.
+* MCP destinations must use public HTTPS URLs; private, loopback, link-local and credential-bearing targets are rejected.
+* Debug mode records redacted operational metadata, not prompts, responses or credentials.
 
 The dashboard shows requests and tokens for the last seven days, broken down by the model that actually answered, so a fallback or a profile using a different model is visible. Counters are kept for 30 days and contain no prompts, responses or identities.
 
@@ -78,11 +78,11 @@ Point the chat at a prompt in Amazon Bedrock Prompt Management and its text repl
 
 = Semantic search =
 
-Keyword search only finds passages that share words with the question, so "when will my parcel arrive" misses a page titled "Getting parcels to you". Choose an embedding model and the plugin indexes your published content, then matches questions by meaning. Indexing runs in small batches from the settings screen, or unattended through WP-Cron, or with `wp ai-chat-bedrock index` on a large site. Editing a post marks it for re-indexing, and keyword search still runs whenever nothing relevant is found. Questions your site does not cover return no context rather than an unrelated passage.
+Keyword search only finds passages that share words with the question, so "when will my parcel arrive" misses a page titled "Getting parcels to you". Choose an embedding model and the plugin indexes published content, then matches questions by meaning. Indexing runs in small batches from the settings screen, or unattended through WP-Cron, or with `wp ai-chat-bedrock index` on a large site. Editing a post marks it for re-indexing, and keyword search still runs when nothing relevant is found. Questions your site does not cover return no context rather than an unrelated passage.
 
 = Fallback model =
 
-Model access is the most common reason a Bedrock chat stops answering: a model is not enabled in the account, a request is throttled, or the service is briefly unreachable. Choose a fallback model and those requests are retried once on it, with the reply stating which model answered. An identifier Bedrock does not recognize is treated the same way. Requests rejected for any other reason, including an invalid payload, missing credentials or the daily limit, are never retried. A stream is retried only before anything reaches the browser, so text is never duplicated.
+Model access is the most common reason a Bedrock chat stops answering: a model is not enabled, a request is throttled, or the service is briefly unreachable. Choose a fallback model and those requests are retried once on it, and the reply states which model answered. An identifier Bedrock does not recognize is treated the same way. Requests rejected for any other reason, including an invalid payload, missing credentials or the daily limit, are never retried. A stream is retried only before anything reaches the browser, so text is never duplicated.
 
 = Chat experience =
 
@@ -124,8 +124,9 @@ On WordPress 7.0 and later, Bedrock is registered with core's AI Client, so
 Those calls use this plugin's request path, so the guardrail, model, region, token ceiling,
 daily limit and usage accounting configured here apply to them.
 
-On 7.1 it also appears in Settings > Connectors, declared as storing no credential: Bedrock
-signs with IAM, not an API key this site must keep.
+On 7.1 it also joins the connector registry, declared as storing no credential: Bedrock signs
+with IAM, not a key this site must keep. The Settings > Connectors screen lists only
+connectors with a credential to manage, so Bedrock is absent there.
 
 = Connect AI clients to this site =
 
@@ -274,9 +275,13 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 
 == Changelog ==
 
+= 1.30.1 =
+* Corrected a claim in 1.30.0. Amazon Bedrock is registered with the WordPress 7.1 connector registry, and any plugin reading `wp_get_connectors()` sees it, but it does not appear on the Settings > Connectors screen: that screen renders only connectors with a credential to manage, and Bedrock has none to store. Confirmed by registering two connectors of the same shape, one declaring an API key and one declaring none; only the first was shown. Making the card appear would mean claiming a credential method Bedrock does not use.
+* No functional change. The AI Client integration, the governance checks and the usage accounting are unaffected.
+
 = 1.30.0 =
 * Registered Amazon Bedrock with the AI Client that WordPress 7.0 added, so `wp_ai_client_prompt()` reaches it from any plugin. Those calls go through this plugin's request path, so the guardrail, model, region, token ceiling, daily limit and usage accounting a site has already configured apply to them as well.
-* Registered Bedrock in Settings > Connectors on WordPress 7.1, declared as storing no credential. Bedrock signs with IAM, and the alternative would have put a field in front of site owners inviting them to paste a long-lived key into the database.
+* Registered Bedrock with the WordPress 7.1 connector registry, declared as storing no credential. Bedrock signs with IAM, and the alternative would have put a field in front of site owners inviting them to paste a long-lived key into the database.
 * The pre-flight check spends nothing, because WordPress runs it for support probes as well as generations; a plugin asking whether a feature exists cannot consume a visitor's budget. Tokens are still counted where they are spent.
 * The provider declares only the options it honours, with their real limits, so WordPress reports no matching model rather than handing over a request that is then quietly ignored.
 * Nothing loads on WordPress without the AI Client, so 6.x installations are unaffected.
@@ -543,6 +548,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.30.1 =
+Documentation correction: Bedrock joins the WordPress 7.1 connector registry but is not shown on the Connectors screen, which lists only connectors that store a credential.
 
 = 1.30.0 =
 On WordPress 7.0+, any plugin's wp_ai_client_prompt() call now reaches Bedrock under this site's guardrail, limits and usage accounting. Older WordPress is unaffected.

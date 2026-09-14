@@ -74,13 +74,25 @@ class AI_Chat_Bedrock_Core_AI {
 	}
 
 	/**
-	 * Declare Bedrock in Settings → Connectors.
+	 * Register Bedrock with core's connector registry.
 	 *
 	 * Registered with authentication method `none`, which is the accurate description: the
 	 * credentials are an IAM role or instance profile that AWS resolves outside WordPress,
 	 * and core stores nothing. The alternative, declaring an API key, would put a text
 	 * field in front of site owners inviting them to paste a long-lived secret into the
 	 * database, which is the practice this plugin exists to avoid.
+	 *
+	 * It does not appear on the Settings → Connectors screen in WordPress 7.1, and that is
+	 * measured rather than assumed. The screen receives it: the module data for the page
+	 * contains this connector in full. It renders only connectors that have a credential to
+	 * manage. Two registrations of the same shape, one declaring `api_key` and one `none`,
+	 * confirmed it: the first appeared with a Set up action, the second did not, with and
+	 * without a plugin entry naming what provides it.
+	 *
+	 * So the registration is for the registry, not the screen. Any plugin reading
+	 * `wp_get_connectors()` sees that this site can reach Bedrock and that WordPress holds
+	 * no key for it. Making the card appear would mean claiming a credential method Bedrock
+	 * does not use, which is not worth a row in a settings screen.
 	 *
 	 * @param WP_Connector_Registry $registry Core's registry.
 	 * @return void

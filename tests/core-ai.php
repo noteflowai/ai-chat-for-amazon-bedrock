@@ -125,6 +125,27 @@ check_core_ai(
 	'Registration must not collide with an existing connector of the same id.'
 );
 
+/*
+ * A credential-free connector is registered but not rendered on the WordPress 7.1
+ * Settings -> Connectors screen. Measured, not assumed: two registrations of the same
+ * shape, one declaring api_key and one none, produced a card for the first only. 1.30.0
+ * shipped a readme claiming the card appears, so the claim is pinned here.
+ */
+$readme = file_get_contents( dirname( __DIR__ ) . '/readme.txt' );
+check_core_ai(
+	1 !== preg_match( '/(appears|appear|shown|listed) in Settings > Connectors/i', $readme ),
+	'The readme must not claim Bedrock appears on the Connectors screen; a credential-free connector is not rendered.'
+);
+check_core_ai(
+	false !== strpos( $source, 'It does not appear on the Settings' ),
+	'The code must record that the connector is registered for the registry, not the screen.'
+);
+// Adding a plugin entry does not change it either, and was tried.
+check_core_ai(
+	false === strpos( $source, "'plugin'" ),
+	'No plugin entry: it was added to force the card to render, and it did not.'
+);
+
 // --- Declared options must match honoured ones ----------------------------------
 
 $provider = '';
