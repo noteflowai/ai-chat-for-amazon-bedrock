@@ -200,12 +200,27 @@ check(
 // Registering the message during validation is what makes it appear.
 $aicfab_admin_source = file_get_contents( __DIR__ . '/../admin/class-ai-chat-bedrock-admin.php' );
 check(
-	false !== strpos( $aicfab_admin_source, "add_settings_error(\n\t\t\t'ai_chat_bedrock_settings',\n\t\t\t'aicfab_settings_saved'," ),
+	false !== strpos( $aicfab_admin_source, "\$this->notice( 'aicfab_settings_saved'" ),
 	'saving settings registers a confirmation under the slug the page displays'
 );
 check(
-	false !== strpos( $aicfab_admin_source, "'success'" ),
+	false !== strpos( $aicfab_admin_source, "__( 'Settings saved.', 'ai-chat-for-amazon-bedrock' ), 'success' )" ),
 	'the confirmation is a success notice rather than an error'
+);
+// Every notice in the validator goes through the guarded helper, because add_settings_error()
+// only exists in wp-admin and the configuration import runs the validator too.
+check(
+	false !== strpos( $aicfab_admin_source, "if ( function_exists( 'add_settings_error' ) ) {" ),
+	'the notice helper checks that the function exists'
+);
+$aicfab_validator = substr(
+	$aicfab_admin_source,
+	strpos( $aicfab_admin_source, 'public function validate_settings( $input ) {' )
+);
+$aicfab_validator = substr( $aicfab_validator, 0, strpos( $aicfab_validator, "\n\t}\n" ) );
+check(
+	false === strpos( $aicfab_validator, 'add_settings_error(' ),
+	'the validator itself never calls the admin-only function directly'
 );
 
 $aicfab_settings_view = file_get_contents( __DIR__ . '/../admin/partials/ai-chat-bedrock-admin-settings.php' );

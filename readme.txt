@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.27.0
+Stable tag: 1.28.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -46,6 +46,7 @@ Credentials are resolved in this order: `wp-config.php` constants, encrypted Wor
 * The chat is not shown to visitors until it can actually answer, so a half-finished setup is never public.
 * A visitor can stop a long answer, and the server stops the Bedrock request with it rather than paying for text nobody will read.
 * Diagnostics generates the least-privilege IAM policy this site needs, and the dashboard checklist reads the site rather than guessing, so it can be finished and then says what is left worth configuring.
+* A configuration can be downloaded and applied on another site. Credentials are never written to the file.
 * Input, history, token, tool-call, redirect and remote-response limits are enforced server-side.
 * MCP destinations must use public HTTPS URLs; private, loopback, link-local, credential-bearing and unsafe redirect targets are rejected.
 * Debug mode records redacted operational metadata, not prompts, responses, credentials or authorization headers.
@@ -262,6 +263,12 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 13. A setup checklist that reads the site's own state, followed by the improvements still worth making.
 
 == Changelog ==
+
+= 1.28.0 =
+* Added configuration transfer: download everything except credentials as a file, and apply it on another site. Useful for moving a staging setup into production without retyping thirty five fields.
+* AWS keys and MCP tokens are never written to the file. They are encrypted for one site, so they would be useless elsewhere, and a configuration file is not a safe place for them. Credentials already present on the receiving site are left untouched.
+* Imported values go through the same validation the settings screens use, and only known options are written.
+* Fixed the settings validator depending on a function that only exists inside the admin area, which would have broken any non-admin caller.
 
 = 1.27.0 =
 * Diagnostics now checks a configured guardrail and reports its name, version and readiness. Amazon Bedrock refuses every request when the guardrail identifier is wrong, so this used to be discovered by a visitor rather than on the settings screen.
@@ -513,6 +520,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.28.0 =
+Adds configuration export and import for moving a setup between sites. Credentials are never included in the file.
 
 = 1.27.0 =
 Diagnostics now verifies a configured guardrail and knowledge base, and a rejected guardrail says so instead of blaming permissions.

@@ -34,6 +34,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-scaffold.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-insights.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-setup-steps.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-transfer.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-aws-credentials.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-event-stream.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-usage.php';
@@ -93,6 +94,8 @@ class AI_Chat_Bedrock {
 		$this->loader->add_filter( 'handle_bulk_actions-upload', $admin, 'handle_media_bulk_action', 10, 3 );
 		$this->loader->add_action( 'admin_notices', $admin, 'render_media_notice' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_export_conversations', $admin, 'handle_export_conversations' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_export_settings', $admin, 'handle_export_settings' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_import_settings', $admin, 'handle_import_settings' );
 		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_index_embeddings', $admin, 'ajax_index_embeddings' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_clear_embeddings', $admin, 'handle_clear_embeddings' );
 		$this->loader->add_action( 'save_post', 'AI_Chat_Bedrock_Embeddings', 'invalidate' );

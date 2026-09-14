@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.27.0\n"
+"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.28.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-14T13:00:27+00:00\n"
+"POT-Creation-Date: 2026-09-14T13:14:48+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -112,7 +112,7 @@ msgid "Indexing…"
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:83
-#: admin/class-ai-chat-bedrock-admin.php:818
+#: admin/class-ai-chat-bedrock-admin.php:872
 msgid "Index content now"
 msgstr ""
 
@@ -302,7 +302,9 @@ msgstr ""
 #: admin/class-ai-chat-bedrock-admin.php:424
 #: admin/class-ai-chat-bedrock-admin.php:462
 #: admin/class-ai-chat-bedrock-admin.php:482
-#: admin/class-ai-chat-bedrock-admin.php:497
+#: admin/class-ai-chat-bedrock-admin.php:500
+#: admin/class-ai-chat-bedrock-admin.php:521
+#: admin/class-ai-chat-bedrock-admin.php:551
 #: includes/class-ai-chat-bedrock-mcp-integration.php:266
 #: includes/class-ai-chat-bedrock-mcp-integration.php:305
 #: includes/class-ai-chat-bedrock-mcp-integration.php:319
@@ -348,16 +350,16 @@ msgstr ""
 msgid "Finish setup"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:510
-#: admin/class-ai-chat-bedrock-admin.php:535
+#: admin/class-ai-chat-bedrock-admin.php:564
+#: admin/class-ai-chat-bedrock-admin.php:589
 #: includes/class-ai-chat-bedrock-mcp-integration.php:355
 #: includes/class-ai-chat-bedrock-stream.php:65
 #: public/class-ai-chat-bedrock-public.php:240
 msgid "Security check failed."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:513
-#: admin/class-ai-chat-bedrock-admin.php:538
+#: admin/class-ai-chat-bedrock-admin.php:567
+#: admin/class-ai-chat-bedrock-admin.php:592
 #: includes/class-ai-chat-bedrock-editor-assistant.php:110
 #: includes/class-ai-chat-bedrock-feedback.php:63
 #: includes/class-ai-chat-bedrock-media-assistant.php:106
@@ -365,38 +367,38 @@ msgid "Too many requests. Please wait a moment."
 msgstr ""
 
 #. translators: %d: number of models discovered.
-#: admin/class-ai-chat-bedrock-admin.php:524
+#: admin/class-ai-chat-bedrock-admin.php:578
 #, php-format
 msgid "%d models available. Reload the page to see the updated list."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:555
+#: admin/class-ai-chat-bedrock-admin.php:609
 msgid "AWS authentication"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:556
+#: admin/class-ai-chat-bedrock-admin.php:610
 msgid "AWS Region"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:557
+#: admin/class-ai-chat-bedrock-admin.php:611
 msgid "AWS Access Key ID"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:558
+#: admin/class-ai-chat-bedrock-admin.php:612
 msgid "AWS Secret Access Key"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:559
+#: admin/class-ai-chat-bedrock-admin.php:613
 msgid "AWS Session Token"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:560
+#: admin/class-ai-chat-bedrock-admin.php:614
 msgid "IAM role credentials"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:562
-#: admin/class-ai-chat-bedrock-admin.php:563
-#: admin/class-ai-chat-bedrock-admin.php:1121
+#: admin/class-ai-chat-bedrock-admin.php:616
+#: admin/class-ai-chat-bedrock-admin.php:617
+#: admin/class-ai-chat-bedrock-admin.php:1187
 #: admin/partials/ai-chat-bedrock-admin-display.php:63
 #: admin/partials/ai-chat-bedrock-admin-display.php:153
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:46
@@ -406,110 +408,110 @@ msgstr ""
 msgid "Model"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:564
+#: admin/class-ai-chat-bedrock-admin.php:618
 msgid "Fallback model"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:565
+#: admin/class-ai-chat-bedrock-admin.php:619
 msgid "Maximum output tokens"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:566
+#: admin/class-ai-chat-bedrock-admin.php:620
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:130
 #: admin/partials/ai-chat-bedrock-admin-test.php:29
 msgid "Temperature"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:568
+#: admin/class-ai-chat-bedrock-admin.php:622
 msgid "Safety and spend controls"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:569
+#: admin/class-ai-chat-bedrock-admin.php:623
 msgid "Guardrail identifier"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:570
+#: admin/class-ai-chat-bedrock-admin.php:624
 msgid "Guardrail version"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:571
+#: admin/class-ai-chat-bedrock-admin.php:625
 msgid "Daily request limit"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:573
+#: admin/class-ai-chat-bedrock-admin.php:627
 msgid "Answer grounding"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:574
+#: admin/class-ai-chat-bedrock-admin.php:628
 msgid "Use site content"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:575
+#: admin/class-ai-chat-bedrock-admin.php:629
 msgid "Passages per answer"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:576
+#: admin/class-ai-chat-bedrock-admin.php:630
 msgid "Semantic search"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:577
+#: admin/class-ai-chat-bedrock-admin.php:631
 msgid "Bedrock knowledge base ID"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:578
+#: admin/class-ai-chat-bedrock-admin.php:632
 msgid "WordPress abilities as tools"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:579
+#: admin/class-ai-chat-bedrock-admin.php:633
 msgid "Site content abilities"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:580
+#: admin/class-ai-chat-bedrock-admin.php:634
 msgid "Editor assistant"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:581
+#: admin/class-ai-chat-bedrock-admin.php:635
 msgid "Conversation log"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:582
+#: admin/class-ai-chat-bedrock-admin.php:636
 msgid "Media helpers"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:584
+#: admin/class-ai-chat-bedrock-admin.php:638
 msgid "Chat security and presentation"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:585
+#: admin/class-ai-chat-bedrock-admin.php:639
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:106
 msgid "System prompt"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:586
+#: admin/class-ai-chat-bedrock-admin.php:640
 msgid "Managed prompt"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:587
+#: admin/class-ai-chat-bedrock-admin.php:641
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:110
 msgid "Chat title"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:588
+#: admin/class-ai-chat-bedrock-admin.php:642
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:114
 msgid "Welcome message"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:589
+#: admin/class-ai-chat-bedrock-admin.php:643
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:118
 #: public/partials/ai-chat-bedrock-public-display.php:51
 msgid "Suggested questions"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:590
+#: admin/class-ai-chat-bedrock-admin.php:644
 msgid "Streaming responses"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:591
+#: admin/class-ai-chat-bedrock-admin.php:645
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:47
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:143
 #: includes/class-ai-chat-bedrock-diagnostics.php:185
@@ -517,324 +519,324 @@ msgstr ""
 msgid "Guest access"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:592
+#: admin/class-ai-chat-bedrock-admin.php:646
 msgid "Requests per visitor per minute"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:593
+#: admin/class-ai-chat-bedrock-admin.php:647
 msgid "Per-role limits"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:594
+#: admin/class-ai-chat-bedrock-admin.php:648
 msgid "Floating chat"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:595
+#: admin/class-ai-chat-bedrock-admin.php:649
 msgid "Debug logging"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:612
+#: admin/class-ai-chat-bedrock-admin.php:666
 msgid "Prefer wp-config.php constants or an IAM role. Database credentials are encrypted with WordPress salts and are never displayed after saving."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:617
+#: admin/class-ai-chat-bedrock-admin.php:671
 msgid "Active credential source:"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:619
+#: admin/class-ai-chat-bedrock-admin.php:673
 msgid "(temporary credentials)"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:623
+#: admin/class-ai-chat-bedrock-admin.php:677
 msgid "No usable AWS credentials were found."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:638
+#: admin/class-ai-chat-bedrock-admin.php:692
 msgid "Required only for temporary AWS credentials."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:644
+#: admin/class-ai-chat-bedrock-admin.php:698
 msgid "Use the server IAM role when no keys are configured"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:645
+#: admin/class-ai-chat-bedrock-admin.php:699
 msgid "Supports environment variables, ECS or EKS task roles, and EC2 instance roles, so no long-lived AWS keys are stored in WordPress."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:652
+#: admin/class-ai-chat-bedrock-admin.php:706
 msgid "Stream responses as they are generated (default)"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:654
+#: admin/class-ai-chat-bedrock-admin.php:708
 msgid "Streaming uses one authenticated POST request per message and falls back to a buffered response automatically."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:656
+#: admin/class-ai-chat-bedrock-admin.php:710
 msgid "This server cannot stream because the PHP cURL extension is unavailable. Buffered responses will be used."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:660
+#: admin/class-ai-chat-bedrock-admin.php:714
 msgid "Apply an Amazon Bedrock guardrail and cap daily requests. Counters store request and token totals only."
 msgstr ""
 
 #. translators: 1: requests today, 2: input tokens today, 3: output tokens today, 4: requests in the last seven days.
-#: admin/class-ai-chat-bedrock-admin.php:666
+#: admin/class-ai-chat-bedrock-admin.php:720
 #, php-format
 msgid "Today: %1$d requests, %2$d input tokens, %3$d output tokens. Last 7 days: %4$d requests."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:675
+#: admin/class-ai-chat-bedrock-admin.php:729
 msgid "Optional. Applies an existing Amazon Bedrock guardrail to every request."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:679
+#: admin/class-ai-chat-bedrock-admin.php:733
 msgid "Use DRAFT or a published numeric version."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:684
+#: admin/class-ai-chat-bedrock-admin.php:738
 msgid "Maximum Bedrock requests per day for the whole site. Use 0 for no plugin-side limit. This is not a billing guarantee; configure AWS Budgets as well."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:687
+#: admin/class-ai-chat-bedrock-admin.php:741
 msgid "Ground answers in your own content. Retrieved passages are passed to the model as reference data, never as instructions, and only published content is used."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:691
+#: admin/class-ai-chat-bedrock-admin.php:745
 msgid "Search published posts and pages for each question"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:692
+#: admin/class-ai-chat-bedrock-admin.php:746
 msgid "Uses the built-in WordPress search. Password-protected, private and draft content is excluded."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:697
+#: admin/class-ai-chat-bedrock-admin.php:751
 msgid "More passages improve grounding but increase input tokens and cost."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:701
+#: admin/class-ai-chat-bedrock-admin.php:755
 msgid "Optional. Queries an existing Amazon Bedrock knowledge base with the Retrieve API. Requires bedrock:Retrieve permission for that knowledge base."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:706
+#: admin/class-ai-chat-bedrock-admin.php:760
 msgid "Offer abilities registered by other plugins to the chat model"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:708
+#: admin/class-ai-chat-bedrock-admin.php:762
 msgid "Abilities follow the same tool policy: a capability is required, permission callbacks are honored, and abilities that change data need explicit approval."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:710
+#: admin/class-ai-chat-bedrock-admin.php:764
 msgid "The WordPress Abilities API is not available on this site, so this option is inactive."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:716
+#: admin/class-ai-chat-bedrock-admin.php:770
 msgid "Register read-only content abilities plus draft creation"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:718
+#: admin/class-ai-chat-bedrock-admin.php:772
 msgid "Registers search, read, SEO suggestion and WooCommerce product lookup as read-only abilities, plus one write ability that creates drafts. Nothing is published, updated or deleted, and orders and customers are never exposed."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:720
+#: admin/class-ai-chat-bedrock-admin.php:774
 msgid "Requires the WordPress Abilities API."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:725
+#: admin/class-ai-chat-bedrock-admin.php:779
 msgid "Add a writing assistant sidebar to the block editor"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:726
+#: admin/class-ai-chat-bedrock-admin.php:780
 msgid "Improve, shorten, expand, summarize, suggest titles or translate. Suggestions are never saved automatically and require the edit_posts capability."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:731
+#: admin/class-ai-chat-bedrock-admin.php:785
 msgid "Store questions and answers for review"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:732
+#: admin/class-ai-chat-bedrock-admin.php:786
 msgid "Keep for"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:732
+#: admin/class-ai-chat-bedrock-admin.php:786
 msgid "days"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:733
+#: admin/class-ai-chat-bedrock-admin.php:787
 msgid "Disabled by default. When enabled, chat content is stored in the database, capped at 200 recent entries, and visible to administrators. Disclose this to your visitors."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:737
+#: admin/class-ai-chat-bedrock-admin.php:791
 msgid "What are your opening hours?"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:738
+#: admin/class-ai-chat-bedrock-admin.php:792
 msgid "One question per line, up to four. They appear as buttons above the input so visitors know what to ask, and disappear once the conversation starts."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:746
+#: admin/class-ai-chat-bedrock-admin.php:800
 msgid "Requests per minute for each role"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:764
+#: admin/class-ai-chat-bedrock-admin.php:818
 msgid "Optional. Leave a row empty to use the site-wide limit above. A visitor with several roles gets the most permissive of them, and requests are still counted per profile."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:770
+#: admin/class-ai-chat-bedrock-admin.php:824
 msgid "Version"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:772
+#: admin/class-ai-chat-bedrock-admin.php:826
 msgid "Optional. Point at a prompt in Amazon Bedrock Prompt Management and its text replaces the system prompt above, so one prompt can be reviewed in AWS and reused by every site. The prompt must live in the same region as the chat. Leave the version empty to follow the draft."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:781
+#: admin/class-ai-chat-bedrock-admin.php:835
 msgid "While the prompt cannot be read, the system prompt above is used instead."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:785
+#: admin/class-ai-chat-bedrock-admin.php:839
 msgid "Prompt in use:"
 msgstr ""
 
 #. translators: %s: comma separated list of variable names.
-#: admin/class-ai-chat-bedrock-admin.php:793
+#: admin/class-ai-chat-bedrock-admin.php:847
 #, php-format
 msgid "These variables are sent literally because this plugin cannot resolve them: %s"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:801
+#: admin/class-ai-chat-bedrock-admin.php:855
 msgid "Off, use keyword search only"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:803
+#: admin/class-ai-chat-bedrock-admin.php:857
 msgid "Finds content by meaning instead of shared words. It adds one embedding request per question, plus one per post while indexing. Keyword search still runs when nothing relevant is found."
 msgstr ""
 
 #. translators: 1: indexed item count, 2: total published item count.
-#: admin/class-ai-chat-bedrock-admin.php:813
+#: admin/class-ai-chat-bedrock-admin.php:867
 #, php-format
 msgid "Indexed %1$d of %2$d published items."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:820
+#: admin/class-ai-chat-bedrock-admin.php:874
 msgid "Keep the index up to date in the background"
 msgstr ""
 
 #. translators: %s: human readable time until the next scheduled run.
-#: admin/class-ai-chat-bedrock-admin.php:827
+#: admin/class-ai-chat-bedrock-admin.php:881
 #, php-format
 msgid "Next background batch in %s. On a large site, run wp ai-chat-bedrock index once to finish faster."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:831
+#: admin/class-ai-chat-bedrock-admin.php:885
 msgid "The background run will be scheduled on the next page load."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:835
+#: admin/class-ai-chat-bedrock-admin.php:889
 msgid "Indexing runs in small batches. Editing a post marks it for re-indexing on the next run."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:840
+#: admin/class-ai-chat-bedrock-admin.php:894
 msgid "Generate image alt text and post excerpts"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:841
+#: admin/class-ai-chat-bedrock-admin.php:895
 msgid "Adds a Generate alt text action to the media library and an excerpt helper for posts. Alt text needs a model that accepts images, such as Claude. Existing alt text is never replaced unless you ask."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:846
+#: admin/class-ai-chat-bedrock-admin.php:900
 msgid "The list is discovered from your AWS account and region. Many current models require a cross-region inference profile ID."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:847
+#: admin/class-ai-chat-bedrock-admin.php:901
 msgid "Refresh model list"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:850
+#: admin/class-ai-chat-bedrock-admin.php:904
 msgid "No fallback"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:852
+#: admin/class-ai-chat-bedrock-admin.php:906
 msgid "Used only when the main model cannot answer because access was denied, the request was throttled, or Amazon Bedrock was unreachable. The reply states which model answered. Requests rejected for other reasons are never retried."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:873
+#: admin/class-ai-chat-bedrock-admin.php:927
 msgid "Allow unauthenticated visitors to use paid Bedrock requests"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:874
+#: admin/class-ai-chat-bedrock-admin.php:928
 msgid "Disabled by default. Enabling this can incur AWS charges even with rate limiting."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:882
+#: admin/class-ai-chat-bedrock-admin.php:936
 msgid "Show a floating chat button on every page"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:884
+#: admin/class-ai-chat-bedrock-admin.php:938
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:45
 msgid "Profile"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:890
+#: admin/class-ai-chat-bedrock-admin.php:944
 msgid "Pages that already contain the chat block or shortcode are left unchanged. Use a profile with guest access if visitors should be able to chat."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:894
+#: admin/class-ai-chat-bedrock-admin.php:948
 msgid "Log redacted request metadata"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:915
+#: admin/class-ai-chat-bedrock-admin.php:986
 msgid "The fallback model must be a valid model that differs from the main model; it was cleared."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:921
+#: admin/class-ai-chat-bedrock-admin.php:992
 msgid "The submitted model ID was not valid; the default model was kept."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:935
+#: admin/class-ai-chat-bedrock-admin.php:1006
 msgid "The credential could not be encrypted; the existing value was preserved."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:965
+#: admin/class-ai-chat-bedrock-admin.php:1036
 msgid "The guardrail identifier contained unsupported characters and was cleared."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:983
+#: admin/class-ai-chat-bedrock-admin.php:1054
 msgid "That embedding model is not supported; semantic search was left off."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:991
+#: admin/class-ai-chat-bedrock-admin.php:1062
 msgid "The managed prompt identifier contained unsupported characters and was cleared."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1015
+#: admin/class-ai-chat-bedrock-admin.php:1086
 msgid "The knowledge base ID must be alphanumeric; the value was cleared."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1054
+#: admin/class-ai-chat-bedrock-admin.php:1122
 msgid "Settings saved."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1117
+#: admin/class-ai-chat-bedrock-admin.php:1183
 msgid "AWS"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1125
+#: admin/class-ai-chat-bedrock-admin.php:1191
 #: public/class-ai-chat-bedrock-public.php:207
 #: public/class-ai-chat-bedrock-public.php:228
 #: public/partials/ai-chat-bedrock-public-display.php:20
 msgid "Chat"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1129
+#: admin/class-ai-chat-bedrock-admin.php:1195
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:48
 msgid "Grounding"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1133
+#: admin/class-ai-chat-bedrock-admin.php:1199
 msgid "Safety and spend"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1161
+#: admin/class-ai-chat-bedrock-admin.php:1227
 msgid "Configured — enter a value to replace"
 msgstr ""
 
@@ -1859,28 +1861,66 @@ msgstr ""
 msgid "View draft pages"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-settings.php:27
-msgid "Settings sections"
+#. translators: %s: number of settings groups applied.
+#: admin/partials/ai-chat-bedrock-admin-settings.php:37
+#, php-format
+msgid "Configuration imported. %s settings groups were applied. Credentials were not in the file and are unchanged."
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-settings.php:47
-msgid "Production guidance"
-msgstr ""
-
-#: admin/partials/ai-chat-bedrock-admin-settings.php:49
-msgid "Use a dedicated least-privilege IAM identity with only bedrock:InvokeModel for the selected models."
-msgstr ""
-
-#: admin/partials/ai-chat-bedrock-admin-settings.php:50
-msgid "Prefer credentials defined in wp-config.php constants so secrets are not stored in the database."
+#: admin/partials/ai-chat-bedrock-admin-settings.php:46
+msgid "The configuration could not be imported."
 msgstr ""
 
 #: admin/partials/ai-chat-bedrock-admin-settings.php:51
+msgid "Settings sections"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-settings.php:71
+msgid "Production guidance"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-settings.php:73
+msgid "Use a dedicated least-privilege IAM identity with only bedrock:InvokeModel for the selected models."
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-settings.php:74
+msgid "Prefer credentials defined in wp-config.php constants so secrets are not stored in the database."
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-settings.php:75
 msgid "Guest chat is disabled by default because every request can incur AWS charges."
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-settings.php:52
+#: admin/partials/ai-chat-bedrock-admin-settings.php:76
 msgid "Rotate AWS credentials immediately if database or WordPress administrator access is compromised."
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-settings.php:83
+msgid "Move this configuration to another site"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-settings.php:85
+msgid "Everything except credentials travels: models, prompts, profiles, limits, grounding, MCP servers and the tool policy. AWS keys and MCP tokens are never written to the file, because they are encrypted for this site and a configuration file is not a safe place for them."
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-settings.php:91
+msgid "Download configuration"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-settings.php:98
+msgid "Configuration file"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-settings.php:102
+msgid "Or paste the file contents"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-settings.php:106
+msgid "Apply configuration"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-settings.php:107
+msgid "Existing values are overwritten. Credentials are left alone."
 msgstr ""
 
 #: admin/partials/ai-chat-bedrock-admin-test.php:14
@@ -3134,6 +3174,22 @@ msgstr ""
 
 #: includes/class-ai-chat-bedrock-stream.php:133
 msgid "Streaming is unavailable; retrying without streaming."
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-transfer.php:129
+msgid "That is not a configuration file this plugin wrote."
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-transfer.php:132
+msgid "That file was written by something else."
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-transfer.php:135
+msgid "That file uses a format this version does not understand."
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-transfer.php:138
+msgid "The file contains no settings to apply."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-wp-mcp-server.php:193

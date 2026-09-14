@@ -492,6 +492,60 @@ class AI_Chat_Bedrock_Admin {
 	/**
 	 * Delete all stored conversations.
 	 */
+	/**
+	 * Send the configuration as a downloadable file.
+	 */
+	public function handle_export_settings() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'ai-chat-for-amazon-bedrock' ), '', array( 'response' => 403 ) );
+		}
+		check_admin_referer( 'ai_chat_bedrock_export_settings' );
+
+		$payload = AI_Chat_Bedrock_Transfer::export();
+		$body    = wp_json_encode( $payload, defined( 'JSON_PRETTY_PRINT' ) ? JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES : 0 );
+		$name    = 'ai-chat-bedrock-settings-' . gmdate( 'Ymd-His' ) . '.json';
+
+		nocache_headers();
+		header( 'Content-Type: application/json; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $name . '"' );
+		header( 'Content-Length: ' . strlen( (string) $body ) );
+		echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON body, not markup.
+		exit;
+	}
+
+	/**
+	 * Apply a configuration file.
+	 */
+	public function handle_import_settings() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'ai-chat-for-amazon-bedrock' ), '', array( 'response' => 403 ) );
+		}
+		check_admin_referer( 'ai_chat_bedrock_import_settings' );
+
+		$json = '';
+		if ( ! empty( $_FILES['aicfab_import_file']['tmp_name'] ) && is_uploaded_file( $_FILES['aicfab_import_file']['tmp_name'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- path checked by is_uploaded_file.
+			$size = isset( $_FILES['aicfab_import_file']['size'] ) ? (int) $_FILES['aicfab_import_file']['size'] : 0;
+			if ( $size > 0 && $size <= 512000 ) {
+				$json = (string) file_get_contents( $_FILES['aicfab_import_file']['tmp_name'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			}
+		}
+		if ( '' === $json && isset( $_POST['aicfab_import_json'] ) ) {
+			$json = (string) wp_unslash( $_POST['aicfab_import_json'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- parsed as JSON below, never echoed.
+		}
+
+		$result = AI_Chat_Bedrock_Transfer::import( $json );
+		$state  = is_wp_error( $result ) ? 'error' : 'imported';
+		$args   = array( 'aicfab-transfer' => $state );
+		if ( is_wp_error( $result ) ) {
+			$args['aicfab-message'] = rawurlencode( $result->get_error_message() );
+		} else {
+			$args['aicfab-applied'] = count( $result['applied'] );
+		}
+
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings' ) ) );
+		exit;
+	}
+
 	public function handle_clear_conversations() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'Permission denied.', 'ai-chat-for-amazon-bedrock' ), '', array( 'response' => 403 ) );
@@ -894,6 +948,23 @@ class AI_Chat_Bedrock_Admin {
 		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[debug_mode]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Log redacted request metadata', 'ai-chat-for-amazon-bedrock' ) . '</label>';
 	}
 
+	/**
+	 * Register a settings notice when the environment can show one.
+	 *
+	 * WordPress only defines add_settings_error() inside wp-admin. The validator is also run
+	 * by the
+	 * configuration import, so calling it directly made the validator admin-only.
+	 *
+	 * @param string $code    Notice code.
+	 * @param string $message Notice text.
+	 * @param string $type    Notice type.
+	 */
+	private function notice( $code, $message, $type = 'error' ) {
+		if ( function_exists( 'add_settings_error' ) ) {
+			add_settings_error( 'ai_chat_bedrock_settings', $code, $message, $type );
+		}
+	}
+
 	public function validate_settings( $input ) {
 		$input   = is_array( $input ) ? $input : array();
 		$current = get_option( 'ai_chat_bedrock_settings', array() );
@@ -912,13 +983,13 @@ class AI_Chat_Bedrock_Admin {
 
 		$fallback = isset( $input['fallback_model_id'] ) ? sanitize_text_field( $input['fallback_model_id'] ) : '';
 		if ( '' !== $fallback && ( ! AI_Chat_Bedrock_Models::is_valid_id( $fallback ) || $fallback === $output['model_id'] ) ) {
-			add_settings_error( 'ai_chat_bedrock_settings', 'fallback_model_id', __( 'The fallback model must be a valid model that differs from the main model; it was cleared.', 'ai-chat-for-amazon-bedrock' ) );
+			$this->notice( 'fallback_model_id', __( 'The fallback model must be a valid model that differs from the main model; it was cleared.', 'ai-chat-for-amazon-bedrock' ) );
 			$fallback = '';
 		}
 		$output['fallback_model_id'] = $fallback;
 
 		if ( ! AI_Chat_Bedrock_Models::is_valid_id( $model ) ) {
-			add_settings_error( 'ai_chat_bedrock_settings', 'model_id', __( 'The submitted model ID was not valid; the default model was kept.', 'ai-chat-for-amazon-bedrock' ) );
+			$this->notice( 'model_id', __( 'The submitted model ID was not valid; the default model was kept.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		if ( isset( $current['aws_region'] ) && $current['aws_region'] !== $output['aws_region'] ) {
 			AI_Chat_Bedrock_Models::flush_cache();
@@ -932,7 +1003,7 @@ class AI_Chat_Bedrock_Admin {
 			}
 			$encrypted = AI_Chat_Bedrock_Security::encrypt_secret( $new_value );
 			if ( '' === $encrypted ) {
-				add_settings_error( 'ai_chat_bedrock_settings', 'credential_encryption', __( 'The credential could not be encrypted; the existing value was preserved.', 'ai-chat-for-amazon-bedrock' ) );
+				$this->notice( 'credential_encryption', __( 'The credential could not be encrypted; the existing value was preserved.', 'ai-chat-for-amazon-bedrock' ) );
 				$output[ $key ] = isset( $current[ $key ] ) ? $current[ $key ] : '';
 			} else {
 				$output[ $key ] = $encrypted;
@@ -962,7 +1033,7 @@ class AI_Chat_Bedrock_Admin {
 		$guardrail_id           = isset( $input['guardrail_id'] ) ? trim( sanitize_text_field( $input['guardrail_id'] ) ) : '';
 		$output['guardrail_id'] = preg_match( '#^[A-Za-z0-9._:/-]{0,200}$#', $guardrail_id ) ? $guardrail_id : '';
 		if ( '' !== $guardrail_id && '' === $output['guardrail_id'] ) {
-			add_settings_error( 'ai_chat_bedrock_settings', 'guardrail_id', __( 'The guardrail identifier contained unsupported characters and was cleared.', 'ai-chat-for-amazon-bedrock' ) );
+			$this->notice( 'guardrail_id', __( 'The guardrail identifier contained unsupported characters and was cleared.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
 		$guardrail_version             = isset( $input['guardrail_version'] ) ? strtoupper( trim( sanitize_text_field( $input['guardrail_version'] ) ) ) : 'DRAFT';
@@ -980,7 +1051,7 @@ class AI_Chat_Bedrock_Admin {
 		$embedding = isset( $input['embedding_model_id'] ) ? sanitize_text_field( $input['embedding_model_id'] ) : '';
 		$known     = AI_Chat_Bedrock_Embeddings::models();
 		if ( '' !== $embedding && ! isset( $known[ $embedding ] ) ) {
-			add_settings_error( 'ai_chat_bedrock_settings', 'embedding_model_id', __( 'That embedding model is not supported; semantic search was left off.', 'ai-chat-for-amazon-bedrock' ) );
+			$this->notice( 'embedding_model_id', __( 'That embedding model is not supported; semantic search was left off.', 'ai-chat-for-amazon-bedrock' ) );
 			$embedding = '';
 		}
 		$output['embedding_model_id']   = $embedding;
@@ -988,7 +1059,7 @@ class AI_Chat_Bedrock_Admin {
 
 		$prompt_id = isset( $input['prompt_id'] ) ? trim( sanitize_text_field( $input['prompt_id'] ) ) : '';
 		if ( '' !== $prompt_id && ! preg_match( '#^[A-Za-z0-9:._/-]{1,2048}$#', $prompt_id ) ) {
-			add_settings_error( 'ai_chat_bedrock_settings', 'prompt_id', __( 'The managed prompt identifier contained unsupported characters and was cleared.', 'ai-chat-for-amazon-bedrock' ) );
+			$this->notice( 'prompt_id', __( 'The managed prompt identifier contained unsupported characters and was cleared.', 'ai-chat-for-amazon-bedrock' ) );
 			$prompt_id = '';
 		}
 		$output['prompt_id'] = $prompt_id;
@@ -1012,7 +1083,7 @@ class AI_Chat_Bedrock_Admin {
 			$output['knowledge_base_id'] = $knowledge_base;
 		} else {
 			$output['knowledge_base_id'] = '';
-			add_settings_error( 'ai_chat_bedrock_settings', 'knowledge_base_id', __( 'The knowledge base ID must be alphanumeric; the value was cleared.', 'ai-chat-for-amazon-bedrock' ) );
+			$this->notice( 'knowledge_base_id', __( 'The knowledge base ID must be alphanumeric; the value was cleared.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
 		if ( class_exists( 'AI_Chat_Bedrock_AWS_Credentials' ) ) {
@@ -1048,12 +1119,7 @@ class AI_Chat_Bedrock_Admin {
 		// WordPress registers its own "Settings saved" against the 'general' slug, which a
 		// settings_errors() call filtered to this plugin's slug never shows. Without this the
 		// page came back silently and there was no way to tell whether the save worked.
-		add_settings_error(
-			'ai_chat_bedrock_settings',
-			'aicfab_settings_saved',
-			__( 'Settings saved.', 'ai-chat-for-amazon-bedrock' ),
-			'success'
-		);
+		$this->notice( 'aicfab_settings_saved', __( 'Settings saved.', 'ai-chat-for-amazon-bedrock' ), 'success' );
 
 		return $output;
 	}
