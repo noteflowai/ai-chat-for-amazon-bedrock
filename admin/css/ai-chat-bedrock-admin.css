@@ -406,3 +406,24 @@
 .aicfab-prompt-error {
     margin: 8px 0;
 }
+
+/* Per-role request limits */
+.aicfab-role-limits {
+    border-collapse: collapse;
+    margin: 0 0 8px;
+}
+
+.aicfab-role-limits th {
+    font-weight: 400;
+    padding: 3px 12px 3px 0;
+    text-align: left;
+    width: 180px;
+}
+
+.aicfab-role-limits td {
+    padding: 3px 0;
+}
+
+.aicfab-role-limits input {
+    width: 90px;
+}

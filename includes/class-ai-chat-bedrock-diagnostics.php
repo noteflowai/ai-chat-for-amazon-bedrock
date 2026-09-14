@@ -184,6 +184,16 @@ class AI_Chat_Bedrock_Diagnostics {
 		}
 
 		$limit = isset( $options['rate_limit_per_minute'] ) ? absint( $options['rate_limit_per_minute'] ) : 5;
+
+		// Report the limit guests actually get, which a per-role override can change.
+		$guest_limit = $limit;
+		if ( class_exists( 'AI_Chat_Bedrock_Rate_Limits' ) ) {
+			$overrides = AI_Chat_Bedrock_Rate_Limits::all();
+			if ( isset( $overrides[ AI_Chat_Bedrock_Rate_Limits::GUEST_KEY ] ) ) {
+				$guest_limit = (int) $overrides[ AI_Chat_Bedrock_Rate_Limits::GUEST_KEY ];
+			}
+		}
+
 		return $this->result(
 			'guest_access',
 			__( 'Guest access', 'ai-chat-for-amazon-bedrock' ),
@@ -191,7 +201,7 @@ class AI_Chat_Bedrock_Diagnostics {
 			sprintf(
 				/* translators: %d: requests allowed per visitor per minute. */
 				__( 'Guest chat is enabled with %d requests per visitor each minute. Confirm AWS Budgets and model pricing.', 'ai-chat-for-amazon-bedrock' ),
-				max( 1, $limit )
+				max( 1, $guest_limit )
 			)
 		);
 	}

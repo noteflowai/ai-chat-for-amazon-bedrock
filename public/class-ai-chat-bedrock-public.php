@@ -162,7 +162,10 @@ class AI_Chat_Bedrock_Public {
 		}
 
 		$limit = isset( $options['rate_limit_per_minute'] ) ? absint( $options['rate_limit_per_minute'] ) : 5;
-		if ( ! AI_Chat_Bedrock_Security::check_rate_limit( 'chat-' . ( '' !== $profile ? $profile : 'default' ), max( 1, min( 60, $limit ) ) ) ) {
+		$limit = class_exists( 'AI_Chat_Bedrock_Rate_Limits' )
+			? AI_Chat_Bedrock_Rate_Limits::for_current_user( $limit )
+			: $limit;
+		if ( ! AI_Chat_Bedrock_Security::check_rate_limit( 'chat-' . ( '' !== $profile ? $profile : 'default' ), max( 1, min( AI_Chat_Bedrock_Rate_Limits::MAX_PER_ROLE, $limit ) ) ) ) {
 			wp_send_json_error( array( 'message' => __( 'Too many requests. Please wait a minute and try again.', 'ai-chat-for-amazon-bedrock' ) ), 429 );
 		}
 

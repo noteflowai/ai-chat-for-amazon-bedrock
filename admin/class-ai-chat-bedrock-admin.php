@@ -558,6 +558,7 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'enable_streaming', __( 'Streaming responses', 'ai-chat-for-amazon-bedrock' ), 'enable_streaming_render', 'aicfab_chat' );
 		$this->field( 'allow_public_chat', __( 'Guest access', 'ai-chat-for-amazon-bedrock' ), 'allow_public_chat_render', 'aicfab_chat' );
 		$this->field( 'rate_limit_per_minute', __( 'Requests per visitor per minute', 'ai-chat-for-amazon-bedrock' ), 'rate_limit_render', 'aicfab_chat' );
+		$this->field( 'role_limits', __( 'Per-role limits', 'ai-chat-for-amazon-bedrock' ), 'role_limits_render', 'aicfab_chat' );
 		$this->field( 'popup_site_wide', __( 'Floating chat', 'ai-chat-for-amazon-bedrock' ), 'popup_site_wide_render', 'aicfab_chat' );
 		$this->field( 'debug_mode', __( 'Debug logging', 'ai-chat-for-amazon-bedrock' ), 'debug_mode_render', 'aicfab_chat' );
 	}
@@ -703,6 +704,33 @@ class AI_Chat_Bedrock_Admin {
 		$value = (string) $this->option( 'suggested_questions', '' );
 		echo '<textarea id="aicfab_field_suggested_questions" name="ai_chat_bedrock_settings[suggested_questions]" rows="4" class="large-text code" placeholder="' . esc_attr__( 'What are your opening hours?', 'ai-chat-for-amazon-bedrock' ) . '">' . esc_textarea( $value ) . '</textarea>';
 		echo '<p class="description">' . esc_html__( 'One question per line, up to four. They appear as buttons above the input so visitors know what to ask, and disappear once the conversation starts.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+
+	public function role_limits_render() {
+		$fallback = max( 1, absint( $this->option( 'rate_limit_per_minute', 5 ) ) );
+		$limits   = AI_Chat_Bedrock_Rate_Limits::all();
+
+		echo '<fieldset>';
+		echo '<legend class="screen-reader-text">' . esc_html__( 'Requests per minute for each role', 'ai-chat-for-amazon-bedrock' ) . '</legend>';
+		echo '<table class="aicfab-role-limits"><tbody>';
+
+		foreach ( AI_Chat_Bedrock_Rate_Limits::roles() as $role => $label ) {
+			$field = 'aicfab_role_limit_' . $role;
+			$value = isset( $limits[ $role ] ) ? (int) $limits[ $role ] : '';
+			printf(
+				'<tr><th scope="row"><label for="%1$s">%2$s</label></th><td><input type="number" id="%1$s" name="ai_chat_bedrock_settings[role_limits][%3$s]" value="%4$s" min="0" max="%5$d" step="1" placeholder="%6$s"></td></tr>',
+				esc_attr( $field ),
+				esc_html( $label ),
+				esc_attr( $role ),
+				esc_attr( (string) $value ),
+				(int) AI_Chat_Bedrock_Rate_Limits::MAX_PER_ROLE,
+				esc_attr( (string) $fallback )
+			);
+		}
+
+		echo '</tbody></table></fieldset>';
+		echo '<p class="description">' . esc_html__( 'Optional. Leave a row empty to use the site-wide limit above. A visitor with several roles gets the most permissive of them, and requests are still counted per profile.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<p class="description"><strong>' . esc_html( AI_Chat_Bedrock_Rate_Limits::describe( $fallback ) ) . '</strong></p>';
 	}
 
 	public function managed_prompt_render() {
@@ -879,14 +907,20 @@ class AI_Chat_Bedrock_Admin {
 			}
 		}
 
-		$output['max_tokens']               = max( 100, min( 4000, isset( $input['max_tokens'] ) ? absint( $input['max_tokens'] ) : 1000 ) );
-		$output['temperature']              = max( 0, min( 1, isset( $input['temperature'] ) ? (float) $input['temperature'] : 0.7 ) );
-		$output['system_prompt']            = isset( $input['system_prompt'] ) ? AI_Chat_Bedrock_Security::string_substr( sanitize_textarea_field( $input['system_prompt'] ), 0, 8000 ) : '';
-		$output['chat_title']               = isset( $input['chat_title'] ) ? sanitize_text_field( $input['chat_title'] ) : 'Chat with AI';
-		$output['welcome_message']          = isset( $input['welcome_message'] ) ? sanitize_text_field( $input['welcome_message'] ) : 'Hello! How can I help you today?';
-		$output['suggested_questions']      = isset( $input['suggested_questions'] ) ? AI_Chat_Bedrock_Chat_Request::sanitize_suggestions( $input['suggested_questions'] ) : '';
-		$output['allow_public_chat']        = ! empty( $input['allow_public_chat'] );
-		$output['rate_limit_per_minute']    = max( 1, min( 60, isset( $input['rate_limit_per_minute'] ) ? absint( $input['rate_limit_per_minute'] ) : 5 ) );
+		$output['max_tokens']            = max( 100, min( 4000, isset( $input['max_tokens'] ) ? absint( $input['max_tokens'] ) : 1000 ) );
+		$output['temperature']           = max( 0, min( 1, isset( $input['temperature'] ) ? (float) $input['temperature'] : 0.7 ) );
+		$output['system_prompt']         = isset( $input['system_prompt'] ) ? AI_Chat_Bedrock_Security::string_substr( sanitize_textarea_field( $input['system_prompt'] ), 0, 8000 ) : '';
+		$output['chat_title']            = isset( $input['chat_title'] ) ? sanitize_text_field( $input['chat_title'] ) : 'Chat with AI';
+		$output['welcome_message']       = isset( $input['welcome_message'] ) ? sanitize_text_field( $input['welcome_message'] ) : 'Hello! How can I help you today?';
+		$output['suggested_questions']   = isset( $input['suggested_questions'] ) ? AI_Chat_Bedrock_Chat_Request::sanitize_suggestions( $input['suggested_questions'] ) : '';
+		$output['allow_public_chat']     = ! empty( $input['allow_public_chat'] );
+		$output['rate_limit_per_minute'] = max( 1, min( 60, isset( $input['rate_limit_per_minute'] ) ? absint( $input['rate_limit_per_minute'] ) : 5 ) );
+
+		if ( in_array( 'role_limits', $submitted, true ) || isset( $input['role_limits'] ) ) {
+			// Stored separately from the settings blob so role changes cannot bloat it.
+			AI_Chat_Bedrock_Rate_Limits::save( isset( $input['role_limits'] ) ? (array) $input['role_limits'] : array() );
+		}
+		unset( $output['role_limits'] );
 		$output['aws_use_role_credentials'] = ! empty( $input['aws_use_role_credentials'] );
 		$output['enable_streaming']         = empty( $input['enable_streaming'] ) ? 'off' : 'on';
 		$output['debug_mode']               = ! empty( $input['debug_mode'] ) ? 'on' : 'off';
