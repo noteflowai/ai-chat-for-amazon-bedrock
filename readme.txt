@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.16.0
+Stable tag: 1.17.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -43,6 +43,7 @@ Credentials are resolved in this order: `wp-config.php` constants, encrypted Wor
 * External MCP tools are unavailable to anonymous visitors by default.
 * Built-in WordPress MCP routes require authentication unless public read-only access is deliberately enabled.
 * Public read-only MCP requests and chat requests are rate limited, per minute and per profile, with optional per-role limits so staff and anonymous visitors need not share one cap.
+* Diagnostics generates the least-privilege IAM policy this site actually needs, so you can avoid a broad managed policy.
 * Input, history, token, tool-call, redirect and remote-response limits are enforced server-side.
 * MCP destinations must use public HTTPS URLs; private, loopback, link-local, credential-bearing and unsafe redirect targets are rejected.
 * Debug mode records redacted operational metadata, not prompts, responses, credentials or authorization headers.
@@ -252,8 +253,16 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 6. Content generator streaming a draft as it is written, before the post is created.
 7. Conversation log with search, source and rating filters, CSV export and helpfulness counts.
 8. Chat settings with the system prompt, an optional Amazon Bedrock managed prompt, suggested questions and streaming.
+9. Per-role request limits, so editors and administrators can be given more requests per minute than anonymous visitors.
+10. The least-privilege IAM policy generated for this site's own configuration, ready to paste into AWS.
 
 == Changelog ==
+
+= 1.17.0 =
+* Diagnostics now generates the IAM policy this site actually needs, scoped to the configured models, region and optional features, with a copy button.
+* The policy covers what is easy to get wrong by hand: InvokeModelWithResponseStream is a separate action from InvokeModel, a cross-region inference profile also needs its underlying foundation model, a guardrail needs ApplyGuardrail, and an AgentCore gateway uses its own service prefix.
+* Diagnostics reports which AWS identity the credentials belong to, so a site pointing at the wrong account is obvious.
+* Added the matching entries to Common fixes, including why chat can work while streaming fails.
 
 = 1.16.0 =
 * Added per-role request limits on the Chat tab, so editors or administrators can be given more requests per minute than anonymous visitors.
@@ -439,6 +448,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.17.0 =
+Diagnostics now generates a least-privilege IAM policy for your exact configuration and shows which AWS identity is in use. Nothing needs changing on existing sites.
 
 = 1.16.0 =
 Request limits can now be set per role, so staff are not held to the same per-minute cap as anonymous visitors. Existing sites keep their current limit until an override is added.

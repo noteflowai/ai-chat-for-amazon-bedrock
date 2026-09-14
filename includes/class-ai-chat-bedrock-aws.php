@@ -1057,6 +1057,88 @@ class AI_Chat_Bedrock_AWS {
 		return $data;
 	}
 
+	/**
+	 * The AWS account and identity the resolved credentials belong to.
+	 *
+	 * Onboarding goes wrong most often because the credentials in use are not the ones the
+	 * administrator thinks they are. This answers that directly, and supplies the account
+	 * ID the generated IAM policy needs. Cached because it never changes for a given set
+	 * of credentials.
+	 *
+	 * @param bool $refresh Ignore the cached value.
+	 * @return array|WP_Error Array with account and arn keys.
+	 */
+	public function caller_identity( $refresh = false ) {
+		$cache_key = 'aicfab_caller_identity';
+		if ( ! $refresh ) {
+			$cached = get_transient( $cache_key );
+			if ( is_array( $cached ) ) {
+				return $cached;
+			}
+		}
+
+		if ( ! $this->has_credentials() ) {
+			$message = '' !== $this->credential_error ? $this->credential_error : __( 'Amazon Bedrock credentials are not configured.', 'ai-chat-for-amazon-bedrock' );
+			return new WP_Error( 'aicfab_no_credentials', $message );
+		}
+		if ( ! preg_match( '/^[a-z]{2}(?:-gov)?-[a-z]+-\d$/', $this->region ) ) {
+			return new WP_Error( 'aicfab_invalid_region', __( 'The configured AWS region is invalid.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		// The query form of GetCallerIdentity, so the request carries no body to sign.
+		$endpoint = $this->service_endpoint( 'sts' ) . '/?Action=GetCallerIdentity&Version=2011-06-15';
+		$headers  = $this->signed_headers( $endpoint, '', 'GET', 'sts' );
+		if ( is_wp_error( $headers ) ) {
+			return $headers;
+		}
+
+		$response = wp_safe_remote_get(
+			$endpoint,
+			array(
+				'timeout'            => 10,
+				'redirection'        => 0,
+				'httpversion'        => '1.1',
+				'reject_unsafe_urls' => true,
+				'headers'            => $headers,
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'aicfab_transport', __( 'AWS Security Token Service could not be reached.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		$status = (int) wp_remote_retrieve_response_code( $response );
+		if ( $status < 200 || $status >= 300 ) {
+			return new WP_Error(
+				'aicfab_sts_error',
+				/* translators: %d: HTTP status code returned by AWS STS. */
+				sprintf( __( 'AWS Security Token Service returned HTTP %d.', 'ai-chat-for-amazon-bedrock' ), $status )
+			);
+		}
+
+		// A small XML response. Read the two fields directly rather than requiring an
+		// XML extension that a minimal PHP build may not have.
+		$body    = (string) wp_remote_retrieve_body( $response );
+		$account = '';
+		$arn     = '';
+		if ( preg_match( '#<Account>(\d{12})</Account>#', $body, $match ) ) {
+			$account = $match[1];
+		}
+		if ( preg_match( '#<Arn>([^<]{1,2048})</Arn>#', $body, $match ) ) {
+			$arn = $match[1];
+		}
+		if ( '' === $account ) {
+			return new WP_Error( 'aicfab_invalid_response', __( 'AWS Security Token Service returned an unexpected response.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		$identity = array(
+			'account' => $account,
+			'arn'     => $arn,
+		);
+		set_transient( $cache_key, $identity, 12 * HOUR_IN_SECONDS );
+		return $identity;
+	}
+
 	private function control_plane_get( $path, $host_prefix = 'bedrock' ) {
 		if ( ! $this->has_credentials() ) {
 			$message = '' !== $this->credential_error ? $this->credential_error : __( 'Amazon Bedrock credentials are not configured.', 'ai-chat-for-amazon-bedrock' );

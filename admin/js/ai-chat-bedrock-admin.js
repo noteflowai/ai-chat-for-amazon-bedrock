@@ -386,3 +386,37 @@
         } );
     } );
 } )( jQuery );
+
+/**
+ * Copy the generated IAM policy. Uses the async clipboard when available and falls back
+ * to selecting the field so the keyboard shortcut still works.
+ */
+(function () {
+	'use strict';
+	document.addEventListener('DOMContentLoaded', function () {
+		var button = document.getElementById('aicfab-copy-iam-policy');
+		var field = document.getElementById('aicfab-iam-policy');
+		var status = document.getElementById('aicfab-copy-iam-status');
+		if (!button || !field) {
+			return;
+		}
+		button.addEventListener('click', function () {
+			var done = function (message) {
+				if (status) {
+					status.textContent = message;
+				}
+			};
+			field.focus();
+			field.select();
+			if (navigator.clipboard && navigator.clipboard.writeText) {
+				navigator.clipboard.writeText(field.value).then(function () {
+					done(button.getAttribute('data-copied') || '');
+				}, function () {
+					done(button.getAttribute('data-manual') || '');
+				});
+				return;
+			}
+			done(button.getAttribute('data-manual') || '');
+		});
+	});
+})();

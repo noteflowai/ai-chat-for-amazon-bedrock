@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.16.0\n"
+"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.17.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-14T06:29:47+00:00\n"
+"POT-Creation-Date: 2026-09-14T07:01:31+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -119,17 +119,17 @@ msgid "Testing…"
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:72
-#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:20
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:25
 msgid "Pass"
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:73
-#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:21
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:26
 msgid "Review"
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:74
-#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:22
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:27
 msgid "Action required"
 msgstr ""
 
@@ -462,7 +462,7 @@ msgstr ""
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:47
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:143
 #: includes/class-ai-chat-bedrock-diagnostics.php:183
-#: includes/class-ai-chat-bedrock-diagnostics.php:190
+#: includes/class-ai-chat-bedrock-diagnostics.php:199
 msgid "Guest access"
 msgstr ""
 
@@ -938,45 +938,93 @@ msgstr ""
 msgid "No conversations recorded yet."
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:27
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:32
 msgid "These checks verify credentials, region, model selection, streaming support, and chat security defaults. The connectivity test sends one short paid request to Amazon Bedrock."
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:30
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:35
 msgid "Run connectivity test"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:37
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:42
 msgid "Check"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:38
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:43
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:77
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:253
 msgid "Status"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:39
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:44
 msgid "Details"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:53
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:58
+msgid "Required AWS permissions"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:59
+msgid "This policy covers exactly what this site is configured to call, and nothing else. Attach it to the IAM user or role the plugin uses instead of a broad managed policy. It changes when you change the model, region or optional features, so copy it again after editing settings."
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:63
+msgid "Credentials in use:"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:68
+msgid "The AWS identity could not be read, so the account ID below is a wildcard. Replace it with your account ID, or grant sts:GetCallerIdentity to have it filled in automatically."
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:73
+msgid "IAM policy for this site"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:77
+msgid "Copied to the clipboard."
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:77
+msgid "The policy is selected. Copy it with your keyboard."
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:77
+msgid "Copy policy"
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:81
+msgid "Model access must also be requested in the Amazon Bedrock console for the region above. Permissions alone are not enough: an account without model access is refused even with a correct policy."
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:84
 msgid "Common fixes"
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:55
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:86
 msgid "AccessDeniedException: grant bedrock:InvokeModel for the exact model or inference profile ARN."
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:56
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:87
 msgid "ValidationException or model not found: confirm model access in the region and whether a cross-region inference profile ID is required."
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:57
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:88
+msgid "Chat works but streaming fails: bedrock:InvokeModelWithResponseStream is a separate action from bedrock:InvokeModel and has to be granted as well."
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:89
 msgid "Streaming unavailable: install the PHP cURL extension, or keep buffered responses."
 msgstr ""
 
-#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:58
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:90
+msgid "Using a cross-region inference profile: the underlying foundation model must be allowed in every region the profile routes to, not only the profile itself."
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:91
+msgid "Guardrail configured: bedrock:ApplyGuardrail is required on the guardrail in addition to the model permissions."
+msgstr ""
+
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:92
 msgid "Credentials not found: define wp-config.php constants or allow the server IAM role."
 msgstr ""
 
@@ -1071,9 +1119,9 @@ msgstr ""
 
 #: admin/partials/ai-chat-bedrock-admin-display.php:97
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:83
-#: includes/class-ai-chat-bedrock-diagnostics.php:202
-#: includes/class-ai-chat-bedrock-diagnostics.php:205
-#: includes/class-ai-chat-bedrock-diagnostics.php:207
+#: includes/class-ai-chat-bedrock-diagnostics.php:211
+#: includes/class-ai-chat-bedrock-diagnostics.php:214
+#: includes/class-ai-chat-bedrock-diagnostics.php:216
 msgid "MCP tools"
 msgstr ""
 
@@ -1759,8 +1807,9 @@ msgstr ""
 #: includes/class-ai-chat-bedrock-aws.php:325
 #: includes/class-ai-chat-bedrock-aws.php:937
 #: includes/class-ai-chat-bedrock-aws.php:1006
-#: includes/class-ai-chat-bedrock-aws.php:1062
-#: includes/class-ai-chat-bedrock-aws.php:1122
+#: includes/class-ai-chat-bedrock-aws.php:1081
+#: includes/class-ai-chat-bedrock-aws.php:1144
+#: includes/class-ai-chat-bedrock-aws.php:1204
 msgid "Amazon Bedrock credentials are not configured."
 msgstr ""
 
@@ -1814,8 +1863,9 @@ msgstr ""
 
 #: includes/class-ai-chat-bedrock-aws.php:329
 #: includes/class-ai-chat-bedrock-aws.php:1016
-#: includes/class-ai-chat-bedrock-aws.php:1066
-#: includes/class-ai-chat-bedrock-aws.php:1128
+#: includes/class-ai-chat-bedrock-aws.php:1085
+#: includes/class-ai-chat-bedrock-aws.php:1148
+#: includes/class-ai-chat-bedrock-aws.php:1210
 msgid "The configured AWS region is invalid."
 msgstr ""
 
@@ -1845,7 +1895,7 @@ msgid "The Bedrock response stream was interrupted."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-aws.php:586
-#: includes/class-ai-chat-bedrock-aws.php:1299
+#: includes/class-ai-chat-bedrock-aws.php:1381
 msgid "Amazon Bedrock returned no usable content."
 msgstr ""
 
@@ -1855,12 +1905,12 @@ msgstr ""
 
 #: includes/class-ai-chat-bedrock-aws.php:773
 #: includes/class-ai-chat-bedrock-aws.php:977
-#: includes/class-ai-chat-bedrock-aws.php:1084
+#: includes/class-ai-chat-bedrock-aws.php:1166
 msgid "Amazon Bedrock could not be reached."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-aws.php:798
-#: includes/class-ai-chat-bedrock-aws.php:1097
+#: includes/class-ai-chat-bedrock-aws.php:1179
 msgid "Amazon Bedrock returned an invalid response."
 msgstr ""
 
@@ -1894,17 +1944,31 @@ msgstr ""
 msgid "The knowledge base returned an invalid response."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1088
+#: includes/class-ai-chat-bedrock-aws.php:1107
+msgid "AWS Security Token Service could not be reached."
+msgstr ""
+
+#. translators: %d: HTTP status code returned by AWS STS.
+#: includes/class-ai-chat-bedrock-aws.php:1115
+#, php-format
+msgid "AWS Security Token Service returned HTTP %d."
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-aws.php:1131
+msgid "AWS Security Token Service returned an unexpected response."
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-aws.php:1170
 msgid "The AWS identity is not authorized for this Amazon Bedrock operation."
 msgstr ""
 
 #. translators: %d: HTTP status code returned by Amazon Bedrock.
-#: includes/class-ai-chat-bedrock-aws.php:1092
+#: includes/class-ai-chat-bedrock-aws.php:1174
 #, php-format
 msgid "Amazon Bedrock returned HTTP %d."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1119
+#: includes/class-ai-chat-bedrock-aws.php:1201
 msgid "The AWS service name is invalid."
 msgstr ""
 
@@ -2073,36 +2137,36 @@ msgid "Only signed-in users can start paid Bedrock requests."
 msgstr ""
 
 #. translators: %d: requests allowed per visitor per minute.
-#: includes/class-ai-chat-bedrock-diagnostics.php:194
+#: includes/class-ai-chat-bedrock-diagnostics.php:203
 #, php-format
 msgid "Guest chat is enabled with %d requests per visitor each minute. Confirm AWS Budgets and model pricing."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:202
+#: includes/class-ai-chat-bedrock-diagnostics.php:211
 msgid "MCP tools are disabled."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:205
+#: includes/class-ai-chat-bedrock-diagnostics.php:214
 msgid "The built-in WordPress MCP endpoint is publicly readable. Disable public access unless it is required."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:207
+#: includes/class-ai-chat-bedrock-diagnostics.php:216
 msgid "MCP tools are enabled and require authentication."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:215
-#: includes/class-ai-chat-bedrock-diagnostics.php:231
+#: includes/class-ai-chat-bedrock-diagnostics.php:224
+#: includes/class-ai-chat-bedrock-diagnostics.php:240
 msgid "Model invocation"
 msgstr ""
 
 #. translators: %d: round trip duration in milliseconds.
-#: includes/class-ai-chat-bedrock-diagnostics.php:221
+#: includes/class-ai-chat-bedrock-diagnostics.php:230
 #, php-format
 msgid "Round trip took %d ms."
 msgstr ""
 
 #. translators: 1: input token count, 2: output token count.
-#: includes/class-ai-chat-bedrock-diagnostics.php:226
+#: includes/class-ai-chat-bedrock-diagnostics.php:235
 #, php-format
 msgid "Tokens used: %1$d input, %2$d output."
 msgstr ""
