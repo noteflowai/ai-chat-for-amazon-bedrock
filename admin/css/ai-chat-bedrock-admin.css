@@ -427,3 +427,42 @@
 .aicfab-role-limits input {
     width: 90px;
 }
+
+/* Setup progress and next steps on the dashboard */
+.aicfab-progress {
+    color: #50575e;
+    font-weight: 600;
+    margin: 0 0 10px;
+}
+
+.aicfab-progress.is-complete {
+    color: #007017;
+}
+
+.aicfab-next-heading {
+    font-size: 13px;
+    margin: 16px 0 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #50575e;
+}
+
+.aicfab-next {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.aicfab-next li {
+    border-top: 1px solid #f0f0f1;
+    padding: 8px 0;
+}
+
+.aicfab-next li:first-child {
+    border-top: 0;
+}
+
+.aicfab-next a {
+    display: block;
+    font-weight: 600;
+}

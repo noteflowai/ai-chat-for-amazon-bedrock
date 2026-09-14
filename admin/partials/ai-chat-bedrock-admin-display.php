@@ -34,32 +34,17 @@ $test_url        = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-test' )
 $mcp_url         = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-mcp' );
 $diagnostics_url = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-diagnostics' );
 
-$steps = array(
-	array(
-		'done'  => $credentials['configured'],
-		'label' => __( 'Connect AWS credentials', 'ai-chat-for-amazon-bedrock' ),
-		'help'  => $credentials['configured'] ? $credentials['message'] : __( 'Use wp-config.php constants, an IAM role, or encrypted settings.', 'ai-chat-for-amazon-bedrock' ),
-		'url'   => $settings_url,
-	),
-	array(
-		'done'  => isset( $regions[ $region ] ) && '' !== $model,
-		'label' => __( 'Choose a region and model', 'ai-chat-for-amazon-bedrock' ),
-		'help'  => isset( $regions[ $region ] ) && '' !== $model ? $regions[ $region ] . ' · ' . $model : __( 'Enable model access in your AWS account, then select the model here.', 'ai-chat-for-amazon-bedrock' ),
-		'url'   => $settings_url,
-	),
-	array(
-		'done'  => $today['requests'] > 0 || $week['requests'] > 0,
-		'label' => __( 'Send a test message', 'ai-chat-for-amazon-bedrock' ),
-		'help'  => __( 'Verify the model responds before publishing the chat.', 'ai-chat-for-amazon-bedrock' ),
-		'url'   => $test_url,
-	),
-	array(
-		'done'  => false,
-		'label' => __( 'Publish the chat', 'ai-chat-for-amazon-bedrock' ),
-		'help'  => __( 'Insert the Amazon Bedrock Chat block, or use the [ai_chat_bedrock] shortcode.', 'ai-chat-for-amazon-bedrock' ),
-		'url'   => admin_url( 'post-new.php?post_type=page' ),
-	),
+$aicfab_state = array(
+	'options'     => $options,
+	'credentials' => $credentials,
+	'model'       => $model,
+	'region_name' => isset( $regions[ $region ] ) ? $regions[ $region ] : '',
+	'requests'    => (int) $today['requests'] + (int) $week['requests'],
 );
+
+$steps           = AI_Chat_Bedrock_Setup_Steps::essential( $aicfab_state );
+$aicfab_progress = AI_Chat_Bedrock_Setup_Steps::progress( $steps );
+$aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 ?>
 <div class="wrap aicfab-dashboard">
 	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
@@ -140,7 +125,12 @@ $steps = array(
 				<?php foreach ( $series as $row ) : ?>
 					<li>
 						<span class="aicfab-usage-day"><?php echo esc_html( wp_date( 'M j', strtotime( $row['day'] . ' 00:00:00 UTC' ) ) ); ?></span>
-						<span class="aicfab-usage-bar" aria-hidden="true"><span style="width: <?php echo esc_attr( max( 2, (int) round( ( $row['requests'] / $peak ) * 100 ) ) ); ?>%"></span></span>
+						<?php
+						// A day with no requests must read as empty. A minimum width made every
+						// idle day look like it had traffic.
+						$aicfab_bar = 0 === (int) $row['requests'] ? 0 : max( 2, (int) round( ( $row['requests'] / $peak ) * 100 ) );
+						?>
+						<span class="aicfab-usage-bar" aria-hidden="true"><span style="width: <?php echo esc_attr( (string) $aicfab_bar ); ?>%"></span></span>
 						<span class="aicfab-usage-count">
 							<?php
 							printf(
@@ -188,6 +178,20 @@ $steps = array(
 	<div class="aicfab-columns">
 		<div class="aicfab-panel">
 			<h2><?php esc_html_e( 'Quick start', 'ai-chat-for-amazon-bedrock' ); ?></h2>
+			<p class="aicfab-progress<?php echo $aicfab_progress['complete'] ? ' is-complete' : ''; ?>">
+				<?php if ( $aicfab_progress['complete'] ) : ?>
+					<?php esc_html_e( 'Setup is complete. The chat is live on this site.', 'ai-chat-for-amazon-bedrock' ); ?>
+				<?php else : ?>
+					<?php
+					printf(
+						/* translators: 1: steps completed, 2: steps in total. */
+						esc_html__( 'Step %1$s of %2$s done.', 'ai-chat-for-amazon-bedrock' ),
+						esc_html( number_format_i18n( $aicfab_progress['done'] ) ),
+						esc_html( number_format_i18n( $aicfab_progress['total'] ) )
+					);
+					?>
+				<?php endif; ?>
+			</p>
 			<ol class="aicfab-steps">
 				<?php foreach ( $steps as $index => $step ) : ?>
 					<li class="<?php echo $step['done'] ? 'is-done' : ''; ?>">
@@ -204,6 +208,20 @@ $steps = array(
 				<a class="button" href="<?php echo esc_url( $diagnostics_url ); ?>"><?php esc_html_e( 'Run diagnostics', 'ai-chat-for-amazon-bedrock' ); ?></a>
 				<a class="button" href="<?php echo esc_url( $test_url ); ?>"><?php esc_html_e( 'Test chat', 'ai-chat-for-amazon-bedrock' ); ?></a>
 			</p>
+
+			<?php if ( ! empty( $aicfab_next ) ) : ?>
+				<h3 class="aicfab-next-heading"><?php esc_html_e( 'Worth doing next', 'ai-chat-for-amazon-bedrock' ); ?></h3>
+				<ul class="aicfab-next">
+					<?php foreach ( $aicfab_next as $aicfab_suggestion ) : ?>
+						<li>
+							<a href="<?php echo esc_url( $aicfab_suggestion['url'] ); ?>"><?php echo esc_html( $aicfab_suggestion['label'] ); ?></a>
+							<span class="aicfab-step-help"><?php echo esc_html( $aicfab_suggestion['help'] ); ?></span>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+			<?php else : ?>
+				<p class="aicfab-card-detail"><?php esc_html_e( 'Grounding, logging, a fallback model and request limits are all configured.', 'ai-chat-for-amazon-bedrock' ); ?></p>
+			<?php endif; ?>
 		</div>
 
 		<div class="aicfab-panel">

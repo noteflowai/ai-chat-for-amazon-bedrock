@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.19.0
+Stable tag: 1.20.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -43,6 +43,7 @@ Credentials are resolved in this order: `wp-config.php` constants, encrypted Wor
 * External MCP tools are unavailable to anonymous visitors by default.
 * Built-in WordPress MCP routes require authentication unless public read-only access is deliberately enabled.
 * Public read-only MCP requests and chat requests are rate limited, per minute and per profile, with optional per-role limits so staff and anonymous visitors need not share one cap.
+* The dashboard checklist reads the site rather than guessing, so it can actually be finished, and then suggests what is still worth configuring.
 * Diagnostics generates the least-privilege IAM policy this site actually needs, so you can avoid a broad managed policy.
 * Input, history, token, tool-call, redirect and remote-response limits are enforced server-side.
 * MCP destinations must use public HTTPS URLs; private, loopback, link-local, credential-bearing and unsafe redirect targets are rejected.
@@ -246,7 +247,7 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 == Screenshots ==
 
 1. A grounded answer on the front end, citing the pages it used, with a timestamp, a copy action and a helpfulness control.
-2. Dashboard with today's usage, a seven-day trend and a per-model breakdown of requests and tokens.
+2. Dashboard with today's usage, a seven-day trend, a per-model breakdown of requests and tokens, and the setup checklist.
 3. Grounding settings: site content search, semantic search with an embedding model, batch indexing progress, knowledge base and controlled abilities.
 4. Diagnostics running a live Amazon Bedrock connectivity test, with round-trip time and tokens used.
 5. MCP screen split into Servers, AI clients, Tool policy and Activity, here showing the tool policy and audit log switch.
@@ -257,8 +258,15 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 10. The least-privilege IAM policy generated for this site's own configuration, ready to paste into AWS.
 11. Drafting a first set of pages from a description of the business. Every page is a draft, and nothing existing is touched.
 12. Content gaps: the questions visitors asked that the site has no content for, each with a shortcut to draft an answer.
+13. A setup checklist that reads the site's own state, followed by the improvements still worth making.
 
 == Changelog ==
+
+= 1.20.0 =
+* Fixed the dashboard checklist. The last step was written as permanently incomplete, so the list could never be finished however the site was configured. It now detects the chat block, the shortcode and the floating button, and says which one it found.
+* The checklist shows progress, and once setup is done it lists what is still worth configuring: grounding, conversation recording, a fallback model, and a guest limit when guest chat is on.
+* Each suggestion disappears once it no longer applies.
+* Fixed the seven-day usage chart drawing a small bar for days with no requests, which made idle days look busy.
 
 = 1.19.0 =
 * Added a content gap report to the Conversations screen: the questions visitors asked that no site content answered, or that they marked unhelpful, grouped by subject and counted.
@@ -467,6 +475,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.20.0 =
+The dashboard checklist now reflects the site instead of being permanently unfinished, and suggests what is worth configuring next.
 
 = 1.19.0 =
 Adds a content gap report showing what visitors asked that your site does not answer. Gaps appear for exchanges recorded from this version on.
