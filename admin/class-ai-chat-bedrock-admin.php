@@ -40,6 +40,33 @@ class AI_Chat_Bedrock_Admin {
 			return;
 		}
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-admin.js', array( 'jquery' ), $this->version, true );
+
+		if ( false !== strpos( (string) $hook_suffix, $this->plugin_name . '-scaffold' ) ) {
+			wp_enqueue_script( $this->plugin_name . '-scaffold', plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-scaffold.js', array(), $this->version, true );
+			wp_localize_script(
+				$this->plugin_name . '-scaffold',
+				'aicfabScaffold',
+				array(
+					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+					'nonce'   => wp_create_nonce( 'aicfab_scaffold' ),
+					'i18n'    => array(
+						'describeFirst' => __( 'Describe the site first.', 'ai-chat-for-amazon-bedrock' ),
+						'thinking'      => __( 'Working out which pages this site needs…', 'ai-chat-for-amazon-bedrock' ),
+						/* translators: %d: number of pages proposed. */
+						'planReady'     => __( '%d pages proposed. Review them before creating drafts.', 'ai-chat-for-amazon-bedrock' ),
+						'writing'       => __( 'Writing…', 'ai-chat-for-amazon-bedrock' ),
+						'skippedByYou'  => __( 'Skipped.', 'ai-chat-for-amazon-bedrock' ),
+						'editDraft'     => __( 'Edit the draft', 'ai-chat-for-amazon-bedrock' ),
+						/* translators: 1: pages handled so far, 2: pages in total. */
+						'progress'      => __( '%1$d of %2$d done…', 'ai-chat-for-amazon-bedrock' ),
+						'finished'      => __( 'Finished. Every page was created as a draft.', 'ai-chat-for-amazon-bedrock' ),
+						'unexpected'    => __( 'The request could not be completed.', 'ai-chat-for-amazon-bedrock' ),
+						'includeLabel'  => __( 'Include', 'ai-chat-for-amazon-bedrock' ),
+						'titleLabel'    => __( 'Page title', 'ai-chat-for-amazon-bedrock' ),
+					),
+				)
+			);
+		}
 		wp_localize_script(
 			$this->plugin_name,
 			'ai_chat_bedrock_admin',
@@ -102,6 +129,7 @@ class AI_Chat_Bedrock_Admin {
 		add_submenu_page( $this->plugin_name, __( 'Test Chat', 'ai-chat-for-amazon-bedrock' ), __( 'Test Chat', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-test', array( $this, 'display_plugin_admin_test_page' ) );
 		add_submenu_page( $this->plugin_name, __( 'MCP Settings', 'ai-chat-for-amazon-bedrock' ), __( 'MCP Settings', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-mcp', array( $this, 'display_plugin_admin_mcp_page' ) );
 		add_submenu_page( $this->plugin_name, __( 'Content Generator', 'ai-chat-for-amazon-bedrock' ), __( 'Content Generator', 'ai-chat-for-amazon-bedrock' ), 'edit_posts', $this->plugin_name . '-generator', array( $this, 'display_plugin_admin_generator_page' ) );
+		add_submenu_page( $this->plugin_name, __( 'Site Pages', 'ai-chat-for-amazon-bedrock' ), __( 'Site Pages', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_Scaffold::CAPABILITY, $this->plugin_name . '-scaffold', array( $this, 'display_plugin_admin_scaffold_page' ) );
 		add_submenu_page( $this->plugin_name, __( 'Chat Profiles', 'ai-chat-for-amazon-bedrock' ), __( 'Chat Profiles', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-profiles', array( $this, 'display_plugin_admin_profiles_page' ) );
 		add_submenu_page( $this->plugin_name, __( 'Conversations', 'ai-chat-for-amazon-bedrock' ), __( 'Conversations', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-conversations', array( $this, 'display_plugin_admin_conversations_page' ) );
 		add_submenu_page( $this->plugin_name, __( 'Diagnostics', 'ai-chat-for-amazon-bedrock' ), __( 'Diagnostics', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-diagnostics', array( $this, 'display_plugin_admin_diagnostics_page' ) );
@@ -109,6 +137,10 @@ class AI_Chat_Bedrock_Admin {
 
 	public function display_plugin_admin_generator_page() {
 		include plugin_dir_path( __FILE__ ) . 'partials/ai-chat-bedrock-admin-generator.php';
+	}
+
+	public function display_plugin_admin_scaffold_page() {
+		include plugin_dir_path( __FILE__ ) . 'partials/ai-chat-bedrock-admin-scaffold.php';
 	}
 
 	public function display_plugin_admin_profiles_page() {

@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.17.0
+Stable tag: 1.18.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -111,6 +111,7 @@ All content tools are optional, require the capability to edit the item, and are
 * **Editor assistant**: a block editor sidebar with six writing actions, namely improve, shorten, expand, summarize, suggest titles and translate. Suggestions are never saved automatically.
 * **Image alt text**: describe an image with a Bedrock vision model and store the result in the standard WordPress alt text field, one image at a time or as a media library bulk action. Existing alt text is never replaced unless you ask, and only JPEG, PNG, GIF and WebP files are accepted.
 * **Excerpts**: summarize the current post into the excerpt field for review before saving.
+* **Site pages**: describe the business and get a first set of pages as drafts, with titles you can edit before anything is written. Nothing is published, a title that already exists is left alone, and the theme and menus are never touched.
 
 = Connect AI clients to this site =
 
@@ -255,8 +256,15 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 8. Chat settings with the system prompt, an optional Amazon Bedrock managed prompt, suggested questions and streaming.
 9. Per-role request limits, so editors and administrators can be given more requests per minute than anonymous visitors.
 10. The least-privilege IAM policy generated for this site's own configuration, ready to paste into AWS.
+11. Drafting a first set of pages from a description of the business. Every page is a draft, and nothing existing is touched.
 
 == Changelog ==
+
+= 1.18.0 =
+* Added Site Pages: describe the business, review the proposed page list, and get each page as a draft. Output is always a draft, an existing title is skipped rather than overwritten, and the theme, menus and options are untouched.
+* Bedrock failures now say what to do. A model that cannot be called on demand, a model ID the region does not offer, a model the provider retired, a missing model grant and an IAM denial were all reported with one generic message before, and each has a different fix.
+* An IAM denial now names the action that was refused.
+* Replaced a call to get_page_by_title(), which WordPress deprecated in 6.2.
 
 = 1.17.0 =
 * Diagnostics now generates the IAM policy this site actually needs, scoped to the configured models, region and optional features, with a copy button.
@@ -448,6 +456,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.18.0 =
+Adds Site Pages for drafting a starting set of pages, and replaces the generic Bedrock error message with the specific fix for each cause. Nothing is published automatically.
 
 = 1.17.0 =
 Diagnostics now generates a least-privilege IAM policy for your exact configuration and shows which AWS identity is in use. Nothing needs changing on existing sites.

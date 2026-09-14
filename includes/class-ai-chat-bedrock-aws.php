@@ -548,10 +548,10 @@ class AI_Chat_Bedrock_AWS {
 		);
 
 		if ( $status >= 400 ) {
-			/* translators: %d: HTTP status code returned by Amazon Bedrock. */
-			$failure = $this->error(
-				/* translators: %d: HTTP status code returned by Amazon Bedrock. */
-				sprintf( __( 'Amazon Bedrock returned HTTP %d. Check the model access and IAM permissions.', 'ai-chat-for-amazon-bedrock' ), $status ),
+			// The streaming body is consumed by the write callback, so classify what it captured.
+			$explained = AI_Chat_Bedrock_Bedrock_Errors::explain( $status, $state['raw'], $model_id, $this->region );
+			$failure   = $this->error(
+				$explained['message'],
 				'aicfab_http_error',
 				$status
 			);
@@ -782,9 +782,9 @@ class AI_Chat_Bedrock_AWS {
 			)
 		);
 		if ( $status < 200 || $status >= 300 ) {
-			$failure = $this->error(
-				/* translators: %d: HTTP status code returned by Amazon Bedrock. */
-				sprintf( __( 'Amazon Bedrock returned HTTP %d. Check the model access and IAM permissions.', 'ai-chat-for-amazon-bedrock' ), $status ),
+			$explained = AI_Chat_Bedrock_Bedrock_Errors::explain( $status, wp_remote_retrieve_body( $response ), $model_id, $this->region );
+			$failure   = $this->error(
+				$explained['message'],
 				'aicfab_http_error',
 				$status
 			);

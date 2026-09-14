@@ -30,6 +30,8 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-security.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-rate-limits.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-iam-policy.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-bedrock-errors.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-scaffold.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-aws-credentials.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-event-stream.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-usage.php';
@@ -120,6 +122,10 @@ class AI_Chat_Bedrock {
 
 		$media = new AI_Chat_Bedrock_Media_Assistant();
 		$this->loader->add_action( 'rest_api_init', $media, 'register_routes' );
+
+		$scaffold = new AI_Chat_Bedrock_Scaffold();
+		$this->loader->add_action( 'wp_ajax_aicfab_scaffold_plan', $scaffold, 'ajax_plan' );
+		$this->loader->add_action( 'wp_ajax_aicfab_scaffold_create', $scaffold, 'ajax_create' );
 
 		$feedback = new AI_Chat_Bedrock_Feedback();
 		$this->loader->add_action( 'rest_api_init', $feedback, 'register_routes' );
