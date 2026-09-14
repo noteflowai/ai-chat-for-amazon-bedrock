@@ -33,6 +33,37 @@ class AI_Chat_Bedrock_Iam_Policy {
 	const ACCOUNT_WILDCARD = '*';
 
 	/**
+	 * Shorten a caller ARN for display.
+	 *
+	 * The Diagnostics screen shows which identity the plugin is signing with, and the useful
+	 * part of that is the role or user name. The rest identifies infrastructure: the full
+	 * account number, and for an assumed role the session name, which on EC2 is the instance
+	 * id. Admins share this screen in support threads and in screenshots, so printing the
+	 * whole ARN hands out more than the question needs.
+	 *
+	 * Enough is kept to recognise the identity: the last four digits of the account, and the
+	 * role or user name. The generated policy below is unaffected, because that has to stay
+	 * pasteable and therefore has to carry the real account.
+	 *
+	 * @param string $arn Caller ARN from GetCallerIdentity.
+	 * @return string Display form, or an empty string when there is nothing to show.
+	 */
+	public static function display_identity( $arn ) {
+		$arn = trim( (string) $arn );
+		if ( '' === $arn ) {
+			return '';
+		}
+		// arn:aws:sts::123456789012:assumed-role/Role/session or arn:aws:iam::123456789012:user/Name
+		if ( ! preg_match( '#^(arn:[a-z0-9-]+:(?:sts|iam)::)(\d{4,})(:[a-z-]+/)(.+)$#i', $arn, $parts ) ) {
+			return $arn;
+		}
+		$account = str_repeat( '*', max( 0, strlen( $parts[2] ) - 4 ) ) . substr( $parts[2], -4 );
+		$path    = explode( '/', $parts[4] );
+		// Drop the session name; the role or user name is what identifies the permission set.
+		return $parts[1] . $account . $parts[3] . $path[0];
+	}
+
+	/**
 	 * Prefixes that mark a cross-Region inference profile rather than a plain model.
 	 *
 	 * @return array

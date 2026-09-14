@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.30.1
+Stable tag: 1.31.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -274,6 +274,11 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 13. A setup checklist that reads the site's own state, followed by the improvements still worth making.
 
 == Changelog ==
+
+= 1.31.0 =
+* Diagnostics no longer prints the whole caller ARN. It kept the full AWS account number and, for an assumed role on EC2, the session name, which is the instance id. Admins share that screen in support threads and screenshots, and neither identifier is needed to answer which role is in use. The account is now masked to its last four digits and the session name is dropped; the role or user name, which is the useful part, is unchanged.
+* The generated IAM policy is untouched: it has to stay pasteable, so it keeps the real account wherever an ARN needs one.
+* Refreshed nine catalogue screenshots. They predated the Site Pages menu item added in 1.18.0, so every one showed a sidebar the plugin no longer has, and the Diagnostics shot predated the guardrail and knowledge base checks added in 1.27.0.
 
 = 1.30.1 =
 * Corrected a claim in 1.30.0. Amazon Bedrock is registered with the WordPress 7.1 connector registry, and any plugin reading `wp_get_connectors()` sees it, but it does not appear on the Settings > Connectors screen: that screen renders only connectors with a credential to manage, and Bedrock has none to store. Confirmed by registering two connectors of the same shape, one declaring an API key and one declaring none; only the first was shown. Making the card appear would mean claiming a credential method Bedrock does not use.
@@ -548,6 +553,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.31.0 =
+The Diagnostics screen no longer prints your full AWS account number or EC2 instance id, so the screen is safe to share. The generated IAM policy is unchanged.
 
 = 1.30.1 =
 Documentation correction: Bedrock joins the WordPress 7.1 connector registry but is not shown on the Connectors screen, which lists only connectors that store a credential.

@@ -61,7 +61,7 @@ $labels          = array(
 	<?php if ( '' !== $aicfab_arn ) : ?>
 		<p>
 			<strong><?php esc_html_e( 'Credentials in use:', 'ai-chat-for-amazon-bedrock' ); ?></strong>
-			<code><?php echo esc_html( $aicfab_arn ); ?></code>
+			<code><?php echo esc_html( AI_Chat_Bedrock_Iam_Policy::display_identity( $aicfab_arn ) ); ?></code>
 		</p>
 	<?php else : ?>
 		<p class="notice notice-warning inline" style="padding:8px 12px">

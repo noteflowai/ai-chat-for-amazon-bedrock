@@ -269,6 +269,44 @@ check_policy( false === strpos( $rendered, '\\/' ), 'slashes in ARNs are not esc
 check_policy( false === strpos( $rendered, 'bedrock:*' ), 'no statement grants every Bedrock action' );
 check_policy( false === strpos( $rendered, '"Resource": "arn:aws:bedrock:*::foundation-model/*"' ), 'no statement grants every model' );
 
+// --- Identity shown on screen ------------------------------------------------
+
+// The Diagnostics screen names the identity the plugin signs with, and admins share that
+// screen in support threads. The full ARN carries the whole account number and, for an
+// assumed role on EC2, the instance id as the session name. Neither is needed to answer
+// "which role is this", so neither is printed.
+$aicfab_full = 'arn:aws:sts::111122223333:assumed-role/WordPressBedrockRole/i-0123456789abcdef0';
+$aicfab_shown = AI_Chat_Bedrock_Iam_Policy::display_identity( $aicfab_full );
+check_policy( false === strpos( $aicfab_shown, '111122223333' ), 'The full account number must not be shown.' );
+check_policy( false === strpos( $aicfab_shown, 'i-0123456789abcdef0' ), 'The session name, which is the instance id on EC2, must not be shown.' );
+check_policy( false !== strpos( $aicfab_shown, 'WordPressBedrockRole' ), 'The role name must survive: it is what the line is for.' );
+check_policy( false !== strpos( $aicfab_shown, '6047' ), 'Enough of the account must survive to recognise it.' );
+check_policy(
+	'arn:aws:iam::********3333:role/WordPressBedrockRole' === AI_Chat_Bedrock_Iam_Policy::display_identity( 'arn:aws:iam::111122223333:role/WordPressBedrockRole' ),
+	'An IAM role ARN must be shortened in the same shape.'
+);
+check_policy(
+	false !== strpos( AI_Chat_Bedrock_Iam_Policy::display_identity( 'arn:aws-us-gov:iam::111122223333:role/GovRole' ), 'aws-us-gov' ),
+	'A GovCloud partition must be preserved.'
+);
+// Anything unrecognised is passed through rather than mangled into something misleading.
+check_policy( 'not-an-arn' === AI_Chat_Bedrock_Iam_Policy::display_identity( 'not-an-arn' ), 'An unrecognised value must pass through unchanged.' );
+check_policy( '' === AI_Chat_Bedrock_Iam_Policy::display_identity( '' ), 'An empty value must stay empty.' );
+
+// The generated policy is the opposite case: it has to stay pasteable, so it keeps the real
+// account wherever an ARN needs one. A configuration with no account-scoped resource has
+// none to keep, which is why a plain foundation model produces a policy without one.
+$aicfab_profile = AI_Chat_Bedrock_Iam_Policy::to_json( AI_Chat_Bedrock_Iam_Policy::build( array(
+	'region' => 'us-east-1', 'account' => '111122223333', 'streaming' => true,
+	'models' => array( 'us.anthropic.claude-haiku-4-5-20251001-v1:0' ),
+) ) );
+$aicfab_plain = AI_Chat_Bedrock_Iam_Policy::to_json( AI_Chat_Bedrock_Iam_Policy::build( array(
+	'region' => 'us-east-1', 'account' => '111122223333', 'streaming' => true,
+	'models' => array( 'anthropic.claude-3-haiku-20240307-v1:0' ),
+) ) );
+check_policy( false !== strpos( $aicfab_profile, '111122223333' ), 'An inference profile ARN needs the account and must keep it.' );
+check_policy( false === strpos( $aicfab_plain, '111122223333' ), 'A foundation model ARN carries no account, so none should appear.' );
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );
