@@ -13,6 +13,7 @@
       "@php tests/aws-payload.php",
       "@php tests/mcp-transport.php",
       "@php tests/site-abilities.php",
+      "@php tests/eval.php",
       "@php tests/core-ai.php",
       "@php tests/wp-mcp-server.php",
       "@php tests/oauth.php",

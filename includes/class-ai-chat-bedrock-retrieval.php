@@ -29,7 +29,18 @@ class AI_Chat_Bedrock_Retrieval {
 	 * @param array  $options Plugin options.
 	 * @return string Empty string when no context is available.
 	 */
-	public static function context( $query, $options = null ) {
+	/**
+	 * Assemble reference material for a question.
+	 *
+	 * @param string     $query   Visitor question.
+	 * @param array|null $options Settings, or null to read them.
+	 * @param float|null $score   Receives the best passage relevance, or 0.0 when the match
+	 *                            came from keyword search, which produces no score. A caller
+	 *                            that only needs the text can ignore it.
+	 * @return string Context block, or an empty string when nothing was found.
+	 */
+	public static function context( $query, $options = null, &$score = null ) {
+		$score = 0.0;
 		if ( ! is_array( $options ) ) {
 			$options = get_option( 'ai_chat_bedrock_settings', array() );
 			$options = is_array( $options ) ? $options : array();
@@ -51,6 +62,20 @@ class AI_Chat_Bedrock_Retrieval {
 		$passages = apply_filters( 'ai_chat_bedrock_retrieved_passages', $passages, $query );
 		if ( empty( $passages ) ) {
 			return '';
+		}
+
+		/*
+		 * The best relevance behind this answer, carried out so the caller can tell a strong
+		 * match from a marginal one. Whether content was found is a weaker fact than how well
+		 * it matched: on a six-page corpus the strongest match for an unrelated question
+		 * scored 0.1223 against a floor of 0.12, while genuinely answered questions scored
+		 * 0.153 to 0.408. A single flag cannot distinguish those, and the content-gap report
+		 * is built on that flag.
+		 */
+		foreach ( $passages as $passage ) {
+			if ( isset( $passage['score'] ) && is_numeric( $passage['score'] ) ) {
+				$score = max( (float) $score, (float) $passage['score'] );
+			}
 		}
 
 		return self::format( $passages );

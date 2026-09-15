@@ -68,6 +68,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-wp-mcp-server.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-oauth.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-core-ai.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-eval.php';
 		$this->loader = new AI_Chat_Bedrock_Loader();
 	}
 

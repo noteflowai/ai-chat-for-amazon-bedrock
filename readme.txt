@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.31.0
+Stable tag: 1.32.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -14,11 +14,11 @@ Streaming chat and governed tool-using agents on Amazon Bedrock. IAM roles, no s
 
 Connect WordPress directly to **Amazon Bedrock** using your own AWS account. Add a configurable AI chat powered by Claude, Amazon Nova or Titan, Meta Llama, Mistral, or DeepSeek model formats, then let authenticated conversations use governed tools through the Model Context Protocol (MCP).
 
-The plugin is built for site owners, developers and teams already using AWS who want predictable requests and security-focused defaults. Model requests go from your WordPress server to the configured Amazon Bedrock endpoint; the plugin author does not operate an AI relay service.
+It is built for site owners, developers and teams already using AWS who want predictable requests and security-focused defaults. Model requests go from your WordPress server to the configured Amazon Bedrock endpoint; the plugin author does not operate an AI relay service.
 
 = What you can build =
 
-* An authenticated internal assistant, or a public chatbot with explicit guest access
+* An internal assistant, or a public chatbot with explicit guest access
 * An agent that answers from your own content and from approved MCP tools
 * A WordPress MCP endpoint that clients such as Claude Code, Cursor or VS Code can read
 
@@ -33,31 +33,31 @@ The plugin is built for site owners, developers and teams already using AWS who 
 
 = Streaming and credentials =
 
-Streaming is on by default. Each visitor message sends one authenticated POST request to a plugin REST route, and Bedrock response events are relayed to the browser with Server-Sent Events. Conversation content never appears in a URL, and one visitor message still results in exactly one Bedrock invocation. Streaming needs the PHP cURL extension; when it is unavailable, disabled or interrupted, the chat falls back to a single buffered request so answers are still delivered.
+Streaming is on by default. Each message sends one authenticated POST request to a plugin REST route, and Bedrock response events are relayed to the browser with Server-Sent Events. Conversation content never appears in a URL, and one visitor message still results in exactly one Bedrock invocation. Streaming needs the PHP cURL extension; when it is unavailable, disabled or interrupted, the chat falls back to a single buffered request so answers are still delivered.
 
 Credentials are resolved in this order: `wp-config.php` constants, encrypted WordPress settings, environment variables, an ECS or EKS task role, then an EC2 instance role using IMDSv2. The last three let a site on AWS run with no long-lived keys in WordPress at all. Role credentials are cached encrypted and refreshed before expiry, role lookups can be disabled with the `ai_chat_bedrock_use_role_credentials` filter, and the active source is shown in the settings without revealing secrets.
 
 = Security and cost defaults =
 
-* Only signed-in users can chat until guest access is explicitly enabled.
+* Only signed-in users can chat until guest access is enabled.
 * External MCP tools are unavailable to visitors by default.
 * Built-in WordPress MCP routes require authentication unless public read-only access is enabled.
-* Chat and public MCP requests are rate limited per minute and per profile, with optional per-role limits so staff and visitors need not share one cap.
-* The chat is not shown to visitors until it can answer, so a half-finished setup is never public.
+* Chat and public MCP requests are rate limited per minute and per profile, with optional per-role limits.
+* The chat is hidden from visitors until it can answer, so a half-finished setup is never public.
 * A visitor can stop a long answer, and the server stops the Bedrock request with it.
-* Diagnostics generates the least-privilege IAM policy this site needs, and the dashboard checklist reads the site.
+* Diagnostics generates the least-privilege IAM policy this site needs.
 * A configuration can be downloaded and applied on another site, never including credentials.
 * Input, history, token, tool-call and redirect limits are enforced server-side.
 * MCP destinations must use public HTTPS URLs; private, loopback, link-local and credential-bearing targets are rejected.
 * Debug mode records redacted operational metadata, not prompts, responses or credentials.
 
-The dashboard shows requests and tokens for the last seven days, broken down by the model that actually answered, so a fallback or a profile using a different model is visible. Counters are kept for 30 days and contain no prompts, responses or identities.
+The dashboard shows requests and tokens for seven days, broken down by the model that actually answered, so a fallback or a profile using a different model is visible. Counters are kept for 30 days and contain no prompts, responses or identities.
 
-Request limiting reduces accidental usage but is not a billing guarantee. Token counts are what Bedrock reported, not a price estimate: review Amazon Bedrock pricing and configure AWS Budgets before opening chat to public traffic.
+Request limiting reduces accidental usage but is not a billing guarantee for AWS charges. Token counts are what Bedrock reported, not a price estimate: review Amazon Bedrock pricing and configure AWS Budgets before opening chat to public traffic.
 
 = Tool use and visible agent steps =
 
-An authenticated conversation can discover and call tools from an administrator-configured MCP server. Tool calls execute on the WordPress server and their results go back to Bedrock for the final answer, always framed as untrusted data.
+An authenticated conversation can call tools from an administrator-configured MCP server. Tool calls execute on the WordPress server and their results go back to Bedrock for the final answer, always framed as untrusted data.
 
 Tool use is governed by a policy layer:
 
@@ -74,15 +74,15 @@ While the agent works, the chat names the tools it is running. The finished answ
 
 = Managed prompts =
 
-Point the chat at a prompt in Amazon Bedrock Prompt Management and its text replaces the local system prompt, so one prompt can be reviewed and versioned in AWS and reused by every site. Pin a version for stability or follow the draft to pick up edits. `{{site_name}}`, `{{site_description}}`, `{{site_url}}` and `{{current_date}}` are filled in; anything else is sent exactly as written. The prompt must live in the same region as the chat, the text is cached briefly, and if it cannot be read the local system prompt is used instead rather than sending an empty one.
+Point the chat at a prompt in Bedrock Prompt Management and its text replaces the local system prompt, so one prompt can be reviewed and versioned in AWS and reused by every site. Pin a version for stability or follow the draft to pick up edits. `{{site_name}}`, `{{site_description}}`, `{{site_url}}` and `{{current_date}}` are filled in; anything else is sent exactly as written. The prompt must live in the same region as the chat, the text is cached briefly, and if it cannot be read the local system prompt is used instead rather than sending an empty one.
 
 = Semantic search =
 
-Keyword search only finds passages that share words with the question, so "when will my parcel arrive" misses a page titled "Getting parcels to you". Choose an embedding model and the plugin indexes published content, then matches questions by meaning. Indexing runs in small batches from the settings screen, or unattended through WP-Cron, or with `wp ai-chat-bedrock index` on a large site. Editing a post marks it for re-indexing, and keyword search still runs when nothing relevant is found. Questions your site does not cover return no context rather than an unrelated passage.
+Keyword search only finds passages sharing words with the question, so "when will my parcel arrive" misses "Getting parcels to you". Choose an embedding model and the plugin indexes published content, then matches questions by meaning. Indexing runs in small batches from the settings screen, unattended through WP-Cron, or with `wp ai-chat-bedrock index`. Editing a post marks it for re-indexing, and keyword search still runs when nothing relevant is found. Questions your site does not cover return no context rather than an unrelated passage.
 
 = Fallback model =
 
-Model access is the most common reason a Bedrock chat stops answering: a model is not enabled, a request is throttled, or the service is briefly unreachable. Choose a fallback model and those requests are retried once on it, and the reply states which model answered. An identifier Bedrock does not recognize is treated the same way. Requests rejected for any other reason, including an invalid payload, missing credentials or the daily limit, are never retried. A stream is retried only before anything reaches the browser, so text is never duplicated.
+Model access is the most common reason a Bedrock chat stops answering: a model is not enabled, throttled, or briefly unreachable. Choose a fallback model and those requests are retried once on it, and the reply states which model answered. An unrecognized identifier is treated the same way. Requests rejected for any other reason are never retried. A stream is retried only before anything reaches the browser, so text is never duplicated.
 
 = Chat experience =
 
@@ -96,11 +96,11 @@ Any chat can render as a floating button instead of an inline panel:
 
 `[ai_chat_bedrock mode="popup" launcher="Ask us" profile="support"]`
 
-A site-wide floating chat can be enabled in the settings with its own profile. Pages that already contain the chat block or shortcode are left unchanged, so the chat is never duplicated. The launcher is keyboard accessible, closes with Escape, stays open while a visitor browses other pages in the same tab, and adapts to small screens.
+A site-wide floating chat can be enabled with its own profile. Pages that already contain the chat block or shortcode are left unchanged, so the chat is never duplicated. The launcher is keyboard accessible, closes with Escape, stays open while a visitor browses other pages in the same tab, and adapts to small screens.
 
 = Multiple chats with profiles =
 
-One installation can serve several chats. Each profile has its own key and can override the model, system prompt, title, welcome message, suggested questions, token limit, temperature, request limit, guest access, grounding and passage count. Anything left empty inherits the main settings.
+One installation serves several chats. Each profile has its own key and can override the model, system prompt, title, welcome message, suggested questions, token limit, temperature, request limit, guest access, grounding and passage count. Anything left empty inherits the main settings.
 
 `[ai_chat_bedrock profile="support"]`
 
@@ -110,12 +110,12 @@ Profile keys arriving from a page, block or chat request are validated against t
 
 All content tools are optional, require the capability to edit the item, and are rate limited.
 
-* **Content generator**: turn a topic into a draft post with a chosen tone, length and language, plus source notes the draft should rely on. The draft streams into the screen as it is written and the post is only created once the model finishes, so an interrupted generation leaves nothing behind. Output is always a draft, existing posts are never modified, and the model is told not to invent statistics, quotes, prices, dates or named sources.
-* **Editor assistant**: a block editor sidebar with six writing actions, namely improve, shorten, expand, summarize, suggest titles and translate. Suggestions are never saved automatically.
-* **Image alt text**: describe an image with a Bedrock vision model and store the result in the standard WordPress alt text field, one image at a time or as a media library bulk action. Existing alt text is never replaced unless you ask, and only JPEG, PNG, GIF and WebP files are accepted.
+* **Content generator**: turn a topic into a draft post with a chosen tone, length and language, plus source notes the draft should rely on. The draft streams in as it is written and the post is created only once the model finishes, so an interrupted generation leaves nothing behind. Output is always a draft, existing posts are never modified, and the model is told not to invent statistics, quotes, prices, dates or sources.
+* **Editor assistant**: a block editor sidebar with six writing actions: improve, shorten, expand, summarize, suggest titles, translate. Suggestions are never saved automatically.
+* **Image alt text**: describe an image with a Bedrock vision model and store it in the standard alt text field, singly or as a media library bulk action. Existing alt text is never replaced unless you ask; JPEG, PNG, GIF and WebP only.
 * **Excerpts**: summarize the current post into the excerpt field for review before saving.
-* **Site pages**: describe the business and get a first set of pages as drafts, with titles you can edit before anything is written. Nothing is published, a title that already exists is left alone, and the theme and menus are never touched.
-* **Content gaps**: the questions visitors asked that no site content answered, or that they marked unhelpful, grouped and counted. Each one links straight to the generator with the subject filled in.
+* **Site pages**: describe the business and get a first set of pages as drafts, with editable titles. Nothing is published, an existing title is left alone, and the theme and menus are never touched.
+* **Content gaps**: questions no site content answered, or that visitors marked unhelpful, grouped and counted. Each links to the generator with the subject filled in.
 
 = Use Bedrock through WordPress's own AI API =
 
@@ -127,6 +127,16 @@ daily limit and usage accounting configured here apply to them.
 On 7.1 it also joins the connector registry, declared as storing no credential: Bedrock signs
 with IAM, not a key this site must keep. The Settings > Connectors screen lists only
 connectors with a credential to manage, so Bedrock is absent there.
+
+= Check the answers, and prove a change helped =
+
+Write questions with expectations, then run `wp ai-chat-bedrock eval`. Each goes through the
+pipeline the chat uses; results are reported by category: grounding, match strength, citation,
+required and forbidden text, tool call, token budget. It exits nonzero to gate a deployment, and
+`--compare` shows the per-category difference after a change.
+
+Every check is a program, not an opinion: no judge model, no scoring of style, and anything
+not checkable this way is reported as unchecked rather than as a pass.
 
 = Connect AI clients to this site =
 
@@ -153,15 +163,15 @@ Endpoints must be public HTTPS URLs. Private, loopback, link-local and credentia
 
 = Site content abilities =
 
-An optional set of narrow abilities can be registered for agents and other plugins: search published posts and pages, read one published post or page, suggest an SEO title and meta description without saving, look up published WooCommerce products, and create a draft post.
+Optional narrow abilities can be registered for agents and other plugins: search published posts and pages, read one published post or page, suggest an SEO title and meta description without saving, look up published WooCommerce products, and create a draft post.
 
 Reads never return draft, private or password-protected content. The only write operation creates a new draft: nothing is published, updated or deleted, and WooCommerce orders and customers are never exposed. Draft creation requires `edit_posts`, reads require the capability configured for MCP tools, and the feature is disabled by default.
 
 = Stored data and privacy =
 
-No custom database table is created. The conversation log is optional and off by default; when enabled it holds the 200 most recent exchanges in a WordPress option, with retention from 1 to 90 days, and can be searched, filtered, exported to CSV and deleted per user or in full.
+No custom table is created. The conversation log is optional and off by default; when enabled it holds the 200 most recent exchanges in a WordPress option, with retention from 1 to 90 days, and can be searched, filtered, exported to CSV and deleted per user or in full.
 
-The Privacy Policy section below sets out what is sent where, what is stored and what administrators are responsible for disclosing.
+The Privacy Policy section sets out what is sent where, what is stored and what administrators are responsible for disclosing.
 
 == Installation ==
 
@@ -274,6 +284,12 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 13. A setup checklist that reads the site's own state, followed by the improvements still worth making.
 
 == Changelog ==
+
+= 1.32.0 =
+* Added a golden set and `wp ai-chat-bedrock eval`. The plugin could stop a bad request and could not say whether an answer that got through was any good, which leaves the most common failure unattended: a prompt edit or a model swap changes behaviour with no diff to review. Cases run through the same pipeline the chat uses and are reported by category, with a nonzero exit so the run can gate a deployment.
+* No judge model. On a deployed multi-turn agent, a built-in LLM judge surfaced 2 of 9 human-confirmed problem patterns and its gate flagged zero of 100 rounds in a batch with 23 confirmed defects (arXiv:2606.10315); in 113 of 114 rounds its own note described the defect while the score read something else. So every check here is a program, every check names its category, and the verdict is derived from the check records alone, which is what stops a detected problem from failing to reach the gate.
+* Retrieval now reports how well the best passage matched, not only that one was found. Running the new evaluation against a real site found the reason it matters: an unrelated question retrieved a passage at 0.1223 against a floor of 0.12, while genuinely answered questions scored 0.153 to 0.408. A single flag cannot tell those apart, and the content gap report is built on that flag. The threshold is unchanged, since one site's corpus is not enough to set it; a case can now require a real match instead.
+* `--compare` reports the per-category difference between two runs and refuses to read a changed number of checks as progress.
 
 = 1.31.0 =
 * Diagnostics no longer prints the whole caller ARN. It kept the full AWS account number and, for an assumed role on EC2, the session name, which is the instance id. Admins share that screen in support threads and screenshots, and neither identifier is needed to answer which role is in use. The account is now masked to its last four digits and the session name is dropped; the role or user name, which is the useful part, is unchanged.
@@ -553,6 +569,9 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.32.0 =
+New: write a golden set of questions and run `wp ai-chat-bedrock eval` to check answers by category, with a nonzero exit for CI. Programmatic checks only; no judge model.
 
 = 1.31.0 =
 The Diagnostics screen no longer prints your full AWS account number or EC2 instance id, so the screen is safe to share. The generated IAM policy is unchanged.

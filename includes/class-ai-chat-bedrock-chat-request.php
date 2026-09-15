@@ -108,9 +108,10 @@ class AI_Chat_Bedrock_Chat_Request {
 
 		// Whether site content was found for this question. An answer with nothing behind
 		// it is the signal that the site is missing a page on the subject.
-		$grounded = false;
+		$grounded  = false;
+		$relevance = 0.0;
 		if ( class_exists( 'AI_Chat_Bedrock_Retrieval' ) ) {
-			$context = AI_Chat_Bedrock_Retrieval::context( $message, $options );
+			$context = AI_Chat_Bedrock_Retrieval::context( $message, $options, $relevance );
 			if ( '' !== $context ) {
 				$grounded   = true;
 				$messages[] = array(
@@ -132,9 +133,13 @@ class AI_Chat_Bedrock_Chat_Request {
 		);
 
 		return array(
-			'messages' => $messages,
-			'message'  => $message,
-			'grounded' => $grounded,
+			'messages'  => $messages,
+			'message'   => $message,
+			'grounded'  => $grounded,
+			// How well the best passage matched, so a caller can tell a strong match from one
+			// that barely cleared the floor. Zero when keyword search supplied the passages,
+			// which return no score.
+			'relevance' => (float) $relevance,
 		);
 	}
 
