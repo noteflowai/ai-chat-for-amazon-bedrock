@@ -41,6 +41,47 @@ class AI_Chat_Bedrock_Admin {
 		}
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-admin.js', array( 'jquery' ), $this->version, true );
 
+		if ( false !== strpos( (string) $hook_suffix, $this->plugin_name . '-eval' ) ) {
+			wp_enqueue_script( $this->plugin_name . '-eval', plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-eval.js', array(), $this->version, true );
+			wp_localize_script(
+				$this->plugin_name . '-eval',
+				'AICFABEval',
+				array(
+					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+					'nonce'   => wp_create_nonce( 'aicfab_eval' ),
+					'i18n'    => array(
+						'question'       => __( 'Question', 'ai-chat-for-amazon-bedrock' ),
+						'expect'         => __( 'Expect', 'ai-chat-for-amazon-bedrock' ),
+						'mustInclude'    => __( 'Must include, comma separated', 'ai-chat-for-amazon-bedrock' ),
+						'mustNotInclude' => __( 'Must not include, comma separated', 'ai-chat-for-amazon-bedrock' ),
+						'cite'           => __( 'Page the answer should credit', 'ai-chat-for-amazon-bedrock' ),
+						'minRelevance'   => __( 'Minimum match, 0 to 1', 'ai-chat-for-amazon-bedrock' ),
+						'tokenCeiling'   => __( 'Output token ceiling', 'ai-chat-for-amazon-bedrock' ),
+						'remove'         => __( 'Remove', 'ai-chat-for-amazon-bedrock' ),
+						'removed'        => __( 'Case removed. Save to keep the change.', 'ai-chat-for-amazon-bedrock' ),
+						'saving'         => __( 'Saving cases…', 'ai-chat-for-amazon-bedrock' ),
+						'saved'          => __( 'Cases saved.', 'ai-chat-for-amazon-bedrock' ),
+						/* translators: %d: number of cases that were dropped. */
+						'savedWithDrops' => __( 'Cases saved. %d could not be run and were dropped: a question and an expectation are both required.', 'ai-chat-for-amazon-bedrock' ),
+						'proposing'      => __( 'Reading recorded questions…', 'ai-chat-for-amazon-bedrock' ),
+						/* translators: %d: number of proposed questions. */
+						'proposed'       => __( '%d question(s) proposed. Add the ones you want, then state what a good answer contains.', 'ai-chat-for-amazon-bedrock' ),
+						'addThis'        => __( 'Add as a case', 'ai-chat-for-amazon-bedrock' ),
+						'addedUnsaved'   => __( 'Added to the table. Save to keep it.', 'ai-chat-for-amazon-bedrock' ),
+						'running'        => __( 'Running the checks. One Amazon Bedrock request per case.', 'ai-chat-for-amazon-bedrock' ),
+						'ran'            => __( 'Run finished.', 'ai-chat-for-amazon-bedrock' ),
+						'failed'         => __( 'The request failed.', 'ai-chat-for-amazon-bedrock' ),
+						'pass'           => __( 'Pass', 'ai-chat-for-amazon-bedrock' ),
+						'fail'           => __( 'Fail', 'ai-chat-for-amazon-bedrock' ),
+						'casesPassed'    => __( 'cases passed', 'ai-chat-for-amazon-bedrock' ),
+						'neverChecked'   => __( 'Never checked in this run:', 'ai-chat-for-amazon-bedrock' ),
+						'notComparable'  => __( 'not comparable with the previous run, the number of checks changed', 'ai-chat-for-amazon-bedrock' ),
+						'sinceLastRun'   => __( 'since the previous run', 'ai-chat-for-amazon-bedrock' ),
+					),
+				)
+			);
+		}
+
 		if ( false !== strpos( (string) $hook_suffix, $this->plugin_name . '-scaffold' ) ) {
 			wp_enqueue_script( $this->plugin_name . '-scaffold', plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-scaffold.js', array(), $this->version, true );
 			wp_localize_script(
@@ -132,11 +173,21 @@ class AI_Chat_Bedrock_Admin {
 		add_submenu_page( $this->plugin_name, __( 'Site Pages', 'ai-chat-for-amazon-bedrock' ), __( 'Site Pages', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_Scaffold::CAPABILITY, $this->plugin_name . '-scaffold', array( $this, 'display_plugin_admin_scaffold_page' ) );
 		add_submenu_page( $this->plugin_name, __( 'Chat Profiles', 'ai-chat-for-amazon-bedrock' ), __( 'Chat Profiles', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-profiles', array( $this, 'display_plugin_admin_profiles_page' ) );
 		add_submenu_page( $this->plugin_name, __( 'Conversations', 'ai-chat-for-amazon-bedrock' ), __( 'Conversations', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-conversations', array( $this, 'display_plugin_admin_conversations_page' ) );
+		add_submenu_page( $this->plugin_name, __( 'Answer checks', 'ai-chat-for-amazon-bedrock' ), __( 'Answer checks', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_Eval::CAPABILITY, $this->plugin_name . '-eval', array( $this, 'display_plugin_admin_eval_page' ) );
 		add_submenu_page( $this->plugin_name, __( 'Diagnostics', 'ai-chat-for-amazon-bedrock' ), __( 'Diagnostics', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-diagnostics', array( $this, 'display_plugin_admin_diagnostics_page' ) );
 	}
 
 	public function display_plugin_admin_generator_page() {
 		include plugin_dir_path( __FILE__ ) . 'partials/ai-chat-bedrock-admin-generator.php';
+	}
+
+	/**
+	 * Answer checks screen.
+	 *
+	 * @return void
+	 */
+	public function display_plugin_admin_eval_page() {
+		include plugin_dir_path( __FILE__ ) . 'partials/ai-chat-bedrock-admin-eval.php';
 	}
 
 	public function display_plugin_admin_scaffold_page() {

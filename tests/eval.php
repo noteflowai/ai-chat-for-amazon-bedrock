@@ -55,6 +55,38 @@ function absint( $value ) {
 function __( $text, $domain = '' ) {
 	return $text;
 }
+$GLOBALS['aicfab_logging'] = true;
+$GLOBALS['aicfab_gaps']    = array();
+$GLOBALS['aicfab_rated']   = array();
+$GLOBALS['aicfab_caps']    = true;
+
+function current_user_can( $capability ) {
+	return (bool) $GLOBALS['aicfab_caps'];
+}
+
+/** Stands in for the conversation log. */
+class AI_Chat_Bedrock_Conversations {
+	public static function enabled() {
+		return (bool) $GLOBALS['aicfab_logging'];
+	}
+	public static function query( $args = array() ) {
+		return array( 'entries' => $GLOBALS['aicfab_rated'], 'total' => count( $GLOBALS['aicfab_rated'] ) );
+	}
+}
+
+/**
+ * Stands in for the insight layer.
+ *
+ * Returns a flat list of groups, which is what the real one returns. Reading a wrapper key here
+ * is the mistake this stub exists to keep out: it produced no proposals at all and nothing
+ * failed, because an empty result looks the same as nothing to propose.
+ */
+class AI_Chat_Bedrock_Insights {
+	public static function content_gaps( $args = array() ) {
+		return $GLOBALS['aicfab_gaps'];
+	}
+}
+
 class AI_Chat_Bedrock_Security {
 	public static function string_substr( $text, $start, $length ) {
 		return substr( (string) $text, $start, $length );
@@ -245,6 +277,67 @@ $reflect = new ReflectionMethod( 'AI_Chat_Bedrock_Eval', 'check' );
 $reflect->setAccessible( true );
 $odd = $reflect->invoke( null, 'vibes', true, true, '' );
 check_eval( 'delivery' === $odd['category'], 'An unknown category must not enter the report under its own name.' );
+
+// --- Proposals come from what the site was actually asked -----------------------
+
+$GLOBALS['aicfab_options'][ AI_Chat_Bedrock_Eval::SET_OPTION ] = array();
+$GLOBALS['aicfab_gaps'] = array(
+	array( 'question' => 'What time does the shop close?', 'asked' => 2, 'ungrounded' => 2, 'disliked' => 0 ),
+	array( 'question' => 'Do you repair cargo bikes?', 'asked' => 1, 'ungrounded' => 1, 'disliked' => 0 ),
+);
+$GLOBALS['aicfab_rated'] = array(
+	array( 'question' => 'Can I return a used bike?', 'grounded' => 1 ),
+	array( 'question' => 'Where are you based?', 'grounded' => 0 ),
+);
+$proposed = AI_Chat_Bedrock_Eval::propose();
+check_eval( 4 === count( $proposed['cases'] ), 'Both sources must contribute proposals; got ' . count( $proposed['cases'] ) . '.' );
+
+/*
+ * The shape guard. The insight layer returns a flat list, and reading a wrapper key from it
+ * returned nothing while looking like success, because no proposals and nothing to propose are
+ * the same output. This asserts a gap question really arrives.
+ */
+$questions = array_column( $proposed['cases'], 'question' );
+check_eval( in_array( 'What time does the shop close?', $questions, true ), 'A content gap must reach the proposals.' );
+check_eval( in_array( 'Can I return a used bike?', $questions, true ), 'An unhelpful rating must reach the proposals.' );
+
+// The expectation follows from the record: a grounded answer that was disliked still expects
+// grounding, an ungrounded one does not.
+$by_question = array_combine( $questions, $proposed['cases'] );
+check_eval( 'unsupported' === $by_question['What time does the shop close?']['expect'], 'A gap must be proposed as unsupported.' );
+check_eval( 'grounded' === $by_question['Can I return a used bike?']['expect'], 'A disliked grounded answer must still expect grounding.' );
+check_eval( 'unsupported' === $by_question['Where are you based?']['expect'], 'A disliked ungrounded answer must expect unsupported.' );
+
+/*
+ * A proposal must not invent the ground truth. Required and forbidden text is what "good" means
+ * for a question, and no record contains it, so the author states it. Filling it in here would
+ * make the set agree with whatever the site already does.
+ */
+foreach ( $proposed['cases'] as $proposal ) {
+	check_eval( ! isset( $proposal['must_include'] ), 'A proposal must not invent required text.' );
+	check_eval( ! isset( $proposal['must_not_include'] ), 'A proposal must not invent forbidden text.' );
+	check_eval( ! empty( $proposal['todo'] ), 'A proposal must say what the author still has to state.' );
+}
+
+// A question already in the set is not offered twice.
+AI_Chat_Bedrock_Eval::save_cases( array( array( 'question' => 'Do you repair cargo bikes?', 'expect' => 'unsupported' ) ) );
+$again = AI_Chat_Bedrock_Eval::propose();
+check_eval(
+	! in_array( 'Do you repair cargo bikes?', array_column( $again['cases'], 'question' ), true ),
+	'A question already in the set must not be proposed again.'
+);
+
+// With logging off there is nothing recorded to propose from, and the reason is given rather
+// than an empty list that looks like a clean bill of health.
+$GLOBALS['aicfab_logging'] = false;
+$off = AI_Chat_Bedrock_Eval::propose();
+check_eval( array() === $off['cases'], 'Proposals require recorded questions.' );
+check_eval( ! empty( $off['skipped'] ), 'An empty proposal list must explain itself.' );
+$GLOBALS['aicfab_logging'] = true;
+
+// Authoring and running are an administrator's job: a run spends money and the cases define
+// what good means for the whole site.
+check_eval( 'manage_options' === AI_Chat_Bedrock_Eval::CAPABILITY, 'Evaluation must require manage_options.' );
 
 if ( $failures ) {
 	echo "FAILED\n";

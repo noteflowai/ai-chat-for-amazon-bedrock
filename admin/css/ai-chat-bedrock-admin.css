@@ -473,3 +473,45 @@
     display: inline-block;
     max-width: 32em;
 }
+
+/*
+ * Answer checks. Seven columns do not fit a narrow admin screen, and a clipped column is worse
+ * than a scrollbar because nothing tells the reader a field exists.
+ */
+.aicfab-eval-scroll {
+	overflow-x: auto;
+	padding-bottom: 4px;
+}
+
+.aicfab-eval-cases {
+	min-width: 62rem;
+}
+
+.aicfab-eval-cases textarea {
+	width: 100%;
+	min-width: 12rem;
+}
+
+.aicfab-eval-cases input[type="text"] {
+	width: 100%;
+	min-width: 9rem;
+}
+
+.aicfab-eval-cases input[type="number"] {
+	width: 6rem;
+}
+
+.aicfab-eval-checks {
+	margin: 0;
+	list-style: none;
+}
+
+/* Never colour alone: each line already carries a tick or a cross. */
+.aicfab-eval-ok {
+	color: #0a6b3d;
+}
+
+.aicfab-eval-bad {
+	color: #8a1f11;
+	font-weight: 600;
+}

@@ -137,6 +137,11 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'deleted_post', 'AI_Chat_Bedrock_Setup_Steps', 'flush' );
 
 		$scaffold = new AI_Chat_Bedrock_Scaffold();
+		$eval     = new AI_Chat_Bedrock_Eval();
+		$this->loader->add_action( 'wp_ajax_aicfab_eval_save', $eval, 'ajax_save' );
+		$this->loader->add_action( 'wp_ajax_aicfab_eval_propose', $eval, 'ajax_propose' );
+		$this->loader->add_action( 'wp_ajax_aicfab_eval_run', $eval, 'ajax_run' );
+
 		$this->loader->add_action( 'wp_ajax_aicfab_scaffold_plan', $scaffold, 'ajax_plan' );
 		$this->loader->add_action( 'wp_ajax_aicfab_scaffold_create', $scaffold, 'ajax_create' );
 

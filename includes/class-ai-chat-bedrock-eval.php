@@ -86,6 +86,175 @@ class AI_Chat_Bedrock_Eval {
 	const CATEGORIES = array( 'grounding', 'relevance', 'citation', 'content', 'unsupported', 'tool_call', 'budget', 'delivery' );
 
 	/**
+	 * The capability required to author or run an evaluation.
+	 *
+	 * A run spends money and the cases decide what "good" means for the whole site, so this is
+	 * an administrator's job rather than an editor's.
+	 */
+	const CAPABILITY = 'manage_options';
+
+	/**
+	 * Propose cases from questions the site has already been asked.
+	 *
+	 * The two places the plugin already knows something went wrong are the questions no content
+	 * answered and the answers a visitor marked unhelpful. Those are the questions worth putting
+	 * in a golden set, and they are real rather than imagined.
+	 *
+	 * What this cannot do is decide what a good answer would have been. A proposal therefore
+	 * carries the question and an expectation that follows from the record, and leaves the
+	 * required and forbidden text empty for a person to fill in. Inventing those would be
+	 * inventing the ground truth the set exists to hold.
+	 *
+	 * @param int $limit Maximum proposals.
+	 * @return array {
+	 *     @type array $cases  Proposed cases, not yet stored.
+	 *     @type array $skipped Reasons proposals were not produced, for an honest empty state.
+	 * }
+	 */
+	public static function propose( $limit = 20 ) {
+		$limit    = max( 1, min( self::MAX_CASES, absint( $limit ) ) );
+		$existing = array();
+		foreach ( self::cases() as $stored ) {
+			$existing[ strtolower( $stored['question'] ) ] = true;
+		}
+
+		$proposals = array();
+		$skipped   = array();
+
+		if ( ! class_exists( 'AI_Chat_Bedrock_Conversations' ) || ! AI_Chat_Bedrock_Conversations::enabled() ) {
+			$skipped[] = __( 'Conversation logging is off, so there are no recorded questions to propose from.', 'ai-chat-for-amazon-bedrock' );
+			return array(
+				'cases'   => array(),
+				'skipped' => $skipped,
+			);
+		}
+
+		// Questions no site content answered. The expectation that follows from the record is
+		// that the site cannot support an answer yet; once a page is written, the author
+		// changes the case to expect grounding, and the run proves the page fixed it.
+		if ( class_exists( 'AI_Chat_Bedrock_Insights' ) ) {
+			// A flat list of groups, not a wrapper. Reading a 'gaps' key here returned nothing
+			// and produced no proposals at all, which is the kind of silence a test catches
+			// and a demo does not.
+			foreach ( AI_Chat_Bedrock_Insights::content_gaps() as $gap ) {
+				$question = isset( $gap['question'] ) ? (string) $gap['question'] : '';
+				if ( '' === $question || isset( $existing[ strtolower( $question ) ] ) || count( $proposals ) >= $limit ) {
+					continue;
+				}
+				$existing[ strtolower( $question ) ] = true;
+				$proposals[]                         = array(
+					'question' => $question,
+					'expect'   => 'unsupported',
+					'origin'   => __( 'No site content answered this.', 'ai-chat-for-amazon-bedrock' ),
+					'todo'     => __( 'List the specifics an invented answer would state, or write the page and change this to expect grounding.', 'ai-chat-for-amazon-bedrock' ),
+				);
+			}
+		}
+
+		// Answers a visitor marked unhelpful. Content was found, so the expectation is that it
+		// still should be; what was missing from the answer is for the author to state.
+		$rated = AI_Chat_Bedrock_Conversations::query(
+			array(
+				'per_page' => 100,
+				'rating'   => 'down',
+			)
+		);
+		foreach ( ( isset( $rated['entries'] ) ? $rated['entries'] : array() ) as $entry ) {
+			$question = isset( $entry['question'] ) ? (string) $entry['question'] : '';
+			if ( '' === $question || isset( $existing[ strtolower( $question ) ] ) || count( $proposals ) >= $limit ) {
+				continue;
+			}
+			$existing[ strtolower( $question ) ] = true;
+			$proposals[]                         = array(
+				'question' => $question,
+				'expect'   => empty( $entry['grounded'] ) ? 'unsupported' : 'grounded',
+				'origin'   => __( 'A visitor marked this answer unhelpful.', 'ai-chat-for-amazon-bedrock' ),
+				'todo'     => __( 'State what the answer should have contained.', 'ai-chat-for-amazon-bedrock' ),
+			);
+		}
+
+		if ( empty( $proposals ) ) {
+			$skipped[] = __( 'Nothing new to propose: no unanswered questions and no unhelpful ratings that are not already cases.', 'ai-chat-for-amazon-bedrock' );
+		}
+		return array(
+			'cases'   => array_slice( $proposals, 0, $limit ),
+			'skipped' => $skipped,
+		);
+	}
+
+	/**
+	 * Refuse the request unless the caller may run an evaluation.
+	 *
+	 * @return void
+	 */
+	private static function guard() {
+		if ( ! current_user_can( self::CAPABILITY ) ) {
+			wp_send_json_error( array( 'message' => __( 'You are not allowed to run evaluations on this site.', 'ai-chat-for-amazon-bedrock' ) ), 403 );
+		}
+	}
+
+	/**
+	 * Save endpoint.
+	 *
+	 * @return void
+	 */
+	public function ajax_save() {
+		check_ajax_referer( 'aicfab_eval', 'nonce' );
+		self::guard();
+		// A JSON document, so the field sanitizers cannot run before it is decoded; every
+		// value inside it goes through sanitize() below, and anything unrecognised is dropped.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- decoded then sanitized field by field in sanitize().
+		$raw   = isset( $_POST['cases'] ) ? (string) wp_unslash( $_POST['cases'] ) : '';
+		$cases = json_decode( is_string( $raw ) ? $raw : '', true );
+		if ( ! is_array( $cases ) ) {
+			wp_send_json_error( array( 'message' => __( 'The case list could not be read.', 'ai-chat-for-amazon-bedrock' ) ) );
+		}
+		$stored = self::save_cases( $cases );
+		wp_send_json_success(
+			array(
+				'cases'   => $stored,
+				// Said plainly: a case that could not be run was dropped rather than stored
+				// broken, and the count is how the author notices.
+				'dropped' => max( 0, count( $cases ) - count( $stored ) ),
+			)
+		);
+	}
+
+	/**
+	 * Proposal endpoint.
+	 *
+	 * @return void
+	 */
+	public function ajax_propose() {
+		check_ajax_referer( 'aicfab_eval', 'nonce' );
+		self::guard();
+		wp_send_json_success( self::propose() );
+	}
+
+	/**
+	 * Run endpoint.
+	 *
+	 * @return void
+	 */
+	public function ajax_run() {
+		check_ajax_referer( 'aicfab_eval', 'nonce' );
+		self::guard();
+		$report = self::run();
+		if ( is_wp_error( $report ) ) {
+			wp_send_json_error( array( 'message' => $report->get_error_message() ) );
+		}
+		self::record_run( $report );
+		$runs       = self::runs();
+		$comparison = count( $runs ) > 1 ? self::compare( $runs[ count( $runs ) - 2 ], $runs[ count( $runs ) - 1 ] ) : null;
+		wp_send_json_success(
+			array(
+				'report'     => $report,
+				'comparison' => $comparison,
+			)
+		);
+	}
+
+	/**
 	 * Read the authored cases.
 	 *
 	 * @return array List of sanitized cases.
