@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.34.0
+Stable tag: 1.35.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -321,17 +321,24 @@ what a good answer says.
 2. Dashboard with today's usage, a seven-day trend, a per-model breakdown of requests and tokens, and the setup checklist.
 3. Grounding settings: site content search, semantic search with an embedding model, batch indexing progress, knowledge base and controlled abilities.
 4. Diagnostics running a live Amazon Bedrock connectivity test, with round-trip time and tokens used.
-5. MCP screen split into Servers, AI clients, Tool policy and Activity, here showing the tool policy and audit log switch.
-6. Content generator streaming a draft as it is written, before the post is created.
-7. Conversation log with search, source and rating filters, CSV export and helpfulness counts.
-8. Chat settings with the system prompt, an optional Amazon Bedrock managed prompt, suggested questions and streaming.
-9. Per-role request limits, so editors and administrators can be given more requests per minute than anonymous visitors.
-10. The least-privilege IAM policy generated for this site's own configuration, ready to paste into AWS.
-11. Drafting a first set of pages from a description of the business. Every page is a draft, and nothing existing is touched.
-12. Content gaps: the questions visitors asked that the site has no content for, each with a shortcut to draft an answer.
-13. A setup checklist that reads the site's own state, followed by the improvements still worth making.
+5. Answer checks: run a set of questions whose right answer you know, and read the result by category. Every check is a program; no model judges another model.
+6. The golden set itself: what each question expects, the text it must or must not contain, the page it should credit, and the match it must clear.
+7. MCP screen split into Servers, AI clients, Tool policy and Activity, here showing the tool policy and audit log switch.
+8. Content generator streaming a draft as it is written, before the post is created.
+9. Conversations: the content gaps this site has, each with a shortcut to draft the missing page, above the log with its filters, CSV export and per-answer token counts.
+10. Chat settings with the system prompt, an optional Amazon Bedrock managed prompt, suggested questions and streaming.
+11. Per-role request limits, so editors and administrators can be given more requests per minute than anonymous visitors.
+12. The least-privilege IAM policy generated for this site's own configuration, ready to paste into AWS.
+13. Drafting a first set of pages from a description of the business. Every page is a draft, and nothing existing is touched.
+
 
 == Changelog ==
+
+= 1.35.0 =
+* Re-shot every catalogue screenshot. Adding the Answer checks menu entry in 1.33.0 left all of them one item short of the plugin they show, and the screen carrying the newest feature was not in the set at all, which for a directory listing means most visitors never learn it exists. Answer checks is now slots 5 and 6.
+* Merged the two Conversations screenshots into one. That page is shorter than the viewport, so the content gaps and the log are always on screen together and no framing could separate them; two captions over one picture would have padded the set.
+* Captions and file names now come from a single ordered manifest, so a renumber cannot leave a caption pointing at the wrong picture, and each capture asserts its expected content is on screen before saving.
+* No functional change.
 
 = 1.34.0 =
 * Rewrote the directory listing. The description had grown to 2308 words across twenty subsections, which is a catalogue rather than a case for installing anything, and it sat one word under the 2500-word budget, so recent releases spent effort shaving sentences instead of writing them. It now leads with what the plugin does, then the three things it does differently, in 811 words.
@@ -627,6 +634,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.35.0 =
+Screenshots only: all thirteen re-shot against the current admin menu, with the Answer checks screen added. No functional change.
 
 = 1.34.0 =
 Documentation only: the plugin page now reads as a description rather than a feature list, with the detail moved to the FAQ tab. No functional change.
