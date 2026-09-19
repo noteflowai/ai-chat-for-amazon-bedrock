@@ -16,7 +16,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-foreach ( array( 'ai_chat_bedrock_settings', 'ai_chat_bedrock_role_limits', 'ai_chat_bedrock_enable_mcp', 'ai_chat_bedrock_mcp_public_access', 'ai_chat_bedrock_mcp_servers', 'ai_chat_bedrock_db_version', 'ai_chat_bedrock_usage', 'ai_chat_bedrock_mcp_tool_policy', 'ai_chat_bedrock_mcp_capability', 'ai_chat_bedrock_mcp_max_rounds', 'ai_chat_bedrock_mcp_log_enabled', 'ai_chat_bedrock_tool_log', 'ai_chat_bedrock_conversations', 'ai_chat_bedrock_log_conversations', 'ai_chat_bedrock_log_retention_days', 'ai_chat_bedrock_oauth_clients', 'ai_chat_bedrock_oauth_grants', 'ai_chat_bedrock_oauth_revoked', 'ai_chat_bedrock_oauth_enabled', 'ai_chat_bedrock_site_abilities', 'ai_chat_bedrock_profiles' ) as $ai_chat_bedrock_option ) {
+foreach ( array( 'ai_chat_bedrock_settings', 'ai_chat_bedrock_role_limits', 'ai_chat_bedrock_enable_mcp', 'ai_chat_bedrock_mcp_public_access', 'ai_chat_bedrock_mcp_servers', 'ai_chat_bedrock_db_version', 'ai_chat_bedrock_usage', 'ai_chat_bedrock_mcp_tool_policy', 'ai_chat_bedrock_mcp_capability', 'ai_chat_bedrock_mcp_max_rounds', 'ai_chat_bedrock_mcp_log_enabled', 'ai_chat_bedrock_tool_log', 'ai_chat_bedrock_conversations', 'ai_chat_bedrock_log_conversations', 'ai_chat_bedrock_log_retention_days', 'ai_chat_bedrock_oauth_clients', 'ai_chat_bedrock_oauth_grants', 'ai_chat_bedrock_oauth_revoked', 'ai_chat_bedrock_oauth_enabled', 'ai_chat_bedrock_site_abilities', 'ai_chat_bedrock_profiles', 'ai_chat_bedrock_eval_set', 'ai_chat_bedrock_eval_runs' ) as $ai_chat_bedrock_option ) {
 	delete_option( $ai_chat_bedrock_option );
 }
 

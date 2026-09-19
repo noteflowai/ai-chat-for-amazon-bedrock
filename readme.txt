@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.35.0
+Stable tag: 1.36.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -334,6 +334,11 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.36.0 =
+* The source is public again, and the plugin now points at it. The repository this plugin advertised carried version 1.0.7 and had not been touched since May 2025, so anyone checking the code behind a plugin that asks for AWS credentials found something 34 versions behind and missing 46 of its files. Plugin URI, Author URI and the Composer name now resolve to the repository the released code actually comes from.
+* Uninstall removes the two options the answer checks added in 1.32.0. They were missed, and a guard already existed for exactly this mistake: it compared the meta keys the source writes against the keys uninstall removes, because one had been missed before. It was scoped to meta keys, so the next miss landed in options and nothing failed. The comparison is now made for option names and for scheduled hooks as well.
+* The masking test no longer uses this machine's real account number, IAM role name and EC2 instance id as its input. Those were harmless in a private repository and a disclosure in a public one; AWS documentation examples exercise the same assertions.
+
 = 1.35.0 =
 * Re-shot every catalogue screenshot. Adding the Answer checks menu entry in 1.33.0 left all of them one item short of the plugin they show, and the screen carrying the newest feature was not in the set at all, which for a directory listing means most visitors never learn it exists. Answer checks is now slots 5 and 6.
 * Merged the two Conversations screenshots into one. That page is shorter than the viewport, so the content gaps and the log are always on screen together and no framing could separate them; two captions over one picture would have padded the set.
@@ -634,6 +639,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.36.0 =
+The plugin now links to the repository that actually carries the released code, and uninstall cleans up two options it had been leaving behind.
 
 = 1.35.0 =
 Screenshots only: all thirteen re-shot against the current admin menu, with the Answer checks screen added. No functional change.

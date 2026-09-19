@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name: AI Agents & Chat for Amazon Bedrock
- * Plugin URI: https://github.com/noteflow-ai/ai-chat-for-amazon-bedrock
+ * Plugin URI: https://github.com/noteflowai/ai-chat-for-amazon-bedrock
  * Description: Streaming chat and governed tool-using agents on Amazon Bedrock, with IAM role credentials, a standards-compliant MCP server and client, and security-first defaults.
- * Version: 1.35.0
+ * Version: 1.36.0
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * Author: Glay
- * Author URI: https://github.com/noteflow-ai
+ * Author URI: https://github.com/noteflowai
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: ai-chat-for-amazon-bedrock
@@ -20,7 +20,7 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-define( 'AI_CHAT_BEDROCK_VERSION', '1.35.0' );
+define( 'AI_CHAT_BEDROCK_VERSION', '1.36.0' );
 define( 'AI_CHAT_BEDROCK_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AI_CHAT_BEDROCK_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

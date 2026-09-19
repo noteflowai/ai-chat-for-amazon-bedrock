@@ -1,5 +1,5 @@
 {
-  "name": "noteflow-ai/ai-chat-for-amazon-bedrock",
+  "name": "noteflowai/ai-chat-for-amazon-bedrock",
   "description": "Production validation for the AI Chat for Amazon Bedrock WordPress plugin",
   "type": "wordpress-plugin",
   "license": "GPL-2.0-or-later",

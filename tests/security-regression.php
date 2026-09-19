@@ -192,6 +192,67 @@ check(
 	'uninstall removes every meta key the plugin writes, missing: ' . implode( ', ', $aicfab_left_behind )
 );
 
+// --- Uninstall removes every option the plugin writes -------------------------
+
+/*
+ * The guard above was added because one meta key had been missed, and it was scoped to meta
+ * keys. The next miss happened in the adjacent category: the two options the answer checks
+ * added in 1.32.0 were left out of the uninstall list, and nothing failed. So the same
+ * comparison is made for option names.
+ *
+ * Only option-shaped writes count. A cron hook name is not an option and requiring it here
+ * would make the guard wrong in a way someone would eventually silence.
+ */
+$aicfab_options_written = array();
+foreach ( array_merge( glob( __DIR__ . '/../includes/*.php' ), glob( __DIR__ . '/../admin/*.php' ), glob( __DIR__ . '/../public/*.php' ) ) as $aicfab_file ) {
+	$aicfab_body = file_get_contents( $aicfab_file );
+	if ( preg_match_all( "/(?:update|add)_option\\(\\s*'(ai_chat_bedrock[a-z_]*)'/", $aicfab_body, $aicfab_hits ) ) {
+		foreach ( $aicfab_hits[1] as $aicfab_name ) {
+			$aicfab_options_written[ $aicfab_name ] = true;
+		}
+	}
+	// Constants holding an option name. The name must contain OPTION so a cron hook or a
+	// transient key does not get pulled in.
+	if ( preg_match_all( "/const\\s+[A-Z_]*OPTION[A-Z_]*\\s*=\\s*'(ai_chat_bedrock[a-z_]*)'/", $aicfab_body, $aicfab_consts ) ) {
+		foreach ( $aicfab_consts[1] as $aicfab_name ) {
+			$aicfab_options_written[ $aicfab_name ] = true;
+		}
+	}
+}
+
+check( count( $aicfab_options_written ) >= 15, 'option names were found in the source, got ' . count( $aicfab_options_written ) );
+
+$aicfab_options_left = array();
+foreach ( array_keys( $aicfab_options_written ) as $aicfab_name ) {
+	if ( false === strpos( $aicfab_uninstall, "'" . $aicfab_name . "'" ) ) {
+		$aicfab_options_left[] = $aicfab_name;
+	}
+}
+check(
+	array() === $aicfab_options_left,
+	'uninstall removes every option the plugin writes, missing: ' . implode( ', ', $aicfab_options_left )
+);
+
+// A scheduled event outlives the plugin unless it is cleared, so the hook is checked too.
+$aicfab_hooks = array();
+foreach ( glob( __DIR__ . '/../includes/*.php' ) as $aicfab_file ) {
+	if ( preg_match_all( "/const\\s+CRON_HOOK\\s*=\\s*'([a-z_]+)'/", file_get_contents( $aicfab_file ), $aicfab_found ) ) {
+		foreach ( $aicfab_found[1] as $aicfab_hook ) {
+			$aicfab_hooks[ $aicfab_hook ] = true;
+		}
+	}
+}
+$aicfab_hooks_left = array();
+foreach ( array_keys( $aicfab_hooks ) as $aicfab_hook ) {
+	if ( false === strpos( $aicfab_uninstall, "'" . $aicfab_hook . "'" ) ) {
+		$aicfab_hooks_left[] = $aicfab_hook;
+	}
+}
+check(
+	array() === $aicfab_hooks_left,
+	'uninstall clears every scheduled hook the plugin declares, missing: ' . implode( ', ', $aicfab_hooks_left )
+);
+
 // --- Saving settings says so ---------------------------------------------------
 
 // The settings page calls settings_errors() filtered to this plugin's slug. WordPress
