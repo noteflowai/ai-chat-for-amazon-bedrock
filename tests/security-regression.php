@@ -239,6 +239,23 @@ foreach ( glob( __DIR__ . '/*.php' ) as $aicfab_suite ) {
 			}
 		}
 	}
+
+	/*
+	 * A suite may also load a directory with glob, which core-ai.php does. Counting only the
+	 * literal requires would eventually fail a class that is in fact loaded, and the way that
+	 * failure reads would send the next person looking for a missing test rather than for a
+	 * missing pattern here.
+	 */
+	if ( preg_match_all( "/glob\(\s*dirname\(\s*__DIR__\s*\)\s*\.\s*'([^']+)'/", $aicfab_body, $aicfab_globs ) ) {
+		foreach ( $aicfab_globs[1] as $aicfab_pattern ) {
+			foreach ( glob( dirname( __DIR__ ) . $aicfab_pattern ) as $aicfab_globbed ) {
+				$aicfab_resolved = realpath( $aicfab_globbed );
+				if ( $aicfab_resolved ) {
+					$aicfab_loaded[ $aicfab_resolved ] = true;
+				}
+			}
+		}
+	}
 }
 
 check( count( $aicfab_shadowed ) >= 10, 'stand-ins were found in the suites, got ' . count( $aicfab_shadowed ) );
