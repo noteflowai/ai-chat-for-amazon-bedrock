@@ -271,6 +271,9 @@ check_policy( false === strpos( $rendered, '"Resource": "arn:aws:bedrock:*::foun
 
 // --- Identity shown on screen ------------------------------------------------
 
+// Values below are AWS documentation examples on purpose. A real account, role and instance
+// id would make this file a disclosure the moment the repository is readable, and the
+// assertions are about the shape of the masking rather than about any one identity.
 // The Diagnostics screen names the identity the plugin signs with, and admins share that
 // screen in support threads. The full ARN carries the whole account number and, for an
 // assumed role on EC2, the instance id as the session name. Neither is needed to answer
@@ -280,7 +283,7 @@ $aicfab_shown = AI_Chat_Bedrock_Iam_Policy::display_identity( $aicfab_full );
 check_policy( false === strpos( $aicfab_shown, '111122223333' ), 'The full account number must not be shown.' );
 check_policy( false === strpos( $aicfab_shown, 'i-0123456789abcdef0' ), 'The session name, which is the instance id on EC2, must not be shown.' );
 check_policy( false !== strpos( $aicfab_shown, 'WordPressBedrockRole' ), 'The role name must survive: it is what the line is for.' );
-check_policy( false !== strpos( $aicfab_shown, '6047' ), 'Enough of the account must survive to recognise it.' );
+check_policy( false !== strpos( $aicfab_shown, '3333' ), 'Enough of the account must survive to recognise it.' );
 check_policy(
 	'arn:aws:iam::********3333:role/WordPressBedrockRole' === AI_Chat_Bedrock_Iam_Policy::display_identity( 'arn:aws:iam::111122223333:role/WordPressBedrockRole' ),
 	'An IAM role ARN must be shortened in the same shape.'
