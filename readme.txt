@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.39.0
+Stable tag: 1.40.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -334,6 +334,12 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.40.0 =
+* Deactivating the plugin now removes its scheduled event. The embeddings index schedules an hourly job and nothing cleared it, so switching the plugin off left a recurring event in the site's cron array that fired every hour with nothing loaded to answer it. Settings still survive deactivation, which is deliberate; permanent cleanup still belongs to uninstall.
+* Covered the Server-Sent Events framing, which every streamed answer passes through. The text inside those frames is model output, retrieved page content and tool results, and in the SSE format a blank line ends an event while a line starting "event:" begins one. JSON encoding is what stops that text forging frames, ending the stream early, or injecting an event the browser would act on, and nothing asserted it: emitting the text raw instead produces two events where there should be one.
+* Also covered there: a hostile event name is reduced to a key, a type supplied in the payload cannot override the real event name, a payload that cannot be encoded sends nothing rather than a broken frame, and text in other languages and URLs are sent unescaped so answers stay readable.
+* Verified against a real streamed Bedrock answer rather than only constructed payloads: 35 deltas produced 35 well-formed frames with no malformed output, from a reply containing ten newlines.
+
 = 1.39.0 =
 * Streaming is on after a fresh install. The settings field has always labelled it the default, and every part of the plugin that reads an absent value agrees, but activation wrote 'off', so a new site had it disabled with the box unticked until someone noticed and ticked it.
 * The generated IAM policy no longer grants bedrock:InvokeModelWithResponseStream to sites that have turned streaming off. The setting is stored as the strings 'on' and 'off', and four places read it by comparing against 'off' while the policy generator used a truthiness test, which treats the string 'off' as true. A least-privilege policy that grants an action the site will never call is not least privilege.
@@ -658,6 +664,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.40.0 =
+Deactivating the plugin no longer leaves an hourly scheduled event behind, and the streaming wire format is now covered by tests.
 
 = 1.39.0 =
 Streaming is now enabled on new installations as the settings field always said it was, and the generated IAM policy no longer includes the streaming action when streaming is off.

@@ -46,6 +46,18 @@ function get_option( $name, $default_value = false ) {
 function apply_filters( $hook, $value ) {
 	return $value;
 }
+$GLOBALS['aicfab_schedule'] = array();
+function wp_schedule_event( $timestamp, $recurrence, $hook ) {
+	$GLOBALS['aicfab_schedule'][ $hook ] = $timestamp;
+	return true;
+}
+function wp_next_scheduled( $hook ) {
+	return isset( $GLOBALS['aicfab_schedule'][ $hook ] ) ? $GLOBALS['aicfab_schedule'][ $hook ] : false;
+}
+function wp_clear_scheduled_hook( $hook ) {
+	unset( $GLOBALS['aicfab_schedule'][ $hook ] );
+	return true;
+}
 function __( $text, $domain = null ) {
 	return $text;
 }
@@ -133,6 +145,35 @@ check_act(
 check_act(
 	isset( $aicfab_settings['aws_region'] ) && '' !== $aicfab_settings['aws_region'],
 	'A region is chosen rather than left empty.'
+);
+
+// --- Deactivation stops the schedule and keeps the settings --------------------
+
+/*
+ * Settings surviving deactivation is deliberate. A recurring event surviving it is not: the
+ * embeddings index schedules an hourly event, nothing removed it on deactivation, and a site
+ * with the plugin switched off was left firing it every hour with no code listening. Verified
+ * on a live site before this was changed.
+ */
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-deactivator.php';
+
+wp_schedule_event( time() + 60, 'hourly', 'ai_chat_bedrock_index_embeddings' );
+check_act( false !== wp_next_scheduled( 'ai_chat_bedrock_index_embeddings' ), 'The fixture has the event scheduled, or the next check proves nothing.' );
+
+$aicfab_before_deactivate = get_option( 'ai_chat_bedrock_settings' );
+AI_Chat_Bedrock_Deactivator::deactivate();
+
+check_act(
+	false === wp_next_scheduled( 'ai_chat_bedrock_index_embeddings' ),
+	'Deactivation leaves no recurring event behind.'
+);
+check_act(
+	$aicfab_before_deactivate === get_option( 'ai_chat_bedrock_settings' ),
+	'Deactivation changes no setting.'
+);
+check_act(
+	array() === $GLOBALS['aicfab_schedule'],
+	'No plugin event of any kind survives deactivation.'
 );
 
 if ( $failures ) {
