@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.36.0
+Stable tag: 1.37.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -334,6 +334,11 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.37.0 =
+* The defence that stops a remote MCP server from injecting instructions is now covered by tests. Tool output is returned to the model wrapped in a frame that labels it as data and tells the model not to act on anything inside it. That frame could be deleted outright and all twenty-six suites stayed green, because the suite exercising tool rounds substitutes a stand-in for the class that builds it. It is now asserted against the real class, using hostile content, and five fault injections confirm the assertions fail when the frame is removed, weakened, or moved after the payload.
+* The same method's two limits, at most five tool results per round and a byte ceiling on the payload, were also unasserted and now are.
+* Added the GPL text as a licence file in the source repository. The licence was declared in three places and the file itself was missing, which only became visible when the repository became readable.
+
 = 1.36.0 =
 * The source is public again, and the plugin now points at it. The repository this plugin advertised carried version 1.0.7 and had not been touched since May 2025, so anyone checking the code behind a plugin that asks for AWS credentials found something 34 versions behind and missing 46 of its files. Plugin URI, Author URI and the Composer name now resolve to the repository the released code actually comes from.
 * Uninstall removes the two options the answer checks added in 1.32.0. They were missed, and a guard already existed for exactly this mistake: it compared the meta keys the source writes against the keys uninstall removes, because one had been missed before. It was scoped to meta keys, so the next miss landed in options and nothing failed. The comparison is now made for option names and for scheduled hooks as well.
@@ -639,6 +644,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.37.0 =
+Test coverage for the prompt-injection frame around tool output, which could previously have been removed without any suite failing.
 
 = 1.36.0 =
 The plugin now links to the repository that actually carries the released code, and uninstall cleans up two options it had been leaving behind.

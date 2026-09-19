@@ -1,10 +1,35 @@
 # AI Agents & Chat for Amazon Bedrock
 
-Development notes for the WordPress plugin published at
-<https://wordpress.org/plugins/ai-chat-for-amazon-bedrock/>.
+The source for the WordPress plugin published at
+<https://wordpress.org/plugins/ai-chat-for-amazon-bedrock/>. This tree is what the
+released package is built from, so the code here is the code that gets installed.
+
+Streaming chat and tool-using agents on Amazon Bedrock, an MCP server that exposes the
+site to AI clients, retrieval over published content, and an evaluation harness for
+checking answers.
+
+## What it does with your AWS account
+
+The plugin signs Bedrock calls with whatever credentials the host already has. On EC2 and
+in ECS that is the instance or task role, and nothing is stored. Long-lived keys are
+supported but are not the intended path, and the Diagnostics screen names which source
+resolved so the answer is not a guess.
+
+Some deliberate limits, which the test suites assert rather than merely document:
+
+- Guest chat is off by default, and an unknown profile key falls back without unlocking it.
+- The only write operation reachable by a tool is creating a draft. Nothing publishes,
+  nothing updates an existing post, no order or customer data is exposed.
+- Retrieval indexes published, non-password-protected content only.
+- Tool output is wrapped as untrusted data before it reaches the model.
+- Tokens are stored as SHA-256 only, compared with `hash_equals`.
+- Credentials never appear in an export file.
+- The generated IAM policy is least-privilege, and the identity line is masked.
+
+## Development notes
 
 User facing documentation lives in `readme.txt`, which is what the plugin directory
-renders. This file is for people working on the code and never ships.
+renders. `README.md` is for people working on the code and never ships.
 
 ## Layout
 
