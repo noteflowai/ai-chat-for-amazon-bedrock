@@ -293,6 +293,15 @@ class AI_Chat_Bedrock_Retrieval {
 				'url'     => get_permalink( $post ),
 				'excerpt' => AI_Chat_Bedrock_Security::string_substr( $content, 0, self::MAX_PASSAGE_CHARS ),
 			);
+
+			/*
+			 * posts_per_page asks for the limit and WP_Query honours it, but suppress_filters
+			 * is false here so a pre_get_posts filter can raise it. The knowledge base path
+			 * stops at its own limit for the same reason.
+			 */
+			if ( count( $passages ) >= $limit ) {
+				break;
+			}
 		}
 
 		wp_reset_postdata();

@@ -69,6 +69,16 @@ class AI_Chat_Bedrock_Chat_Request {
 	 */
 	public static function build( $message, $history_json, $options = array() ) {
 		$options = is_array( $options ) ? $options : array();
+
+		/*
+		 * message arrives from a request parameter, so a caller can send message[]=x and make
+		 * it an array. Casting that to a string logs a PHP warning and yields the literal
+		 * "Array", which is five non-empty characters and would be sent to the model as the
+		 * question. The history parameter below was already hardened for the same reason.
+		 */
+		if ( ! is_scalar( $message ) ) {
+			return new WP_Error( 'aicfab_empty_message', __( 'Message cannot be empty.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 400 ) );
+		}
 		$message = sanitize_textarea_field( (string) $message );
 
 		if ( '' === $message ) {

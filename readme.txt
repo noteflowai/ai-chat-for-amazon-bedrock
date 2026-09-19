@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.37.0
+Stable tag: 1.38.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -334,6 +334,13 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.38.0 =
+* Two more defences turned out to be untested for the same reason as the one fixed in 1.37.0, and both are now covered. Retrieval kept drafts, pending posts and password-protected pages out of an answer through two independent layers, and both could be deleted with every suite passing. Abilities checked a capability before letting a model generate text or invoke a site ability, and that check could be deleted too. The cause in all three cases was a suite defining its own stand-in for the class, so the real implementation was never loaded.
+* Added a check that fails the build when a class is shadowed by a stand-in in the suites without any suite loading the real one. One class is exempt and the exemption states its reason. This is the third time this pattern hid something, so it is now caught structurally rather than by noticing.
+* Keyword retrieval now stops at its own result limit instead of trusting the query to honour posts_per_page, which a pre_get_posts filter can change. The knowledge base path already did this.
+* New suites for retrieval and abilities, 24 fault injections between them confirming the assertions fail when each behaviour is removed.
+* A chat request sent with message as an array, which any caller can do with message[]=x, logged a PHP warning and then sent the literal string "Array" to the model as the question. It is now refused as an empty message. The history parameter beside it had already been hardened against exactly this, so the fix follows what the surrounding code had decided.
+
 = 1.37.0 =
 * The defence that stops a remote MCP server from injecting instructions is now covered by tests. Tool output is returned to the model wrapped in a frame that labels it as data and tells the model not to act on anything inside it. That frame could be deleted outright and all twenty-six suites stayed green, because the suite exercising tool rounds substitutes a stand-in for the class that builds it. It is now asserted against the real class, using hostile content, and five fault injections confirm the assertions fail when the frame is removed, weakened, or moved after the payload.
 * The same method's two limits, at most five tool results per round and a byte ceiling on the payload, were also unasserted and now are.
@@ -644,6 +651,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.38.0 =
+Test coverage for the retrieval filters that exclude unpublished and password-protected content, and for the capability checks on abilities.
 
 = 1.37.0 =
 Test coverage for the prompt-injection frame around tool output, which could previously have been removed without any suite failing.

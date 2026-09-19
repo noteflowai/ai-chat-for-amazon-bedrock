@@ -9,6 +9,8 @@
   "scripts": {
     "test": [
       "@php tests/security-regression.php",
+      "@php tests/retrieval.php",
+      "@php tests/abilities.php",
       "@php tests/bootstrap-smoke.php",
       "@php tests/aws-payload.php",
       "@php tests/mcp-transport.php",

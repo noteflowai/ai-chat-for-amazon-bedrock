@@ -309,6 +309,26 @@ function wp_list_pluck_compat( $rows, $field ) {
 	}, (array) $rows );
 }
 
+// --- A malformed message parameter is refused, not stringified -----------------
+
+/*
+ * message[]=x makes this parameter an array. Casting it produced a PHP warning in the site
+ * log and the literal "Array", which is non-empty and was sent to the model as the question.
+ */
+$aicfab_array_message = AI_Chat_Bedrock_Chat_Request::build( array( 'x', 'y' ), '[]', array() );
+check_conv( $aicfab_array_message instanceof WP_Error, 'An array message is refused.' );
+check_conv(
+	! is_array( $aicfab_array_message ) || 'Array' !== $aicfab_array_message['message'],
+	'The literal string Array is never sent as the question.'
+);
+$aicfab_object_message = AI_Chat_Bedrock_Chat_Request::build( new stdClass(), '[]', array() );
+check_conv( $aicfab_object_message instanceof WP_Error, 'An object message is refused.' );
+$aicfab_good_message = AI_Chat_Bedrock_Chat_Request::build( 'What are your hours?', '[]', array() );
+check_conv(
+	is_array( $aicfab_good_message ) && 'What are your hours?' === $aicfab_good_message['message'],
+	'A normal message is still accepted.'
+);
+
 // --- Tool output is returned to the model as data, not as instructions ---------
 
 /*

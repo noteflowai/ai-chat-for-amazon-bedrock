@@ -192,6 +192,79 @@ check(
 	'uninstall removes every meta key the plugin writes, missing: ' . implode( ', ', $aicfab_left_behind )
 );
 
+// --- A stand-in must not be the only thing a class ever sees -------------------
+
+/*
+ * Three separate defences were found unguarded because the suites that exercised their code
+ * paths defined their own stand-in for the class that implemented them, so the real one was
+ * never loaded and could be deleted with everything still green:
+ *
+ *   - the frame that labels tool output as data, against prompt injection from an MCP server
+ *   - the two layers keeping drafts and password-protected pages out of retrieved context
+ *   - the capability checks on abilities the model is allowed to invoke
+ *
+ * A stand-in is often the right tool. What is never right is a stand-in being the only version
+ * of a class the suites ever see. This compares the classes shadowed in tests against the
+ * classes some suite loads for real, and fails on any that are only ever shadowed.
+ */
+$aicfab_real_classes = array();
+foreach ( array_merge(
+	glob( __DIR__ . '/../includes/*.php' ),
+	glob( __DIR__ . '/../includes/core-ai/*.php' ),
+	glob( __DIR__ . '/../admin/*.php' ),
+	glob( __DIR__ . '/../public/*.php' )
+) as $aicfab_file ) {
+	if ( preg_match( '/^\s*class\s+(AI_Chat_Bedrock[A-Za-z_]*)/m', file_get_contents( $aicfab_file ), $aicfab_found ) ) {
+		$aicfab_real_classes[ $aicfab_found[1] ] = realpath( $aicfab_file );
+	}
+}
+
+$aicfab_shadowed = array();
+$aicfab_loaded   = array();
+foreach ( glob( __DIR__ . '/*.php' ) as $aicfab_suite ) {
+	$aicfab_body = file_get_contents( $aicfab_suite );
+	if ( preg_match_all( '/^\s*class\s+(AI_Chat_Bedrock[A-Za-z_]*)/m', $aicfab_body, $aicfab_hits ) ) {
+		foreach ( $aicfab_hits[1] as $aicfab_class ) {
+			if ( isset( $aicfab_real_classes[ $aicfab_class ] ) ) {
+				$aicfab_shadowed[ $aicfab_class ] = true;
+			}
+		}
+	}
+	// Both require styles the suites use resolve to the same thing.
+	if ( preg_match_all( "/(?:require|include)(?:_once)?\s*(?:dirname\(\s*__DIR__\s*\)|__DIR__)\s*\.\s*'([^']+)'/", $aicfab_body, $aicfab_reqs ) ) {
+		foreach ( $aicfab_reqs[1] as $aicfab_path ) {
+			$aicfab_resolved = realpath( __DIR__ . '/' . ( 0 === strpos( $aicfab_path, '/..' ) ? $aicfab_path : '/..' . $aicfab_path ) );
+			if ( $aicfab_resolved ) {
+				$aicfab_loaded[ $aicfab_resolved ] = true;
+			}
+		}
+	}
+}
+
+check( count( $aicfab_shadowed ) >= 10, 'stand-ins were found in the suites, got ' . count( $aicfab_shadowed ) );
+
+/*
+ * AI_Chat_Bedrock_Admin is exempt and says why: it is a screen controller whose constructor
+ * reaches for WordPress hooks, admin notices and asset registration, and loading it outside a
+ * request tells you nothing a test could assert. Anything added here needs a reason of that
+ * kind, not a shortage of time.
+ */
+$aicfab_double_only_allowed = array( 'AI_Chat_Bedrock_Admin' );
+
+$aicfab_never_real = array();
+foreach ( array_keys( $aicfab_shadowed ) as $aicfab_class ) {
+	if ( in_array( $aicfab_class, $aicfab_double_only_allowed, true ) ) {
+		continue;
+	}
+	if ( ! isset( $aicfab_loaded[ $aicfab_real_classes[ $aicfab_class ] ] ) ) {
+		$aicfab_never_real[] = $aicfab_class;
+	}
+}
+check(
+	array() === $aicfab_never_real,
+	'every class shadowed by a stand-in is also loaded for real by some suite, missing: ' . implode( ', ', $aicfab_never_real )
+);
+
 // --- Uninstall removes every option the plugin writes -------------------------
 
 /*
