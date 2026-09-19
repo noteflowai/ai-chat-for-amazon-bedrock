@@ -19,7 +19,7 @@ class AI_Chat_Bedrock_Activator {
 			'chat_title'            => 'Chat with AI',
 			'welcome_message'       => 'Hello! How can I help you today?',
 			'system_prompt'         => 'You are a helpful AI assistant powered by Amazon Bedrock.',
-			'enable_streaming'      => 'off',
+			'enable_streaming'      => 'on',
 			'allow_public_chat'     => false,
 			'rate_limit_per_minute' => 5,
 			'debug_mode'            => 'off',

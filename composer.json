@@ -13,6 +13,8 @@
       "@php tests/abilities.php",
       "@php tests/mcp-client.php",
       "@php tests/diagnostics.php",
+      "@php tests/stream-permission.php",
+      "@php tests/activation-defaults.php",
       "@php tests/bootstrap-smoke.php",
       "@php tests/aws-payload.php",
       "@php tests/mcp-transport.php",

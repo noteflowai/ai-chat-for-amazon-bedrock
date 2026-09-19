@@ -310,6 +310,38 @@ $aicfab_plain = AI_Chat_Bedrock_Iam_Policy::to_json( AI_Chat_Bedrock_Iam_Policy:
 check_policy( false !== strpos( $aicfab_profile, '111122223333' ), 'An inference profile ARN needs the account and must keep it.' );
 check_policy( false === strpos( $aicfab_plain, '111122223333' ), 'A foundation model ARN carries no account, so none should appear.' );
 
+// --- The policy reads the streaming setting the way the rest of the plugin does --
+
+/*
+ * enable_streaming is normalised to the strings 'on' and 'off'. This generator read it with
+ * ! empty(), and ! empty( 'off' ) is true, so a site that had turned streaming off was still
+ * handed a policy granting bedrock:InvokeModelWithResponseStream. For a plugin whose point is a
+ * least-privilege policy, granting an action the site will never call is the whole defect.
+ */
+$aicfab_stream_states = array(
+	'on'        => true,
+	'off'       => false,
+	'(absent)'  => true,
+);
+foreach ( $aicfab_stream_states as $aicfab_value => $aicfab_expected ) {
+	$aicfab_settings = array( 'aws_region' => 'us-east-1', 'model_id' => 'amazon.nova-lite-v1:0' );
+	if ( '(absent)' !== $aicfab_value ) {
+		$aicfab_settings['enable_streaming'] = $aicfab_value;
+	}
+	$aicfab_json = AI_Chat_Bedrock_Iam_Policy::to_json( AI_Chat_Bedrock_Iam_Policy::for_site( $aicfab_settings, '111122223333' ) );
+	$aicfab_has  = false !== strpos( $aicfab_json, 'InvokeModelWithResponseStream' );
+	check_policy(
+		$aicfab_has === $aicfab_expected,
+		'enable_streaming ' . $aicfab_value . ' grants the streaming action: expected ' . var_export( $aicfab_expected, true ) . ', got ' . var_export( $aicfab_has, true )
+	);
+}
+
+// The non-streaming action is always needed, so its presence is not conditional.
+$aicfab_off_json = AI_Chat_Bedrock_Iam_Policy::to_json(
+	AI_Chat_Bedrock_Iam_Policy::for_site( array( 'aws_region' => 'us-east-1', 'model_id' => 'amazon.nova-lite-v1:0', 'enable_streaming' => 'off' ), '111122223333' )
+);
+check_policy( false !== strpos( $aicfab_off_json, 'bedrock:InvokeModel' ), 'InvokeModel is granted regardless of streaming.' );
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

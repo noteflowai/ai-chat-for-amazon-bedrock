@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.38.0
+Stable tag: 1.39.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -334,6 +334,13 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.39.0 =
+* Streaming is on after a fresh install. The settings field has always labelled it the default, and every part of the plugin that reads an absent value agrees, but activation wrote 'off', so a new site had it disabled with the box unticked until someone noticed and ticked it.
+* The generated IAM policy no longer grants bedrock:InvokeModelWithResponseStream to sites that have turned streaming off. The setting is stored as the strings 'on' and 'off', and four places read it by comparing against 'off' while the policy generator used a truthiness test, which treats the string 'off' as true. A least-privilege policy that grants an action the site will never call is not least privilege.
+* Covered the gate on the streaming endpoint, which is the path most visitors actually use. Its four steps are a nonce, the guest gate, whether streaming is enabled, and a rate limit; each helper was tested alone and the composition was not. Includes the order: a request refused at the nonce must not consume the rate limit, or anyone can exhaust a visitor's allowance without holding a valid nonce.
+* Covered the state a new installation starts in, including that guests cannot chat, MCP is off and not publicly readable, no credential fields are stored, a rate limit applies from the first request, and reactivating does not overwrite a configured site.
+* The rate limit identifies a guest by an HMAC of their address rather than the address, so the limit works without the site accumulating visitor IPs. Now asserted, along with two visitors not sharing one allowance.
+
 = 1.38.0 =
 * Two more defences turned out to be untested for the same reason as the one fixed in 1.37.0, and both are now covered. Retrieval kept drafts, pending posts and password-protected pages out of an answer through two independent layers, and both could be deleted with every suite passing. Abilities checked a capability before letting a model generate text or invoke a site ability, and that check could be deleted too. The cause in all three cases was a suite defining its own stand-in for the class, so the real implementation was never loaded.
 * Added a check that fails the build when a class is shadowed by a stand-in in the suites without any suite loading the real one. One class is exempt and the exemption states its reason. This is the third time this pattern hid something, so it is now caught structurally rather than by noticing.
@@ -651,6 +658,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.39.0 =
+Streaming is now enabled on new installations as the settings field always said it was, and the generated IAM policy no longer includes the streaming action when streaming is off.
 
 = 1.38.0 =
 Test coverage for the retrieval filters that exclude unpublished and password-protected content, and for the capability checks on abilities.

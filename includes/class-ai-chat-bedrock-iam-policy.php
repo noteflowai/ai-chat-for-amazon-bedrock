@@ -281,7 +281,7 @@ class AI_Chat_Bedrock_Iam_Policy {
 				'region'         => isset( $options['aws_region'] ) ? $options['aws_region'] : 'us-east-1',
 				'account'        => $account,
 				'models'         => $models,
-				'streaming'      => ! isset( $options['enable_streaming'] ) || ! empty( $options['enable_streaming'] ),
+				'streaming'      => ! isset( $options['enable_streaming'] ) || 'off' !== $options['enable_streaming'],
 				'guardrail_id'   => isset( $options['guardrail_id'] ) ? $options['guardrail_id'] : '',
 				'prompt_id'      => isset( $options['prompt_id'] ) ? $options['prompt_id'] : '',
 				'knowledge_base' => isset( $options['knowledge_base_id'] ) ? $options['knowledge_base_id'] : '',
