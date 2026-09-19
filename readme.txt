@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.40.0
+Stable tag: 1.41.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -333,6 +333,11 @@ what a good answer says.
 
 
 == Changelog ==
+
+= 1.41.0 =
+* `wp ai-chat-bedrock eval --json` now works. It never had. WP-CLI translates --json into --format json before a command sees it, and this command declared a bare --json flag with no format parameter, so every documented use of it failed with "unknown --format parameter" and wrote nothing. The command now declares --format with table and json, so both --json and --format=json produce the report and a bare run still prints the readable form.
+* Covered the command line contract, which is the part of this plugin other people's pipelines depend on: a failing case exits nonzero, a passing run exits zero, a run that could not happen at all is an error rather than a pass, JSON mode writes exactly one document and nothing else, an inapplicable check stays null instead of counting as a pass, and --record stores a failing run as it was.
+* `--compare` reports and always exits zero, even when it shows a regression. That was already true and is now said in the help text, so nobody wires it into a pipeline expecting it to fail a build.
 
 = 1.40.0 =
 * Deactivating the plugin now removes its scheduled event. The embeddings index schedules an hourly job and nothing cleared it, so switching the plugin off left a recurring event in the site's cron array that fired every hour with nothing loaded to answer it. Settings still survive deactivation, which is deliberate; permanent cleanup still belongs to uninstall.
@@ -664,6 +669,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.41.0 =
+The documented wp ai-chat-bedrock eval --json had never worked, because WP-CLI maps --json onto a format parameter the command did not declare. Both --json and --format=json now work.
 
 = 1.40.0 =
 Deactivating the plugin no longer leaves an hourly scheduled event behind, and the streaming wire format is now covered by tests.

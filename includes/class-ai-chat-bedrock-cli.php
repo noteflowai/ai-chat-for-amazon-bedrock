@@ -258,19 +258,29 @@ class AI_Chat_Bedrock_CLI {
 	 *
 	 * ## OPTIONS
 	 *
-	 * [--json]
-	 * : Emit the full report as JSON, including every check.
+	 * [--format=<format>]
+	 * : Output format. Passing --json is WP-CLI's own shorthand for --format=json, and it was
+	 * being rejected here because this command declared a bare --json flag instead of the
+	 * format parameter WP-CLI translates it into.
+	 * ---
+	 * default: table
+	 * options:
+	 *   - table
+	 *   - json
+	 * ---
 	 *
 	 * [--record]
 	 * : Store this run so a later one can be compared against it.
 	 *
 	 * [--compare]
-	 * : Print the per-category difference against the previous stored run and exit.
+	 * : Print the per-category difference against the previous stored run. This reports; it
+	 * always exits zero, even when it shows a regression. Use a plain run to gate a build.
 	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp ai-chat-bedrock eval
 	 *     wp ai-chat-bedrock eval --json > eval.json
+	 *     wp ai-chat-bedrock eval --format=json > eval.json
 	 *     wp ai-chat-bedrock eval --record
 	 *     wp ai-chat-bedrock eval --compare
 	 *
@@ -285,13 +295,16 @@ class AI_Chat_Bedrock_CLI {
 			WP_CLI::error( 'The evaluation component is unavailable.' );
 		}
 
+		$as_json = ( isset( $assoc_args['format'] ) && 'json' === $assoc_args['format'] )
+			|| ! empty( $assoc_args['json'] );
+
 		if ( ! empty( $assoc_args['compare'] ) ) {
 			$runs = AI_Chat_Bedrock_Eval::runs();
 			if ( count( $runs ) < 2 ) {
 				WP_CLI::error( 'Two recorded runs are needed to compare. Run with --record first.' );
 			}
 			$diff = AI_Chat_Bedrock_Eval::compare( $runs[ count( $runs ) - 2 ], $runs[ count( $runs ) - 1 ] );
-			if ( ! empty( $assoc_args['json'] ) ) {
+			if ( $as_json ) {
 				WP_CLI::line( (string) wp_json_encode( $diff, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
 				return;
 			}
@@ -318,7 +331,7 @@ class AI_Chat_Bedrock_CLI {
 		if ( ! empty( $assoc_args['record'] ) ) {
 			AI_Chat_Bedrock_Eval::record_run( $report );
 		}
-		if ( ! empty( $assoc_args['json'] ) ) {
+		if ( $as_json ) {
 			WP_CLI::line( (string) wp_json_encode( $report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
 		} else {
 			foreach ( $report['results'] as $result ) {

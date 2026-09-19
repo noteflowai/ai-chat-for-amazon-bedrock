@@ -17,6 +17,7 @@
       "@php tests/activation-defaults.php",
       "@php tests/sse.php",
       "@php tests/public-chat.php",
+      "@php tests/cli.php",
       "@php tests/bootstrap-smoke.php",
       "@php tests/aws-payload.php",
       "@php tests/mcp-transport.php",
