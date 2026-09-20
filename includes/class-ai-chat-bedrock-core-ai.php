@@ -43,7 +43,31 @@ class AI_Chat_Bedrock_Core_AI {
 	 * @return bool
 	 */
 	public static function core_ai_available() {
-		return function_exists( 'wp_ai_client_prompt' ) && class_exists( '\WordPress\AiClient\AiClient' );
+		if ( ! function_exists( 'wp_ai_client_prompt' ) || ! class_exists( '\WordPress\AiClient\AiClient' ) ) {
+			return false;
+		}
+
+		/*
+		 * The AiClient class existing does not mean the rest of the bundled library is loadable.
+		 * The provider files below implement interfaces from it, and a class that implements a
+		 * missing interface is a fatal error at include time, not something a caller can handle.
+		 * A continuous integration run on WordPress 7.1.1 hit exactly that: the class was present,
+		 * TextGenerationModelInterface was not, and loading this plugin took the request down.
+		 * So the interfaces the provider actually implements are checked, not a proxy for them.
+		 */
+		foreach (
+			array(
+				'\WordPress\AiClient\Providers\Models\Contracts\ModelInterface',
+				'\WordPress\AiClient\Providers\Models\TextGeneration\Contracts\TextGenerationModelInterface',
+				'\WordPress\AiClient\Providers\Contracts\ModelMetadataDirectoryInterface',
+				'\WordPress\AiClient\Providers\Contracts\ProviderAvailabilityInterface',
+			) as $interface
+		) {
+			if ( ! interface_exists( $interface ) ) {
+				return false;
+			}
+		}
+		return class_exists( '\WordPress\AiClient\Providers\AbstractProvider' );
 	}
 
 	/**
@@ -124,24 +148,34 @@ class AI_Chat_Bedrock_Core_AI {
 		if ( ! self::core_ai_available() ) {
 			return;
 		}
-		foreach (
-			array(
-				'class-ai-chat-bedrock-ai-availability.php',
-				'class-ai-chat-bedrock-ai-model-directory.php',
-				'class-ai-chat-bedrock-ai-model.php',
-				'class-ai-chat-bedrock-ai-provider.php',
-			) as $file
-		) {
-			require_once AI_CHAT_BEDROCK_PLUGIN_DIR . 'includes/core-ai/' . $file;
-		}
+
+		/*
+		 * The includes are inside the try, and Throwable rather than Exception is caught. A class
+		 * implementing a missing interface raises an Error, which an Exception handler does not
+		 * see, and it is raised by the include itself rather than by anything after it. Both of
+		 * those put the earlier version of this method outside its own safety net: the comment
+		 * said a provider that cannot be registered must not take the site down, and it could.
+		 */
 		try {
+			foreach (
+				array(
+					'class-ai-chat-bedrock-ai-availability.php',
+					'class-ai-chat-bedrock-ai-model-directory.php',
+					'class-ai-chat-bedrock-ai-model.php',
+					'class-ai-chat-bedrock-ai-provider.php',
+				) as $file
+			) {
+				require_once AI_CHAT_BEDROCK_PLUGIN_DIR . 'includes/core-ai/' . $file;
+			}
+
 			$registry = \WordPress\AiClient\AiClient::defaultRegistry();
 			if ( $registry->hasProvider( self::PROVIDER_ID ) ) {
 				return;
 			}
 			$registry->registerProvider( 'AI_Chat_Bedrock_AI_Provider' );
-		} catch ( Exception $error ) {
-			// A provider that cannot be registered must not take the site down with it.
+		} catch ( Throwable $error ) {
+			// Offering Bedrock to core's AI API is a convenience. Losing it costs a feature;
+			// taking the request down with it would cost the site.
 			return;
 		}
 	}

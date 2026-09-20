@@ -209,6 +209,73 @@ check_core_ai(
 	'A fallback model must be reported as the model that ran.'
 );
 
+// --- A partial AI Client must cost a feature, not the site ---------------------
+
+/*
+ * The guard checked that the AiClient class existed and concluded the whole bundled library was
+ * usable. It is not the same thing. The provider files implement interfaces from that library, and
+ * a class implementing a missing interface is a fatal error raised by the include itself, which no
+ * caller can handle. Continuous integration on WordPress 7.1.1 hit exactly that state and the
+ * request died. Reproduced locally afterwards by hiding one interface file in a cold process: the
+ * shipped 1.42.0 version fataled, this one survives.
+ *
+ * Read from source because the condition cannot be created inside a process that has already
+ * loaded the library.
+ */
+$aicfab_core_ai_src = file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock-core-ai.php' );
+
+/*
+ * Scoped to the guard itself. A first version looked for each interface name anywhere in the file,
+ * which passed while the name was only in the comment above the guard, so removing it from the
+ * list changed nothing the check could see. Substring searches over a whole file have now been
+ * wrong four times in this suite's history; the region matters as much as the string.
+ */
+$aicfab_guard = '';
+if ( preg_match( '/function core_ai_available\(\).*?\n\t\}/s', $aicfab_core_ai_src, $aicfab_gm ) ) {
+	$aicfab_guard = $aicfab_gm[0];
+}
+check_core_ai( '' !== $aicfab_guard, 'the guard body was found in the source' );
+foreach (
+	array(
+		'ModelInterface',
+		'TextGenerationModelInterface',
+		'ModelMetadataDirectoryInterface',
+		'ProviderAvailabilityInterface',
+	) as $aicfab_needed
+) {
+	check_core_ai(
+		false !== strpos( $aicfab_guard, "\\" . $aicfab_needed . "'" ),
+		'the guard itself names ' . $aicfab_needed . ', which the provider implements'
+	);
+}
+check_core_ai(
+	false !== strpos( $aicfab_core_ai_src, 'interface_exists(' ),
+	'the guard tests interfaces by existence rather than inferring them from a class'
+);
+
+/*
+ * Two separate mistakes put the old code outside its own safety net: the includes sat before the
+ * try, and Exception does not catch the Error that a missing interface raises.
+ */
+$aicfab_register = '';
+if ( preg_match( '/function register_provider\(\).*?
+	\}/s', $aicfab_core_ai_src, $aicfab_m ) ) {
+	$aicfab_register = $aicfab_m[0];
+}
+check_core_ai( '' !== $aicfab_register, 'register_provider was found in the source' );
+check_core_ai(
+	false !== strpos( $aicfab_register, 'catch ( Throwable' ),
+	'registration catches Throwable, since a missing interface raises an Error and not an Exception'
+);
+check_core_ai(
+	strpos( $aicfab_register, 'try {' ) < strpos( $aicfab_register, 'require_once' ),
+	'the includes are inside the try, because the include is what raises'
+);
+check_core_ai(
+	false === strpos( $aicfab_register, 'catch ( Exception' ),
+	'nothing in registration relies on catching Exception alone'
+);
+
 if ( $failures ) {
 	echo "FAILED\n";
 	foreach ( $failures as $failure ) {

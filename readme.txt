@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.42.0
+Stable tag: 1.43.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -349,6 +349,10 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.43.0 =
+* Fixed a fault that could take a site down. Offering Bedrock to WordPress's own AI API loads provider classes that implement interfaces from the AI client library core bundles, and the check beforehand only confirmed that library's main class existed. Those are not the same thing: a class implementing a missing interface is a fatal error raised by the include itself, which no caller can catch. A continuous integration run on WordPress 7.1.1 reached that state and the request died. The check now tests each interface the provider implements, the includes sit inside the error handler rather than before it, and the handler catches Throwable rather than Exception, which never saw this kind of failure at all. A missing piece of that library now costs the AI API integration and nothing else.
+* Added a release step that asks a real WordPress whether the plugin attaches where it says it does, and fails the build when it does not. Fourteen points: the abilities and their category and declared behaviour, the block, the shortcode, the Site Health check, the privacy exporter and eraser, the REST routes, the connector, and the AI client provider. The test suites call this plugin's own methods, so they cannot see whether a hook name is one WordPress actually fires, which is how the abilities integration was inert for so long. This step found the fault above on its first run.
+
 = 1.42.0 =
 * The abilities this plugin defines were never registered with WordPress. The wiring hooked `abilities_api_init`, which is not a hook WordPress has ever fired; the real one is `wp_abilities_api_init`, and `wp_register_ability()` refuses anything registered outside it. Nothing was registered either, because no category was passed and WordPress returns nothing for an ability without one. So on every version with the Abilities API, the registry held none of this plugin's abilities, and anything reading the registry, including the official MCP adapter that bridges it to MCP clients, saw nothing here at all. Confirmed against a live WordPress 7.1 site before and after: six abilities now register, where there were none.
 * Each ability now declares its behaviour where a client can read it, rather than only in this readme. The four read-only abilities are marked read-only, and WordPress then permits them over GET only; draft creation is marked as updating but not destructive, and WordPress requires POST. Verified both ways against the live site, including that a read-only ability is refused over POST and the writing one over GET.
@@ -690,6 +694,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.43.0 =
+Fixes a fault that could produce a fatal error on sites where the AI client library WordPress bundles is incomplete. Worth taking.
 
 = 1.42.0 =
 The abilities this plugin defines were never reaching the WordPress Abilities registry, so AI clients reading it saw nothing from this plugin. They register now, and declare what each one does.
