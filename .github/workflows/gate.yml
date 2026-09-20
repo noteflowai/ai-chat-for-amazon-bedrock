@@ -96,23 +96,27 @@ jobs:
 
       - name: Install WordPress
         run: |
-          php -d memory_limit=512M "$(which wp)" core download --path=/tmp/wp --version=latest
-          # A run of this workflow produced a WordPress whose bundled AI client library was
-          # missing 19 of its 101 files while the download reported success, so the
-          # integration step was checking the plugin against a broken WordPress and
-          # reporting that it had checked it against a real one. Extraction is also memory
-          # hungry: 7.1.1 exhausts a 128 MB limit and dies partway through.
-          if ! wp core verify-checksums --path=/tmp/wp; then
-            echo "::warning::the first download did not verify, taking it again"
-            rm -rf /tmp/wp
-            php -d memory_limit=512M "$(which wp)" core download --path=/tmp/wp --version=latest
-            wp core verify-checksums --path=/tmp/wp
-          fi
+          # wp core download drops files. On this runner it produced a WordPress whose bundled
+          # AI client library was missing 19 of its 101 source files, deterministically, so
+          # taking the download again changed nothing. Every one of those files is present and
+          # normally compressed in the official archive, with unremarkable paths. Its extractor
+          # is also memory hungry enough to die outright under a 128 MB limit. So the archive is
+          # fetched and unpacked directly, and then checked rather than trusted.
+          WP_VERSION="$(curl -sS https://api.wordpress.org/core/version-check/1.7/ \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["offers"][0]["current"])')"
+          echo "installing WordPress $WP_VERSION"
+          curl -sS -o /tmp/wp.zip "https://wordpress.org/wordpress-${WP_VERSION}.zip"
+          unzip -q /tmp/wp.zip -d /tmp/unpacked
+          mv /tmp/unpacked/wordpress /tmp/wp
+          rm -rf /tmp/wp.zip /tmp/unpacked
           wp config create --path=/tmp/wp --dbname=wordpress --dbuser=root \
             --dbpass=wordpress --dbhost=127.0.0.1:3306
           wp core install --path=/tmp/wp --url=http://localhost --title="Gate" \
             --admin_user=admin --admin_password="$(openssl rand -hex 16)" \
             --admin_email=gate@example.invalid --skip-email
+          # The gate reports that it verified the plugin against a real WordPress. That claim is
+          # only worth something if the WordPress is intact, and once it was not.
+          wp core verify-checksums --path=/tmp/wp
 
       - name: Install this plugin into it
         run: |
