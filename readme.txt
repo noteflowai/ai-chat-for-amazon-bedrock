@@ -296,12 +296,19 @@ Narrow abilities can be registered for agents and other plugins: search publishe
 
 Reads never return draft, private or password-protected content. The only write operation creates a new draft: nothing is published, updated or deleted, and WooCommerce orders and customers are never exposed. Draft creation requires `edit_posts`, reads require the capability configured for MCP tools, and the feature is disabled by default.
 
-These register into WordPress's own Abilities registry, so anything that reads it sees them: the
-core REST routes under `/wp-abilities/v1/`, and the official MCP adapter that bridges the registry
-to MCP clients. Each one declares what it does in a form a client can check rather than a sentence
-it has to trust. The four read-only abilities are marked read-only and WordPress will then only
-allow them over GET; draft creation is marked as updating but not destructive, and WordPress
-requires POST for it. Listing and running them needs authentication; an anonymous request is
+These register into WordPress's own Abilities registry, so anything that reads it sees them,
+including the core REST routes under `/wp-abilities/v1/` and the official WordPress MCP adapter.
+Checked against that adapter rather than assumed: an MCP client that connects to it discovers these
+abilities alongside the core ones, reads each one's schema and behaviour before calling it, and can
+execute them, which was confirmed by searching this site's content and by creating a draft through
+the protocol.
+
+Each ability declares what it does in a form a client can check rather than a sentence it has to
+trust, and WordPress enforces the declaration: the read-only ones are refused over POST, and draft
+creation, marked as updating but not destructive, is refused over GET. Text generation is
+deliberately not marked read-only even though it changes nothing here, because it spends money on a
+model request, and a client treating read-only as safe to call unattended would find that out by
+billing the account. Listing and running abilities needs authentication; an anonymous request is
 refused.
 
 = Is there a command line? =
