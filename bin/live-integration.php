@@ -209,12 +209,31 @@ if ( ! class_exists( 'AI_Chat_Bedrock_Core_AI' ) ) {
 	$aicfab_ids      = (array) $aicfab_registry->getRegisteredProviderIds();
 	$aicfab_present  = in_array( 'amazon-bedrock', $aicfab_ids, true );
 
+	/*
+	 * Reported in enough detail to tell a partial install from a moved file. A CI run reached a
+	 * state where the autoloader was on disk and this interface did not resolve, and answering why
+	 * cost a day of guessing that a file count would have settled.
+	 */
+	$aicfab_lib  = ABSPATH . WPINC . '/php-ai-client';
+	$aicfab_path = $aicfab_lib . '/src/Providers/Models/TextGeneration/Contracts/TextGenerationModelInterface.php';
+	$aicfab_count = 0;
+	if ( is_dir( $aicfab_lib . '/src' ) ) {
+		$aicfab_iterator = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $aicfab_lib . '/src' ) );
+		foreach ( $aicfab_iterator as $aicfab_file ) {
+			if ( $aicfab_file->isFile() && 'php' === strtolower( $aicfab_file->getExtension() ) ) {
+				++$aicfab_count;
+			}
+		}
+	}
 	aicfab_note(
 		sprintf(
-			'AI Client: library usable=%s, TextGenerationModelInterface=%s, autoloader file=%s',
+			'AI Client: usable=%s, interface resolves=%s, its file on disk=%s, src/ holds %d php files, autoloader=%s, wp=%s',
 			$aicfab_usable ? 'yes' : 'no',
-			interface_exists( $aicfab_iface ) ? 'present' : 'absent',
-			file_exists( ABSPATH . WPINC . '/php-ai-client/autoload.php' ) ? 'present' : 'absent'
+			interface_exists( $aicfab_iface ) ? 'yes' : 'no',
+			file_exists( $aicfab_path ) ? 'yes' : 'no',
+			$aicfab_count,
+			file_exists( $aicfab_lib . '/autoload.php' ) ? 'present' : 'absent',
+			get_bloginfo( 'version' )
 		)
 	);
 
