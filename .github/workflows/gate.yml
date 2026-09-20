@@ -96,7 +96,18 @@ jobs:
 
       - name: Install WordPress
         run: |
-          wp core download --path=/tmp/wp --version=latest
+          php -d memory_limit=512M "$(which wp)" core download --path=/tmp/wp --version=latest
+          # A run of this workflow produced a WordPress whose bundled AI client library was
+          # missing 19 of its 101 files while the download reported success, so the
+          # integration step was checking the plugin against a broken WordPress and
+          # reporting that it had checked it against a real one. Extraction is also memory
+          # hungry: 7.1.1 exhausts a 128 MB limit and dies partway through.
+          if ! wp core verify-checksums --path=/tmp/wp; then
+            echo "::warning::the first download did not verify, taking it again"
+            rm -rf /tmp/wp
+            php -d memory_limit=512M "$(which wp)" core download --path=/tmp/wp --version=latest
+            wp core verify-checksums --path=/tmp/wp
+          fi
           wp config create --path=/tmp/wp --dbname=wordpress --dbuser=root \
             --dbpass=wordpress --dbhost=127.0.0.1:3306
           wp core install --path=/tmp/wp --url=http://localhost --title="Gate" \
