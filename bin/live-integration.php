@@ -191,16 +191,39 @@ aicfab_live( count( $aicfab_routes ) >= 5, 'the REST routes are registered', cou
  * Core's AI Client, where the install has one. The provider must be registered and configured, or
  * wp_ai_client_prompt() cannot reach Bedrock and the integration is decoration.
  */
-if ( class_exists( '\WordPress\AiClient\AiClient' ) ) {
+/*
+ * The provider can only register where the bundled library is complete, and on some installs it is
+ * not: continuous integration on WordPress 7.1.1 has the AiClient class but not the interfaces the
+ * provider implements. That state is legitimate, and the plugin's job there is to decline rather
+ * than to fail, so this asserts the two halves of the contract separately. Enough detail is printed
+ * to tell which half applies without another round trip.
+ */
+if ( ! class_exists( 'AI_Chat_Bedrock_Core_AI' ) ) {
+	aicfab_note( 'skipped: the core AI integration is not part of this build' );
+} elseif ( ! class_exists( '\WordPress\AiClient\AiClient' ) ) {
+	aicfab_note( 'skipped: this WordPress has no AI Client at all' );
+} else {
+	$aicfab_iface    = '\WordPress\AiClient\Providers\Models\TextGeneration\Contracts\TextGenerationModelInterface';
+	$aicfab_usable   = AI_Chat_Bedrock_Core_AI::core_ai_available();
 	$aicfab_registry = \WordPress\AiClient\AiClient::defaultRegistry();
 	$aicfab_ids      = (array) $aicfab_registry->getRegisteredProviderIds();
-	aicfab_live(
-		in_array( 'amazon-bedrock', $aicfab_ids, true ),
-		'the provider is registered with core\'s AI Client',
-		implode( ', ', $aicfab_ids )
+	$aicfab_present  = in_array( 'amazon-bedrock', $aicfab_ids, true );
+
+	aicfab_note(
+		sprintf(
+			'AI Client: library usable=%s, TextGenerationModelInterface=%s, autoloader file=%s',
+			$aicfab_usable ? 'yes' : 'no',
+			interface_exists( $aicfab_iface ) ? 'present' : 'absent',
+			file_exists( ABSPATH . WPINC . '/php-ai-client/autoload.php' ) ? 'present' : 'absent'
+		)
 	);
-} else {
-	aicfab_note( 'skipped: this WordPress has no AI Client' );
+
+	if ( $aicfab_usable ) {
+		aicfab_live( $aicfab_present, 'the provider registers where the library is complete', implode( ', ', $aicfab_ids ) );
+	} else {
+		// Declining is the correct behaviour, and it must decline rather than half-register.
+		aicfab_live( ! $aicfab_present, 'the provider stays out where the library is incomplete', implode( ', ', $aicfab_ids ) );
+	}
 }
 
 if ( function_exists( 'wp_is_connector_registered' ) ) {
