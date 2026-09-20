@@ -69,10 +69,18 @@ foreach ( $php_files as $file ) {
 	}
 }
 /*
- * The guard is about translation calls, not the literal string: the WP-CLI command is
- * named ai-chat-bedrock, which is legitimate and must not trip this check.
+ * The guard is about translation calls, not the literal string. Several legitimate uses have the
+ * same shape as a translation call's trailing domain argument: the WP-CLI command is named
+ * ai-chat-bedrock, the abilities category is too, and strpos( $route, 'ai-chat-bedrock' ) reads
+ * identically to a comma-then-domain-then-paren. Matching on shape alone reported one of those as
+ * a defect, so the function names are named. A guard that cries wolf is one somebody eventually
+ * silences.
  */
-check( 0 === preg_match( '/,\s*\x27ai-chat-bedrock\x27\s*\)/', $source ), 'Legacy text domain must not remain in translation calls.' );
+$aicfab_translation_calls = '(?:__|_e|_x|_ex|_n|_nx|esc_html__|esc_html_e|esc_html_x|esc_attr__|esc_attr_e|esc_attr_x|_n_noop|_nx_noop)';
+check(
+	0 === preg_match( '/\b' . $aicfab_translation_calls . '\s*\([^;]*?,\s*\x27ai-chat-bedrock\x27\s*\)/', $source ),
+	'Legacy text domain must not remain in translation calls.'
+);
 check( false === strpos( $source, "load_plugin_textdomain( 'ai-chat-bedrock'" ), 'The legacy text domain is not loaded.' );
 check( false === strpos( $source, 'session_start(' ), 'PHP sessions must not be used.' );
 // Public REST routes are only acceptable for the OAuth endpoints the protocol requires.

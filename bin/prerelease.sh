@@ -272,6 +272,44 @@ else
 	fi
 fi
 
+step "Live integration"
+# The suites call this plugin's own methods, so they cannot see whether the hook a method is
+# attached to is one WordPress actually fires. That is not hypothetical: the Abilities API
+# integration registered on a hook name WordPress does not have, every suite passed, and the
+# feature was inert on every install. This step asks a real WordPress instead.
+if [ -z "$WP_CLI" ]; then
+	skip 'no --wp-cli given, so the integration points were not verified against WordPress'
+else
+	if ! $WP_CLI plugin is-active ai-chat-for-amazon-bedrock >/dev/null 2>&1; then
+		$WP_CLI plugin activate ai-chat-for-amazon-bedrock >/dev/null 2>&1
+	fi
+	# The WP-CLI command may be a plain wp on this filesystem, or a wrapper whose view of the
+	# filesystem differs from ours, so the script is offered by each path that could reach it
+	# rather than assuming one. Stdin is not used: a wrapper need not forward it, and a step that
+	# cannot be exercised locally is a step nobody trusts.
+	LIVE_OUTPUT=''
+	for LIVE_PATH in \
+		"wp-content/plugins/ai-chat-for-amazon-bedrock/bin/live-integration.php" \
+		"$PLUGIN_DIR/bin/live-integration.php"
+	do
+		LIVE_TRY="$($WP_CLI eval-file "$LIVE_PATH" 2>&1)"
+		if ! printf '%s' "$LIVE_TRY" | grep -q 'does not exist'; then
+			LIVE_OUTPUT="$LIVE_TRY"
+			break
+		fi
+	done
+	if [ -z "$LIVE_OUTPUT" ]; then
+		LIVE_OUTPUT='Error: could not reach live-integration.php from the WP-CLI process'
+	fi
+	if printf '%s' "$LIVE_OUTPUT" | grep -q '^OK:'; then
+		printf '%s\n' "$LIVE_OUTPUT" | grep -E '^\s+(ok|FAIL|skip)' | head -20
+		ok "$(printf '%s' "$LIVE_OUTPUT" | grep '^OK:' | sed 's/^OK: //')"
+	else
+		printf '%s\n' "$LIVE_OUTPUT" | head -20
+		bad 'the plugin does not attach to WordPress where it says it does'
+	fi
+fi
+
 step "Package contents"
 if command -v python3 >/dev/null 2>&1; then
 	if PACKAGE_OUTPUT="$(python3 "$PLUGIN_DIR/bin/build-package.py" --list 2>&1 >/dev/null)"; then
