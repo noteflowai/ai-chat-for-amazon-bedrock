@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.43.0
+Stable tag: 1.44.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -348,6 +348,11 @@ what a good answer says.
 
 
 == Changelog ==
+
+= 1.44.0 =
+* A new installation could not answer its first question. Activation chose Claude 3 Haiku, and its provider has since withdrawn that model from accounts that were not already using it, so the first request came back saying the model was retired. Found by installing the package from the plugin directory onto a clean WordPress and asking it something, which is the one check that reflects what a new user actually gets. Activation now chooses Amazon Nova Lite, verified by invoking it: a fresh install answers in about 700 milliseconds with nothing configured beyond an IAM role.
+* Reordered the model list the plugin falls back to when discovery fails. It began with the same retired model, so the first suggestion was the one least likely to work. Amazon Bedrock still lists retired models, so no amount of discovery can detect this; only invoking the model can, which is what the Diagnostics screen already does.
+* The default model and that list are now checked against each other, so a model that stops working cannot be removed from the list while remaining the default.
 
 = 1.43.0 =
 * Fixed a fault that could take a site down. Offering Bedrock to WordPress's own AI API loads provider classes that implement interfaces from the AI client library core bundles, and the check beforehand only confirmed that library's main class existed. Those are not the same thing: a class implementing a missing interface is a fatal error raised by the include itself, which no caller can catch. A continuous integration run on WordPress 7.1.1 reached that state and the request died. The check now tests each interface the provider implements, the includes sit inside the error handler rather than before it, and the handler catches Throwable rather than Exception, which never saw this kind of failure at all. A missing piece of that library now costs the AI API integration and nothing else.
@@ -694,6 +699,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.44.0 =
+New installations defaulted to a model its provider has retired, so the first question failed. Existing sites that already chose a model are unaffected.
 
 = 1.43.0 =
 Fixes a fault that could produce a fatal error on sites where the AI client library WordPress bundles is incomplete. Worth taking.

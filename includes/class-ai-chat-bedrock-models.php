@@ -22,12 +22,18 @@ class AI_Chat_Bedrock_Models {
 	 */
 	public static function fallback_models() {
 		return array(
-			'anthropic.claude-3-haiku-20240307-v1:0'       => 'Claude 3 Haiku',
-			'anthropic.claude-3-5-sonnet-20240620-v1:0'    => 'Claude 3.5 Sonnet',
-			'us.anthropic.claude-3-5-sonnet-20241022-v2:0' => 'Claude 3.5 Sonnet v2 (inference profile)',
-			'us.anthropic.claude-3-7-sonnet-20250219-v1:0' => 'Claude 3.7 Sonnet (inference profile)',
+
+			/*
+			 * Only consulted when discovery fails, so it is ordered with the models most
+			 * likely to be usable first. Claude 3 Haiku led this list until its provider
+			 * retired it for accounts not already using it, which made the first entry the
+			 * one most likely to fail.
+			 */
 			'amazon.nova-lite-v1:0'                        => 'Amazon Nova Lite',
+			'amazon.nova-micro-v1:0'                       => 'Amazon Nova Micro',
 			'amazon.nova-pro-v1:0'                         => 'Amazon Nova Pro',
+			'us.anthropic.claude-haiku-4-5-20251001-v1:0'  => 'Claude Haiku 4.5 (inference profile)',
+			'us.anthropic.claude-3-7-sonnet-20250219-v1:0' => 'Claude 3.7 Sonnet (inference profile)',
 			'amazon.titan-text-express-v1'                 => 'Amazon Titan Text Express',
 			'meta.llama3-8b-instruct-v1:0'                 => 'Meta Llama 3 8B',
 			'mistral.mistral-7b-instruct-v0:2'             => 'Mistral 7B',

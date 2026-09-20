@@ -13,7 +13,16 @@ class AI_Chat_Bedrock_Activator {
 	public static function activate() {
 		$defaults = array(
 			'aws_region'            => 'us-east-1',
-			'model_id'              => 'anthropic.claude-3-haiku-20240307-v1:0',
+
+			/*
+			 * Amazon's own small model, chosen because a fresh install must be able to answer
+			 * before anyone visits the settings screen. The previous default, Claude 3 Haiku,
+			 * was retired by its provider for accounts not already using it, so a new install
+			 * failed its first request with a message about choosing a current model. Bedrock
+			 * still lists retired models in ListFoundationModels, so discovery cannot catch
+			 * this; only an invocation can, which is what the Diagnostics screen does.
+			 */
+			'model_id'              => 'amazon.nova-lite-v1:0',
 			'max_tokens'            => 1000,
 			'temperature'           => 0.7,
 			'chat_title'            => 'Chat with AI',

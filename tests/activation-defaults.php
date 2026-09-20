@@ -176,6 +176,48 @@ check_act(
 	'No plugin event of any kind survives deactivation.'
 );
 
+// --- The default model is one the plugin itself considers current -------------
+
+/*
+ * A fresh install answered its first request with "the model provider has retired this model",
+ * because activation defaulted to Claude 3 Haiku and its provider withdrew it for accounts not
+ * already using it. Bedrock still lists retired models, so nothing in discovery can catch this.
+ * What can be held still is that the default and the plugin's own ordered list of most-likely
+ * usable models agree: if the list is reordered because the first entry stopped working, the
+ * default has to move with it.
+ */
+$aicfab_models_src = file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock-models.php' );
+$aicfab_fallback   = array();
+if ( preg_match( '/function fallback_models\(\).*?return array\((.*?)\n\t\t\);/s', $aicfab_models_src, $aicfab_fm ) ) {
+	preg_match_all( "/'([^']+)'\s*=>/", $aicfab_fm[1], $aicfab_ids );
+	$aicfab_fallback = $aicfab_ids[1];
+}
+
+check_act( count( $aicfab_fallback ) >= 5, 'the fallback model list was found, got ' . count( $aicfab_fallback ) );
+check_act(
+	in_array( $aicfab_settings['model_id'], $aicfab_fallback, true ),
+	'the default model is one the plugin ships in its fallback list, got ' . $aicfab_settings['model_id']
+);
+check_act(
+	isset( $aicfab_fallback[0] ) && $aicfab_settings['model_id'] === $aicfab_fallback[0],
+	'the default model is the first entry, which is the one the list claims is most likely usable'
+);
+
+/*
+ * Named rather than pattern-matched. A retired identifier cannot be recognised by its shape, so
+ * the only honest guard is a list of the ones already known to have been withdrawn.
+ */
+foreach ( array( 'anthropic.claude-3-haiku-20240307-v1:0' ) as $aicfab_retired ) {
+	check_act(
+		$aicfab_settings['model_id'] !== $aicfab_retired,
+		'the default is not ' . $aicfab_retired . ', which is retired'
+	);
+	check_act(
+		! in_array( $aicfab_retired, array_slice( $aicfab_fallback, 0, 3 ), true ),
+		'a retired model is not among the first the fallback list offers'
+	);
+}
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );
