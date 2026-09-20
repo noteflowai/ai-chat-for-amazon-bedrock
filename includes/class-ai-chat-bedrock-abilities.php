@@ -18,8 +18,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 class AI_Chat_Bedrock_Abilities {
 
 	const TOOL_PREFIX = 'wpability___';
-	const MAX_TOOLS   = 20;
-	const MAX_TEXT    = 4000;
+
+	/*
+	 * Core ships only the site and user categories, and a category is not optional in practice:
+	 * wp_register_ability() returns null both for an unknown category and for none at all, so
+	 * every ability here needs one that exists. Filing this plugin's abilities under core's
+	 * "site" would misdescribe them, so it registers its own.
+	 */
+	const CATEGORY  = 'ai-chat-bedrock';
+	const MAX_TOOLS = 20;
+	const MAX_TEXT  = 4000;
 
 	/**
 	 * Whether abilities were already registered in this request.
@@ -45,6 +53,24 @@ class AI_Chat_Bedrock_Abilities {
 	public static function tools_enabled() {
 		$enabled = (bool) get_option( 'ai_chat_bedrock_abilities_tools', false );
 		return (bool) apply_filters( 'ai_chat_bedrock_abilities_tools_enabled', $enabled && self::available() );
+	}
+
+	/**
+	 * Register the category this plugin's abilities belong to.
+	 *
+	 * Runs on wp_abilities_api_categories_init, which fires before abilities are registered.
+	 */
+	public function register_category() {
+		if ( ! function_exists( 'wp_register_ability_category' ) ) {
+			return;
+		}
+		wp_register_ability_category(
+			self::CATEGORY,
+			array(
+				'label'       => __( 'AI Chat for Amazon Bedrock', 'ai-chat-for-amazon-bedrock' ),
+				'description' => __( 'Read-only lookups over published content, plus one additive action that creates a draft.', 'ai-chat-for-amazon-bedrock' ),
+			)
+		);
 	}
 
 	/**
@@ -83,6 +109,17 @@ class AI_Chat_Bedrock_Abilities {
 					),
 				),
 				'execute_callback'    => array( $this, 'ability_generate_text' ),
+				'category'            => self::CATEGORY,
+				'meta'                => array(
+
+					/*
+					 * Nothing on the site changes, but this spends money on a Bedrock request,
+					 * so readonly is deliberately not claimed: a client that treats readonly as
+					 * free to call unattended would be billing the account to find out.
+					 */
+					'annotations' => array( 'destructive' => false ),
+					'public'      => true,
+				),
 				'permission_callback' => array( $this, 'can_generate_text' ),
 			)
 		);
@@ -98,6 +135,14 @@ class AI_Chat_Bedrock_Abilities {
 				),
 				'output_schema'       => array( 'type' => 'object' ),
 				'execute_callback'    => array( $this, 'ability_get_status' ),
+				'category'            => self::CATEGORY,
+				'meta'                => array(
+					'annotations' => array(
+						'readonly'   => true,
+						'idempotent' => true,
+					),
+					'public'      => true,
+				),
 				'permission_callback' => array( $this, 'can_manage' ),
 			)
 		);

@@ -160,9 +160,17 @@ class AI_Chat_Bedrock {
 		$mcp = new AI_Chat_Bedrock_MCP_Integration();
 		$mcp->register_hooks( $this->loader );
 
+		/*
+		 * The hook is wp_abilities_api_init, with the prefix. This read abilities_api_init, which
+		 * is not a hook WordPress has ever fired, and the init fallback beside it was refused by
+		 * core because wp_register_ability() checks doing_action( 'wp_abilities_api_init' ) and
+		 * warns that the ability was not registered. The result was that every ability this
+		 * plugin defines was absent from the registry, so core's own MCP adapter and anything
+		 * else reading the Abilities API saw nothing here at all.
+		 */
 		$abilities = new AI_Chat_Bedrock_Abilities();
-		$this->loader->add_action( 'abilities_api_init', $abilities, 'register_abilities' );
-		$this->loader->add_action( 'init', $abilities, 'register_abilities', 20 );
+		$this->loader->add_action( 'wp_abilities_api_categories_init', $abilities, 'register_category' );
+		$this->loader->add_action( 'wp_abilities_api_init', $abilities, 'register_abilities' );
 		$this->loader->add_filter( 'ai_chat_bedrock_message_payload', $abilities, 'add_ability_tools', 20, 2 );
 		$this->loader->add_filter( 'ai_chat_bedrock_process_response', $abilities, 'execute_ability_tools', 20, 2 );
 
@@ -171,8 +179,7 @@ class AI_Chat_Bedrock {
 		AI_Chat_Bedrock_Core_AI::init();
 
 		$site_abilities = new AI_Chat_Bedrock_Site_Abilities();
-		$this->loader->add_action( 'abilities_api_init', $site_abilities, 'register' );
-		$this->loader->add_action( 'init', $site_abilities, 'register', 21 );
+		$this->loader->add_action( 'wp_abilities_api_init', $site_abilities, 'register' );
 	}
 
 	private function init_wp_mcp_server() {

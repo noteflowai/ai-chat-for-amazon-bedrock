@@ -68,6 +68,15 @@ class AI_Chat_Bedrock_Site_Abilities {
 				),
 				'output_schema'       => array( 'type' => 'object' ),
 				'execute_callback'    => array( $this, 'search_content' ),
+				'category'            => AI_Chat_Bedrock_Abilities::CATEGORY,
+				'meta'                => array(
+					// Read-only and repeatable, so a client may call it without asking first.
+					'annotations' => array(
+						'readonly'   => true,
+						'idempotent' => true,
+					),
+					'public'      => true,
+				),
 				'permission_callback' => array( $this, 'can_read' ),
 			)
 		);
@@ -89,6 +98,15 @@ class AI_Chat_Bedrock_Site_Abilities {
 				),
 				'output_schema'       => array( 'type' => 'object' ),
 				'execute_callback'    => array( $this, 'get_post_content' ),
+				'category'            => AI_Chat_Bedrock_Abilities::CATEGORY,
+				'meta'                => array(
+					// Read-only and repeatable, so a client may call it without asking first.
+					'annotations' => array(
+						'readonly'   => true,
+						'idempotent' => true,
+					),
+					'public'      => true,
+				),
 				'permission_callback' => array( $this, 'can_read' ),
 			)
 		);
@@ -114,6 +132,22 @@ class AI_Chat_Bedrock_Site_Abilities {
 				),
 				'output_schema'       => array( 'type' => 'object' ),
 				'execute_callback'    => array( $this, 'create_draft' ),
+				'category'            => AI_Chat_Bedrock_Abilities::CATEGORY,
+				'meta'                => array(
+
+					/*
+					 * The one ability here that writes. Additive rather than destructive: it
+					 * inserts a draft and never publishes, updates or deletes anything, which
+					 * is why destructive is false rather than absent. Not idempotent, since
+					 * calling it again makes another draft.
+					 */
+					'annotations' => array(
+						'readonly'    => false,
+						'destructive' => false,
+						'idempotent'  => false,
+					),
+					'public'      => true,
+				),
 				'permission_callback' => array( $this, 'can_draft' ),
 			)
 		);
@@ -135,6 +169,15 @@ class AI_Chat_Bedrock_Site_Abilities {
 				),
 				'output_schema'       => array( 'type' => 'object' ),
 				'execute_callback'    => array( $this, 'suggest_seo_meta' ),
+				'category'            => AI_Chat_Bedrock_Abilities::CATEGORY,
+				'meta'                => array(
+					// Read-only and repeatable, so a client may call it without asking first.
+					'annotations' => array(
+						'readonly'   => true,
+						'idempotent' => true,
+					),
+					'public'      => true,
+				),
 				'permission_callback' => array( $this, 'can_draft' ),
 			)
 		);
@@ -160,6 +203,15 @@ class AI_Chat_Bedrock_Site_Abilities {
 					),
 					'output_schema'       => array( 'type' => 'object' ),
 					'execute_callback'    => array( $this, 'get_products' ),
+					'category'            => AI_Chat_Bedrock_Abilities::CATEGORY,
+					'meta'                => array(
+						// Read-only and repeatable, so a client may call it without asking first.
+						'annotations' => array(
+							'readonly'   => true,
+							'idempotent' => true,
+						),
+						'public'      => true,
+					),
 					'permission_callback' => array( $this, 'can_read' ),
 				)
 			);

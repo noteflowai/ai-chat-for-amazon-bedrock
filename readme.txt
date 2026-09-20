@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.41.0
+Stable tag: 1.42.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -296,6 +296,14 @@ Narrow abilities can be registered for agents and other plugins: search publishe
 
 Reads never return draft, private or password-protected content. The only write operation creates a new draft: nothing is published, updated or deleted, and WooCommerce orders and customers are never exposed. Draft creation requires `edit_posts`, reads require the capability configured for MCP tools, and the feature is disabled by default.
 
+These register into WordPress's own Abilities registry, so anything that reads it sees them: the
+core REST routes under `/wp-abilities/v1/`, and the official MCP adapter that bridges the registry
+to MCP clients. Each one declares what it does in a form a client can check rather than a sentence
+it has to trust. The four read-only abilities are marked read-only and WordPress will then only
+allow them over GET; draft creation is marked as updating but not destructive, and WordPress
+requires POST for it. Listing and running them needs authentication; an anonymous request is
+refused.
+
 = Is there a command line? =
 
 `wp ai-chat-bedrock index` builds the semantic index without keeping a browser tab open, with `--batch`, `--max` and `--force`. `index-status` reports coverage, `diagnose` runs the same checks as the admin screen with an optional `--live` Bedrock request, and `usage` prints requests and tokens per day or per model. Useful in a deploy step or a cron job.
@@ -333,6 +341,12 @@ what a good answer says.
 
 
 == Changelog ==
+
+= 1.42.0 =
+* The abilities this plugin defines were never registered with WordPress. The wiring hooked `abilities_api_init`, which is not a hook WordPress has ever fired; the real one is `wp_abilities_api_init`, and `wp_register_ability()` refuses anything registered outside it. Nothing was registered either, because no category was passed and WordPress returns nothing for an ability without one. So on every version with the Abilities API, the registry held none of this plugin's abilities, and anything reading the registry, including the official MCP adapter that bridges it to MCP clients, saw nothing here at all. Confirmed against a live WordPress 7.1 site before and after: six abilities now register, where there were none.
+* Each ability now declares its behaviour where a client can read it, rather than only in this readme. The four read-only abilities are marked read-only, and WordPress then permits them over GET only; draft creation is marked as updating but not destructive, and WordPress requires POST. Verified both ways against the live site, including that a read-only ability is refused over POST and the writing one over GET.
+* Text generation is deliberately not marked read-only even though it changes nothing on the site, because it spends money on a Bedrock request, and a client that treats read-only as safe to call unattended would be billing the account to find out.
+* Added a check that fails the build if the unprefixed hook name returns, if the init fallback that WordPress refuses comes back, or if any ability is registered without a category or without declaring its behaviour.
 
 = 1.41.0 =
 * `wp ai-chat-bedrock eval --json` now works. It never had. WP-CLI translates --json into --format json before a command sees it, and this command declared a bare --json flag with no format parameter, so every documented use of it failed with "unknown --format parameter" and wrote nothing. The command now declares --format with table and json, so both --json and --format=json produce the report and a bare run still prints the readable form.
@@ -669,6 +683,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.42.0 =
+The abilities this plugin defines were never reaching the WordPress Abilities registry, so AI clients reading it saw nothing from this plugin. They register now, and declare what each one does.
 
 = 1.41.0 =
 The documented wp ai-chat-bedrock eval --json had never worked, because WP-CLI maps --json onto a format parameter the command did not declare. Both --json and --format=json now work.

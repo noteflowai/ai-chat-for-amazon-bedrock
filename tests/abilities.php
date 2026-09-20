@@ -320,6 +320,118 @@ check_ab(
 );
 $GLOBALS['aicfab_opts']['ai_chat_bedrock_abilities_tools'] = true;
 
+// --- Registration has to reach the core registry --------------------------------
+
+/*
+ * Every ability this plugin defines was absent from the WordPress registry, on every version
+ * that has the Abilities API, because the wiring hooked abilities_api_init: a name WordPress
+ * has never fired. The prefixed wp_abilities_api_init is the real one, and wp_register_ability()
+ * refuses anything registered outside it. The plugin also passed no category, and core returns
+ * null for an ability without one, so the abilities would still not have registered even after
+ * the hook name was corrected. Both are checked here, by reading the source, because a unit
+ * test that calls register() directly cannot see a wrong hook name.
+ */
+$aicfab_wiring   = file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock.php' );
+$aicfab_sources  = array(
+	'includes/class-ai-chat-bedrock-abilities.php',
+	'includes/class-ai-chat-bedrock-site-abilities.php',
+);
+
+check_ab(
+	(bool) preg_match( "/add_action\(\s*'wp_abilities_api_init'/", $aicfab_wiring ),
+	'Abilities are registered on wp_abilities_api_init.'
+);
+check_ab(
+	! preg_match( "/'abilities_api_init'/", $aicfab_wiring ),
+	'The unprefixed hook name, which WordPress never fires, does not appear.'
+);
+check_ab(
+	(bool) preg_match( "/add_action\(\s*'wp_abilities_api_categories_init'/", $aicfab_wiring ),
+	'The category is registered on its own hook, which fires before abilities.'
+);
+/*
+ * Written with a single-quoted pattern on purpose. In a double-quoted PHP string \$ collapses to
+ * a bare $, which a regex reads as the end-of-string anchor, and the first version of this check
+ * could therefore never match the line it was meant to catch.
+ */
+check_ab(
+	! preg_match( '/add_action\(\s*.init.,\s*\$[a-z_]*abilities/', $aicfab_wiring ),
+	'There is no init fallback, because core refuses registration there and warns.'
+);
+
+// Every registration must carry a category, or core silently returns null for it.
+$aicfab_registrations = 0;
+$aicfab_missing_cat   = array();
+$aicfab_missing_meta  = array();
+foreach ( $aicfab_sources as $aicfab_file ) {
+	$aicfab_body = file_get_contents( __DIR__ . '/../' . $aicfab_file );
+	if ( ! preg_match_all( "/wp_register_ability\(\s*\n\s*'([a-z0-9\-\/]+)',\s*\n\s*array\((.*?)\n\s*\)\s*\n\s*\);/s", $aicfab_body, $aicfab_hits, PREG_SET_ORDER ) ) {
+		continue;
+	}
+	foreach ( $aicfab_hits as $aicfab_hit ) {
+		++$aicfab_registrations;
+		if ( false === strpos( $aicfab_hit[2], "'category'" ) ) {
+			$aicfab_missing_cat[] = $aicfab_hit[1];
+		}
+		if ( false === strpos( $aicfab_hit[2], "'annotations'" ) ) {
+			$aicfab_missing_meta[] = $aicfab_hit[1];
+		}
+	}
+}
+
+check_ab( $aicfab_registrations >= 7, 'The ability registrations were found, got ' . $aicfab_registrations );
+check_ab(
+	array() === $aicfab_missing_cat,
+	'Every ability declares a category, missing: ' . implode( ', ', $aicfab_missing_cat )
+);
+
+/*
+ * The annotations are not decoration. Core reads them at the transport layer: an ability marked
+ * readonly may only be invoked with GET, and one that updates may only be invoked with POST,
+ * which was confirmed against a live site. They are how this plugin's claim that only one
+ * ability writes becomes something a client can check rather than a sentence in a readme.
+ */
+check_ab(
+	array() === $aicfab_missing_meta,
+	'Every ability declares its behaviour, missing: ' . implode( ', ', $aicfab_missing_meta )
+);
+
+/*
+ * Matched against source with its whitespace collapsed. The first version of these checks were
+ * written against single-line arrays and broke the moment the formatter expanded them, which
+ * made the assertions about formatting rather than about behaviour.
+ */
+$aicfab_flat = preg_replace( '/\s+/', ' ', file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock-site-abilities.php' ) );
+
+function aicfab_annotation( $flat, $ability, $key, $value ) {
+	$pattern = '/\x27ai-chat-bedrock\/' . preg_quote( $ability, '/' ) . '\x27.*?\x27' . preg_quote( $key, '/' ) . '\x27\s*=>\s*' . preg_quote( $value, '/' ) . '/';
+	return (bool) preg_match( $pattern, $flat );
+}
+
+check_ab(
+	1 === preg_match_all( '/\x27readonly\x27\s*=>\s*false/', $aicfab_flat ),
+	'Exactly one site ability declares that it writes, found ' . preg_match_all( '/\x27readonly\x27\s*=>\s*false/', $aicfab_flat )
+);
+check_ab(
+	aicfab_annotation( $aicfab_flat, 'create-draft', 'readonly', 'false' ),
+	'The draft ability is the one that declares it writes.'
+);
+check_ab(
+	aicfab_annotation( $aicfab_flat, 'create-draft', 'destructive', 'false' ),
+	'And declares itself additive rather than destructive, so a client knows it removes nothing.'
+);
+foreach ( array( 'search-content', 'get-post', 'suggest-seo-meta', 'get-products' ) as $aicfab_read ) {
+	check_ab(
+		aicfab_annotation( $aicfab_flat, $aicfab_read, 'readonly', 'true' ),
+		$aicfab_read . ' declares itself read only.'
+	);
+}
+
+check_ab(
+	(bool) preg_match( '/function register_category\(/', file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock-abilities.php' ) ),
+	'The plugin registers the category it files its abilities under, under exactly that name.'
+);
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

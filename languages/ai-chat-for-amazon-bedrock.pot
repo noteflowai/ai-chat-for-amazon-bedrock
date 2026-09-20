@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.41.0\n"
+"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.42.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-19T09:53:49+00:00\n"
+"POT-Creation-Date: 2026-09-20T02:02:30+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -190,7 +190,7 @@ msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:104
 #: admin/class-ai-chat-bedrock-admin.php:138
-#: includes/class-ai-chat-bedrock-abilities.php:157
+#: includes/class-ai-chat-bedrock-abilities.php:202
 #: includes/class-ai-chat-bedrock-content-generator.php:79
 #: includes/class-ai-chat-bedrock-editor-assistant.php:163
 #: includes/class-ai-chat-bedrock-editor-assistant.php:237
@@ -352,6 +352,7 @@ msgid "Parameters"
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:168
+#: includes/class-ai-chat-bedrock-abilities.php:70
 msgid "AI Chat for Amazon Bedrock"
 msgstr ""
 
@@ -1551,7 +1552,7 @@ msgstr ""
 #: admin/partials/ai-chat-bedrock-admin-generator.php:47
 #: includes/class-ai-chat-bedrock-content-generator.php:100
 #: includes/class-ai-chat-bedrock-generator-stream.php:68
-#: includes/class-ai-chat-bedrock-site-abilities.php:276
+#: includes/class-ai-chat-bedrock-site-abilities.php:328
 msgid "You are not allowed to create drafts."
 msgstr ""
 
@@ -2142,43 +2143,47 @@ msgstr ""
 msgid "Maximum tokens"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-abilities.php:62
+#: includes/class-ai-chat-bedrock-abilities.php:71
+msgid "Read-only lookups over published content, plus one additive action that creates a draft."
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-abilities.php:88
 msgid "Generate text with Amazon Bedrock"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-abilities.php:63
+#: includes/class-ai-chat-bedrock-abilities.php:89
 msgid "Send a prompt to the configured Amazon Bedrock model and return the generated text."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-abilities.php:69
+#: includes/class-ai-chat-bedrock-abilities.php:95
 msgid "The instruction to send to the model."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-abilities.php:73
+#: includes/class-ai-chat-bedrock-abilities.php:99
 msgid "Optional system instruction."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-abilities.php:93
+#: includes/class-ai-chat-bedrock-abilities.php:130
 msgid "Read Amazon Bedrock chat status"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-abilities.php:94
+#: includes/class-ai-chat-bedrock-abilities.php:131
 msgid "Return the plugin configuration status, including credential source, region, model and streaming state. No secret values are returned."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-abilities.php:136
+#: includes/class-ai-chat-bedrock-abilities.php:181
 msgid "A prompt is required."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-abilities.php:254
+#: includes/class-ai-chat-bedrock-abilities.php:299
 msgid "This ability is not allowed by the site policy."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-abilities.php:425
+#: includes/class-ai-chat-bedrock-abilities.php:470
 msgid "You are not allowed to run this ability."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-abilities.php:433
+#: includes/class-ai-chat-bedrock-abilities.php:478
 msgid "The Abilities API is not available."
 msgstr ""
 
@@ -3397,72 +3402,72 @@ msgid "Search terms."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-site-abilities.php:64
-#: includes/class-ai-chat-bedrock-site-abilities.php:157
+#: includes/class-ai-chat-bedrock-site-abilities.php:200
 msgid "Maximum results, up to 10."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:78
+#: includes/class-ai-chat-bedrock-site-abilities.php:87
 msgid "Read a published post"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:79
+#: includes/class-ai-chat-bedrock-site-abilities.php:88
 msgid "Return the title, URL and plain-text content of one published post or page. Read only."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:85
-#: includes/class-ai-chat-bedrock-site-abilities.php:131
+#: includes/class-ai-chat-bedrock-site-abilities.php:94
+#: includes/class-ai-chat-bedrock-site-abilities.php:165
 msgid "Post ID."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:99
+#: includes/class-ai-chat-bedrock-site-abilities.php:117
 msgid "Create a draft post"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:100
+#: includes/class-ai-chat-bedrock-site-abilities.php:118
 msgid "Create a new draft post. Drafts are never published automatically and existing posts are never modified."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:106
+#: includes/class-ai-chat-bedrock-site-abilities.php:124
 msgid "Draft title."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:110
+#: includes/class-ai-chat-bedrock-site-abilities.php:128
 msgid "Draft body text."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:124
+#: includes/class-ai-chat-bedrock-site-abilities.php:158
 msgid "Suggest SEO metadata"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:125
+#: includes/class-ai-chat-bedrock-site-abilities.php:159
 msgid "Analyse a published post and return suggested title and meta description text. Nothing is saved."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:146
+#: includes/class-ai-chat-bedrock-site-abilities.php:189
 msgid "Read published WooCommerce products"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:147
+#: includes/class-ai-chat-bedrock-site-abilities.php:190
 msgid "Search published WooCommerce products and return name, price, stock status and URL. Read only; orders and customers are never exposed."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:153
+#: includes/class-ai-chat-bedrock-site-abilities.php:196
 msgid "Product search terms."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:273
+#: includes/class-ai-chat-bedrock-site-abilities.php:325
 msgid "A title and content are required."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:333
+#: includes/class-ai-chat-bedrock-site-abilities.php:385
 msgid "Suggestions only. Apply them in your SEO plugin after review."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:403
+#: includes/class-ai-chat-bedrock-site-abilities.php:455
 msgid "A valid post ID is required."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-site-abilities.php:408
+#: includes/class-ai-chat-bedrock-site-abilities.php:460
 msgid "That post is not published or not publicly readable."
 msgstr ""
 
