@@ -33,8 +33,18 @@ function get_transient( $key ) { return isset( $GLOBALS['aicfab_test_transients'
 function set_transient( $key, $value, $ttl = 0 ) { $GLOBALS['aicfab_test_transients'][ $key ] = $value; return true; }
 function delete_transient( $key ) { unset( $GLOBALS['aicfab_test_transients'][ $key ] ); return true; }
 function wp_remote_request( $url, $args = array() ) { return new WP_Error( 'aicfab_test_blocked', 'Metadata requests are blocked during tests.' ); }
-function wp_remote_retrieve_response_code( $response ) { return 0; }
-function wp_remote_retrieve_body( $response ) { return ''; }
+function wp_remote_retrieve_response_code( $response ) { return isset( $response['response']['code'] ) ? (int) $response['response']['code'] : 0; }
+function wp_remote_retrieve_body( $response ) { return isset( $response['body'] ) ? (string) $response['body'] : ''; }
+function wp_remote_retrieve_header( $response, $name ) { return ''; }
+function untrailingslashit( $value ) { return rtrim( (string) $value, '/\\' ); }
+if ( ! defined( 'DAY_IN_SECONDS' ) ) { define( 'DAY_IN_SECONDS', 86400 ); }
+// Queued Bedrock answers for requests that reach the runtime; each request is recorded.
+$GLOBALS['aicfab_test_posts']     = array();
+$GLOBALS['aicfab_test_responses'] = array();
+function wp_safe_remote_post( $url, $args = array() ) {
+	$GLOBALS['aicfab_test_posts'][] = array( 'url' => $url, 'args' => $args );
+	return array_shift( $GLOBALS['aicfab_test_responses'] );
+}
 
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-aws-credentials.php';
@@ -331,10 +341,100 @@ check_aws(
 	'noticing the visitor has gone asks the Bedrock stream to stop'
 );
 
-if ( $failures ) {
-	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
-	exit( 1 );
+
+// --- Converse for every family without a native payload ------------------------
+
+// Observed on Bedrock 2026-09-25: gpt-oss and Qwen3 answer the old prompt/max_tokens body
+// with "missing field `messages`", and DeepSeek R1 wrote both sides of the conversation.
+foreach ( array( 'anthropic.claude-3-haiku-20240307-v1:0', 'us.anthropic.claude-sonnet-5', 'amazon.nova-lite-v1:0', 'us.amazon.nova-pro-v1:0', 'amazon.titan-text-express-v1' ) as $model ) {
+	check_aws( 'invoke' === AI_Chat_Bedrock_AWS::chat_api( $model ), $model . ' keeps its native InvokeModel payload.' );
 }
+foreach ( array( 'openai.gpt-oss-20b-1:0', 'qwen.qwen3-32b-v1:0', 'us.deepseek.r1-v1:0', 'meta.llama3-8b-instruct-v1:0', 'us.meta.llama4-maverick-17b-instruct-v1:0', 'mistral.mistral-large-2402-v1:0', 'global.moonshotai.kimi-k3', 'some.future-model-v1:0' ) as $model ) {
+	check_aws( 'converse' === AI_Chat_Bedrock_AWS::chat_api( $model ), $model . ' goes through Converse.' );
+}
+
+$history = array(
+	'messages' => array(
+		array( 'role' => 'system', 'content' => 'System instruction.' ),
+		array( 'role' => 'user', 'content' => 'First question' ),
+		array( 'role' => 'assistant', 'content' => 'First answer' ),
+		array( 'role' => 'user', 'content' => 'Hello' ),
+	),
+);
+$converse = $format->invoke( $aws, 'openai.gpt-oss-20b-1:0', $history, 600, 0.3 );
+check_aws( array( array( 'text' => 'System instruction.' ) ) === $converse['system'], 'Converse carries the system prompt as a system block.' );
+check_aws( 3 === count( $converse['messages'] ) && 'user' === $converse['messages'][0]['role'] && 'assistant' === $converse['messages'][1]['role'], 'Converse keeps the conversation turns in order.' );
+check_aws( 'Hello' === $converse['messages'][2]['content'][0]['text'], 'Converse messages use content text blocks.' );
+check_aws( 600 === $converse['inferenceConfig']['maxTokens'] && 0.3 === $converse['inferenceConfig']['temperature'], 'Converse gets the configured limits.' );
+check_aws( ! isset( $converse['prompt'] ) && ! isset( $converse['max_tokens'] ) && ! isset( $converse['guardrailConfig'] ), 'Converse sends no legacy fields and no guardrail when none is set.' );
+
+// Mistral 7B Instruct refuses a system block; the instructions lead the first user turn.
+$mistral = $format->invoke( $aws, 'mistral.mistral-7b-instruct-v0:2', $history, 600, 0.3 );
+check_aws( ! isset( $mistral['system'] ), 'Mistral 7B is not sent a system block.' );
+check_aws( 0 === strpos( $mistral['messages'][0]['content'][0]['text'], 'System instruction.' ) && false !== strpos( $mistral['messages'][0]['content'][0]['text'], 'First question' ), 'Mistral 7B still gets the instructions, ahead of the first question.' );
+
+// Converse takes the guardrail in the body and ignores the InvokeModel headers.
+$GLOBALS['aicfab_test_options']['guardrail_id']      = 'gr-abc123';
+$GLOBALS['aicfab_test_options']['guardrail_version'] = 'DRAFT';
+$guarded_converse = new AI_Chat_Bedrock_AWS();
+$guarded_payload  = $format->invoke( $guarded_converse, 'qwen.qwen3-32b-v1:0', $history, 600, 0.3 );
+check_aws( isset( $guarded_payload['guardrailConfig'] ) && array( 'guardrailIdentifier' => 'gr-abc123', 'guardrailVersion' => 'DRAFT' ) === $guarded_payload['guardrailConfig'], 'Converse requests carry the configured guardrail in the body.' );
+unset( $GLOBALS['aicfab_test_options']['guardrail_id'], $GLOBALS['aicfab_test_options']['guardrail_version'] );
+
+$converse_answer = $parse->invoke( $aws, array( 'output' => array( 'message' => array( 'role' => 'assistant', 'content' => array( array( 'reasoningContent' => array( 'reasoningText' => array( 'text' => 'thinking' ) ) ), array( 'text' => 'Converse answer' ) ) ) ), 'usage' => array( 'inputTokens' => 9, 'outputTokens' => 4 ) ), 'openai.gpt-oss-20b-1:0' );
+check_aws( true === $converse_answer['success'] && 'Converse answer' === $converse_answer['data']['message'], 'A Converse answer is read without its reasoning block.' );
+
+check_aws( 'streamed' === AI_Chat_Bedrock_Event_Stream::text_delta( array( 'contentBlockDelta' => array( 'contentBlockIndex' => 1, 'delta' => array( 'text' => 'streamed' ) ) ), 'qwen.qwen3-32b-v1:0' ), 'ConverseStream text deltas are read.' );
+check_aws( '' === AI_Chat_Bedrock_Event_Stream::text_delta( array( 'contentBlockDelta' => array( 'delta' => array( 'reasoningContent' => array( 'text' => 'thinking' ) ) ) ), 'openai.gpt-oss-20b-1:0' ), 'ConverseStream reasoning deltas are not shown to visitors.' );
+
+// A model that refuses a field is asked once more without it, and remembered.
+// Observed on Bedrock 2026-09-25 from GPT-6 Astra, GPT-5.6, Grok 4.6 and Kimi K3.
+$invoke = new ReflectionMethod( $aws, 'invoke_model' );
+$invoke->setAccessible( true );
+$GLOBALS['aicfab_test_posts']     = array();
+$GLOBALS['aicfab_test_responses'] = array(
+	array( 'response' => array( 'code' => 400 ), 'body' => '{"message":"This model doesn\'t support the temperature field. Remove temperature and try again."}' ),
+	array( 'response' => array( 'code' => 200 ), 'body' => '{"output":{"message":{"role":"assistant","content":[{"text":"Adapted answer"}]}},"usage":{"inputTokens":5,"outputTokens":2}}' ),
+);
+$refusing = 'global.openai.gpt-6-astra';
+$adapted  = $invoke->invoke( $aws, $format->invoke( $aws, $refusing, $history, 600, 0.3 ), $refusing, 'converse' );
+check_aws( true === $adapted['success'] && 'Adapted answer' === $adapted['data']['message'], 'A refused temperature is dropped and the question answered.' );
+check_aws( 2 === count( $GLOBALS['aicfab_test_posts'] ), 'The refusal costs exactly one extra request.' );
+check_aws( false !== strpos( $GLOBALS['aicfab_test_posts'][0]['url'], '/converse' ) && false === strpos( $GLOBALS['aicfab_test_posts'][0]['url'], '/invoke' ), 'Converse models are sent to the Converse endpoint.' );
+$retried = json_decode( $GLOBALS['aicfab_test_posts'][1]['args']['body'], true );
+check_aws( ! isset( $retried['inferenceConfig']['temperature'] ) && 600 === $retried['inferenceConfig']['maxTokens'], 'The retry leaves out only the refused field.' );
+check_aws( false === strpos( wp_json_encode( $GLOBALS['aicfab_test_posts'][0]['args']['headers'] ), 'guardrail' ), 'Converse requests carry no guardrail headers.' );
+$next = $format->invoke( $aws, $refusing, $history, 600, 0.3 );
+check_aws( ! isset( $next['inferenceConfig']['temperature'] ), 'A learned refusal shapes the next request up front.' );
+$other = $format->invoke( $aws, 'qwen.qwen3-32b-v1:0', $history, 600, 0.3 );
+check_aws( 0.3 === $other['inferenceConfig']['temperature'], 'One model refusing a field does not change other models.' );
+
+$GLOBALS['aicfab_test_posts']     = array();
+$GLOBALS['aicfab_test_responses'] = array(
+	array( 'response' => array( 'code' => 400 ), 'body' => '{"message":"This model doesn\'t support system messages."}' ),
+	array( 'response' => array( 'code' => 200 ), 'body' => '{"output":{"message":{"role":"assistant","content":[{"text":"Folded"}]}}}' ),
+);
+$folded = $invoke->invoke( $aws, $format->invoke( $aws, 'mistral.some-new-instruct', $history, 600, 0.3 ), 'mistral.some-new-instruct', 'converse' );
+$folded_body = json_decode( $GLOBALS['aicfab_test_posts'][1]['args']['body'], true );
+check_aws( true === $folded['success'] && ! isset( $folded_body['system'] ) && 0 === strpos( $folded_body['messages'][0]['content'][0]['text'], 'System instruction.' ), 'A refused system block is folded into the first question.' );
+
+// A 400 the plugin cannot fix is reported once, not retried.
+if ( ! class_exists( 'AI_Chat_Bedrock_Bedrock_Errors' ) ) {
+	require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-bedrock-errors.php';
+}
+$GLOBALS['aicfab_test_posts']     = array();
+$GLOBALS['aicfab_test_responses'] = array(
+	array( 'response' => array( 'code' => 400 ), 'body' => '{"message":"Malformed input request"}' ),
+	array( 'response' => array( 'code' => 200 ), 'body' => '{}' ),
+);
+$unfixable = $invoke->invoke( $aws, $format->invoke( $aws, 'qwen.qwen3-32b-v1:0', $history, 600, 0.3 ), 'qwen.qwen3-32b-v1:0', 'converse' );
+check_aws( false === $unfixable['success'] && 1 === count( $GLOBALS['aicfab_test_posts'] ), 'An unrelated 400 is not retried.' );
+$GLOBALS['aicfab_test_responses'] = array();
+
+// The streaming path adapts the same way, before any text has been shown.
+check_aws( false !== strpos( $aicfab_stream_source, "'/converse-stream'" ), 'Converse models stream from ConverseStream.' );
+check_aws( false !== strpos( $aicfab_stream_source, "self::adapt_refused_converse( \$prepared['payload'], \$model_id, \$state['raw'] )" ), 'A refused streaming request is adapted from the captured error body.' );
+
 
 // Image input must produce a Claude content block alongside the text.
 $image_payload = $format->invoke(
@@ -366,5 +466,9 @@ $rejected = $format->invoke(
 );
 check_aws( is_string( $rejected['messages'][ count( $rejected['messages'] ) - 1 ]['content'] ), 'unsupported media types are dropped' );
 
+if ( $failures ) {
+	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
+	exit( 1 );
+}
 
 echo "OK: AWS payload, response, and signing checks passed\n";

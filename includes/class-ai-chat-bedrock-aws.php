@@ -10,6 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class AI_Chat_Bedrock_AWS {
+
+	/**
+	 * Transient holding request fields each Converse model has been seen to refuse.
+	 */
+	const CONVERSE_QUIRKS = 'aicfab_converse_quirks';
+
 	private $region;
 	private $access_key;
 	private $secret_key;
@@ -86,7 +92,7 @@ class AI_Chat_Bedrock_AWS {
 			return $this->error( $prepared->get_error_message(), $prepared->get_error_code() );
 		}
 
-		$response = $this->invoke_model( $prepared['payload'], $prepared['model_id'] );
+		$response = $this->invoke_model( $prepared['payload'], $prepared['model_id'], $prepared['api'] );
 		if ( ! $this->should_fall_back( $response ) ) {
 			return $response;
 		}
@@ -108,7 +114,7 @@ class AI_Chat_Bedrock_AWS {
 				'to'   => $fallback,
 			)
 		);
-		$second = $this->invoke_model( $retry['payload'], $fallback );
+		$second = $this->invoke_model( $retry['payload'], $fallback, $retry['api'] );
 		if ( empty( $second['success'] ) ) {
 			// The primary failure is the more useful one to report, but keep the retry visible.
 			return $this->with_fallback_failure( $response, $second );
@@ -403,7 +409,31 @@ class AI_Chat_Bedrock_AWS {
 		return array(
 			'payload'  => $payload,
 			'model_id' => $model_id,
+			'api'      => self::chat_api( $model_id ),
 		);
+	}
+
+	/**
+	 * Which Bedrock Runtime operation carries a chat request for this model.
+	 *
+	 * Claude, Nova and Titan have native request bodies the plugin builds itself, and Claude's
+	 * is the one that carries tools and images. Every other family goes through Converse,
+	 * which gives one request shape and applies each model's own chat template on the AWS
+	 * side. Before 1.46.0 those families were sent a raw "User: ... Assistant:" prompt:
+	 * OpenAI gpt-oss and Qwen3 reject that outright with "missing field `messages`", and
+	 * DeepSeek R1 accepted it but carried on writing both sides of the conversation.
+	 *
+	 * @param string $model_id Model or inference profile ID.
+	 * @return string Either 'invoke' or 'converse'.
+	 */
+	public static function chat_api( $model_id ) {
+		$model_id = (string) $model_id;
+		foreach ( array( 'anthropic.claude', 'amazon.nova', 'amazon.titan' ) as $native ) {
+			if ( false !== strpos( $model_id, $native ) ) {
+				return 'invoke';
+			}
+		}
+		return 'converse';
 	}
 
 	/**
@@ -485,15 +515,16 @@ class AI_Chat_Bedrock_AWS {
 	 * @param array    $prepared Prepared payload and model.
 	 * @return array
 	 */
-	private function stream_once( $on_delta, $prepared ) {
+	private function stream_once( $on_delta, $prepared, $adaptations = 2 ) {
 		$model_id = $prepared['model_id'];
 		$body     = wp_json_encode( $prepared['payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
 		if ( false === $body ) {
 			return $this->error( __( 'The Bedrock request could not be encoded.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
-		$endpoint          = $this->service_endpoint( 'bedrock-runtime' ) . '/model/' . rawurlencode( $model_id ) . '/invoke-with-response-stream';
-		$headers           = $this->signed_headers( $endpoint, $body, 'POST', 'bedrock', $this->guardrail_headers() );
+		$converse          = isset( $prepared['api'] ) && 'converse' === $prepared['api'];
+		$endpoint          = $this->service_endpoint( 'bedrock-runtime' ) . '/model/' . rawurlencode( $model_id ) . ( $converse ? '/converse-stream' : '/invoke-with-response-stream' );
+		$headers           = $this->signed_headers( $endpoint, $body, 'POST', 'bedrock', $converse ? array() : $this->guardrail_headers() );
 		$headers['Accept'] = 'application/vnd.amazon.eventstream';
 
 		$curl_headers = array();
@@ -607,6 +638,14 @@ class AI_Chat_Bedrock_AWS {
 			)
 		);
 
+		if ( $converse && 400 === $status && $adaptations > 0 ) {
+			// Refused before anything streamed, so asking again cannot duplicate text.
+			$adapted = self::adapt_refused_converse( $prepared['payload'], $model_id, $state['raw'] );
+			if ( null !== $adapted ) {
+				$prepared['payload'] = $adapted;
+				return $this->stream_once( $on_delta, $prepared, $adaptations - 1 );
+			}
+		}
 		if ( $status >= 400 ) {
 			// The streaming body is consumed by the write callback, so classify what it captured.
 			$explained = AI_Chat_Bedrock_Bedrock_Errors::explain( $status, $state['raw'], $model_id, $this->region, $this->credential_context() );
@@ -772,33 +811,176 @@ class AI_Chat_Bedrock_AWS {
 			return $payload;
 		}
 
+		if ( 'converse' === self::chat_api( $model_id ) ) {
+			return $this->format_converse_payload( $model_id, $chat, $system, $max_tokens, $temperature );
+		}
+
+		// Titan Text, the one native family left without a chat format of its own.
 		$prompt = '' !== $system ? $system . "\n\n" : '';
 		foreach ( $chat as $message ) {
 			$prompt .= ( 'user' === $message['role'] ? 'User: ' : 'Assistant: ' ) . $message['content'] . "\n";
 		}
 		$prompt .= 'Assistant: ';
 
-		if ( false !== strpos( $model_id, 'amazon.titan' ) ) {
-			return array(
-				'inputText'            => $prompt,
-				'textGenerationConfig' => array(
-					'maxTokenCount' => $max_tokens,
-					'temperature'   => $temperature,
-				),
-			);
-		}
-		if ( false !== strpos( $model_id, 'meta.llama' ) ) {
-			return array(
-				'prompt'      => $prompt,
-				'max_gen_len' => $max_tokens,
-				'temperature' => $temperature,
-			);
-		}
 		return array(
-			'prompt'      => $prompt,
-			'max_tokens'  => $max_tokens,
-			'temperature' => $temperature,
+			'inputText'            => $prompt,
+			'textGenerationConfig' => array(
+				'maxTokenCount' => $max_tokens,
+				'temperature'   => $temperature,
+			),
 		);
+	}
+
+	/**
+	 * Build a Converse request.
+	 *
+	 * Converse wants turns that alternate and start with the user, which is what the Claude
+	 * normaliser already guarantees. The guardrail travels in the body here, because
+	 * Converse ignores the guardrail headers InvokeModel reads, and sending a chat without
+	 * the guardrail the administrator configured would be worse than failing.
+	 *
+	 * @param string $model_id    Model or inference profile ID.
+	 * @param array  $chat        User and assistant turns with string content.
+	 * @param string $system      Combined system prompt.
+	 * @param int    $max_tokens  Output token ceiling.
+	 * @param float  $temperature Sampling temperature.
+	 * @return array
+	 */
+	private function format_converse_payload( $model_id, $chat, $system, $max_tokens, $temperature ) {
+		$turns    = $this->normalize_claude_messages( $chat );
+		$messages = array();
+		foreach ( $turns as $turn ) {
+			$messages[] = array(
+				'role'    => $turn['role'],
+				'content' => array( array( 'text' => $turn['content'] ) ),
+			);
+		}
+
+		$payload = array(
+			'messages'        => $messages,
+			'inferenceConfig' => array(
+				'maxTokens'   => $max_tokens,
+				'temperature' => $temperature,
+			),
+		);
+		if ( '' !== $system ) {
+			$payload['system'] = array( array( 'text' => $system ) );
+		}
+
+		$guardrail = $this->guardrail_setting();
+		if ( ! empty( $guardrail ) ) {
+			$payload['guardrailConfig'] = array(
+				'guardrailIdentifier' => $guardrail['id'],
+				'guardrailVersion'    => $guardrail['version'],
+			);
+		}
+		return self::apply_converse_quirks( $payload, self::converse_quirks( $model_id ) );
+	}
+
+	/**
+	 * Request fields a Converse model is known to refuse.
+	 *
+	 * Converse accepts one request shape, but not every model accepts every field in it, and
+	 * each says so in a sentence rather than an error code. Observed on Bedrock: Mistral 7B
+	 * Instruct refuses a system block, and GPT-6 Astra, GPT-5.6, Grok 4.6 and Kimi K3 refuse
+	 * temperature. A model the plugin has not met yet is learned from its first refusal, so
+	 * the next request is right the first time.
+	 *
+	 * @param string $model_id Model or inference profile ID.
+	 * @return array List of quirk names: no_system, no_temperature.
+	 */
+	private static function converse_quirks( $model_id ) {
+		$quirks = array();
+		if ( 1 === preg_match( '/mistral\.mi[sx]tral-(?:7b|8x7b)-instruct/', (string) $model_id ) ) {
+			$quirks[] = 'no_system';
+		}
+		$learned = get_transient( self::CONVERSE_QUIRKS );
+		if ( is_array( $learned ) && isset( $learned[ $model_id ] ) && is_array( $learned[ $model_id ] ) ) {
+			$quirks = array_merge( $quirks, $learned[ $model_id ] );
+		}
+		return array_values( array_intersect( array( 'no_system', 'no_temperature' ), $quirks ) );
+	}
+
+	/**
+	 * Which field a Converse rejection complains about, if it is one the plugin can drop.
+	 *
+	 * @param string $body Error response body.
+	 * @return string Quirk name, or an empty string.
+	 */
+	private static function converse_quirk_from_error( $body ) {
+		$body = strtolower( (string) $body );
+		if ( false !== strpos( $body, 'support the temperature field' ) ) {
+			return 'no_temperature';
+		}
+		if ( false !== strpos( $body, 'support system messages' ) ) {
+			return 'no_system';
+		}
+		return '';
+	}
+
+	/**
+	 * Remember that a model refuses a field, so later requests leave it out.
+	 *
+	 * @param string $model_id Model or inference profile ID.
+	 * @param string $quirk    Quirk name.
+	 */
+	private static function remember_converse_quirk( $model_id, $quirk ) {
+		$learned = get_transient( self::CONVERSE_QUIRKS );
+		$learned = is_array( $learned ) ? $learned : array();
+		$known   = isset( $learned[ $model_id ] ) && is_array( $learned[ $model_id ] ) ? $learned[ $model_id ] : array();
+		if ( in_array( $quirk, $known, true ) ) {
+			return;
+		}
+		$known[]              = $quirk;
+		$learned[ $model_id ] = $known;
+		// Bounded, because the key is a model ID and there is no reason for it to grow.
+		set_transient( self::CONVERSE_QUIRKS, array_slice( $learned, -50, null, true ), 30 * DAY_IN_SECONDS );
+	}
+
+	/**
+	 * Leave out the fields a Converse model refuses.
+	 *
+	 * A refused system prompt still matters, so it leads the first user turn instead.
+	 *
+	 * @param array $payload Converse request.
+	 * @param array $quirks  Quirk names.
+	 * @return array
+	 */
+	private static function apply_converse_quirks( $payload, $quirks ) {
+		if ( in_array( 'no_temperature', $quirks, true ) ) {
+			unset( $payload['inferenceConfig']['temperature'] );
+		}
+		if ( in_array( 'no_system', $quirks, true ) && ! empty( $payload['system'] ) ) {
+			$instructions = array();
+			foreach ( $payload['system'] as $block ) {
+				if ( isset( $block['text'] ) ) {
+					$instructions[] = (string) $block['text'];
+				}
+			}
+			unset( $payload['system'] );
+			if ( ! empty( $instructions ) && isset( $payload['messages'][0]['content'][0]['text'] ) ) {
+				$payload['messages'][0]['content'][0]['text'] = implode( "\n\n", $instructions ) . "\n\n" . $payload['messages'][0]['content'][0]['text'];
+			}
+		}
+		return $payload;
+	}
+
+	/**
+	 * The same Converse request without the field Bedrock just refused, if that helps.
+	 *
+	 * @param array  $payload  Converse request that was refused.
+	 * @param string $model_id Model or inference profile ID.
+	 * @param string $body     Error response body.
+	 * @return array|null Adapted request, or null when there is nothing to drop.
+	 */
+	private static function adapt_refused_converse( $payload, $model_id, $body ) {
+		$quirk = self::converse_quirk_from_error( $body );
+		if ( '' === $quirk ) {
+			return null;
+		}
+		self::remember_converse_quirk( $model_id, $quirk );
+		$adapted = self::apply_converse_quirks( $payload, array( $quirk ) );
+		return $adapted === $payload ? null : $adapted;
 	}
 
 	private function normalize_claude_messages( $messages ) {
@@ -823,14 +1005,16 @@ class AI_Chat_Bedrock_AWS {
 		return $normalized;
 	}
 
-	private function invoke_model( $payload, $model_id ) {
-		$endpoint = $this->service_endpoint( 'bedrock-runtime' ) . '/model/' . rawurlencode( $model_id ) . '/invoke';
+	private function invoke_model( $payload, $model_id, $api = 'invoke', $adaptations = 2 ) {
+		$converse = 'converse' === $api;
+		$endpoint = $this->service_endpoint( 'bedrock-runtime' ) . '/model/' . rawurlencode( $model_id ) . ( $converse ? '/converse' : '/invoke' );
 		$body     = wp_json_encode( $payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
 		if ( false === $body ) {
 			return $this->error( __( 'The Bedrock request could not be encoded.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
-		$headers = $this->signed_headers( $endpoint, $body, 'POST', 'bedrock', $this->guardrail_headers() );
+		// Converse takes the guardrail in the body, and ignores these headers.
+		$headers = $this->signed_headers( $endpoint, $body, 'POST', 'bedrock', $converse ? array() : $this->guardrail_headers() );
 		$timeout = (int) apply_filters( 'ai_chat_bedrock_http_timeout', 120 );
 		$this->log_debug(
 			'Sending request',
@@ -865,6 +1049,13 @@ class AI_Chat_Bedrock_AWS {
 				'request_id' => sanitize_text_field( $request_id ),
 			)
 		);
+		if ( $converse && 400 === $status && $adaptations > 0 ) {
+			$adapted = self::adapt_refused_converse( $payload, $model_id, wp_remote_retrieve_body( $response ) );
+			if ( null !== $adapted ) {
+				$this->log_debug( 'Retrying without a field the model refused', array( 'model' => $model_id ) );
+				return $this->invoke_model( $adapted, $model_id, $api, $adaptations - 1 );
+			}
+		}
 		if ( $status < 200 || $status >= 300 ) {
 			$explained = AI_Chat_Bedrock_Bedrock_Errors::explain( $status, wp_remote_retrieve_body( $response ), $model_id, $this->region, $this->credential_context() );
 			$failure   = $this->error(
@@ -899,6 +1090,22 @@ class AI_Chat_Bedrock_AWS {
 	 * @return array
 	 */
 	private function guardrail_headers() {
+		$guardrail = $this->guardrail_setting();
+		if ( empty( $guardrail ) ) {
+			return array();
+		}
+		return array(
+			'x-amzn-bedrock-guardrailidentifier' => $guardrail['id'],
+			'x-amzn-bedrock-guardrailversion'    => $guardrail['version'],
+		);
+	}
+
+	/**
+	 * The configured guardrail, validated, or an empty array when there is none.
+	 *
+	 * @return array Array with id and version keys.
+	 */
+	private function guardrail_setting() {
 		$options = get_option( 'ai_chat_bedrock_settings', array() );
 		$options = is_array( $options ) ? $options : array();
 		$id      = isset( $options['guardrail_id'] ) ? trim( (string) $options['guardrail_id'] ) : '';
@@ -911,8 +1118,8 @@ class AI_Chat_Bedrock_AWS {
 			$version = 'DRAFT';
 		}
 		return array(
-			'x-amzn-bedrock-guardrailidentifier' => $id,
-			'x-amzn-bedrock-guardrailversion'    => $version,
+			'id'      => $id,
+			'version' => $version,
 		);
 	}
 
@@ -1052,7 +1259,7 @@ class AI_Chat_Bedrock_AWS {
 		}
 
 		$started  = microtime( true );
-		$response = $this->invoke_model( $payload, $model_id );
+		$response = $this->invoke_model( $payload, $model_id, self::chat_api( $model_id ) );
 		$duration = (int) round( ( microtime( true ) - $started ) * 1000 );
 
 		if ( empty( $response['success'] ) ) {

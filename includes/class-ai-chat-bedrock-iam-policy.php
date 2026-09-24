@@ -69,7 +69,7 @@ class AI_Chat_Bedrock_Iam_Policy {
 	 * @return array
 	 */
 	public static function profile_prefixes() {
-		return array( 'us.', 'eu.', 'apac.', 'apne.', 'global.' );
+		return array( 'us.', 'eu.', 'apac.', 'apne.', 'jp.', 'au.', 'ca.', 'us-gov.', 'global.' );
 	}
 
 	/**
