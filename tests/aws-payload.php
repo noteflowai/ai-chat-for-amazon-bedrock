@@ -63,9 +63,24 @@ check_aws( 'System instruction.' === $claude['system'], 'Claude system prompt mu
 check_aws( 'Hello' === $claude['messages'][0]['content'], 'Claude system prompt must not be prepended to user content.' );
 check_aws( isset( $claude['tools'][0]['name'] ), 'Claude tools must be retained.' );
 
+check_aws( isset( $claude['temperature'] ) && 0.2 === $claude['temperature'], 'Claude 3 must keep the configured temperature.' );
+
+// Observed on Bedrock 2026-09-24: these answer "`temperature` is deprecated for this model."
+foreach ( array( 'us.anthropic.claude-sonnet-5', 'us.anthropic.claude-opus-5-5', 'global.anthropic.claude-fable-5-1', 'us.anthropic.claude-opus-4-7', 'anthropic.claude-opus-4-8', 'us.anthropic.claude-some-future-model' ) as $model ) {
+	$payload = $format->invoke( $aws, $model, $messages, 800, 0.2 );
+	check_aws( is_array( $payload ) && ! array_key_exists( 'temperature', $payload ), $model . ' must not be sent a temperature.' );
+	check_aws( is_array( $payload ) && 800 === $payload['max_tokens'] && 'Hello' === $payload['messages'][0]['content'], $model . ' must still get the rest of the Claude payload.' );
+}
+// And these were observed to accept it, so the setting keeps working on them.
+foreach ( array( 'us.anthropic.claude-opus-4-6-v1', 'us.anthropic.claude-sonnet-4-5-20250929-v1:0', 'us.anthropic.claude-haiku-4-5-20251001-v1:0', 'anthropic.claude-sonnet-4-20250514-v1:0', 'us.anthropic.claude-3-7-sonnet-20250219-v1:0' ) as $model ) {
+	$payload = $format->invoke( $aws, $model, $messages, 800, 0.2 );
+	check_aws( is_array( $payload ) && isset( $payload['temperature'] ) && 0.2 === $payload['temperature'], $model . ' must keep the configured temperature.' );
+}
+
 $nova = $format->invoke( $aws, 'amazon.nova-text-v1:0', $messages, 700, 0.3 );
 check_aws( 'Hello' === $nova['messages'][0]['content'][0]['text'], 'Nova messages must use content text blocks.' );
 check_aws( 700 === $nova['inferenceConfig']['maxTokens'], 'Nova max token configuration is invalid.' );
+check_aws( 0.3 === $nova['inferenceConfig']['temperature'], 'Nova must keep the configured temperature.' );
 
 $parsed = $parse->invoke( $aws, array( 'content' => array( array( 'type' => 'text', 'text' => 'Working' ), array( 'type' => 'tool_use', 'id' => 'x', 'name' => 'server___tool', 'input' => array( 'q' => 'value' ) ) ) ), 'anthropic.claude-3-haiku-20240307-v1:0' );
 check_aws( true === $parsed['success'] && 'Working' === $parsed['data']['message'], 'Claude text response parsing failed.' );

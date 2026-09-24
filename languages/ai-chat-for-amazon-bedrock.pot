@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.44.0\n"
+"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.45.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-20T04:46:39+00:00\n"
+"POT-Creation-Date: 2026-09-24T16:14:15+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -508,7 +508,7 @@ msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:667
 #: admin/class-ai-chat-bedrock-admin.php:668
-#: admin/class-ai-chat-bedrock-admin.php:1238
+#: admin/class-ai-chat-bedrock-admin.php:1239
 #: admin/partials/ai-chat-bedrock-admin-display.php:63
 #: admin/partials/ai-chat-bedrock-admin-display.php:153
 #: admin/partials/ai-chat-bedrock-admin-eval.php:96
@@ -870,84 +870,88 @@ msgstr ""
 msgid "Used only when the main model cannot answer because access was denied, the request was throttled, or Amazon Bedrock was unreachable. The reply states which model answered. Requests rejected for other reasons are never retried."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:978
-msgid "Allow unauthenticated visitors to use paid Bedrock requests"
+#: admin/class-ai-chat-bedrock-admin.php:966
+msgid "Not sent to Claude Opus 4.7, Sonnet 5, Opus 5 and newer Claude models, because Amazon Bedrock rejects it for them."
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:979
+msgid "Allow unauthenticated visitors to use paid Bedrock requests"
+msgstr ""
+
+#: admin/class-ai-chat-bedrock-admin.php:980
 msgid "Disabled by default. Enabling this can incur AWS charges even with rate limiting."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:987
+#: admin/class-ai-chat-bedrock-admin.php:988
 msgid "Show a floating chat button on every page"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:989
+#: admin/class-ai-chat-bedrock-admin.php:990
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:45
 msgid "Profile"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:995
+#: admin/class-ai-chat-bedrock-admin.php:996
 msgid "Pages that already contain the chat block or shortcode are left unchanged. Use a profile with guest access if visitors should be able to chat."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:999
+#: admin/class-ai-chat-bedrock-admin.php:1000
 msgid "Log redacted request metadata"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1037
+#: admin/class-ai-chat-bedrock-admin.php:1038
 msgid "The fallback model must be a valid model that differs from the main model; it was cleared."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1043
+#: admin/class-ai-chat-bedrock-admin.php:1044
 msgid "The submitted model ID was not valid; the default model was kept."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1057
+#: admin/class-ai-chat-bedrock-admin.php:1058
 msgid "The credential could not be encrypted; the existing value was preserved."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1087
+#: admin/class-ai-chat-bedrock-admin.php:1088
 msgid "The guardrail identifier contained unsupported characters and was cleared."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1105
+#: admin/class-ai-chat-bedrock-admin.php:1106
 msgid "That embedding model is not supported; semantic search was left off."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1113
+#: admin/class-ai-chat-bedrock-admin.php:1114
 msgid "The managed prompt identifier contained unsupported characters and was cleared."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1137
+#: admin/class-ai-chat-bedrock-admin.php:1138
 msgid "The knowledge base ID must be alphanumeric; the value was cleared."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1173
+#: admin/class-ai-chat-bedrock-admin.php:1174
 msgid "Settings saved."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1234
+#: admin/class-ai-chat-bedrock-admin.php:1235
 msgid "AWS"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1242
+#: admin/class-ai-chat-bedrock-admin.php:1243
 #: public/class-ai-chat-bedrock-public.php:207
 #: public/class-ai-chat-bedrock-public.php:228
 #: public/partials/ai-chat-bedrock-public-display.php:20
 msgid "Chat"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1246
+#: admin/class-ai-chat-bedrock-admin.php:1247
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:48
 msgid "Grounding"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1250
+#: admin/class-ai-chat-bedrock-admin.php:1251
 msgid "Safety and spend"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:1278
+#: admin/class-ai-chat-bedrock-admin.php:1279
 msgid "Configured — enter a value to replace"
 msgstr ""
 
@@ -2191,16 +2195,16 @@ msgstr ""
 #: includes/class-ai-chat-bedrock-aws-credentials.php:72
 #: includes/class-ai-chat-bedrock-aws.php:226
 #: includes/class-ai-chat-bedrock-aws.php:375
-#: includes/class-ai-chat-bedrock-aws.php:1003
-#: includes/class-ai-chat-bedrock-aws.php:1072
-#: includes/class-ai-chat-bedrock-aws.php:1147
-#: includes/class-ai-chat-bedrock-aws.php:1210
-#: includes/class-ai-chat-bedrock-aws.php:1270
+#: includes/class-ai-chat-bedrock-aws.php:1021
+#: includes/class-ai-chat-bedrock-aws.php:1090
+#: includes/class-ai-chat-bedrock-aws.php:1165
+#: includes/class-ai-chat-bedrock-aws.php:1228
+#: includes/class-ai-chat-bedrock-aws.php:1288
 msgid "Amazon Bedrock credentials are not configured."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-aws-credentials.php:119
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:163
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:173
 msgid "wp-config.php constants"
 msgstr ""
 
@@ -2257,15 +2261,15 @@ msgid "Amazon Bedrock returned no embedding."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-aws.php:379
-#: includes/class-ai-chat-bedrock-aws.php:1082
-#: includes/class-ai-chat-bedrock-aws.php:1151
-#: includes/class-ai-chat-bedrock-aws.php:1214
-#: includes/class-ai-chat-bedrock-aws.php:1276
+#: includes/class-ai-chat-bedrock-aws.php:1100
+#: includes/class-ai-chat-bedrock-aws.php:1169
+#: includes/class-ai-chat-bedrock-aws.php:1232
+#: includes/class-ai-chat-bedrock-aws.php:1294
 msgid "The configured AWS region is invalid."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-aws.php:392
-#: includes/class-ai-chat-bedrock-aws.php:1012
+#: includes/class-ai-chat-bedrock-aws.php:1030
 msgid "The configured model ID is invalid."
 msgstr ""
 
@@ -2274,7 +2278,7 @@ msgid "Streaming is not available on this server."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-aws.php:492
-#: includes/class-ai-chat-bedrock-aws.php:812
+#: includes/class-ai-chat-bedrock-aws.php:830
 msgid "The Bedrock request could not be encoded."
 msgstr ""
 
@@ -2283,80 +2287,80 @@ msgid "The Bedrock response stream was interrupted."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-aws.php:648
-#: includes/class-ai-chat-bedrock-aws.php:1447
+#: includes/class-ai-chat-bedrock-aws.php:1465
 msgid "Amazon Bedrock returned no usable content."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:689
+#: includes/class-ai-chat-bedrock-aws.php:705
 msgid "No valid chat messages were supplied."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:839
-#: includes/class-ai-chat-bedrock-aws.php:1043
-#: includes/class-ai-chat-bedrock-aws.php:1232
+#: includes/class-ai-chat-bedrock-aws.php:857
+#: includes/class-ai-chat-bedrock-aws.php:1061
+#: includes/class-ai-chat-bedrock-aws.php:1250
 msgid "Amazon Bedrock could not be reached."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:864
-#: includes/class-ai-chat-bedrock-aws.php:1245
+#: includes/class-ai-chat-bedrock-aws.php:882
+#: includes/class-ai-chat-bedrock-aws.php:1263
 msgid "Amazon Bedrock returned an invalid response."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1051
+#: includes/class-ai-chat-bedrock-aws.php:1069
 msgid "Amazon Bedrock responded successfully."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1076
+#: includes/class-ai-chat-bedrock-aws.php:1094
 msgid "The knowledge base ID is invalid."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1079
+#: includes/class-ai-chat-bedrock-aws.php:1097
 msgid "A search query is required."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1094
+#: includes/class-ai-chat-bedrock-aws.php:1112
 msgid "The retrieval request could not be encoded."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1110
+#: includes/class-ai-chat-bedrock-aws.php:1128
 msgid "The Amazon Bedrock knowledge base could not be reached."
 msgstr ""
 
 #. translators: %d: HTTP status code returned by Amazon Bedrock.
-#: includes/class-ai-chat-bedrock-aws.php:1116
+#: includes/class-ai-chat-bedrock-aws.php:1134
 #, php-format
 msgid "The knowledge base returned HTTP %d."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1121
+#: includes/class-ai-chat-bedrock-aws.php:1139
 msgid "The knowledge base returned an invalid response."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1173
+#: includes/class-ai-chat-bedrock-aws.php:1191
 msgid "AWS Security Token Service could not be reached."
 msgstr ""
 
 #. translators: %d: HTTP status code returned by AWS STS.
-#: includes/class-ai-chat-bedrock-aws.php:1181
+#: includes/class-ai-chat-bedrock-aws.php:1199
 #, php-format
 msgid "AWS Security Token Service returned HTTP %d."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1197
+#: includes/class-ai-chat-bedrock-aws.php:1215
 msgid "AWS Security Token Service returned an unexpected response."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1236
+#: includes/class-ai-chat-bedrock-aws.php:1254
 msgid "The AWS identity is not authorized for this Amazon Bedrock operation."
 msgstr ""
 
 #. translators: %d: HTTP status code returned by Amazon Bedrock.
-#: includes/class-ai-chat-bedrock-aws.php:1240
+#: includes/class-ai-chat-bedrock-aws.php:1258
 #, php-format
 msgid "Amazon Bedrock returned HTTP %d."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-aws.php:1267
+#: includes/class-ai-chat-bedrock-aws.php:1285
 msgid "The AWS service name is invalid."
 msgstr ""
 
@@ -2372,71 +2376,75 @@ msgstr ""
 msgid "The model provider has retired this model for accounts that were not already using it. Choose a current model on the settings screen."
 msgstr ""
 
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:90
+msgid "Amazon Bedrock no longer serves this model version. Choose a current model on the settings screen."
+msgstr ""
+
 #. translators: %s: AWS region code.
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:92
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:102
 #, php-format
 msgid "Amazon Bedrock does not recognise this model ID in %s. Either the ID is wrong, or that region does not offer the model. Refresh the model list to see what this region offers."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:93
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:103
 msgid "Amazon Bedrock does not recognise this model ID in the configured region. Either the ID is wrong, or the region does not offer the model."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:102
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:112
 msgid "This account has not been granted access to the model. Request access for it in the Amazon Bedrock console, under Model access, in this region."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:117
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:127
 msgid "Amazon Bedrock refused the request. Attach the generated IAM policy from the Diagnostics screen, and confirm model access is granted in this region."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:125
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:135
 msgid "Amazon Bedrock is throttling requests. Retry shortly, lower the per-minute limit, or request a quota increase."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:132
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:142
 msgid "Amazon Bedrock reported a service error. Retrying usually succeeds; a configured fallback model is used automatically."
 msgstr ""
 
 #. translators: %d: HTTP status code returned by Amazon Bedrock.
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:140
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:150
 #, php-format
 msgid "Amazon Bedrock returned HTTP %d. The Diagnostics screen lists the permissions this site needs."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:164
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:174
 msgid "environment variables"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:165
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:175
 msgid "the container IAM role"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:166
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:176
 msgid "the instance IAM role"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:167
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:177
 msgid "keys stored in the settings"
 msgstr ""
 
 #. translators: %s: where the AWS credentials came from.
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:175
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:185
 #, php-format
 msgid "The request used credentials from %s."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:180
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:190
 msgid "Those are temporary credentials, which nothing renews once they expire. Replace them, or use an IAM role instead."
 msgstr ""
 
 #. translators: %s: IAM action name, such as bedrock:InvokeModelWithResponseStream.
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:196
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:206
 #, php-format
 msgid "The AWS identity is not allowed to perform %s. Attach the generated IAM policy from the Diagnostics screen, which includes it."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:200
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:210
 msgid "The AWS identity is missing a required permission. The Diagnostics screen generates the policy this site needs."
 msgstr ""
 
@@ -3097,19 +3105,19 @@ msgstr ""
 msgid "This image is too large to describe. Upload a smaller version."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-models.php:106
+#: includes/class-ai-chat-bedrock-models.php:114
 msgid "No text models are available to this AWS identity in the selected region."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-models.php:187
+#: includes/class-ai-chat-bedrock-models.php:195
 msgid "inference profile"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-models.php:204
+#: includes/class-ai-chat-bedrock-models.php:212
 msgid "legacy"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-models.php:225
+#: includes/class-ai-chat-bedrock-models.php:233
 msgid "configured"
 msgstr ""
 

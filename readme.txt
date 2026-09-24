@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.44.0
+Stable tag: 1.45.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -13,7 +13,7 @@ Streaming chat and governed tool-using agents on Amazon Bedrock. IAM roles, no s
 == Description ==
 
 Connect WordPress directly to **Amazon Bedrock** using your own AWS account. Add a chat powered by
-Claude, Amazon Nova or Titan, Meta Llama, Mistral or DeepSeek, let authenticated conversations use
+Claude, Amazon Nova, Meta Llama, Mistral or DeepSeek, let authenticated conversations use
 governed tools through the Model Context Protocol, and check that the answers are still right after
 you change something.
 
@@ -142,15 +142,15 @@ No. Model requests use Amazon Bedrock and your AWS credentials. Availability, mo
 
 = Which Bedrock models are supported? =
 
-Version 1.1.0 includes request and response formats for Anthropic Claude, Amazon Nova and Titan, Meta Llama, Mistral, and DeepSeek model families. A specific model may still require model access, a supported Region, the correct model or inference-profile ID, and suitable IAM permissions.
+Text models in the Anthropic Claude, Amazon Nova, Amazon Titan, Meta Llama, Mistral and DeepSeek families that your Region offers, including Claude Sonnet 5, Claude Opus 5.5 and Claude Haiku 4.5. The settings screen lists the models your account offers in that Region, and "Refresh model list" updates it. A new installation starts on Amazon Nova Lite because it answers with nothing enabled beyond an IAM role. Newer Claude models such as Sonnet 5 and Opus 5.5 are called through a cross-region inference profile, an ID beginning with `us.`, `eu.` or `global.`, and they reject the temperature setting, so the plugin does not send it to them. A specific model may still need a supported Region and suitable IAM permissions.
 
 = Why do I receive AccessDeniedException or a model access error? =
 
 Confirm that the model is available and enabled in the configured AWS Region, the model ID is correct, and the IAM identity can call `bedrock:InvokeModel` for the required resource. Some models use inference profiles with different IDs and IAM resources.
 
-= Why can guests not use the chat after upgrading? =
+= Why can guests not use the chat? =
 
-Version 1.1.0 defaults to signed-in users to reduce the risk of anonymous scripts generating unbounded AWS charges. An administrator can explicitly enable guest access and configure a request limit.
+The chat defaults to signed-in users to reduce the risk of anonymous scripts generating unbounded AWS charges. An administrator can explicitly enable guest access and configure a request limit.
 
 = Are AWS credentials stored in plaintext? =
 
@@ -160,7 +160,7 @@ Newly saved credentials are encrypted with authenticated encryption derived from
 
 Yes. Configure the access key, secret key, and session token together, or define all three constants in `wp-config.php`.
 
-= Does version 1.2.0 stream responses? =
+= Does the chat stream responses? =
 
 Yes. Streaming is the default and uses an authenticated POST request with Server-Sent Events. The removed 1.0.x implementation was unsafe because it used a GET EventSource that placed conversation data in URLs and issued duplicate Bedrock requests. If the PHP cURL extension is missing or a proxy buffers the stream, the chat falls back to one buffered request automatically.
 
@@ -348,6 +348,11 @@ what a good answer says.
 
 
 == Changelog ==
+
+= 1.45.0 =
+* Claude Sonnet 5, Opus 5.5, Opus 5, Fable 5.1 and Opus 4.7 could not answer at all. The plugin sent the temperature setting with every Claude request, and Amazon Bedrock rejects it for these models with "`temperature` is deprecated for this model", so every chat, and the Diagnostics model test, failed on them. Found by invoking each current Claude model on Bedrock. Temperature is now left out for them and for any Claude model newer than the plugin knows, and still sent to older Claude models and the other families; Claude Opus 4.6, Sonnet 4.6, Sonnet 4.5, Opus 4.5, Haiku 4.5 and Nova Lite were invoked to confirm they accept it. The field on the settings screen says so.
+* 1.44.0 moved new installations to Amazon Nova Lite, but left the plugin's internal default on Claude 3 Haiku, so a settings form saved without a model, or a request on a site whose settings were never written, still fell back to the retired model. Both now use Nova Lite, and a test fails if shipped code names a retired model again.
+* Removed Claude 3.7 Sonnet and Amazon Titan Text Express from the list shown when model discovery fails; Bedrock now answers both with "This model version has reached the end of its life". Claude Sonnet 5 and Claude Opus 5.5 take their places. That end-of-life reply used to be explained as an IAM problem; it now says the model is no longer served and to choose a current one.
 
 = 1.44.0 =
 * A new installation could not answer its first question. Activation chose Claude 3 Haiku, and its provider has since withdrawn that model from accounts that were not already using it, so the first request came back saying the model was retired. Found by installing the package from the plugin directory onto a clean WordPress and asking it something, which is the one check that reflects what a new user actually gets. Activation now chooses Amazon Nova Lite, verified by invoking it: a fresh install answers in about 700 milliseconds with nothing configured beyond an IAM role.
@@ -699,6 +704,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.45.0 =
+Makes Claude Sonnet 5, Opus 5.5 and other current Claude models work; Bedrock rejected every request the plugin sent them. Also stops a missing model setting falling back to a retired model.
 
 = 1.44.0 =
 New installations defaulted to a model its provider has retired, so the first question failed. Existing sites that already chose a model are unaffected.
