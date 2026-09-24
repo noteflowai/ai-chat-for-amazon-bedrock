@@ -59,6 +59,12 @@ $captured = array(
 		'body'   => '{"message":"Access denied. This Model is marked by provider as Legacy and you have not been actively using the model in the last 30 days. Please upgrade to an active model on Amazon Bedrock"}',
 		'model'  => 'anthropic.claude-3-haiku-20240307-v1:0',
 	),
+	// Captured 2026-09-24 from us-east-1; Titan Text Express returns the same body.
+	'end_of_life'   => array(
+		'status' => 404,
+		'body'   => '{"message":"This model version has reached the end of its life. Please refer to the AWS documentation for more details."}',
+		'model'  => 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
+	),
 );
 
 // --- A model that requires an inference profile ------------------------------
@@ -101,6 +107,13 @@ check_error( 'legacy_model' === $result['kind'], 'a retired model is recognised,
 check_error( false !== stripos( $result['message'], 'choose a current model' ), 'the fix is to pick another model' );
 // The payload starts with "Access denied", which would mislead a status-only classifier.
 check_error( false === stripos( $result['message'], 'not authorized' ), 'the wording of the payload does not turn it into a permissions error' );
+
+// --- A model version Bedrock has shut down -----------------------------------
+
+$result = AI_Chat_Bedrock_Bedrock_Errors::explain( $captured['end_of_life']['status'], $captured['end_of_life']['body'], $captured['end_of_life']['model'], 'us-east-1' );
+check_error( 'retired_model' === $result['kind'], 'an end-of-life model is recognised, got ' . $result['kind'] );
+check_error( false !== stripos( $result['message'], 'choose a current model' ), 'the fix for an end-of-life model is to pick another model' );
+check_error( false === stripos( $result['message'], 'IAM' ), 'an end-of-life 404 is not blamed on IAM' );
 
 // --- Model access not granted, from the documented wording ------------------
 

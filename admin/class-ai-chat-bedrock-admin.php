@@ -963,6 +963,7 @@ class AI_Chat_Bedrock_Admin {
 	public function temperature_render() {
 		$value = $this->option( 'temperature', 0.7 );
 		echo '<input type="number" id="aicfab_field_temperature" name="ai_chat_bedrock_settings[temperature]" value="' . esc_attr( $value ) . '" min="0" max="1" step="0.1">';
+		echo '<p class="description">' . esc_html__( 'Not sent to Claude Opus 4.7, Sonnet 5, Opus 5 and newer Claude models, because Amazon Bedrock rejects it for them.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function system_prompt_render() {
 		echo '<textarea id="aicfab_field_system_prompt" name="ai_chat_bedrock_settings[system_prompt]" rows="5" class="large-text" maxlength="8000">' . esc_textarea( $this->option( 'system_prompt', 'You are a helpful AI assistant powered by Amazon Bedrock.' ) ) . '</textarea>';

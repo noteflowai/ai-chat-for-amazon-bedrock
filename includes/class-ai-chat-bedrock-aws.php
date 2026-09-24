@@ -382,7 +382,7 @@ class AI_Chat_Bedrock_AWS {
 		$options  = get_option( 'ai_chat_bedrock_settings', array() );
 		$options  = is_array( $options ) ? $options : array();
 		$options  = array_merge( $options, $this->overrides );
-		$model_id = isset( $options['model_id'] ) ? sanitize_text_field( $options['model_id'] ) : 'anthropic.claude-3-haiku-20240307-v1:0';
+		$model_id = isset( $options['model_id'] ) ? sanitize_text_field( $options['model_id'] ) : ( class_exists( 'AI_Chat_Bedrock_Models' ) ? AI_Chat_Bedrock_Models::DEFAULT_MODEL : 'amazon.nova-lite-v1:0' );
 		if ( '' !== $force_model ) {
 			$model_id = sanitize_text_field( (string) $force_model );
 		}
@@ -666,6 +666,22 @@ class AI_Chat_Bedrock_AWS {
 		return $result;
 	}
 
+	/**
+	 * Whether a Claude model still takes the temperature parameter.
+	 *
+	 * Observed on Bedrock: ValidationException, "`temperature` is deprecated for this model."
+	 * from Claude Opus 4.7, Opus 4.8, Opus 5, Opus 5.5, Sonnet 5, Fable 5 and Fable 5.1, which
+	 * made every chat, and the Diagnostics model test, fail on those models. Claude 3, 3.x and
+	 * 4 through 4.6 still accept it. Unknown and newer Claude models get no temperature,
+	 * because sending it is an error and leaving it out is not.
+	 *
+	 * @param string $model_id Model or inference profile ID.
+	 * @return bool
+	 */
+	private static function claude_accepts_temperature( $model_id ) {
+		return 1 === preg_match( '/anthropic\.claude-(?:v2|instant|3|(?:opus|sonnet|haiku)-4(?:-[0-6])?(?:-\d{8}|-v\d|:|$))/', (string) $model_id );
+	}
+
 	private function format_payload_for_model( $model_id, $message_data, $max_tokens, $temperature ) {
 		$messages = isset( $message_data['messages'] ) && is_array( $message_data['messages'] ) ? $message_data['messages'] : array();
 		$system   = '';
@@ -720,9 +736,11 @@ class AI_Chat_Bedrock_AWS {
 			$payload = array(
 				'anthropic_version' => 'bedrock-2023-05-31',
 				'max_tokens'        => $max_tokens,
-				'temperature'       => $temperature,
 				'messages'          => $messages_out,
 			);
+			if ( self::claude_accepts_temperature( $model_id ) ) {
+				$payload['temperature'] = $temperature;
+			}
 			if ( '' !== $system ) {
 				$payload['system'] = $system;
 			}

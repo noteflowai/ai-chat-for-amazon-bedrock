@@ -218,6 +218,42 @@ foreach ( array( 'anthropic.claude-3-haiku-20240307-v1:0' ) as $aicfab_retired )
 	);
 }
 
+/*
+ * 1.44.0 moved activation off Claude 3 Haiku and left AI_Chat_Bedrock_Models::DEFAULT_MODEL and
+ * the request fallback in the AWS client on it, so a settings form saved without a model still
+ * came back with the retired one. The constant is read from source because loading the class
+ * needs WordPress.
+ */
+check_act(
+	(bool) preg_match( "/const DEFAULT_MODEL\s*=\s*'([^']+)'/", $aicfab_models_src, $aicfab_const ) && $aicfab_const[1] === $aicfab_settings['model_id'],
+	'DEFAULT_MODEL matches the model activation writes, got ' . ( isset( $aicfab_const[1] ) ? $aicfab_const[1] : '(not found)' )
+);
+
+/*
+ * Bedrock answers these with "This model version has reached the end of its life", so unlike
+ * the legacy one above they cannot be offered anywhere, and no shipped code may fall back to
+ * any of them.
+ */
+$aicfab_end_of_life = array( 'us.anthropic.claude-3-7-sonnet-20250219-v1:0', 'amazon.titan-text-express-v1' );
+foreach ( $aicfab_end_of_life as $aicfab_retired ) {
+	check_act( ! in_array( $aicfab_retired, $aicfab_fallback, true ), $aicfab_retired . ' is not in the fallback list, because Bedrock no longer serves it' );
+}
+$aicfab_shipped = array_merge(
+	glob( dirname( __DIR__ ) . '/*.php' ),
+	glob( dirname( __DIR__ ) . '/includes/*.php' ),
+	glob( dirname( __DIR__ ) . '/admin/*.php' ),
+	glob( dirname( __DIR__ ) . '/public/*.php' )
+);
+foreach ( $aicfab_shipped as $aicfab_file ) {
+	$aicfab_src = file_get_contents( $aicfab_file );
+	foreach ( array_merge( array( 'anthropic.claude-3-haiku-20240307-v1:0' ), $aicfab_end_of_life ) as $aicfab_retired ) {
+		check_act(
+			false === strpos( $aicfab_src, "'" . $aicfab_retired . "'" ),
+			basename( $aicfab_file ) . ' does not use the retired model ' . $aicfab_retired . ' as a literal'
+		);
+	}
+}
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

@@ -81,6 +81,16 @@ class AI_Chat_Bedrock_Bedrock_Errors {
 			);
 		}
 
+		// Observed: ResourceNotFoundException, "This model version has reached the end of its
+		// life. Please refer to the AWS documentation for more details." Returned for Claude
+		// 3.7 Sonnet and Titan Text Express; it fell through to the IAM advice for a 404.
+		if ( false !== strpos( $haystack, 'end of its life' ) ) {
+			return array(
+				'kind'    => 'retired_model',
+				'message' => __( 'Amazon Bedrock no longer serves this model version. Choose a current model on the settings screen.', 'ai-chat-for-amazon-bedrock' ),
+			);
+		}
+
 		// Observed: ValidationException, "The provided model identifier is invalid." The
 		// same message covers a typo and a model that region does not offer, so both are
 		// named rather than guessing.

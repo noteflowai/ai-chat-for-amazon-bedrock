@@ -11,9 +11,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class AI_Chat_Bedrock_Models {
 
-	const CACHE_PREFIX  = 'aicfab_models_';
-	const CACHE_TTL     = 43200;
-	const DEFAULT_MODEL = 'anthropic.claude-3-haiku-20240307-v1:0';
+	const CACHE_PREFIX = 'aicfab_models_';
+	const CACHE_TTL    = 43200;
+
+	/*
+	 * Must match the model activation writes. 1.44.0 moved activation off Claude 3 Haiku and
+	 * left this constant behind, so a settings form saved without a model, and a site whose
+	 * settings were never written, still fell back to the retired model.
+	 */
+	const DEFAULT_MODEL = 'amazon.nova-lite-v1:0';
 
 	/**
 	 * Model identifiers that remain selectable when discovery is unavailable.
@@ -27,17 +33,19 @@ class AI_Chat_Bedrock_Models {
 			 * Only consulted when discovery fails, so it is ordered with the models most
 			 * likely to be usable first. Claude 3 Haiku led this list until its provider
 			 * retired it for accounts not already using it, which made the first entry the
-			 * one most likely to fail.
+			 * one most likely to fail. Claude 3.7 Sonnet and Titan Text Express were removed
+			 * in 1.45.0: Bedrock answers both with "This model version has reached the end
+			 * of its life".
 			 */
-			'amazon.nova-lite-v1:0'                        => 'Amazon Nova Lite',
-			'amazon.nova-micro-v1:0'                       => 'Amazon Nova Micro',
-			'amazon.nova-pro-v1:0'                         => 'Amazon Nova Pro',
-			'us.anthropic.claude-haiku-4-5-20251001-v1:0'  => 'Claude Haiku 4.5 (inference profile)',
-			'us.anthropic.claude-3-7-sonnet-20250219-v1:0' => 'Claude 3.7 Sonnet (inference profile)',
-			'amazon.titan-text-express-v1'                 => 'Amazon Titan Text Express',
-			'meta.llama3-8b-instruct-v1:0'                 => 'Meta Llama 3 8B',
-			'mistral.mistral-7b-instruct-v0:2'             => 'Mistral 7B',
-			'us.deepseek.r1-v1:0'                          => 'DeepSeek R1 (inference profile)',
+			'amazon.nova-lite-v1:0'                       => 'Amazon Nova Lite',
+			'amazon.nova-micro-v1:0'                      => 'Amazon Nova Micro',
+			'amazon.nova-pro-v1:0'                        => 'Amazon Nova Pro',
+			'us.anthropic.claude-haiku-4-5-20251001-v1:0' => 'Claude Haiku 4.5 (inference profile)',
+			'us.anthropic.claude-sonnet-5'                => 'Claude Sonnet 5 (inference profile)',
+			'us.anthropic.claude-opus-5-5'                => 'Claude Opus 5.5 (inference profile)',
+			'meta.llama3-8b-instruct-v1:0'                => 'Meta Llama 3 8B',
+			'mistral.mistral-7b-instruct-v0:2'            => 'Mistral 7B',
+			'us.deepseek.r1-v1:0'                         => 'DeepSeek R1 (inference profile)',
 		);
 	}
 
