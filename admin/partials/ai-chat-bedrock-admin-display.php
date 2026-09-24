@@ -112,6 +112,17 @@ $aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 				}
 				?>
 			</p>
+			<?php if ( ! empty( $week['cache_read_tokens'] ) ) : ?>
+				<p class="aicfab-card-detail">
+					<?php
+					printf(
+						/* translators: %s: number of input tokens read from the Claude prompt cache in the last seven days. */
+						esc_html__( 'Prompt cache, last 7 days: %s input tokens reused at a tenth of the input price.', 'ai-chat-for-amazon-bedrock' ),
+						esc_html( number_format_i18n( (int) $week['cache_read_tokens'] ) )
+					);
+					?>
+				</p>
+			<?php endif; ?>
 		</div>
 	</div>
 

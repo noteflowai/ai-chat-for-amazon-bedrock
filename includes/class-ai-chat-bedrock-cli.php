@@ -248,6 +248,9 @@ class AI_Chat_Bedrock_CLI {
 
 		$totals = AI_Chat_Bedrock_Usage::totals( $days );
 		WP_CLI::log( sprintf( 'Total: %d requests, %d input tokens, %d output tokens.', (int) $totals['requests'], (int) $totals['input_tokens'], (int) $totals['output_tokens'] ) );
+		if ( ! empty( $totals['cache_read_tokens'] ) || ! empty( $totals['cache_write_tokens'] ) ) {
+			WP_CLI::log( sprintf( 'Prompt cache: %d input tokens read, %d written.', (int) $totals['cache_read_tokens'], (int) $totals['cache_write_tokens'] ) );
+		}
 	}
 
 	/**

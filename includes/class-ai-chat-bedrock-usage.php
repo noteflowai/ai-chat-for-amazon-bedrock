@@ -31,6 +31,8 @@ class AI_Chat_Bedrock_Usage {
 		$totals = self::all();
 		$input  = isset( $usage['input_tokens'] ) ? (int) $usage['input_tokens'] : 0;
 		$output = isset( $usage['output_tokens'] ) ? (int) $usage['output_tokens'] : 0;
+		$read   = isset( $usage['cache_read_tokens'] ) ? max( 0, (int) $usage['cache_read_tokens'] ) : 0;
+		$write  = isset( $usage['cache_write_tokens'] ) ? max( 0, (int) $usage['cache_write_tokens'] ) : 0;
 
 		if ( ! isset( $totals[ $today ] ) || ! is_array( $totals[ $today ] ) ) {
 			$totals[ $today ] = array(
@@ -44,6 +46,14 @@ class AI_Chat_Bedrock_Usage {
 		$totals[ $today ]['requests']      = (int) $totals[ $today ]['requests'] + 1;
 		$totals[ $today ]['input_tokens']  = (int) $totals[ $today ]['input_tokens'] + $input;
 		$totals[ $today ]['output_tokens'] = (int) $totals[ $today ]['output_tokens'] + $output;
+
+		// Days recorded before 1.46.0 have no cache counters, so they start from zero here.
+		if ( $read > 0 ) {
+			$totals[ $today ]['cache_read_tokens'] = ( isset( $totals[ $today ]['cache_read_tokens'] ) ? (int) $totals[ $today ]['cache_read_tokens'] : 0 ) + $read;
+		}
+		if ( $write > 0 ) {
+			$totals[ $today ]['cache_write_tokens'] = ( isset( $totals[ $today ]['cache_write_tokens'] ) ? (int) $totals[ $today ]['cache_write_tokens'] : 0 ) + $write;
+		}
 
 		$model = self::clean_model( $model );
 		if ( '' !== $model ) {
@@ -204,9 +214,11 @@ class AI_Chat_Bedrock_Usage {
 		$entry  = isset( $totals[ $today ] ) && is_array( $totals[ $today ] ) ? $totals[ $today ] : array();
 
 		return array(
-			'requests'      => isset( $entry['requests'] ) ? (int) $entry['requests'] : 0,
-			'input_tokens'  => isset( $entry['input_tokens'] ) ? (int) $entry['input_tokens'] : 0,
-			'output_tokens' => isset( $entry['output_tokens'] ) ? (int) $entry['output_tokens'] : 0,
+			'requests'           => isset( $entry['requests'] ) ? (int) $entry['requests'] : 0,
+			'input_tokens'       => isset( $entry['input_tokens'] ) ? (int) $entry['input_tokens'] : 0,
+			'output_tokens'      => isset( $entry['output_tokens'] ) ? (int) $entry['output_tokens'] : 0,
+			'cache_read_tokens'  => isset( $entry['cache_read_tokens'] ) ? (int) $entry['cache_read_tokens'] : 0,
+			'cache_write_tokens' => isset( $entry['cache_write_tokens'] ) ? (int) $entry['cache_write_tokens'] : 0,
 		);
 	}
 
@@ -220,10 +232,12 @@ class AI_Chat_Bedrock_Usage {
 		$days   = max( 1, min( self::RETENTION_DAYS, absint( $days ) ) );
 		$totals = self::all();
 		$result = array(
-			'requests'      => 0,
-			'input_tokens'  => 0,
-			'output_tokens' => 0,
-			'days'          => $days,
+			'requests'           => 0,
+			'input_tokens'       => 0,
+			'output_tokens'      => 0,
+			'cache_read_tokens'  => 0,
+			'cache_write_tokens' => 0,
+			'days'               => $days,
 		);
 
 		for ( $offset = 0; $offset < $days; $offset++ ) {
@@ -234,6 +248,9 @@ class AI_Chat_Bedrock_Usage {
 			$result['requests']      += isset( $totals[ $day ]['requests'] ) ? (int) $totals[ $day ]['requests'] : 0;
 			$result['input_tokens']  += isset( $totals[ $day ]['input_tokens'] ) ? (int) $totals[ $day ]['input_tokens'] : 0;
 			$result['output_tokens'] += isset( $totals[ $day ]['output_tokens'] ) ? (int) $totals[ $day ]['output_tokens'] : 0;
+			foreach ( array( 'cache_read_tokens', 'cache_write_tokens' ) as $counter ) {
+				$result[ $counter ] += isset( $totals[ $day ][ $counter ] ) ? (int) $totals[ $day ][ $counter ] : 0;
+			}
 		}
 		return $result;
 	}
@@ -279,6 +296,11 @@ class AI_Chat_Bedrock_Usage {
 				'output_tokens' => isset( $entry['output_tokens'] ) ? (int) $entry['output_tokens'] : 0,
 				'models'        => $models,
 			);
+			foreach ( array( 'cache_read_tokens', 'cache_write_tokens' ) as $counter ) {
+				if ( ! empty( $entry[ $counter ] ) ) {
+					$clean[ $day ][ $counter ] = (int) $entry[ $counter ];
+				}
+			}
 		}
 		return $clean;
 	}

@@ -721,9 +721,80 @@ class AI_Chat_Bedrock_AWS {
 		return 1 === preg_match( '/anthropic\.claude-(?:v2|instant|3|(?:opus|sonnet|haiku)-4(?:-[0-6])?(?:-\d{8}|-v\d|:|$))/', (string) $model_id );
 	}
 
+	/**
+	 * Whether a Claude model on Bedrock accepts a prompt cache checkpoint.
+	 *
+	 * AWS lists Claude 3.5 Haiku, 3.7 Sonnet and every Claude 4 and later model. The older
+	 * ones are left alone because a checkpoint is a field they were never documented to take.
+	 *
+	 * @param string $model_id Model or inference profile ID.
+	 * @return bool
+	 */
+	private static function claude_caches_prompts( $model_id ) {
+		$model_id = (string) $model_id;
+		if ( false === strpos( $model_id, 'anthropic.claude' ) ) {
+			return false;
+		}
+		return 1 !== preg_match( '/anthropic\.claude-(?:v2|instant|3-(?:haiku|sonnet|opus)|3-5-sonnet)/', $model_id );
+	}
+
+	/**
+	 * Mark the part of a Claude request that repeats, so Bedrock can reuse it.
+	 *
+	 * Bedrock reads a request as tools, then system, then messages, and a checkpoint caches
+	 * everything before it. The first system section is the site's own prompt and the tools
+	 * are the site's abilities, and both are the same for every visitor. What follows them is
+	 * the retrieved site content and the conversation, which change with every question, so
+	 * the checkpoint goes at the end of the first section and nowhere later. A cached read
+	 * costs a tenth of the input price and a write costs a quarter more. A prefix shorter
+	 * than the model's minimum (1,024 tokens on most models) is simply not cached, so a short
+	 * prompt costs what it did before. The ai_chat_bedrock_prompt_caching filter turns this
+	 * off.
+	 *
+	 * @param array  $payload  Claude request.
+	 * @param string $model_id Model or inference profile ID.
+	 * @param array  $sections System prompt sections, in order.
+	 * @return array
+	 */
+	private function with_prompt_cache( $payload, $model_id, $sections ) {
+		if ( ! self::claude_caches_prompts( $model_id ) || ! apply_filters( 'ai_chat_bedrock_prompt_caching', true, $model_id ) ) {
+			return $payload;
+		}
+		$checkpoint = array( 'type' => 'ephemeral' );
+
+		if ( ! empty( $sections ) && '' !== trim( (string) $sections[0] ) ) {
+			$blocks = array(
+				array(
+					'type'          => 'text',
+					'text'          => (string) $sections[0],
+					'cache_control' => $checkpoint,
+				),
+			);
+			$rest   = implode( "\n\n", array_slice( $sections, 1 ) );
+			if ( '' !== trim( $rest ) ) {
+				$blocks[] = array(
+					'type' => 'text',
+					'text' => $rest,
+				);
+			}
+			$payload['system'] = $blocks;
+			return $payload;
+		}
+
+		// No stable system prompt, so the tool definitions are the repeating part.
+		if ( ! empty( $payload['tools'] ) && is_array( $payload['tools'] ) ) {
+			$last = count( $payload['tools'] ) - 1;
+			if ( is_array( $payload['tools'][ $last ] ) ) {
+				$payload['tools'][ $last ]['cache_control'] = $checkpoint;
+			}
+		}
+		return $payload;
+	}
+
 	private function format_payload_for_model( $model_id, $message_data, $max_tokens, $temperature ) {
 		$messages = isset( $message_data['messages'] ) && is_array( $message_data['messages'] ) ? $message_data['messages'] : array();
 		$system   = '';
+		$sections = array();
 		$chat     = array();
 		foreach ( $messages as $message ) {
 			if ( ! is_array( $message ) || ! isset( $message['role'], $message['content'] ) || ! is_string( $message['content'] ) ) {
@@ -732,7 +803,8 @@ class AI_Chat_Bedrock_AWS {
 			$role    = sanitize_key( $message['role'] );
 			$content = $message['content'];
 			if ( 'system' === $role ) {
-				$system .= ( '' === $system ? '' : "\n\n" ) . $content;
+				$system    .= ( '' === $system ? '' : "\n\n" ) . $content;
+				$sections[] = $content;
 			} elseif ( in_array( $role, array( 'user', 'assistant' ), true ) && '' !== trim( $content ) ) {
 				$chat[] = array(
 					'role'    => $role,
@@ -787,7 +859,7 @@ class AI_Chat_Bedrock_AWS {
 				$payload['tools']       = array_slice( $message_data['tools'], 0, 50 );
 				$payload['tool_choice'] = array( 'type' => 'auto' );
 			}
-			return $payload;
+			return $this->with_prompt_cache( $payload, $model_id, $sections );
 		}
 
 		if ( false !== strpos( $model_id, 'amazon.nova' ) ) {

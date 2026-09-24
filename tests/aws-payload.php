@@ -387,6 +387,45 @@ check_aws( true === $converse_answer['success'] && 'Converse answer' === $conver
 check_aws( 'streamed' === AI_Chat_Bedrock_Event_Stream::text_delta( array( 'contentBlockDelta' => array( 'contentBlockIndex' => 1, 'delta' => array( 'text' => 'streamed' ) ) ), 'qwen.qwen3-32b-v1:0' ), 'ConverseStream text deltas are read.' );
 check_aws( '' === AI_Chat_Bedrock_Event_Stream::text_delta( array( 'contentBlockDelta' => array( 'delta' => array( 'reasoningContent' => array( 'text' => 'thinking' ) ) ) ), 'openai.gpt-oss-20b-1:0' ), 'ConverseStream reasoning deltas are not shown to visitors.' );
 
+
+// --- Prompt caching of the part every visitor shares ---------------------------
+
+$grounded = array(
+	'messages' => array(
+		array( 'role' => 'system', 'content' => 'Site prompt.' ),
+		array( 'role' => 'system', 'content' => 'Retrieved context.' ),
+		array( 'role' => 'user', 'content' => 'Hello' ),
+	),
+	'tools'    => $messages['tools'],
+);
+$cached = $format->invoke( $aws, 'us.anthropic.claude-sonnet-4-5-20250929-v1:0', $grounded, 800, 0.2 );
+check_aws( is_array( $cached['system'] ) && 2 === count( $cached['system'] ), 'A cached Claude system prompt is split into the shared and the per-question part.' );
+check_aws( 'Site prompt.' === $cached['system'][0]['text'] && array( 'type' => 'ephemeral' ) === $cached['system'][0]['cache_control'], 'The checkpoint closes the site prompt, which also covers the tools before it.' );
+check_aws( 'Retrieved context.' === $cached['system'][1]['text'] && ! isset( $cached['system'][1]['cache_control'] ), 'Retrieved content changes per question, so it is never cached.' );
+check_aws( ! isset( $cached['tools'][0]['cache_control'] ), 'Only one checkpoint is set when there is a site prompt.' );
+check_aws( 1 === substr_count( wp_json_encode( $cached ), 'cache_control' ), 'Exactly one checkpoint is sent.' );
+
+$tools_only = $format->invoke( $aws, 'us.anthropic.claude-haiku-4-5-20251001-v1:0', array( 'messages' => array( array( 'role' => 'user', 'content' => 'Hello' ) ), 'tools' => $messages['tools'] ), 800, 0.2 );
+check_aws( array( 'type' => 'ephemeral' ) === $tools_only['tools'][0]['cache_control'] && ! isset( $tools_only['system'] ), 'Without a site prompt the tool definitions carry the checkpoint.' );
+
+foreach ( array( 'anthropic.claude-3-haiku-20240307-v1:0', 'anthropic.claude-3-5-sonnet-20240620-v1:0', 'us.anthropic.claude-3-5-sonnet-20241022-v2:0', 'amazon.nova-lite-v1:0', 'openai.gpt-oss-20b-1:0' ) as $model ) {
+	$plain = $format->invoke( $aws, $model, $grounded, 800, 0.2 );
+	check_aws( false === strpos( wp_json_encode( $plain ), 'cache_control' ), $model . ' is not sent a cache checkpoint.' );
+}
+$legacy = $format->invoke( $aws, 'anthropic.claude-3-haiku-20240307-v1:0', $grounded, 800, 0.2 );
+check_aws( "Site prompt.\n\nRetrieved context." === $legacy['system'], 'Claude models without caching keep the single system string.' );
+
+// The cache counts are reported apart from input_tokens, which leaves them out.
+$claude_cached = AI_Chat_Bedrock_Event_Stream::usage( array( 'usage' => array( 'input_tokens' => 12, 'output_tokens' => 40, 'cache_read_input_tokens' => 2048, 'cache_creation_input_tokens' => 0 ) ) );
+check_aws( 12 === $claude_cached['input_tokens'] && 2048 === $claude_cached['cache_read_tokens'] && 0 === $claude_cached['cache_write_tokens'], 'Claude cache counts are read from a buffered answer.' );
+$stream_start = AI_Chat_Bedrock_Event_Stream::usage( array( 'type' => 'message_start', 'message' => array( 'usage' => array( 'input_tokens' => 9, 'output_tokens' => 1, 'cache_creation_input_tokens' => 1500 ) ) ) );
+check_aws( 9 === $stream_start['input_tokens'] && 1500 === $stream_start['cache_write_tokens'], 'Claude cache counts are read from a streamed message_start.' );
+$metrics = AI_Chat_Bedrock_Event_Stream::usage( array( 'amazon-bedrock-invocationMetrics' => array( 'inputTokenCount' => 9, 'outputTokenCount' => 30, 'cacheReadInputTokenCount' => 1500, 'cacheWriteInputTokenCount' => 0 ) ) );
+check_aws( 1500 === $metrics['cache_read_tokens'] && 30 === $metrics['output_tokens'], 'Bedrock invocation metrics carry the cache counts too.' );
+$converse_cached = AI_Chat_Bedrock_Event_Stream::usage( array( 'metadata' => array( 'usage' => array( 'inputTokens' => 3, 'outputTokens' => 2, 'cacheReadInputTokens' => 1100, 'cacheWriteInputTokens' => 0 ) ) ) );
+check_aws( 1100 === $converse_cached['cache_read_tokens'], 'Converse cache counts are read.' );
+check_aws( ! isset( $nova_usage['cache_read_tokens'] ), 'No cache count is invented when none is reported.' );
+
 // A model that refuses a field is asked once more without it, and remembered.
 // Observed on Bedrock 2026-09-25 from GPT-6 Astra, GPT-5.6, Grok 4.6 and Kimi K3.
 $invoke = new ReflectionMethod( $aws, 'invoke_model' );
