@@ -122,13 +122,25 @@ class AI_Chat_Bedrock_Diagnostics {
 	private function check_credentials( $options ) {
 		$status = AI_Chat_Bedrock_AWS_Credentials::describe( $options );
 		if ( ! $status['configured'] ) {
-			return $this->result( 'credentials', __( 'AWS credentials', 'ai-chat-for-amazon-bedrock' ), 'fail', __( 'No usable AWS credentials were found. Add credentials or enable IAM role credentials.', 'ai-chat-for-amazon-bedrock' ) );
+			return $this->result( 'credentials', __( 'AWS credentials', 'ai-chat-for-amazon-bedrock' ), 'fail', __( 'No usable AWS credentials were found. Paste an Amazon Bedrock API key, add access keys, or enable IAM role credentials.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
 		$state   = in_array( $status['source'], array( 'options' ), true ) ? 'warn' : 'pass';
 		$message = $status['message'];
 		if ( 'options' === $status['source'] ) {
 			$message .= ' ' . __( 'Consider wp-config.php constants or an IAM role so keys are not stored in the database.', 'ai-chat-for-amazon-bedrock' );
+		}
+		if ( 0 === strpos( $status['source'], 'api_key_' ) ) {
+			if ( ! empty( $status['temporary'] ) ) {
+				$state    = 'warn';
+				$message .= ' ' . __( 'This is a short-term key, which stops working within 12 hours. Use a long-term key or an IAM role.', 'ai-chat-for-amazon-bedrock' );
+			}
+			// Agents endpoints refuse API keys, so a feature that uses them needs signing credentials too.
+			$needs_signing = ! empty( $options['knowledge_base_id'] ) || ! empty( $options['prompt_id'] );
+			if ( $needs_signing && ! ( new AI_Chat_Bedrock_AWS() )->has_signing_credentials() ) {
+				$state    = 'warn';
+				$message .= ' ' . __( 'A Knowledge Base or managed prompt is configured, and those only accept signed requests. Add access keys or an IAM role for them; chat keeps using the API key.', 'ai-chat-for-amazon-bedrock' );
+			}
 		}
 		return $this->result( 'credentials', __( 'AWS credentials', 'ai-chat-for-amazon-bedrock' ), $state, $message );
 	}

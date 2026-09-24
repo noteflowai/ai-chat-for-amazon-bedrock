@@ -183,12 +183,24 @@ class AI_Chat_Bedrock_Iam_Policy {
 		}
 
 		// The model picker lists what the account can use. No resource-level scoping exists.
+		// Without ListInferenceProfiles the picker cannot offer models that are only
+		// reachable through a cross-Region or global profile.
 		$statements[] = array(
 			'Sid'      => 'AICFABListModelsForTheModelPicker',
 			'Effect'   => 'Allow',
-			'Action'   => array( 'bedrock:ListFoundationModels' ),
+			'Action'   => array( 'bedrock:ListFoundationModels', 'bedrock:ListInferenceProfiles' ),
 			'Resource' => '*',
 		);
+
+		// An Amazon Bedrock API key is only honoured for an identity allowed to use one.
+		if ( ! empty( $config['api_key'] ) ) {
+			$statements[] = array(
+				'Sid'      => 'AICFABUseBedrockApiKey',
+				'Effect'   => 'Allow',
+				'Action'   => array( 'bedrock:CallWithBearerToken' ),
+				'Resource' => '*',
+			);
+		}
 
 		$guardrail = self::clean_id( isset( $config['guardrail_id'] ) ? $config['guardrail_id'] : '' );
 		if ( '' !== $guardrail ) {
@@ -286,6 +298,7 @@ class AI_Chat_Bedrock_Iam_Policy {
 				'prompt_id'      => isset( $options['prompt_id'] ) ? $options['prompt_id'] : '',
 				'knowledge_base' => isset( $options['knowledge_base_id'] ) ? $options['knowledge_base_id'] : '',
 				'agentcore'      => $agentcore,
+				'api_key'        => class_exists( 'AI_Chat_Bedrock_AWS_Credentials' ) && null !== AI_Chat_Bedrock_AWS_Credentials::api_key( $options ),
 			)
 		);
 	}

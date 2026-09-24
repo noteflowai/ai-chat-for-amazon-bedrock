@@ -24,6 +24,34 @@ class AI_Chat_Bedrock_AWS {
 	private $credential_error;
 	private $debug;
 
+	/**
+	 * Amazon Bedrock API key, sent as a bearer token to Bedrock and Bedrock Runtime.
+	 *
+	 * @var string
+	 */
+	private $api_key = '';
+
+	/**
+	 * Whether the API key is a short-term one.
+	 *
+	 * @var bool
+	 */
+	private $api_key_temporary = false;
+
+	/**
+	 * Whether the signing credential chain has been consulted.
+	 *
+	 * @var bool
+	 */
+	private $signing_resolved = false;
+
+	/**
+	 * Plugin options the client was built with, kept for resolving signing credentials later.
+	 *
+	 * @var array
+	 */
+	private $options = array();
+
 	private $overrides = array();
 
 	public function __construct( $overrides = array() ) {
@@ -38,16 +66,80 @@ class AI_Chat_Bedrock_AWS {
 		$this->credential_source = 'none';
 		$this->credential_error  = '';
 		$this->debug             = isset( $options['debug_mode'] ) && 'on' === $options['debug_mode'];
+		$this->options           = $options;
 
-		$credentials = AI_Chat_Bedrock_AWS_Credentials::resolve( $options );
+		$api_key = AI_Chat_Bedrock_AWS_Credentials::api_key( $options );
+		if ( null !== $api_key ) {
+			// Signing credentials are looked up only if a request needs them, so a site that
+			// uses an API key on shared hosting does not wait on metadata endpoints it lacks.
+			$this->api_key           = $api_key['key'];
+			$this->api_key_temporary = $api_key['temporary'];
+			$this->credential_source = $api_key['source'];
+			return;
+		}
+		$this->resolve_signing_credentials();
+	}
+
+	/**
+	 * Look up the credentials that sign requests with Signature Version 4.
+	 */
+	private function resolve_signing_credentials() {
+		if ( $this->signing_resolved ) {
+			return;
+		}
+		$this->signing_resolved = true;
+
+		$credentials = AI_Chat_Bedrock_AWS_Credentials::resolve( $this->options );
 		if ( is_wp_error( $credentials ) ) {
 			$this->credential_error = $credentials->get_error_message();
 			return;
 		}
-		$this->access_key        = $credentials['access_key'];
-		$this->secret_key        = $credentials['secret_key'];
-		$this->session_token     = $credentials['session_token'];
-		$this->credential_source = $credentials['source'];
+		$this->access_key    = $credentials['access_key'];
+		$this->secret_key    = $credentials['secret_key'];
+		$this->session_token = $credentials['session_token'];
+		if ( '' === $this->api_key ) {
+			$this->credential_source = $credentials['source'];
+		}
+	}
+
+	/**
+	 * Whether requests can be signed with Signature Version 4.
+	 *
+	 * Knowledge Bases, Prompt Management, STS and AgentCore need this; an API key is not enough.
+	 *
+	 * @return bool
+	 */
+	public function has_signing_credentials() {
+		$this->resolve_signing_credentials();
+		return '' !== $this->access_key && '' !== $this->secret_key;
+	}
+
+	/**
+	 * Why a request to an AWS service cannot be authorised, or null when it can.
+	 *
+	 * @param string $service    Endpoint prefix: bedrock, bedrock-runtime, bedrock-agent, sts and so on.
+	 * @param bool   $use_bearer Whether the request may be authorised with an API key.
+	 * @return WP_Error|null
+	 */
+	private function missing_credentials( $service = 'bedrock-runtime', $use_bearer = true ) {
+		if ( $use_bearer && '' !== $this->api_key && in_array( $service, array( 'bedrock', 'bedrock-runtime' ), true ) ) {
+			return null;
+		}
+		if ( $this->has_signing_credentials() ) {
+			return null;
+		}
+		if ( '' !== $this->api_key ) {
+			return new WP_Error(
+				'aicfab_api_key_unsupported',
+				sprintf(
+					/* translators: %s: AWS service endpoint name, such as bedrock-agent-runtime. */
+					__( 'An Amazon Bedrock API key cannot call %s, which only accepts signed AWS requests. Add AWS access keys or an IAM role to use this feature; chat keeps working with the API key.', 'ai-chat-for-amazon-bedrock' ),
+					$service
+				)
+			);
+		}
+		$message = '' !== $this->credential_error ? $this->credential_error : __( 'Amazon Bedrock credentials are not configured.', 'ai-chat-for-amazon-bedrock' );
+		return new WP_Error( 'aicfab_no_credentials', $message );
 	}
 
 	/**
@@ -63,7 +155,7 @@ class AI_Chat_Bedrock_AWS {
 	private function credential_context() {
 		return array(
 			'source'    => $this->credential_source,
-			'temporary' => '' !== $this->session_token,
+			'temporary' => '' !== $this->api_key ? $this->api_key_temporary : '' !== $this->session_token,
 		);
 	}
 
@@ -77,7 +169,7 @@ class AI_Chat_Bedrock_AWS {
 	 * @return bool
 	 */
 	public function has_credentials() {
-		return '' !== $this->access_key && '' !== $this->secret_key;
+		return '' !== $this->api_key || $this->has_signing_credentials();
 	}
 
 	/**
@@ -1365,9 +1457,9 @@ class AI_Chat_Bedrock_AWS {
 		$query             = trim( (string) $query );
 		$limit             = max( 1, min( 10, absint( $limit ) ) );
 
-		if ( ! $this->has_credentials() ) {
-			$message = '' !== $this->credential_error ? $this->credential_error : __( 'Amazon Bedrock credentials are not configured.', 'ai-chat-for-amazon-bedrock' );
-			return new WP_Error( 'aicfab_no_credentials', $message );
+		$missing = $this->missing_credentials( 'bedrock-agent-runtime' );
+		if ( null !== $missing ) {
+			return $missing;
 		}
 		if ( ! preg_match( '/^[A-Za-z0-9]{1,64}$/', $knowledge_base_id ) ) {
 			return new WP_Error( 'aicfab_invalid_knowledge_base', __( 'The knowledge base ID is invalid.', 'ai-chat-for-amazon-bedrock' ) );
@@ -1440,9 +1532,9 @@ class AI_Chat_Bedrock_AWS {
 			}
 		}
 
-		if ( ! $this->has_credentials() ) {
-			$message = '' !== $this->credential_error ? $this->credential_error : __( 'Amazon Bedrock credentials are not configured.', 'ai-chat-for-amazon-bedrock' );
-			return new WP_Error( 'aicfab_no_credentials', $message );
+		$missing = $this->missing_credentials( 'sts' );
+		if ( null !== $missing ) {
+			return $missing;
 		}
 		if ( ! preg_match( '/^[a-z]{2}(?:-gov)?-[a-z]+-\d$/', $this->region ) ) {
 			return new WP_Error( 'aicfab_invalid_region', __( 'The configured AWS region is invalid.', 'ai-chat-for-amazon-bedrock' ) );
@@ -1503,9 +1595,9 @@ class AI_Chat_Bedrock_AWS {
 	}
 
 	private function control_plane_get( $path, $host_prefix = 'bedrock' ) {
-		if ( ! $this->has_credentials() ) {
-			$message = '' !== $this->credential_error ? $this->credential_error : __( 'Amazon Bedrock credentials are not configured.', 'ai-chat-for-amazon-bedrock' );
-			return new WP_Error( 'aicfab_no_credentials', $message );
+		$missing = $this->missing_credentials( (string) $host_prefix );
+		if ( null !== $missing ) {
+			return $missing;
 		}
 		if ( ! preg_match( '/^[a-z]{2}(?:-gov)?-[a-z]+-\d$/', $this->region ) ) {
 			return new WP_Error( 'aicfab_invalid_region', __( 'The configured AWS region is invalid.', 'ai-chat-for-amazon-bedrock' ) );
@@ -1563,8 +1655,9 @@ class AI_Chat_Bedrock_AWS {
 		if ( '' === $service ) {
 			return new WP_Error( 'aicfab_invalid_service', __( 'The AWS service name is invalid.', 'ai-chat-for-amazon-bedrock' ) );
 		}
-		if ( ! $client->has_credentials() ) {
-			return new WP_Error( 'aicfab_no_credentials', __( 'Amazon Bedrock credentials are not configured.', 'ai-chat-for-amazon-bedrock' ) );
+		$missing = $client->missing_credentials( $service, false );
+		if ( null !== $missing ) {
+			return $missing;
 		}
 
 		$region = sanitize_key( (string) $region );
@@ -1575,11 +1668,44 @@ class AI_Chat_Bedrock_AWS {
 			$client->region = $region;
 		}
 
-		return $client->signed_headers( $endpoint, (string) $body, $method, $service );
+		return $client->signed_headers( $endpoint, (string) $body, $method, $service, array(), false );
 	}
 
-	private function signed_headers( $endpoint, $body, $method = 'POST', $service = 'bedrock', $extra = array() ) {
-		$host       = wp_parse_url( $endpoint, PHP_URL_HOST );
+	/**
+	 * Headers that authorise a request: a bearer API key where Bedrock accepts one,
+	 * otherwise a Signature Version 4 signature.
+	 *
+	 * @param string $endpoint   Absolute endpoint URL.
+	 * @param string $body       Request body.
+	 * @param string $method     HTTP method.
+	 * @param string $service    Signing name.
+	 * @param array  $extra      Additional headers to send (and sign).
+	 * @param bool   $use_bearer Whether an API key may be used for this request.
+	 * @return array
+	 */
+	private function signed_headers( $endpoint, $body, $method = 'POST', $service = 'bedrock', $extra = array(), $use_bearer = true ) {
+		$host = wp_parse_url( $endpoint, PHP_URL_HOST );
+
+		/*
+		 * Bedrock API keys work for Bedrock and Bedrock Runtime, which both sign as "bedrock".
+		 * The Agents endpoints (Knowledge Bases and Prompt Management) sign as "bedrock" as
+		 * well but refuse API keys, so they are told apart by host.
+		 */
+		if ( $use_bearer && '' !== $this->api_key && 'bedrock' === $service && false === strpos( (string) $host, 'bedrock-agent' ) ) {
+			$headers = array(
+				'Content-Type'  => 'application/json',
+				'Authorization' => 'Bearer ' . $this->api_key,
+			);
+			foreach ( (array) $extra as $name => $value ) {
+				$name = preg_replace( '/[^A-Za-z0-9-]/', '', (string) $name );
+				if ( '' !== $name && ! isset( $headers[ $name ] ) ) {
+					$headers[ $name ] = (string) $value;
+				}
+			}
+			return $headers;
+		}
+		$this->resolve_signing_credentials();
+
 		$path       = wp_parse_url( $endpoint, PHP_URL_PATH );
 		$query      = wp_parse_url( $endpoint, PHP_URL_QUERY );
 		$method     = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) $method ) );

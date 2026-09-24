@@ -148,7 +148,7 @@ check_policy(
 
 $list = statement( $policy, 'AICFABListModelsForTheModelPicker' );
 check_policy( null !== $list, 'listing models is granted so the model picker works' );
-check_policy( array( 'bedrock:ListFoundationModels' ) === $list['Action'], 'the discovery action is ListFoundationModels' );
+check_policy( array( 'bedrock:ListFoundationModels', 'bedrock:ListInferenceProfiles' ) === $list['Action'], 'discovery lists foundation models and the inference profiles that reach them' );
 // This operation has no resource, so scoping it would deny it.
 check_policy( '*' === $list['Resource'], 'ListFoundationModels is granted on * because it takes no resource' );
 
@@ -161,7 +161,7 @@ $minimal = AI_Chat_Bedrock_Iam_Policy::build(
 		'models'  => array( 'anthropic.claude-3-haiku-20240307-v1:0' ),
 	)
 );
-foreach ( array( 'AICFABApplyConfiguredGuardrail', 'AICFABReadManagedPrompt', 'AICFABRetrieveFromKnowledgeBase', 'AICFABInvokeAgentCoreGateway' ) as $sid ) {
+foreach ( array( 'AICFABApplyConfiguredGuardrail', 'AICFABReadManagedPrompt', 'AICFABRetrieveFromKnowledgeBase', 'AICFABInvokeAgentCoreGateway', 'AICFABUseBedrockApiKey' ) as $sid ) {
 	check_policy( null === statement( $minimal, $sid ), "nothing grants $sid when the feature is unconfigured" );
 }
 
@@ -177,6 +177,18 @@ $full = AI_Chat_Bedrock_Iam_Policy::build(
 		'agentcore'      => array( 'us-west-2' ),
 	)
 );
+
+// An API key is refused unless its identity may call with a bearer token.
+$with_key = AI_Chat_Bedrock_Iam_Policy::build(
+	array(
+		'region'  => 'us-east-1',
+		'account' => '111122223333',
+		'models'  => array( 'amazon.nova-lite-v1:0' ),
+		'api_key' => true,
+	)
+);
+$bearer = statement( $with_key, 'AICFABUseBedrockApiKey' );
+check_policy( null !== $bearer && array( 'bedrock:CallWithBearerToken' ) === $bearer['Action'] && '*' === $bearer['Resource'], 'an API key needs bedrock:CallWithBearerToken' );
 
 $guardrail = statement( $full, 'AICFABApplyConfiguredGuardrail' );
 check_policy( array( 'bedrock:ApplyGuardrail' ) === $guardrail['Action'], 'a guardrail needs ApplyGuardrail, not only InvokeModel' );

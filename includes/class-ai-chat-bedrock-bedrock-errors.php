@@ -175,8 +175,18 @@ class AI_Chat_Bedrock_Bedrock_Errors {
 			'container_role' => __( 'the container IAM role', 'ai-chat-for-amazon-bedrock' ),
 			'instance_role'  => __( 'the instance IAM role', 'ai-chat-for-amazon-bedrock' ),
 			'settings'       => __( 'keys stored in the settings', 'ai-chat-for-amazon-bedrock' ),
+			// The credential chain calls this source "options"; "settings" was never produced.
+			'options'        => __( 'keys stored in the settings', 'ai-chat-for-amazon-bedrock' ),
 		);
 		$source = (string) $credentials['source'];
+
+		if ( 0 === strpos( $source, 'api_key_' ) ) {
+			$note = ' ' . __( 'The request used an Amazon Bedrock API key. Bedrock refuses a key that has expired or been revoked, and one whose IAM identity lacks bedrock:CallWithBearerToken or permission for this model.', 'ai-chat-for-amazon-bedrock' );
+			if ( ! empty( $credentials['temporary'] ) ) {
+				$note .= ' ' . __( 'It is a short-term key, which lasts at most 12 hours. Use a long-term key or an IAM role for a site that has to keep working.', 'ai-chat-for-amazon-bedrock' );
+			}
+			return $note;
+		}
 		if ( ! isset( $labels[ $source ] ) ) {
 			return '';
 		}

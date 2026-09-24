@@ -90,7 +90,7 @@ class AI_Chat_Bedrock_Security {
 		}
 
 		$changed = false;
-		foreach ( array( 'aws_access_key', 'aws_secret_key', 'aws_session_token' ) as $key ) {
+		foreach ( array( 'aws_access_key', 'aws_secret_key', 'aws_session_token', 'bedrock_api_key' ) as $key ) {
 			if ( empty( $options[ $key ] ) || self::is_encrypted( $options[ $key ] ) ) {
 				continue;
 			}

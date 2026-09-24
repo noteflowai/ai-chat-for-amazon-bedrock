@@ -40,7 +40,7 @@ class AI_Chat_Bedrock_Transfer {
 	 * @return array
 	 */
 	public static function credential_keys() {
-		return array( 'aws_access_key', 'aws_secret_key', 'aws_session_token' );
+		return array( 'aws_access_key', 'aws_secret_key', 'aws_session_token', 'bedrock_api_key' );
 	}
 
 	/**

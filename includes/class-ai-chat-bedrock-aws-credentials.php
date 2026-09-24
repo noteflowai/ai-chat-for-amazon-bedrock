@@ -11,6 +11,9 @@
  *
  * Sources 3-5 remove the need to store long-lived AWS keys in WordPress.
  *
+ * An Amazon Bedrock API key is resolved separately, because it is not a signing credential:
+ * it is sent as a bearer token and only Bedrock and Bedrock Runtime accept it. See api_key().
+ *
  * @package AI_Chat_Bedrock
  */
 
@@ -73,12 +76,96 @@ class AI_Chat_Bedrock_AWS_Credentials {
 	}
 
 	/**
+	 * Resolve the Amazon Bedrock API key to use, if any.
+	 *
+	 * An API key is the quickest way to connect: one value, created in the Bedrock console,
+	 * with no IAM user or access key pair. Resolution order is the AI_CHAT_BEDROCK_API_KEY
+	 * constant, then the encrypted setting, then the AWS_BEARER_TOKEN_BEDROCK environment
+	 * variable the AWS SDKs read. The environment variable is ignored when access keys are
+	 * configured in wp-config.php or the settings, because a value the site owner entered for
+	 * this plugin should not be overridden by one the server happens to carry.
+	 *
+	 * @param array $options Plugin options.
+	 * @return array|null Array with key, source and temporary, or null.
+	 */
+	public static function api_key( $options = null ) {
+		if ( ! is_array( $options ) ) {
+			$options = get_option( 'ai_chat_bedrock_settings', array() );
+			$options = is_array( $options ) ? $options : array();
+		}
+
+		$candidates = array();
+		if ( defined( 'AI_CHAT_BEDROCK_API_KEY' ) ) {
+			$candidates['api_key_constant'] = (string) constant( 'AI_CHAT_BEDROCK_API_KEY' );
+		}
+		if ( ! empty( $options['bedrock_api_key'] ) ) {
+			$candidates['api_key_option'] = AI_Chat_Bedrock_Security::decrypt_secret( $options['bedrock_api_key'] );
+		}
+		$candidates['api_key_environment'] = self::env( 'AWS_BEARER_TOKEN_BEDROCK' );
+
+		foreach ( $candidates as $source => $value ) {
+			$key = self::clean_api_key( $value );
+			if ( '' === $key ) {
+				continue;
+			}
+			if ( 'api_key_environment' === $source && self::has_static_keys( $options ) ) {
+				return null;
+			}
+			return array(
+				'key'       => $key,
+				'source'    => $source,
+				'temporary' => 0 === strpos( $key, 'bedrock-api-key-' ),
+			);
+		}
+		return null;
+	}
+
+	/**
+	 * Normalise a pasted Amazon Bedrock API key.
+	 *
+	 * Long-term keys are base64 text and short-term keys are a prefixed, encoded presigned
+	 * URL, so both fit a token character set. A pasted "Bearer " prefix or surrounding
+	 * whitespace is removed. Anything else is rejected rather than sent in a header.
+	 *
+	 * @param string $value Raw value.
+	 * @return string Clean key, or an empty string.
+	 */
+	public static function clean_api_key( $value ) {
+		$value = trim( (string) $value );
+		$value = preg_replace( '/^Bearer\s+/i', '', $value );
+		if ( strlen( $value ) < 20 || strlen( $value ) > 8192 ) {
+			return '';
+		}
+		return 1 === preg_match( '/^[A-Za-z0-9+\/=._~:-]+$/', $value ) ? $value : '';
+	}
+
+	/**
+	 * Whether AWS access keys are configured in wp-config.php or the settings.
+	 *
+	 * @param array $options Plugin options.
+	 * @return bool
+	 */
+	public static function has_static_keys( $options ) {
+		return null !== self::from_constants() || null !== self::from_options( is_array( $options ) ? $options : array() );
+	}
+
+	/**
 	 * Describe the active credential source without exposing secret values.
 	 *
 	 * @param array $options Plugin options.
 	 * @return array
 	 */
 	public static function describe( $options = null ) {
+		$api_key = self::api_key( $options );
+		if ( null !== $api_key ) {
+			return array(
+				'configured' => true,
+				'source'     => $api_key['source'],
+				'temporary'  => $api_key['temporary'],
+				'message'    => self::source_label( $api_key['source'] ),
+			);
+		}
+
 		$credentials = self::resolve( $options );
 		if ( is_wp_error( $credentials ) ) {
 			return array(
@@ -116,11 +203,14 @@ class AI_Chat_Bedrock_AWS_Credentials {
 	 */
 	public static function source_label( $source ) {
 		$labels = array(
-			'constants'      => __( 'wp-config.php constants', 'ai-chat-for-amazon-bedrock' ),
-			'options'        => __( 'Encrypted WordPress settings', 'ai-chat-for-amazon-bedrock' ),
-			'environment'    => __( 'Server environment variables', 'ai-chat-for-amazon-bedrock' ),
-			'container_role' => __( 'ECS or EKS task role', 'ai-chat-for-amazon-bedrock' ),
-			'instance_role'  => __( 'EC2 instance role (IMDSv2)', 'ai-chat-for-amazon-bedrock' ),
+			'constants'           => __( 'wp-config.php constants', 'ai-chat-for-amazon-bedrock' ),
+			'options'             => __( 'Encrypted WordPress settings', 'ai-chat-for-amazon-bedrock' ),
+			'environment'         => __( 'Server environment variables', 'ai-chat-for-amazon-bedrock' ),
+			'container_role'      => __( 'ECS or EKS task role', 'ai-chat-for-amazon-bedrock' ),
+			'instance_role'       => __( 'EC2 instance role (IMDSv2)', 'ai-chat-for-amazon-bedrock' ),
+			'api_key_constant'    => __( 'Amazon Bedrock API key (wp-config.php constant)', 'ai-chat-for-amazon-bedrock' ),
+			'api_key_option'      => __( 'Amazon Bedrock API key (encrypted WordPress settings)', 'ai-chat-for-amazon-bedrock' ),
+			'api_key_environment' => __( 'Amazon Bedrock API key (AWS_BEARER_TOKEN_BEDROCK)', 'ai-chat-for-amazon-bedrock' ),
 		);
 		return isset( $labels[ $source ] ) ? $labels[ $source ] : __( 'Unknown source', 'ai-chat-for-amazon-bedrock' );
 	}

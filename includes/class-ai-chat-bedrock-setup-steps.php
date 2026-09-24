@@ -141,7 +141,7 @@ class AI_Chat_Bedrock_Setup_Steps {
 				'label' => __( 'Connect AWS credentials', 'ai-chat-for-amazon-bedrock' ),
 				'help'  => $configured && ! empty( $credentials['message'] )
 					? $credentials['message']
-					: __( 'Use wp-config.php constants, an IAM role, or encrypted settings.', 'ai-chat-for-amazon-bedrock' ),
+					: __( 'Paste an Amazon Bedrock API key for the quickest start, or use an IAM role, wp-config.php constants or encrypted access keys.', 'ai-chat-for-amazon-bedrock' ),
 				'url'   => $settings,
 			),
 			array(
