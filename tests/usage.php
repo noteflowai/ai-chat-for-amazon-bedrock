@@ -150,6 +150,24 @@ foreach ( array( 'question', 'answer', 'user', 'ip', 'prompt' ) as $forbidden ) 
 	check_usage( false === strpos( $encoded, $forbidden ), 'Usage records never contain ' . $forbidden . '.' );
 }
 
+// --- Prompt cache counters -----------------------------------------------
+
+AI_Chat_Bedrock_Usage::reset();
+seed( array( $yesterday => array( 'requests' => 1, 'input_tokens' => 5, 'output_tokens' => 2, 'models' => array() ) ) );
+AI_Chat_Bedrock_Usage::record( array( 'input_tokens' => 10, 'output_tokens' => 4, 'cache_write_tokens' => 1500 ), 'us.anthropic.claude-sonnet-4-5-20250929-v1:0' );
+AI_Chat_Bedrock_Usage::record( array( 'input_tokens' => 12, 'output_tokens' => 6, 'cache_read_tokens' => 1500, 'cache_write_tokens' => 0 ), 'us.anthropic.claude-sonnet-4-5-20250929-v1:0' );
+$cache_today = AI_Chat_Bedrock_Usage::today_totals();
+check_usage( 1500 === $cache_today['cache_read_tokens'] && 1500 === $cache_today['cache_write_tokens'], 'Cache reads and writes are counted per day.' );
+check_usage( 22 === $cache_today['input_tokens'], 'Cache counts are not folded into input tokens.' );
+$cache_week = AI_Chat_Bedrock_Usage::totals( 7 );
+check_usage( 1500 === $cache_week['cache_read_tokens'] && 3 === $cache_week['requests'], 'Days recorded before cache counters existed still add up.' );
+$yesterday_only = AI_Chat_Bedrock_Usage::totals( 1 );
+check_usage( 1500 === $yesterday_only['cache_read_tokens'], 'Today alone carries the cache counters.' );
+AI_Chat_Bedrock_Usage::reset();
+AI_Chat_Bedrock_Usage::record( array( 'input_tokens' => 3, 'output_tokens' => 1 ), 'amazon.nova-lite-v1:0' );
+$stored = get_option( AI_Chat_Bedrock_Usage::OPTION, array() );
+check_usage( ! isset( $stored[ $today ]['cache_read_tokens'] ) && 0 === AI_Chat_Bedrock_Usage::today_totals()['cache_read_tokens'], 'A day without caching stores no cache counters but reports zero.' );
+
 function wp_list_pluck_compat( $rows, $field ) {
 	return array_map(
 		static function ( $row ) use ( $field ) {

@@ -10,6 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class AI_Chat_Bedrock_AWS {
+
+	/**
+	 * Transient holding request fields each Converse model has been seen to refuse.
+	 */
+	const CONVERSE_QUIRKS = 'aicfab_converse_quirks';
+
 	private $region;
 	private $access_key;
 	private $secret_key;
@@ -17,6 +23,34 @@ class AI_Chat_Bedrock_AWS {
 	private $credential_source;
 	private $credential_error;
 	private $debug;
+
+	/**
+	 * Amazon Bedrock API key, sent as a bearer token to Bedrock and Bedrock Runtime.
+	 *
+	 * @var string
+	 */
+	private $api_key = '';
+
+	/**
+	 * Whether the API key is a short-term one.
+	 *
+	 * @var bool
+	 */
+	private $api_key_temporary = false;
+
+	/**
+	 * Whether the signing credential chain has been consulted.
+	 *
+	 * @var bool
+	 */
+	private $signing_resolved = false;
+
+	/**
+	 * Plugin options the client was built with, kept for resolving signing credentials later.
+	 *
+	 * @var array
+	 */
+	private $options = array();
 
 	private $overrides = array();
 
@@ -32,16 +66,80 @@ class AI_Chat_Bedrock_AWS {
 		$this->credential_source = 'none';
 		$this->credential_error  = '';
 		$this->debug             = isset( $options['debug_mode'] ) && 'on' === $options['debug_mode'];
+		$this->options           = $options;
 
-		$credentials = AI_Chat_Bedrock_AWS_Credentials::resolve( $options );
+		$api_key = AI_Chat_Bedrock_AWS_Credentials::api_key( $options );
+		if ( null !== $api_key ) {
+			// Signing credentials are looked up only if a request needs them, so a site that
+			// uses an API key on shared hosting does not wait on metadata endpoints it lacks.
+			$this->api_key           = $api_key['key'];
+			$this->api_key_temporary = $api_key['temporary'];
+			$this->credential_source = $api_key['source'];
+			return;
+		}
+		$this->resolve_signing_credentials();
+	}
+
+	/**
+	 * Look up the credentials that sign requests with Signature Version 4.
+	 */
+	private function resolve_signing_credentials() {
+		if ( $this->signing_resolved ) {
+			return;
+		}
+		$this->signing_resolved = true;
+
+		$credentials = AI_Chat_Bedrock_AWS_Credentials::resolve( $this->options );
 		if ( is_wp_error( $credentials ) ) {
 			$this->credential_error = $credentials->get_error_message();
 			return;
 		}
-		$this->access_key        = $credentials['access_key'];
-		$this->secret_key        = $credentials['secret_key'];
-		$this->session_token     = $credentials['session_token'];
-		$this->credential_source = $credentials['source'];
+		$this->access_key    = $credentials['access_key'];
+		$this->secret_key    = $credentials['secret_key'];
+		$this->session_token = $credentials['session_token'];
+		if ( '' === $this->api_key ) {
+			$this->credential_source = $credentials['source'];
+		}
+	}
+
+	/**
+	 * Whether requests can be signed with Signature Version 4.
+	 *
+	 * Knowledge Bases, Prompt Management, STS and AgentCore need this; an API key is not enough.
+	 *
+	 * @return bool
+	 */
+	public function has_signing_credentials() {
+		$this->resolve_signing_credentials();
+		return '' !== $this->access_key && '' !== $this->secret_key;
+	}
+
+	/**
+	 * Why a request to an AWS service cannot be authorised, or null when it can.
+	 *
+	 * @param string $service    Endpoint prefix: bedrock, bedrock-runtime, bedrock-agent, sts and so on.
+	 * @param bool   $use_bearer Whether the request may be authorised with an API key.
+	 * @return WP_Error|null
+	 */
+	private function missing_credentials( $service = 'bedrock-runtime', $use_bearer = true ) {
+		if ( $use_bearer && '' !== $this->api_key && in_array( $service, array( 'bedrock', 'bedrock-runtime' ), true ) ) {
+			return null;
+		}
+		if ( $this->has_signing_credentials() ) {
+			return null;
+		}
+		if ( '' !== $this->api_key ) {
+			return new WP_Error(
+				'aicfab_api_key_unsupported',
+				sprintf(
+					/* translators: %s: AWS service endpoint name, such as bedrock-agent-runtime. */
+					__( 'An Amazon Bedrock API key cannot call %s, which only accepts signed AWS requests. Add AWS access keys or an IAM role to use this feature; chat keeps working with the API key.', 'ai-chat-for-amazon-bedrock' ),
+					$service
+				)
+			);
+		}
+		$message = '' !== $this->credential_error ? $this->credential_error : __( 'Amazon Bedrock credentials are not configured.', 'ai-chat-for-amazon-bedrock' );
+		return new WP_Error( 'aicfab_no_credentials', $message );
 	}
 
 	/**
@@ -57,7 +155,7 @@ class AI_Chat_Bedrock_AWS {
 	private function credential_context() {
 		return array(
 			'source'    => $this->credential_source,
-			'temporary' => '' !== $this->session_token,
+			'temporary' => '' !== $this->api_key ? $this->api_key_temporary : '' !== $this->session_token,
 		);
 	}
 
@@ -71,7 +169,7 @@ class AI_Chat_Bedrock_AWS {
 	 * @return bool
 	 */
 	public function has_credentials() {
-		return '' !== $this->access_key && '' !== $this->secret_key;
+		return '' !== $this->api_key || $this->has_signing_credentials();
 	}
 
 	/**
@@ -86,7 +184,7 @@ class AI_Chat_Bedrock_AWS {
 			return $this->error( $prepared->get_error_message(), $prepared->get_error_code() );
 		}
 
-		$response = $this->invoke_model( $prepared['payload'], $prepared['model_id'] );
+		$response = $this->invoke_model( $prepared['payload'], $prepared['model_id'], $prepared['api'] );
 		if ( ! $this->should_fall_back( $response ) ) {
 			return $response;
 		}
@@ -108,7 +206,7 @@ class AI_Chat_Bedrock_AWS {
 				'to'   => $fallback,
 			)
 		);
-		$second = $this->invoke_model( $retry['payload'], $fallback );
+		$second = $this->invoke_model( $retry['payload'], $fallback, $retry['api'] );
 		if ( empty( $second['success'] ) ) {
 			// The primary failure is the more useful one to report, but keep the retry visible.
 			return $this->with_fallback_failure( $response, $second );
@@ -403,7 +501,31 @@ class AI_Chat_Bedrock_AWS {
 		return array(
 			'payload'  => $payload,
 			'model_id' => $model_id,
+			'api'      => self::chat_api( $model_id ),
 		);
+	}
+
+	/**
+	 * Which Bedrock Runtime operation carries a chat request for this model.
+	 *
+	 * Claude, Nova and Titan have native request bodies the plugin builds itself, and Claude's
+	 * is the one that carries tools and images. Every other family goes through Converse,
+	 * which gives one request shape and applies each model's own chat template on the AWS
+	 * side. Before 1.46.0 those families were sent a raw "User: ... Assistant:" prompt:
+	 * OpenAI gpt-oss and Qwen3 reject that outright with "missing field `messages`", and
+	 * DeepSeek R1 accepted it but carried on writing both sides of the conversation.
+	 *
+	 * @param string $model_id Model or inference profile ID.
+	 * @return string Either 'invoke' or 'converse'.
+	 */
+	public static function chat_api( $model_id ) {
+		$model_id = (string) $model_id;
+		foreach ( array( 'anthropic.claude', 'amazon.nova', 'amazon.titan' ) as $native ) {
+			if ( false !== strpos( $model_id, $native ) ) {
+				return 'invoke';
+			}
+		}
+		return 'converse';
 	}
 
 	/**
@@ -485,15 +607,16 @@ class AI_Chat_Bedrock_AWS {
 	 * @param array    $prepared Prepared payload and model.
 	 * @return array
 	 */
-	private function stream_once( $on_delta, $prepared ) {
+	private function stream_once( $on_delta, $prepared, $adaptations = 2 ) {
 		$model_id = $prepared['model_id'];
 		$body     = wp_json_encode( $prepared['payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
 		if ( false === $body ) {
 			return $this->error( __( 'The Bedrock request could not be encoded.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
-		$endpoint          = $this->service_endpoint( 'bedrock-runtime' ) . '/model/' . rawurlencode( $model_id ) . '/invoke-with-response-stream';
-		$headers           = $this->signed_headers( $endpoint, $body, 'POST', 'bedrock', $this->guardrail_headers() );
+		$converse          = isset( $prepared['api'] ) && 'converse' === $prepared['api'];
+		$endpoint          = $this->service_endpoint( 'bedrock-runtime' ) . '/model/' . rawurlencode( $model_id ) . ( $converse ? '/converse-stream' : '/invoke-with-response-stream' );
+		$headers           = $this->signed_headers( $endpoint, $body, 'POST', 'bedrock', $converse ? array() : $this->guardrail_headers() );
 		$headers['Accept'] = 'application/vnd.amazon.eventstream';
 
 		$curl_headers = array();
@@ -607,6 +730,14 @@ class AI_Chat_Bedrock_AWS {
 			)
 		);
 
+		if ( $converse && 400 === $status && $adaptations > 0 ) {
+			// Refused before anything streamed, so asking again cannot duplicate text.
+			$adapted = self::adapt_refused_converse( $prepared['payload'], $model_id, $state['raw'] );
+			if ( null !== $adapted ) {
+				$prepared['payload'] = $adapted;
+				return $this->stream_once( $on_delta, $prepared, $adaptations - 1 );
+			}
+		}
 		if ( $status >= 400 ) {
 			// The streaming body is consumed by the write callback, so classify what it captured.
 			$explained = AI_Chat_Bedrock_Bedrock_Errors::explain( $status, $state['raw'], $model_id, $this->region, $this->credential_context() );
@@ -682,9 +813,80 @@ class AI_Chat_Bedrock_AWS {
 		return 1 === preg_match( '/anthropic\.claude-(?:v2|instant|3|(?:opus|sonnet|haiku)-4(?:-[0-6])?(?:-\d{8}|-v\d|:|$))/', (string) $model_id );
 	}
 
+	/**
+	 * Whether a Claude model on Bedrock accepts a prompt cache checkpoint.
+	 *
+	 * AWS lists Claude 3.5 Haiku, 3.7 Sonnet and every Claude 4 and later model. The older
+	 * ones are left alone because a checkpoint is a field they were never documented to take.
+	 *
+	 * @param string $model_id Model or inference profile ID.
+	 * @return bool
+	 */
+	private static function claude_caches_prompts( $model_id ) {
+		$model_id = (string) $model_id;
+		if ( false === strpos( $model_id, 'anthropic.claude' ) ) {
+			return false;
+		}
+		return 1 !== preg_match( '/anthropic\.claude-(?:v2|instant|3-(?:haiku|sonnet|opus)|3-5-sonnet)/', $model_id );
+	}
+
+	/**
+	 * Mark the part of a Claude request that repeats, so Bedrock can reuse it.
+	 *
+	 * Bedrock reads a request as tools, then system, then messages, and a checkpoint caches
+	 * everything before it. The first system section is the site's own prompt and the tools
+	 * are the site's abilities, and both are the same for every visitor. What follows them is
+	 * the retrieved site content and the conversation, which change with every question, so
+	 * the checkpoint goes at the end of the first section and nowhere later. A cached read
+	 * costs a tenth of the input price and a write costs a quarter more. A prefix shorter
+	 * than the model's minimum (1,024 tokens on most models) is simply not cached, so a short
+	 * prompt costs what it did before. The ai_chat_bedrock_prompt_caching filter turns this
+	 * off.
+	 *
+	 * @param array  $payload  Claude request.
+	 * @param string $model_id Model or inference profile ID.
+	 * @param array  $sections System prompt sections, in order.
+	 * @return array
+	 */
+	private function with_prompt_cache( $payload, $model_id, $sections ) {
+		if ( ! self::claude_caches_prompts( $model_id ) || ! apply_filters( 'ai_chat_bedrock_prompt_caching', true, $model_id ) ) {
+			return $payload;
+		}
+		$checkpoint = array( 'type' => 'ephemeral' );
+
+		if ( ! empty( $sections ) && '' !== trim( (string) $sections[0] ) ) {
+			$blocks = array(
+				array(
+					'type'          => 'text',
+					'text'          => (string) $sections[0],
+					'cache_control' => $checkpoint,
+				),
+			);
+			$rest   = implode( "\n\n", array_slice( $sections, 1 ) );
+			if ( '' !== trim( $rest ) ) {
+				$blocks[] = array(
+					'type' => 'text',
+					'text' => $rest,
+				);
+			}
+			$payload['system'] = $blocks;
+			return $payload;
+		}
+
+		// No stable system prompt, so the tool definitions are the repeating part.
+		if ( ! empty( $payload['tools'] ) && is_array( $payload['tools'] ) ) {
+			$last = count( $payload['tools'] ) - 1;
+			if ( is_array( $payload['tools'][ $last ] ) ) {
+				$payload['tools'][ $last ]['cache_control'] = $checkpoint;
+			}
+		}
+		return $payload;
+	}
+
 	private function format_payload_for_model( $model_id, $message_data, $max_tokens, $temperature ) {
 		$messages = isset( $message_data['messages'] ) && is_array( $message_data['messages'] ) ? $message_data['messages'] : array();
 		$system   = '';
+		$sections = array();
 		$chat     = array();
 		foreach ( $messages as $message ) {
 			if ( ! is_array( $message ) || ! isset( $message['role'], $message['content'] ) || ! is_string( $message['content'] ) ) {
@@ -693,7 +895,8 @@ class AI_Chat_Bedrock_AWS {
 			$role    = sanitize_key( $message['role'] );
 			$content = $message['content'];
 			if ( 'system' === $role ) {
-				$system .= ( '' === $system ? '' : "\n\n" ) . $content;
+				$system    .= ( '' === $system ? '' : "\n\n" ) . $content;
+				$sections[] = $content;
 			} elseif ( in_array( $role, array( 'user', 'assistant' ), true ) && '' !== trim( $content ) ) {
 				$chat[] = array(
 					'role'    => $role,
@@ -748,7 +951,7 @@ class AI_Chat_Bedrock_AWS {
 				$payload['tools']       = array_slice( $message_data['tools'], 0, 50 );
 				$payload['tool_choice'] = array( 'type' => 'auto' );
 			}
-			return $payload;
+			return $this->with_prompt_cache( $payload, $model_id, $sections );
 		}
 
 		if ( false !== strpos( $model_id, 'amazon.nova' ) ) {
@@ -772,33 +975,176 @@ class AI_Chat_Bedrock_AWS {
 			return $payload;
 		}
 
+		if ( 'converse' === self::chat_api( $model_id ) ) {
+			return $this->format_converse_payload( $model_id, $chat, $system, $max_tokens, $temperature );
+		}
+
+		// Titan Text, the one native family left without a chat format of its own.
 		$prompt = '' !== $system ? $system . "\n\n" : '';
 		foreach ( $chat as $message ) {
 			$prompt .= ( 'user' === $message['role'] ? 'User: ' : 'Assistant: ' ) . $message['content'] . "\n";
 		}
 		$prompt .= 'Assistant: ';
 
-		if ( false !== strpos( $model_id, 'amazon.titan' ) ) {
-			return array(
-				'inputText'            => $prompt,
-				'textGenerationConfig' => array(
-					'maxTokenCount' => $max_tokens,
-					'temperature'   => $temperature,
-				),
-			);
-		}
-		if ( false !== strpos( $model_id, 'meta.llama' ) ) {
-			return array(
-				'prompt'      => $prompt,
-				'max_gen_len' => $max_tokens,
-				'temperature' => $temperature,
-			);
-		}
 		return array(
-			'prompt'      => $prompt,
-			'max_tokens'  => $max_tokens,
-			'temperature' => $temperature,
+			'inputText'            => $prompt,
+			'textGenerationConfig' => array(
+				'maxTokenCount' => $max_tokens,
+				'temperature'   => $temperature,
+			),
 		);
+	}
+
+	/**
+	 * Build a Converse request.
+	 *
+	 * Converse wants turns that alternate and start with the user, which is what the Claude
+	 * normaliser already guarantees. The guardrail travels in the body here, because
+	 * Converse ignores the guardrail headers InvokeModel reads, and sending a chat without
+	 * the guardrail the administrator configured would be worse than failing.
+	 *
+	 * @param string $model_id    Model or inference profile ID.
+	 * @param array  $chat        User and assistant turns with string content.
+	 * @param string $system      Combined system prompt.
+	 * @param int    $max_tokens  Output token ceiling.
+	 * @param float  $temperature Sampling temperature.
+	 * @return array
+	 */
+	private function format_converse_payload( $model_id, $chat, $system, $max_tokens, $temperature ) {
+		$turns    = $this->normalize_claude_messages( $chat );
+		$messages = array();
+		foreach ( $turns as $turn ) {
+			$messages[] = array(
+				'role'    => $turn['role'],
+				'content' => array( array( 'text' => $turn['content'] ) ),
+			);
+		}
+
+		$payload = array(
+			'messages'        => $messages,
+			'inferenceConfig' => array(
+				'maxTokens'   => $max_tokens,
+				'temperature' => $temperature,
+			),
+		);
+		if ( '' !== $system ) {
+			$payload['system'] = array( array( 'text' => $system ) );
+		}
+
+		$guardrail = $this->guardrail_setting();
+		if ( ! empty( $guardrail ) ) {
+			$payload['guardrailConfig'] = array(
+				'guardrailIdentifier' => $guardrail['id'],
+				'guardrailVersion'    => $guardrail['version'],
+			);
+		}
+		return self::apply_converse_quirks( $payload, self::converse_quirks( $model_id ) );
+	}
+
+	/**
+	 * Request fields a Converse model is known to refuse.
+	 *
+	 * Converse accepts one request shape, but not every model accepts every field in it, and
+	 * each says so in a sentence rather than an error code. Observed on Bedrock: Mistral 7B
+	 * Instruct refuses a system block, and GPT-6 Astra, GPT-5.6, Grok 4.6 and Kimi K3 refuse
+	 * temperature. A model the plugin has not met yet is learned from its first refusal, so
+	 * the next request is right the first time.
+	 *
+	 * @param string $model_id Model or inference profile ID.
+	 * @return array List of quirk names: no_system, no_temperature.
+	 */
+	private static function converse_quirks( $model_id ) {
+		$quirks = array();
+		if ( 1 === preg_match( '/mistral\.mi[sx]tral-(?:7b|8x7b)-instruct/', (string) $model_id ) ) {
+			$quirks[] = 'no_system';
+		}
+		$learned = get_transient( self::CONVERSE_QUIRKS );
+		if ( is_array( $learned ) && isset( $learned[ $model_id ] ) && is_array( $learned[ $model_id ] ) ) {
+			$quirks = array_merge( $quirks, $learned[ $model_id ] );
+		}
+		return array_values( array_intersect( array( 'no_system', 'no_temperature' ), $quirks ) );
+	}
+
+	/**
+	 * Which field a Converse rejection complains about, if it is one the plugin can drop.
+	 *
+	 * @param string $body Error response body.
+	 * @return string Quirk name, or an empty string.
+	 */
+	private static function converse_quirk_from_error( $body ) {
+		$body = strtolower( (string) $body );
+		if ( false !== strpos( $body, 'support the temperature field' ) ) {
+			return 'no_temperature';
+		}
+		if ( false !== strpos( $body, 'support system messages' ) ) {
+			return 'no_system';
+		}
+		return '';
+	}
+
+	/**
+	 * Remember that a model refuses a field, so later requests leave it out.
+	 *
+	 * @param string $model_id Model or inference profile ID.
+	 * @param string $quirk    Quirk name.
+	 */
+	private static function remember_converse_quirk( $model_id, $quirk ) {
+		$learned = get_transient( self::CONVERSE_QUIRKS );
+		$learned = is_array( $learned ) ? $learned : array();
+		$known   = isset( $learned[ $model_id ] ) && is_array( $learned[ $model_id ] ) ? $learned[ $model_id ] : array();
+		if ( in_array( $quirk, $known, true ) ) {
+			return;
+		}
+		$known[]              = $quirk;
+		$learned[ $model_id ] = $known;
+		// Bounded, because the key is a model ID and there is no reason for it to grow.
+		set_transient( self::CONVERSE_QUIRKS, array_slice( $learned, -50, null, true ), 30 * DAY_IN_SECONDS );
+	}
+
+	/**
+	 * Leave out the fields a Converse model refuses.
+	 *
+	 * A refused system prompt still matters, so it leads the first user turn instead.
+	 *
+	 * @param array $payload Converse request.
+	 * @param array $quirks  Quirk names.
+	 * @return array
+	 */
+	private static function apply_converse_quirks( $payload, $quirks ) {
+		if ( in_array( 'no_temperature', $quirks, true ) ) {
+			unset( $payload['inferenceConfig']['temperature'] );
+		}
+		if ( in_array( 'no_system', $quirks, true ) && ! empty( $payload['system'] ) ) {
+			$instructions = array();
+			foreach ( $payload['system'] as $block ) {
+				if ( isset( $block['text'] ) ) {
+					$instructions[] = (string) $block['text'];
+				}
+			}
+			unset( $payload['system'] );
+			if ( ! empty( $instructions ) && isset( $payload['messages'][0]['content'][0]['text'] ) ) {
+				$payload['messages'][0]['content'][0]['text'] = implode( "\n\n", $instructions ) . "\n\n" . $payload['messages'][0]['content'][0]['text'];
+			}
+		}
+		return $payload;
+	}
+
+	/**
+	 * The same Converse request without the field Bedrock just refused, if that helps.
+	 *
+	 * @param array  $payload  Converse request that was refused.
+	 * @param string $model_id Model or inference profile ID.
+	 * @param string $body     Error response body.
+	 * @return array|null Adapted request, or null when there is nothing to drop.
+	 */
+	private static function adapt_refused_converse( $payload, $model_id, $body ) {
+		$quirk = self::converse_quirk_from_error( $body );
+		if ( '' === $quirk ) {
+			return null;
+		}
+		self::remember_converse_quirk( $model_id, $quirk );
+		$adapted = self::apply_converse_quirks( $payload, array( $quirk ) );
+		return $adapted === $payload ? null : $adapted;
 	}
 
 	private function normalize_claude_messages( $messages ) {
@@ -823,14 +1169,16 @@ class AI_Chat_Bedrock_AWS {
 		return $normalized;
 	}
 
-	private function invoke_model( $payload, $model_id ) {
-		$endpoint = $this->service_endpoint( 'bedrock-runtime' ) . '/model/' . rawurlencode( $model_id ) . '/invoke';
+	private function invoke_model( $payload, $model_id, $api = 'invoke', $adaptations = 2 ) {
+		$converse = 'converse' === $api;
+		$endpoint = $this->service_endpoint( 'bedrock-runtime' ) . '/model/' . rawurlencode( $model_id ) . ( $converse ? '/converse' : '/invoke' );
 		$body     = wp_json_encode( $payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
 		if ( false === $body ) {
 			return $this->error( __( 'The Bedrock request could not be encoded.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
-		$headers = $this->signed_headers( $endpoint, $body, 'POST', 'bedrock', $this->guardrail_headers() );
+		// Converse takes the guardrail in the body, and ignores these headers.
+		$headers = $this->signed_headers( $endpoint, $body, 'POST', 'bedrock', $converse ? array() : $this->guardrail_headers() );
 		$timeout = (int) apply_filters( 'ai_chat_bedrock_http_timeout', 120 );
 		$this->log_debug(
 			'Sending request',
@@ -865,6 +1213,13 @@ class AI_Chat_Bedrock_AWS {
 				'request_id' => sanitize_text_field( $request_id ),
 			)
 		);
+		if ( $converse && 400 === $status && $adaptations > 0 ) {
+			$adapted = self::adapt_refused_converse( $payload, $model_id, wp_remote_retrieve_body( $response ) );
+			if ( null !== $adapted ) {
+				$this->log_debug( 'Retrying without a field the model refused', array( 'model' => $model_id ) );
+				return $this->invoke_model( $adapted, $model_id, $api, $adaptations - 1 );
+			}
+		}
 		if ( $status < 200 || $status >= 300 ) {
 			$explained = AI_Chat_Bedrock_Bedrock_Errors::explain( $status, wp_remote_retrieve_body( $response ), $model_id, $this->region, $this->credential_context() );
 			$failure   = $this->error(
@@ -899,6 +1254,22 @@ class AI_Chat_Bedrock_AWS {
 	 * @return array
 	 */
 	private function guardrail_headers() {
+		$guardrail = $this->guardrail_setting();
+		if ( empty( $guardrail ) ) {
+			return array();
+		}
+		return array(
+			'x-amzn-bedrock-guardrailidentifier' => $guardrail['id'],
+			'x-amzn-bedrock-guardrailversion'    => $guardrail['version'],
+		);
+	}
+
+	/**
+	 * The configured guardrail, validated, or an empty array when there is none.
+	 *
+	 * @return array Array with id and version keys.
+	 */
+	private function guardrail_setting() {
 		$options = get_option( 'ai_chat_bedrock_settings', array() );
 		$options = is_array( $options ) ? $options : array();
 		$id      = isset( $options['guardrail_id'] ) ? trim( (string) $options['guardrail_id'] ) : '';
@@ -911,8 +1282,8 @@ class AI_Chat_Bedrock_AWS {
 			$version = 'DRAFT';
 		}
 		return array(
-			'x-amzn-bedrock-guardrailidentifier' => $id,
-			'x-amzn-bedrock-guardrailversion'    => $version,
+			'id'      => $id,
+			'version' => $version,
 		);
 	}
 
@@ -1052,7 +1423,7 @@ class AI_Chat_Bedrock_AWS {
 		}
 
 		$started  = microtime( true );
-		$response = $this->invoke_model( $payload, $model_id );
+		$response = $this->invoke_model( $payload, $model_id, self::chat_api( $model_id ) );
 		$duration = (int) round( ( microtime( true ) - $started ) * 1000 );
 
 		if ( empty( $response['success'] ) ) {
@@ -1086,9 +1457,9 @@ class AI_Chat_Bedrock_AWS {
 		$query             = trim( (string) $query );
 		$limit             = max( 1, min( 10, absint( $limit ) ) );
 
-		if ( ! $this->has_credentials() ) {
-			$message = '' !== $this->credential_error ? $this->credential_error : __( 'Amazon Bedrock credentials are not configured.', 'ai-chat-for-amazon-bedrock' );
-			return new WP_Error( 'aicfab_no_credentials', $message );
+		$missing = $this->missing_credentials( 'bedrock-agent-runtime' );
+		if ( null !== $missing ) {
+			return $missing;
 		}
 		if ( ! preg_match( '/^[A-Za-z0-9]{1,64}$/', $knowledge_base_id ) ) {
 			return new WP_Error( 'aicfab_invalid_knowledge_base', __( 'The knowledge base ID is invalid.', 'ai-chat-for-amazon-bedrock' ) );
@@ -1161,9 +1532,9 @@ class AI_Chat_Bedrock_AWS {
 			}
 		}
 
-		if ( ! $this->has_credentials() ) {
-			$message = '' !== $this->credential_error ? $this->credential_error : __( 'Amazon Bedrock credentials are not configured.', 'ai-chat-for-amazon-bedrock' );
-			return new WP_Error( 'aicfab_no_credentials', $message );
+		$missing = $this->missing_credentials( 'sts' );
+		if ( null !== $missing ) {
+			return $missing;
 		}
 		if ( ! preg_match( '/^[a-z]{2}(?:-gov)?-[a-z]+-\d$/', $this->region ) ) {
 			return new WP_Error( 'aicfab_invalid_region', __( 'The configured AWS region is invalid.', 'ai-chat-for-amazon-bedrock' ) );
@@ -1224,9 +1595,9 @@ class AI_Chat_Bedrock_AWS {
 	}
 
 	private function control_plane_get( $path, $host_prefix = 'bedrock' ) {
-		if ( ! $this->has_credentials() ) {
-			$message = '' !== $this->credential_error ? $this->credential_error : __( 'Amazon Bedrock credentials are not configured.', 'ai-chat-for-amazon-bedrock' );
-			return new WP_Error( 'aicfab_no_credentials', $message );
+		$missing = $this->missing_credentials( (string) $host_prefix );
+		if ( null !== $missing ) {
+			return $missing;
 		}
 		if ( ! preg_match( '/^[a-z]{2}(?:-gov)?-[a-z]+-\d$/', $this->region ) ) {
 			return new WP_Error( 'aicfab_invalid_region', __( 'The configured AWS region is invalid.', 'ai-chat-for-amazon-bedrock' ) );
@@ -1284,8 +1655,9 @@ class AI_Chat_Bedrock_AWS {
 		if ( '' === $service ) {
 			return new WP_Error( 'aicfab_invalid_service', __( 'The AWS service name is invalid.', 'ai-chat-for-amazon-bedrock' ) );
 		}
-		if ( ! $client->has_credentials() ) {
-			return new WP_Error( 'aicfab_no_credentials', __( 'Amazon Bedrock credentials are not configured.', 'ai-chat-for-amazon-bedrock' ) );
+		$missing = $client->missing_credentials( $service, false );
+		if ( null !== $missing ) {
+			return $missing;
 		}
 
 		$region = sanitize_key( (string) $region );
@@ -1296,11 +1668,44 @@ class AI_Chat_Bedrock_AWS {
 			$client->region = $region;
 		}
 
-		return $client->signed_headers( $endpoint, (string) $body, $method, $service );
+		return $client->signed_headers( $endpoint, (string) $body, $method, $service, array(), false );
 	}
 
-	private function signed_headers( $endpoint, $body, $method = 'POST', $service = 'bedrock', $extra = array() ) {
-		$host       = wp_parse_url( $endpoint, PHP_URL_HOST );
+	/**
+	 * Headers that authorise a request: a bearer API key where Bedrock accepts one,
+	 * otherwise a Signature Version 4 signature.
+	 *
+	 * @param string $endpoint   Absolute endpoint URL.
+	 * @param string $body       Request body.
+	 * @param string $method     HTTP method.
+	 * @param string $service    Signing name.
+	 * @param array  $extra      Additional headers to send (and sign).
+	 * @param bool   $use_bearer Whether an API key may be used for this request.
+	 * @return array
+	 */
+	private function signed_headers( $endpoint, $body, $method = 'POST', $service = 'bedrock', $extra = array(), $use_bearer = true ) {
+		$host = wp_parse_url( $endpoint, PHP_URL_HOST );
+
+		/*
+		 * Bedrock API keys work for Bedrock and Bedrock Runtime, which both sign as "bedrock".
+		 * The Agents endpoints (Knowledge Bases and Prompt Management) sign as "bedrock" as
+		 * well but refuse API keys, so they are told apart by host.
+		 */
+		if ( $use_bearer && '' !== $this->api_key && 'bedrock' === $service && false === strpos( (string) $host, 'bedrock-agent' ) ) {
+			$headers = array(
+				'Content-Type'  => 'application/json',
+				'Authorization' => 'Bearer ' . $this->api_key,
+			);
+			foreach ( (array) $extra as $name => $value ) {
+				$name = preg_replace( '/[^A-Za-z0-9-]/', '', (string) $name );
+				if ( '' !== $name && ! isset( $headers[ $name ] ) ) {
+					$headers[ $name ] = (string) $value;
+				}
+			}
+			return $headers;
+		}
+		$this->resolve_signing_credentials();
+
 		$path       = wp_parse_url( $endpoint, PHP_URL_PATH );
 		$query      = wp_parse_url( $endpoint, PHP_URL_QUERY );
 		$method     = strtoupper( preg_replace( '/[^A-Za-z]/', '', (string) $method ) );

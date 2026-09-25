@@ -461,7 +461,7 @@ class AI_Chat_Bedrock_Admin {
 		printf(
 			'<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s <a href="%3$s">%4$s</a></p></div>',
 			esc_html__( 'AI Chat for Amazon Bedrock:', 'ai-chat-for-amazon-bedrock' ),
-			esc_html__( 'no usable AWS credentials were found, so the chat cannot answer yet.', 'ai-chat-for-amazon-bedrock' ),
+			esc_html__( 'no usable AWS credentials were found, so the chat cannot answer yet. An Amazon Bedrock API key is the quickest way to connect.', 'ai-chat-for-amazon-bedrock' ),
 			esc_url( admin_url( 'admin.php?page=' . $this->plugin_name . '-settings' ) ),
 			esc_html__( 'Finish setup', 'ai-chat-for-amazon-bedrock' )
 		);
@@ -659,6 +659,7 @@ class AI_Chat_Bedrock_Admin {
 		);
 		add_settings_section( 'aicfab_aws', __( 'AWS authentication', 'ai-chat-for-amazon-bedrock' ), array( $this, 'aws_settings_section_callback' ), 'aicfab_tab_aws' );
 		$this->field( 'aws_region', __( 'AWS Region', 'ai-chat-for-amazon-bedrock' ), 'aws_region_render', 'aicfab_aws' );
+		$this->field( 'bedrock_api_key', __( 'Amazon Bedrock API key', 'ai-chat-for-amazon-bedrock' ), 'bedrock_api_key_render', 'aicfab_aws' );
 		$this->field( 'aws_access_key', __( 'AWS Access Key ID', 'ai-chat-for-amazon-bedrock' ), 'aws_access_key_render', 'aicfab_aws' );
 		$this->field( 'aws_secret_key', __( 'AWS Secret Access Key', 'ai-chat-for-amazon-bedrock' ), 'aws_secret_key_render', 'aicfab_aws' );
 		$this->field( 'aws_session_token', __( 'AWS Session Token', 'ai-chat-for-amazon-bedrock' ), 'aws_session_token_render', 'aicfab_aws' );
@@ -715,7 +716,7 @@ class AI_Chat_Bedrock_Admin {
 
 	public function aws_settings_section_callback() {
 		echo '<p>' . esc_html__( 'Prefer wp-config.php constants or an IAM role. Database credentials are encrypted with WordPress salts and are never displayed after saving.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
-		echo '<p><code>AI_CHAT_BEDROCK_AWS_ACCESS_KEY</code>, <code>AI_CHAT_BEDROCK_AWS_SECRET_KEY</code>, <code>AI_CHAT_BEDROCK_AWS_SESSION_TOKEN</code></p>';
+		echo '<p><code>AI_CHAT_BEDROCK_API_KEY</code>, <code>AI_CHAT_BEDROCK_AWS_ACCESS_KEY</code>, <code>AI_CHAT_BEDROCK_AWS_SECRET_KEY</code>, <code>AI_CHAT_BEDROCK_AWS_SESSION_TOKEN</code></p>';
 
 		$status = AI_Chat_Bedrock_AWS_Credentials::describe();
 		if ( $status['configured'] ) {
@@ -731,6 +732,13 @@ class AI_Chat_Bedrock_Admin {
 
 	public function aws_region_render() {
 		$this->select( 'aws_region', AI_Chat_Bedrock_Models::regions(), 'us-east-1' );
+	}
+	public function bedrock_api_key_render() {
+		$this->credential_input( 'bedrock_api_key', true );
+		echo '<p class="description">' . esc_html__( 'The quickest way to connect: create a long-term API key in the Amazon Bedrock console under API keys, choose the same Region as above, and paste it here. It is used for chat, the model list and embeddings. Knowledge Bases, Prompt Management and AgentCore still need access keys or an IAM role.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		if ( '' !== $this->option( 'bedrock_api_key', '' ) ) {
+			echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[bedrock_api_key_clear]" value="1"> ' . esc_html__( 'Remove the stored API key', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		}
 	}
 	public function aws_access_key_render() {
 		$this->credential_input( 'aws_access_key', false );
@@ -1062,6 +1070,27 @@ class AI_Chat_Bedrock_Admin {
 			}
 		}
 
+		// An API key is a bearer token, so a malformed paste is refused rather than stored.
+		$raw_api_key = isset( $input['bedrock_api_key'] ) && is_string( $input['bedrock_api_key'] ) ? trim( $input['bedrock_api_key'] ) : '';
+		$new_api_key = AI_Chat_Bedrock_AWS_Credentials::clean_api_key( $raw_api_key );
+		if ( ! empty( $input['bedrock_api_key_clear'] ) ) {
+			$output['bedrock_api_key'] = '';
+		} elseif ( '' !== $new_api_key ) {
+			$encrypted = AI_Chat_Bedrock_Security::encrypt_secret( $new_api_key );
+			if ( '' === $encrypted ) {
+				$this->notice( 'credential_encryption', __( 'The credential could not be encrypted; the existing value was preserved.', 'ai-chat-for-amazon-bedrock' ) );
+				$output['bedrock_api_key'] = isset( $current['bedrock_api_key'] ) ? $current['bedrock_api_key'] : '';
+			} else {
+				$output['bedrock_api_key'] = $encrypted;
+			}
+		} else {
+			if ( '' !== $raw_api_key ) {
+				$this->notice( 'bedrock_api_key', __( 'That does not look like an Amazon Bedrock API key, so it was not saved.', 'ai-chat-for-amazon-bedrock' ) );
+			}
+			$output['bedrock_api_key'] = isset( $current['bedrock_api_key'] ) ? $current['bedrock_api_key'] : '';
+		}
+		unset( $output['bedrock_api_key_clear'] );
+
 		$output['max_tokens']            = max( 100, min( 4000, isset( $input['max_tokens'] ) ? absint( $input['max_tokens'] ) : 1000 ) );
 		$output['temperature']           = max( 0, min( 1, isset( $input['temperature'] ) ? (float) $input['temperature'] : 0.7 ) );
 		$output['system_prompt']         = isset( $input['system_prompt'] ) ? AI_Chat_Bedrock_Security::string_substr( sanitize_textarea_field( $input['system_prompt'] ), 0, 8000 ) : '';
@@ -1160,7 +1189,7 @@ class AI_Chat_Bedrock_Admin {
 					$merged[ $key ] = $output[ $key ];
 				}
 			}
-			foreach ( array( 'aws_access_key', 'aws_secret_key', 'aws_session_token', 'enable_streaming', 'log_retention_days', 'popup_profile', 'guardrail_version' ) as $paired ) {
+			foreach ( array( 'aws_access_key', 'aws_secret_key', 'aws_session_token', 'bedrock_api_key', 'enable_streaming', 'log_retention_days', 'popup_profile', 'guardrail_version' ) as $paired ) {
 				if ( in_array( $paired, $submitted, true ) && array_key_exists( $paired, $output ) ) {
 					$merged[ $paired ] = $output[ $paired ];
 				}
@@ -1274,6 +1303,7 @@ class AI_Chat_Bedrock_Admin {
 			'aws_access_key'    => 'AI_CHAT_BEDROCK_AWS_ACCESS_KEY',
 			'aws_secret_key'    => 'AI_CHAT_BEDROCK_AWS_SECRET_KEY',
 			'aws_session_token' => 'AI_CHAT_BEDROCK_AWS_SESSION_TOKEN',
+			'bedrock_api_key'   => 'AI_CHAT_BEDROCK_API_KEY',
 		);
 		$configured = ( isset( $constants[ $key ] ) && defined( $constants[ $key ] ) ) || '' !== $this->option( $key, '' );
 		echo '<input type="' . ( $password ? 'password' : 'text' ) . '" class="regular-text" id="' . esc_attr( self::control_id( $key ) ) . '" name="ai_chat_bedrock_settings[' . esc_attr( $key ) . ']" value="" autocomplete="new-password" placeholder="' . esc_attr( $configured ? __( 'Configured — enter a value to replace', 'ai-chat-for-amazon-bedrock' ) : '' ) . '">';

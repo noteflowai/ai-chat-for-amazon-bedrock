@@ -1,19 +1,19 @@
 === AI Agents & Chat for Amazon Bedrock – MCP Server, Claude, AWS ===
 Contributors: glay, glayguo
-Tags: amazon bedrock, claude, chatbot, mcp, mcp-server
+Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.45.0
+Stable tag: 1.46.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Streaming chat and governed tool-using agents on Amazon Bedrock. IAM roles, no stored keys, an MCP server for AI clients, security-first defaults.
+AI chatbot and agents on Amazon Bedrock with Claude, Nova, Llama, gpt-oss and more. Connect with an API key or IAM role. Includes an MCP server.
 
 == Description ==
 
 Connect WordPress directly to **Amazon Bedrock** using your own AWS account. Add a chat powered by
-Claude, Amazon Nova, Meta Llama, Mistral or DeepSeek, let authenticated conversations use
+Claude, Amazon Nova, Meta Llama, Mistral, DeepSeek, OpenAI gpt-oss, Qwen or Kimi, let authenticated conversations use
 governed tools through the Model Context Protocol, and check that the answers are still right after
 you change something.
 
@@ -34,7 +34,7 @@ from a single setting.
 = Three things this does differently =
 
 **It runs without storing AWS keys.** An instance role, a task role or environment variables are
-enough. Where keys are stored, they are encrypted, and Diagnostics generates the least-privilege
+enough. Off AWS, one Amazon Bedrock API key from the Bedrock console is all it takes to connect. Where keys are stored, they are encrypted, and Diagnostics generates the least-privilege
 IAM policy this site actually needs rather than asking you to attach a broad managed policy.
 
 **It assumes a public chat will be abused.** Every default below is the safe one, and each is a
@@ -78,14 +78,17 @@ encrypted, or SigV4. Endpoints must be public HTTPS URLs.
 No custom table is created. The conversation log is optional and off by default; when enabled it
 holds the 200 most recent exchanges in a WordPress option, with a retention window you set, and it
 supports the WordPress personal-data export and erase tools. Debug mode records redacted metadata,
-not prompts, responses or credentials. The Privacy Policy section
+not prompts, responses or credentials. AWS states that model providers have no access to Bedrock
+prompts and completions, and that they are not used to train the base models. The Privacy Policy section
 sets out what is sent, to whom, and what is kept.
 
 = What it costs, and how to watch it =
 
 The dashboard shows requests and tokens for the last seven days, broken down by the model that
 actually answered, so a fallback or a profile on a different model is visible. Those counters are
-kept for 30 days and contain no prompts, responses or identities.
+kept for 30 days and contain no prompts, responses or identities. On Claude, the system prompt and
+tool definitions every visitor shares are cached by Bedrock, and the dashboard shows how many input
+tokens were read from that cache instead of being billed at the full price.
 
 Token counts are what Bedrock reported and are not a price estimate. Rate limiting reduces
 accidental usage but guarantees nothing about your bill, so review Amazon Bedrock pricing and set
@@ -104,10 +107,22 @@ Before starting, enable access to the model in the selected AWS Region and creat
 
 1. Install and activate the plugin.
 2. Open **AI Chat Bedrock > Settings**.
-3. Enter the AWS Region, credentials and Bedrock model ID.
+3. Choose the AWS Region, then paste an Amazon Bedrock API key, enter AWS credentials, or leave both empty to use the server's IAM role. Pick a Bedrock model.
 4. Save the settings and run **Diagnostics** while signed in.
 5. Add `[ai_chat_bedrock]` to a page or post, or insert the chat block.
 6. Review model pricing and request limits before enabling guest chat.
+
+= Quickest start: an Amazon Bedrock API key =
+
+1. In the Amazon Bedrock console, in the same Region you chose in the plugin, open **API keys** and generate a long-term key. Give it an expiry.
+2. Paste it into **AI Chat Bedrock > Settings > AWS authentication > Amazon Bedrock API key** and save. It is stored encrypted and never shown again.
+3. Run **Diagnostics**. It sends one short question to the model and reports the answer.
+
+To keep the key out of the database, define it in `wp-config.php` instead:
+
+`define( 'AI_CHAT_BEDROCK_API_KEY', 'replace-with-bedrock-api-key' );`
+
+The plugin also reads `AWS_BEARER_TOKEN_BEDROCK`, the variable the AWS SDKs use. An API key covers chat, streaming, the model list and embeddings. Knowledge Bases, Prompt Management and AgentCore Gateway do not accept API keys, so they still need an IAM role or access keys, and Diagnostics says so when one of them is configured. Short-term keys expire after at most 12 hours, which suits a test but not a live site.
 
 = Minimal IAM policy =
 
@@ -142,7 +157,15 @@ No. Model requests use Amazon Bedrock and your AWS credentials. Availability, mo
 
 = Which Bedrock models are supported? =
 
-Text models in the Anthropic Claude, Amazon Nova, Amazon Titan, Meta Llama, Mistral and DeepSeek families that your Region offers, including Claude Sonnet 5, Claude Opus 5.5 and Claude Haiku 4.5. The settings screen lists the models your account offers in that Region, and "Refresh model list" updates it. A new installation starts on Amazon Nova Lite because it answers with nothing enabled beyond an IAM role. Newer Claude models such as Sonnet 5 and Opus 5.5 are called through a cross-region inference profile, an ID beginning with `us.`, `eu.` or `global.`, and they reject the temperature setting, so the plugin does not send it to them. A specific model may still need a supported Region and suitable IAM permissions.
+Text models in the Anthropic Claude, Amazon Nova, Amazon Titan, Meta Llama, Mistral and DeepSeek families that your Region offers, including Claude Sonnet 5, Claude Opus 5.5 and Claude Haiku 4.5, and the other chat models Bedrock serves, such as OpenAI gpt-oss, Qwen3, Llama 4, Mistral Large, DeepSeek R1 and Kimi. Models other than Claude, Nova and Titan are called through the Bedrock Converse API, which applies each model's own chat format; when a model refuses a setting such as temperature or a system prompt, the plugin retries once without it and remembers that for the model. The settings screen lists the models your account offers in that Region, and "Refresh model list" updates it. A new installation starts on Amazon Nova Lite because it answers with nothing enabled beyond an IAM role. Newer Claude models such as Sonnet 5 and Opus 5.5 are called through a cross-region inference profile, an ID beginning with `us.`, `eu.` or `global.`, and they reject the temperature setting, so the plugin does not send it to them. A specific model may still need a supported Region and suitable IAM permissions.
+
+= What is an Amazon Bedrock API key, and should I use one? =
+
+It is a single credential created in the Amazon Bedrock console and sent as a bearer token, so there is no IAM user or access key pair to manage. It is the quickest way to get a first answer, especially on hosting outside AWS. On an EC2 instance, ECS or EKS an IAM role is still the better choice, because nothing long-lived is stored at all. If a key stops working, check that it has not expired or been revoked and that its identity is allowed `bedrock:CallWithBearerToken`; the IAM policy that Diagnostics generates includes it when a key is configured.
+
+= Does the plugin use prompt caching? =
+
+Yes, on Claude 3.5 Haiku, Claude 3.7 Sonnet and newer Claude models, which Bedrock supports it for. The site's system prompt and tool definitions are the same for every visitor, so they are marked for Bedrock's prompt cache; a later request that starts the same way reads them at a fraction of the input price. Writing to the cache costs slightly more than a normal input token, and a prompt shorter than the model's minimum is simply not cached, so a site with a short prompt pays what it paid before. The dashboard and `wp ai-chat-bedrock usage` show cache reads and writes. The `ai_chat_bedrock_prompt_caching` filter turns it off.
 
 = Why do I receive AccessDeniedException or a model access error? =
 
@@ -158,7 +181,7 @@ Newly saved credentials are encrypted with authenticated encryption derived from
 
 = Can I use temporary AWS credentials? =
 
-Yes. Configure the access key, secret key, and session token together, or define all three constants in `wp-config.php`.
+Yes. Configure the access key, secret key, and session token together, or define all three constants in `wp-config.php`. A short-term Amazon Bedrock API key also works, and Diagnostics warns that it expires within 12 hours.
 
 = Does the chat stream responses? =
 
@@ -196,7 +219,7 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 
 Streaming is on by default. Each message sends one authenticated POST request to a plugin REST route, and Bedrock response events are relayed to the browser with Server-Sent Events. Conversation content never appears in a URL, and one visitor message still results in exactly one Bedrock invocation. Streaming needs the PHP cURL extension; when it is unavailable, disabled or interrupted, the chat falls back to a single buffered request so answers are still delivered.
 
-Credentials are resolved in this order: `wp-config.php` constants, encrypted WordPress settings, environment variables, an ECS or EKS task role, then an EC2 instance role using IMDSv2. The last three let a site on AWS run with no long-lived keys in WordPress at all. Role credentials are cached encrypted and refreshed before expiry, role lookups can be disabled with the `ai_chat_bedrock_use_role_credentials` filter, and the active source is shown in the settings without revealing secrets.
+An Amazon Bedrock API key, when one is configured, is used for Bedrock and Bedrock Runtime requests. Signing credentials are resolved in this order: `wp-config.php` constants, encrypted WordPress settings, environment variables, an ECS or EKS task role, then an EC2 instance role using IMDSv2. The last three let a site on AWS run with no long-lived keys in WordPress at all. Role credentials are cached encrypted and refreshed before expiry, role lookups can be disabled with the `ai_chat_bedrock_use_role_credentials` filter, and the active source is shown in the settings without revealing secrets.
 
 = What can the agent do with tools, and what stops it? =
 
@@ -348,6 +371,12 @@ what a good answer says.
 
 
 == Changelog ==
+
+= 1.46.0 =
+* Connect with an Amazon Bedrock API key. Until now a first answer needed an IAM user, an access key pair and a policy, which is where most new sites stopped. Paste one key from the Bedrock console into the settings, define `AI_CHAT_BEDROCK_API_KEY` in `wp-config.php`, or set `AWS_BEARER_TOKEN_BEDROCK`. The key is stored encrypted and withheld from settings exports. It covers chat, streaming, the model list and embeddings; Knowledge Bases, Prompt Management and AgentCore Gateway do not accept API keys, so they keep using a role or access keys and say so instead of failing unsigned. The generated IAM policy adds `bedrock:CallWithBearerToken` when a key is configured, and Diagnostics warns about short-term keys that expire within 12 hours.
+* OpenAI gpt-oss, Qwen3, DeepSeek R1, Llama 4, Mistral Large, Kimi and the other chat models in the model list now answer properly. They were sent a plain "User: ... Assistant:" prompt, which gpt-oss and Qwen3 rejected outright and DeepSeek R1 answered by writing both sides of the conversation. They now go through the Bedrock Converse API, which applies each model's own chat format; checked by invoking each one, buffered and streamed. A configured guardrail is sent in the Converse request body, because Converse ignores the headers used before. When a model refuses temperature or a system prompt, the request is retried once without it and the model is remembered.
+* Claude requests now use Bedrock prompt caching for the system prompt and tool definitions every visitor shares, so repeated questions read that prefix from the cache at a fraction of the input price. Checked on Claude Sonnet 4.5, which wrote 2,431 tokens to the cache on the first question and read them on the second. The dashboard shows the week's cache reads, `wp ai-chat-bedrock usage` prints reads and writes, and the `ai_chat_bedrock_prompt_caching` filter turns caching off.
+* Model discovery also checks the `global.`, `jp.`, `au.`, `ca.` and `us-gov.` inference profiles, so models offered only through them appear in the list, and the generated IAM policy covers them and allows `ListInferenceProfiles`.
 
 = 1.45.0 =
 * Claude Sonnet 5, Opus 5.5, Opus 5, Fable 5.1 and Opus 4.7 could not answer at all. The plugin sent the temperature setting with every Claude request, and Amazon Bedrock rejects it for these models with "`temperature` is deprecated for this model", so every chat, and the Diagnostics model test, failed on them. Found by invoking each current Claude model on Bedrock. Temperature is now left out for them and for any Claude model newer than the plugin knows, and still sent to older Claude models and the other families; Claude Opus 4.6, Sonnet 4.6, Sonnet 4.5, Opus 4.5, Haiku 4.5 and Nova Lite were invoked to confirm they accept it. The field on the settings screen says so.
@@ -704,6 +733,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.46.0 =
+Connect with an Amazon Bedrock API key instead of an IAM user. gpt-oss, Qwen3, DeepSeek R1, Llama 4, Mistral Large and Kimi now answer through the Converse API, and Claude prompts are cached.
 
 = 1.45.0 =
 Makes Claude Sonnet 5, Opus 5.5 and other current Claude models work; Bedrock rejected every request the plugin sent them. Also stops a missing model setting falling back to a retired model.

@@ -214,8 +214,18 @@ class AI_Chat_Bedrock_Models {
 		return $label;
 	}
 
+	/**
+	 * Inference profile IDs that could serve a model, most local first.
+	 *
+	 * Geographic profiles keep requests inside one geography, so they win. Newer models are
+	 * often offered only through a global profile, and without it they never reached the
+	 * model list at all.
+	 *
+	 * @param string $model_id Foundation model ID.
+	 * @return array
+	 */
 	private static function profile_candidates( $model_id ) {
-		$prefixes   = array( 'us', 'eu', 'apac', 'ap', 'us-gov' );
+		$prefixes   = array( 'us', 'eu', 'apac', 'ap', 'jp', 'au', 'ca', 'us-gov', 'global' );
 		$candidates = array();
 		foreach ( $prefixes as $prefix ) {
 			$candidates[] = $prefix . '.' . $model_id;

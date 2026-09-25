@@ -20,6 +20,7 @@
       "@php tests/cli.php",
       "@php tests/bootstrap-smoke.php",
       "@php tests/aws-payload.php",
+      "@php tests/api-key.php",
       "@php tests/mcp-transport.php",
       "@php tests/site-abilities.php",
       "@php tests/eval.php",

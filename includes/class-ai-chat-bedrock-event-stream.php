@@ -121,8 +121,14 @@ class AI_Chat_Bedrock_Event_Stream {
 	/**
 	 * Extract token usage reported by a streaming event.
 	 *
+	 * Prompt caching adds two counts that input_tokens leaves out: tokens read from the cache
+	 * and tokens written to it. Both are billed, at a tenth and at one and a quarter of the
+	 * input price, so they are reported as cache_read_tokens and cache_write_tokens rather
+	 * than folded into input_tokens, where they would hide what the cache saved.
+	 *
 	 * @param array $payload Decoded event payload.
-	 * @return array Associative array with input_tokens and output_tokens when present.
+	 * @return array Associative array with input_tokens, output_tokens, cache_read_tokens and
+	 *               cache_write_tokens when present.
 	 */
 	public static function usage( $payload ) {
 		if ( ! is_array( $payload ) ) {
@@ -132,6 +138,10 @@ class AI_Chat_Bedrock_Event_Stream {
 		$candidates = array();
 		if ( isset( $payload['usage'] ) && is_array( $payload['usage'] ) ) {
 			$candidates[] = $payload['usage'];
+		}
+		// Claude's streamed message_start carries the input side, cache counts included.
+		if ( isset( $payload['message']['usage'] ) && is_array( $payload['message']['usage'] ) ) {
+			$candidates[] = $payload['message']['usage'];
 		}
 		if ( isset( $payload['metadata']['usage'] ) && is_array( $payload['metadata']['usage'] ) ) {
 			$candidates[] = $payload['metadata']['usage'];
@@ -149,6 +159,14 @@ class AI_Chat_Bedrock_Event_Stream {
 			}
 			if ( null !== $output ) {
 				$usage['output_tokens'] = $output;
+			}
+			$read  = self::first_numeric( $candidate, array( 'cache_read_input_tokens', 'cacheReadInputTokens', 'cacheReadInputTokenCount' ) );
+			$write = self::first_numeric( $candidate, array( 'cache_creation_input_tokens', 'cacheWriteInputTokens', 'cacheWriteInputTokenCount' ) );
+			if ( null !== $read ) {
+				$usage['cache_read_tokens'] = $read;
+			}
+			if ( null !== $write ) {
+				$usage['cache_write_tokens'] = $write;
 			}
 		}
 		return $usage;
