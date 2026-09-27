@@ -43,6 +43,9 @@ foreach ( array( '_aicfab_embedding', '_aicfab_embedding_model', '_aicfab_embedd
 	delete_post_meta_by_key( $ai_chat_bedrock_meta_key );
 }
 
+// The one user meta key: an administrator dismissed the setup notice.
+delete_metadata( 'user', 0, 'aicfab_dismissed_setup_notice', '', true );
+
 // Cached managed prompt text is stored in transients keyed by prompt and version.
 $ai_chat_bedrock_prompt_pattern = $wpdb->esc_like( '_transient_aicfab_prompt_' ) . '%';
 $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $ai_chat_bedrock_prompt_pattern ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery

@@ -210,20 +210,41 @@
 		}
 	} );
 
-	document.getElementById( 'aicfab-eval-save' ).addEventListener( 'click', function () {
+	var buttons = [ 'aicfab-eval-add', 'aicfab-eval-propose', 'aicfab-eval-save', 'aicfab-eval-run' ].map( function ( id ) {
+		return document.getElementById( id );
+	} );
+
+	// A run sends one paid request per case: while a request is out, another click must not
+	// send a second one.
+	function busy( on ) {
+		buttons.forEach( function ( button ) {
+			button.disabled = on;
+		} );
+	}
+
+	// Saves the table as it is on screen and resolves to true once the server has it.
+	function save() {
 		say( config.i18n.saving );
-		post( 'aicfab_eval_save', { cases: JSON.stringify( collect() ) } ).then( function ( response ) {
+		return post( 'aicfab_eval_save', { cases: JSON.stringify( collect() ) } ).then( function ( response ) {
 			if ( ! response || ! response.success ) {
 				say( ( response && response.data && response.data.message ) || config.i18n.failed );
-				return;
+				return false;
 			}
 			rows.textContent = '';
 			response.data.cases.forEach( addRow );
 			say( response.data.dropped
 				? config.i18n.savedWithDrops.replace( '%d', response.data.dropped )
 				: config.i18n.saved );
-		} ).catch( function () {
+			return true;
+		} );
+	}
+
+	document.getElementById( 'aicfab-eval-save' ).addEventListener( 'click', function () {
+		busy( true );
+		save().catch( function () {
 			say( config.i18n.failed );
+		} ).then( function () {
+			busy( false );
 		} );
 	} );
 
@@ -264,17 +285,27 @@
 		} );
 	} );
 
+	// The run reads the saved set, so the table is saved first: otherwise an edit made since
+	// the last save would silently not be what ran.
 	document.getElementById( 'aicfab-eval-run' ).addEventListener( 'click', function () {
-		say( config.i18n.running );
-		post( 'aicfab_eval_run', {} ).then( function ( response ) {
-			if ( ! response || ! response.success ) {
-				say( ( response && response.data && response.data.message ) || config.i18n.failed );
+		busy( true );
+		save().then( function ( saved ) {
+			if ( ! saved ) {
 				return;
 			}
-			renderReport( response.data );
-			say( config.i18n.ran );
+			say( config.i18n.running );
+			return post( 'aicfab_eval_run', {} ).then( function ( response ) {
+				if ( ! response || ! response.success ) {
+					say( ( response && response.data && response.data.message ) || config.i18n.failed );
+					return;
+				}
+				renderReport( response.data );
+				say( config.i18n.ran );
+			} );
 		} ).catch( function () {
 			say( config.i18n.failed );
+		} ).then( function () {
+			busy( false );
 		} );
 	} );
 

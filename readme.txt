@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.47.4
+Stable tag: 1.47.5
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -371,6 +371,15 @@ what a good answer says.
 
 
 == Changelog ==
+
+= 1.47.5 =
+* The "no usable AWS credentials" notice shown across wp-admin can now be dismissed, and stays dismissed for you. It was meant to be dismissible, but nothing recorded the dismissal, so it came back on every screen.
+* Answer checks: running the checks saves the table first, so an edit you had not saved yet is what runs. The button now says "Save and run the checks", it is the only primary button, and the buttons wait while a request is out, so a double click no longer sends each case to Amazon Bedrock twice.
+* Content generator: tone and length each have a row of their own. The hints for the language and source notes stay under the fields instead of disappearing as you type. "Open in editor" is a plain link in the notice, and the notices can be dismissed.
+* Settings: number fields use WordPress's standard narrow width. The managed prompt's version has its own labelled line, and a prompt that cannot be read is reported in a standard notice. Suggested questions are no longer shown in a code font.
+* Diagnostics: the common fixes are a bulleted list, and the IAM policy keeps one statement per line and scrolls sideways instead of wrapping.
+* Test Chat links to the model settings it shows, and screen readers hear each value with its name. In the chat, the suggested questions are announced as a group.
+* The translation template is up to date again; it had stopped at 1.46.0.
 
 = 1.47.4 =
 * Settings: moving a configuration to another site has a tab of its own, Import and export, instead of repeating under every group of options. After an import the page returns to that tab with the result.
@@ -761,6 +770,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.47.5 =
+The setup notice can be dismissed, and running answer checks saves your edits first and cannot be sent twice.
 
 = 1.47.4 =
 Tidier settings screens: import and export on its own tab, clearer profile limits and status badges.

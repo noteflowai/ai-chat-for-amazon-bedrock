@@ -48,7 +48,7 @@ $launcher        = isset( $atts['launcher'] ) ? $atts['launcher'] : __( 'Chat', 
 		</div>
 	</div>
 	<?php if ( ! empty( $suggestions ) ) : ?>
-		<div class="ai-chat-bedrock-suggestions" aria-label="<?php esc_attr_e( 'Suggested questions', 'ai-chat-for-amazon-bedrock' ); ?>">
+		<div class="ai-chat-bedrock-suggestions" role="group" aria-label="<?php esc_attr_e( 'Suggested questions', 'ai-chat-for-amazon-bedrock' ); ?>">
 			<?php foreach ( $suggestions as $suggestion ) : ?>
 				<button type="button" class="ai-chat-bedrock-suggestion"><?php echo esc_html( $suggestion ); ?></button>
 			<?php endforeach; ?>

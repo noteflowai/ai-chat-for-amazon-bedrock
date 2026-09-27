@@ -91,6 +91,7 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_delete_profile', $admin, 'handle_delete_profile' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_generate_content', $admin, 'handle_generate_content' );
 		$this->loader->add_action( 'admin_notices', $admin, 'render_setup_notice' );
+		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_dismiss_setup_notice', $admin, 'ajax_dismiss_setup_notice' );
 		$this->loader->add_filter( 'media_row_actions', $admin, 'add_media_row_action', 10, 2 );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_alt_text', $admin, 'handle_alt_text_action' );
 		$this->loader->add_filter( 'bulk_actions-upload', $admin, 'add_media_bulk_action' );

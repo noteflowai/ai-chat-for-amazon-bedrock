@@ -76,7 +76,7 @@ $tones           = array(
 
 	<p>
 		<label class="screen-reader-text" for="aicfab-iam-policy"><?php esc_html_e( 'IAM policy for this site', 'ai-chat-for-amazon-bedrock' ); ?></label>
-		<textarea id="aicfab-iam-policy" class="large-text code" rows="18" readonly><?php echo esc_textarea( AI_Chat_Bedrock_Iam_Policy::to_json( $aicfab_policy ) ); ?></textarea>
+		<textarea id="aicfab-iam-policy" class="large-text code aicfab-policy" rows="18" readonly><?php echo esc_textarea( AI_Chat_Bedrock_Iam_Policy::to_json( $aicfab_policy ) ); ?></textarea>
 	</p>
 	<p>
 		<button type="button" class="button" id="aicfab-copy-iam-policy" data-copied="<?php echo esc_attr__( 'Copied to the clipboard.', 'ai-chat-for-amazon-bedrock' ); ?>" data-manual="<?php echo esc_attr__( 'The policy is selected. Copy it with your keyboard.', 'ai-chat-for-amazon-bedrock' ); ?>"><?php esc_html_e( 'Copy policy', 'ai-chat-for-amazon-bedrock' ); ?></button>
@@ -87,7 +87,7 @@ $tones           = array(
 	</p>
 
 	<h2><?php esc_html_e( 'Common fixes', 'ai-chat-for-amazon-bedrock' ); ?></h2>
-	<ul>
+	<ul class="ul-disc">
 		<li><?php esc_html_e( 'AccessDeniedException: grant bedrock:InvokeModel for the exact model or inference profile ARN.', 'ai-chat-for-amazon-bedrock' ); ?></li>
 		<li><?php esc_html_e( 'ValidationException or model not found: confirm model access in the region and whether a cross-region inference profile ID is required.', 'ai-chat-for-amazon-bedrock' ); ?></li>
 		<li><?php esc_html_e( 'Chat works but streaming fails: bedrock:InvokeModelWithResponseStream is a separate action from bedrock:InvokeModel and has to be granted as well.', 'ai-chat-for-amazon-bedrock' ); ?></li>

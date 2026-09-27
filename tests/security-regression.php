@@ -173,7 +173,8 @@ $aicfab_meta_written = array();
 foreach ( array_merge( glob( __DIR__ . '/../includes/*.php' ), glob( __DIR__ . '/../admin/*.php' ), glob( __DIR__ . '/../public/*.php' ) ) as $aicfab_file ) {
 	$aicfab_body = file_get_contents( $aicfab_file );
 	// Only keys actually passed to a meta write, not every string that looks like one.
-	if ( preg_match_all( "/(?:update|add)_post_meta\\(\\s*[^,]+,\\s*'(_aicfab[a-z_]*)'/", $aicfab_body, $aicfab_hits ) ) {
+	// User meta too: the setup notice remembers who dismissed it.
+	if ( preg_match_all( "/(?:update|add)_(?:post|user)_meta\\(\\s*[^,]+,\\s*'(_?aicfab[a-z_]*)'/", $aicfab_body, $aicfab_hits ) ) {
 		foreach ( $aicfab_hits[1] as $aicfab_key ) {
 			$aicfab_meta_written[ $aicfab_key ] = true;
 		}

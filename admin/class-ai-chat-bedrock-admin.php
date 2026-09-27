@@ -495,12 +495,34 @@ class AI_Chat_Bedrock_Admin {
 		}
 
 		printf(
-			'<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s <a href="%3$s">%4$s</a></p></div>',
+			'<div class="notice notice-warning is-dismissible aicfab-setup-notice"><p><strong>%1$s</strong> %2$s <a href="%3$s">%4$s</a></p></div>',
 			esc_html__( 'AI Chat for Amazon Bedrock:', 'ai-chat-for-amazon-bedrock' ),
 			esc_html__( 'no usable AWS credentials were found, so the chat cannot answer yet. An Amazon Bedrock API key is the quickest way to connect.', 'ai-chat-for-amazon-bedrock' ),
 			esc_url( admin_url( 'admin.php?page=' . $this->plugin_name . '-settings' ) ),
 			esc_html__( 'Finish setup', 'ai-chat-for-amazon-bedrock' )
 		);
+
+		// The notice is shown on every admin screen, where the plugin's own script is not
+		// loaded. Core's common.js adds the dismiss button; this remembers the click, which
+		// the check above has always read but nothing ever wrote.
+		wp_add_inline_script(
+			'common',
+			sprintf(
+				'jQuery( document ).on( "click", ".aicfab-setup-notice .notice-dismiss", function () { jQuery.post( ajaxurl, { action: "ai_chat_bedrock_dismiss_setup_notice", _ajax_nonce: %s } ); } );',
+				wp_json_encode( wp_create_nonce( 'ai_chat_bedrock_dismiss_setup_notice' ) )
+			)
+		);
+	}
+
+	/**
+	 * Stop showing the setup notice to the current user.
+	 */
+	public function ajax_dismiss_setup_notice() {
+		if ( ! current_user_can( 'manage_options' ) || ! check_ajax_referer( 'ai_chat_bedrock_dismiss_setup_notice', false, false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'ai-chat-for-amazon-bedrock' ) ), 403 );
+		}
+		update_user_meta( get_current_user_id(), 'aicfab_dismissed_setup_notice', 1 );
+		wp_send_json_success();
 	}
 
 	/**
@@ -577,9 +599,6 @@ class AI_Chat_Bedrock_Admin {
 	}
 
 	/**
-	 * Delete all stored conversations.
-	 */
-	/**
 	 * Send the configuration as a downloadable file.
 	 */
 	public function handle_export_settings() {
@@ -633,6 +652,9 @@ class AI_Chat_Bedrock_Admin {
 		exit;
 	}
 
+	/**
+	 * Delete all stored conversations.
+	 */
 	public function handle_clear_conversations() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'Permission denied.', 'ai-chat-for-amazon-bedrock' ), '', array( 'response' => 403 ) );
@@ -852,7 +874,7 @@ class AI_Chat_Bedrock_Admin {
 	}
 	public function context_results_render() {
 		$value = absint( $this->option( 'context_results', 3 ) );
-		echo '<input type="number" id="aicfab_field_context_results" name="ai_chat_bedrock_settings[context_results]" value="' . esc_attr( max( 1, min( 8, $value ) ) ) . '" min="1" max="8">';
+		echo '<input type="number" id="aicfab_field_context_results" class="small-text" name="ai_chat_bedrock_settings[context_results]" value="' . esc_attr( max( 1, min( 8, $value ) ) ) . '" min="1" max="8">';
 		echo '<p class="description">' . esc_html__( 'More passages improve grounding but increase input tokens and cost.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function knowledge_base_id_render() {
@@ -895,7 +917,7 @@ class AI_Chat_Bedrock_Admin {
 	}
 	public function suggested_questions_render() {
 		$value = (string) $this->option( 'suggested_questions', '' );
-		echo '<textarea id="aicfab_field_suggested_questions" name="ai_chat_bedrock_settings[suggested_questions]" rows="4" class="large-text code" placeholder="' . esc_attr__( 'What are your opening hours?', 'ai-chat-for-amazon-bedrock' ) . '">' . esc_textarea( $value ) . '</textarea>';
+		echo '<textarea id="aicfab_field_suggested_questions" name="ai_chat_bedrock_settings[suggested_questions]" rows="4" class="large-text" placeholder="' . esc_attr__( 'What are your opening hours?', 'ai-chat-for-amazon-bedrock' ) . '">' . esc_textarea( $value ) . '</textarea>';
 		echo '<p class="description">' . esc_html__( 'One question per line, up to four. They appear as buttons above the input so visitors know what to ask, and disappear once the conversation starts.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 
@@ -927,9 +949,11 @@ class AI_Chat_Bedrock_Admin {
 	}
 
 	public function managed_prompt_render() {
+		echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'Managed prompt', 'ai-chat-for-amazon-bedrock' ) . '</legend>';
 		$this->text_input( 'prompt_id', '', 2048 );
-		echo ' <label>' . esc_html__( 'Version', 'ai-chat-for-amazon-bedrock' ) . ' ';
-		echo '<input type="text" name="ai_chat_bedrock_settings[prompt_version]" value="' . esc_attr( (string) $this->option( 'prompt_version', '' ) ) . '" size="8" maxlength="10" placeholder="DRAFT"></label>';
+		echo '<br><label for="aicfab_field_prompt_version">' . esc_html__( 'Version', 'ai-chat-for-amazon-bedrock' ) . '</label> ';
+		echo '<input type="text" id="aicfab_field_prompt_version" class="small-text" name="ai_chat_bedrock_settings[prompt_version]" value="' . esc_attr( (string) $this->option( 'prompt_version', '' ) ) . '" maxlength="10" placeholder="DRAFT">';
+		echo '</fieldset>';
 		echo '<p class="description">' . esc_html__( 'Optional. Point at a prompt in Amazon Bedrock Prompt Management and its text replaces the system prompt above, so one prompt can be reviewed in AWS and reused by every site. The prompt must live in the same region as the chat. Leave the version empty to follow the draft.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 
 		if ( ! AI_Chat_Bedrock_Prompts::enabled() ) {
@@ -938,7 +962,7 @@ class AI_Chat_Bedrock_Admin {
 
 		$text = AI_Chat_Bedrock_Prompts::text();
 		if ( is_wp_error( $text ) ) {
-			echo '<p class="aicfab-prompt-error notice notice-error inline"><span>' . esc_html( $text->get_error_message() ) . '</span></p>';
+			echo '<div class="aicfab-prompt-error notice notice-error inline"><p>' . esc_html( $text->get_error_message() ) . '</p></div>';
 			echo '<p class="description">' . esc_html__( 'While the prompt cannot be read, the system prompt above is used instead.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 			return;
 		}
@@ -1016,11 +1040,11 @@ class AI_Chat_Bedrock_Admin {
 	}
 	public function max_tokens_render() {
 		$value = $this->option( 'max_tokens', 1000 );
-		echo '<input type="number" id="aicfab_field_max_tokens" name="ai_chat_bedrock_settings[max_tokens]" value="' . esc_attr( $value ) . '" min="100" max="4000" step="100">';
+		echo '<input type="number" id="aicfab_field_max_tokens" class="small-text" name="ai_chat_bedrock_settings[max_tokens]" value="' . esc_attr( $value ) . '" min="100" max="4000" step="100">';
 	}
 	public function temperature_render() {
 		$value = $this->option( 'temperature', 0.7 );
-		echo '<input type="number" id="aicfab_field_temperature" name="ai_chat_bedrock_settings[temperature]" value="' . esc_attr( $value ) . '" min="0" max="1" step="0.1">';
+		echo '<input type="number" id="aicfab_field_temperature" class="small-text" name="ai_chat_bedrock_settings[temperature]" value="' . esc_attr( $value ) . '" min="0" max="1" step="0.1">';
 		echo '<p class="description">' . esc_html__( 'Not sent to Claude Opus 4.7, Sonnet 5, Opus 5 and newer Claude models, because Amazon Bedrock rejects it for them.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function system_prompt_render() {
@@ -1039,7 +1063,7 @@ class AI_Chat_Bedrock_Admin {
 	}
 	public function rate_limit_render() {
 		$value = $this->option( 'rate_limit_per_minute', 5 );
-		echo '<input type="number" id="aicfab_field_rate_limit_per_minute" name="ai_chat_bedrock_settings[rate_limit_per_minute]" value="' . esc_attr( $value ) . '" min="1" max="60">';
+		echo '<input type="number" id="aicfab_field_rate_limit_per_minute" class="small-text" name="ai_chat_bedrock_settings[rate_limit_per_minute]" value="' . esc_attr( $value ) . '" min="1" max="60">';
 	}
 	public function popup_site_wide_render() {
 		$checked = ! empty( $this->option( 'popup_site_wide', false ) );
