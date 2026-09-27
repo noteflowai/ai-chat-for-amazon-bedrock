@@ -48,8 +48,8 @@
 
             AIChatBedrockAdmin.post('ai_chat_bedrock_refresh_models').done(function (response) {
                 if (response && response.success && response.data && response.data.message) {
+                    refillModelMenus(response.data.models);
                     $status.text(response.data.message);
-                    AIChatBedrockAdmin.showNotice(response.data.message, 'success');
                 } else {
                     $status.text('');
                     AIChatBedrockAdmin.showNotice(i18n.ajax_error || 'The request could not be completed.', 'error');
@@ -60,6 +60,29 @@
             }).always(function () {
                 $button.prop('disabled', false);
             });
+        });
+    }
+
+    // Both model menus, in the new order, keeping what is selected in each even if it is not
+    // saved yet: a choice the new list lacks stays, so refreshing never changes a setting.
+    function refillModelMenus(models) {
+        if (!Array.isArray(models) || !models.length) {
+            return;
+        }
+        $('#aicfab_field_model_id, #aicfab_field_fallback_model_id').each(function () {
+            const $select = $(this);
+            const current = String($select.val() || '');
+            const $none = $select.find('option[value=""]').detach();
+            const $selected = $select.find('option:selected').detach();
+            const listed = models.some(function (model) { return model.value === current; });
+            $select.empty().append($none);
+            models.forEach(function (model) {
+                $select.append($('<option>', { value: model.value }).text(model.label));
+            });
+            if ('' !== current && !listed) {
+                $select.append($selected);
+            }
+            $select.val(current);
         });
     }
 
@@ -118,9 +141,25 @@
         });
     }
 
+    // Actions that cannot be undone ask first, with the consequence in the question. Forms
+    // carry the question when every submit deletes; a button when only that one does.
+    function bindConfirmations() {
+        $(document).on('click', 'button[data-aicfab-confirm]', function (event) {
+            if (!window.confirm($(this).attr('data-aicfab-confirm'))) {
+                event.preventDefault();
+            }
+        });
+        $(document).on('submit', 'form[data-aicfab-confirm]', function (event) {
+            if (!window.confirm($(this).attr('data-aicfab-confirm'))) {
+                event.preventDefault();
+            }
+        });
+    }
+
     $(function () {
         bindModelRefresh();
         bindDiagnostics();
+        bindConfirmations();
     });
 
     window.AIChatBedrockAdmin = AIChatBedrockAdmin;

@@ -191,9 +191,17 @@ class AI_Chat_Bedrock_Editor_Assistant {
 
 	/**
 	 * Enqueue the editor sidebar.
+	 *
+	 * In the post editor only. The hook fires in the widgets and site editors too, where
+	 * this script's wp-editor dependency makes WordPress warn and its post actions do not
+	 * apply.
 	 */
 	public function enqueue_editor_assets() {
 		if ( ! self::enabled() || ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $screen || 'post' !== $screen->base ) {
 			return;
 		}
 

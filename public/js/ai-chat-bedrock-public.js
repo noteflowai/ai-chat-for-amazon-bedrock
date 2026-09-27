@@ -93,6 +93,8 @@
         const $suggestions = $container.find('.ai-chat-bedrock-suggestions');
         const $usage = $container.find('.ai-chat-bedrock-usage');
         const profile = String($container.attr('data-profile') || '');
+        // The profile's own greeting; the site-wide one replaced it when the chat was cleared.
+        const welcome = $container.attr('data-welcome') || params.welcome_message;
         let history = [];
         let pending = false;
 
@@ -246,7 +248,7 @@
                     dataType: 'json',
                     contentType: 'application/json',
                     headers: params.rest_nonce ? { 'X-WP-Nonce': params.rest_nonce } : {},
-                    data: JSON.stringify({ entry: entryId, rating: value })
+                    data: JSON.stringify({ entry: entryId, rating: value, profile: profile })
                 }).done(function () {
                     $wrap.empty().append($('<span>', { 'class': 'ai-chat-bedrock-feedback-label' }).text(params.i18n.feedback_thanks || ''));
                 }).fail(function () {
@@ -791,7 +793,7 @@
             showSuggestions();
             const $welcome = $('<div>', { 'class': 'ai-chat-bedrock-welcome-message' });
             const $message = $('<div>', { 'class': 'ai-chat-bedrock-message ai-message' });
-            $message.append(avatar(false), $('<div>', { 'class': 'ai-chat-bedrock-message-content' }).text(params.welcome_message));
+            $message.append(avatar(false), $('<div>', { 'class': 'ai-chat-bedrock-message-content' }).text(welcome));
             $messages.append($welcome.append($message));
             $textarea.trigger('focus');
         });
