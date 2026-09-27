@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.47.0
+Stable tag: 1.47.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -372,6 +372,9 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.47.1 =
+* Sites in a VPC with an interface endpoint for Bedrock (or STS) could not reach Bedrock except by streaming. With private DNS on, `bedrock-runtime.<region>.amazonaws.com` resolves to an address inside the VPC, and WordPress's `wp_safe_remote_*()` refuses private addresses, so the Diagnostics model test, buffered answers, knowledge base retrieval and the credential check all failed within a millisecond with "Amazon Bedrock could not be reached". Found on ECS Fargate in a VPC with a `bedrock-runtime` endpoint. For the AWS host of each request, and only while it runs, the plugin now lets that address through; the rest of WordPress's URL check still applies, and any host outside `amazonaws.com`, `amazonaws.com.cn` and `api.aws` is still refused, look-alikes such as `bedrock-runtime.<region>.amazonaws.com.example.net` included.
+
 = 1.47.0 =
 * Export the Content gaps panel as CSV for editorial planning. Administrators can download the same ranked gaps from the last 30 days, with occurrence counts, the latest question time in UTC, and grounding counts for the exchanges contributing to each gap. Downloads require a nonce, preserve CSV quoting and backslashes, and neutralize spreadsheet formulas. No new data is collected or sent to Bedrock.
 
@@ -736,6 +739,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.47.1 =
+Fixes "Amazon Bedrock could not be reached" on sites whose VPC has a private-DNS interface endpoint for Bedrock.
 
 = 1.47.0 =
 Adds a protected CSV download to the Content gaps panel. Existing logging settings and stored conversations are unchanged.
