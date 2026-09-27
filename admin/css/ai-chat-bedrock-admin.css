@@ -404,11 +404,13 @@
     font-weight: 400;
     padding: 3px 12px 3px 0;
     text-align: left;
+    vertical-align: middle;
     width: 180px;
 }
 
 .aicfab-role-limits td {
     padding: 3px 0;
+    vertical-align: middle;
 }
 
 .aicfab-role-limits input {
