@@ -308,6 +308,42 @@ class AI_Chat_Bedrock_Admin {
 	}
 
 	/**
+	 * Download the same content gaps shown in the 30-day editorial panel.
+	 */
+	public function handle_export_gaps() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'ai-chat-for-amazon-bedrock' ), '', array( 'response' => 403 ) );
+		}
+		check_admin_referer( 'ai_chat_bedrock_export_gaps' );
+
+		$rows     = AI_Chat_Bedrock_Insights::export_rows( array( 'days' => 30 ) );
+		$filename = 'ai-chat-bedrock-content-gaps-' . gmdate( 'Ymd-His' ) . '.csv';
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+
+		// This is a response stream, not a file on disk; WP_Filesystem does not apply.
+		$handle = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+		if ( false === $handle ) {
+			wp_die( esc_html__( 'The export could not be created.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		foreach ( $rows as $row ) {
+			$row = array_map(
+				static function ( $value ) {
+					$value = (string) $value;
+					// Also cover whitespace before a spreadsheet formula.
+					return preg_match( '/^[\x00-\x20]*[=+\-@]/', $value ) ? "'" . $value : $value;
+				},
+				$row
+			);
+			// An empty escape character preserves literal backslashes and RFC 4180 quoting.
+			fputcsv( $handle, $row, ',', '"', '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fputcsv
+		}
+		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		exit;
+	}
+
+	/**
 	 * Offer alt text generation as a media library bulk action.
 	 *
 	 * @param array $actions Existing bulk actions.

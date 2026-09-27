@@ -99,6 +99,12 @@ $filter_url = add_query_arg(
 				?>
 			</p>
 
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<?php wp_nonce_field( 'ai_chat_bedrock_export_gaps' ); ?>
+				<input type="hidden" name="action" value="ai_chat_bedrock_export_gaps">
+				<button type="submit" class="button"><?php esc_html_e( 'Download content gaps CSV', 'ai-chat-for-amazon-bedrock' ); ?></button>
+			</form>
+
 			<?php if ( empty( $aicfab_gaps ) ) : ?>
 				<p class="description">
 					<?php esc_html_e( 'Nothing to report yet. Gaps appear once visitors ask something the site has no content for, or mark an answer unhelpful.', 'ai-chat-for-amazon-bedrock' ); ?>
