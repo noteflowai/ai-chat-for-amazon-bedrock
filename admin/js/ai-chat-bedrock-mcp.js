@@ -189,7 +189,11 @@
             tabs.forEach( function ( tab ) {
                 var active = tab.getAttribute( 'data-aicfab-section' ) === id;
                 tab.classList.toggle( 'nav-tab-active', active );
-                tab.setAttribute( 'aria-current', active ? 'true' : 'false' );
+                if ( active ) {
+                    tab.setAttribute( 'aria-current', 'true' );
+                } else {
+                    tab.removeAttribute( 'aria-current' );
+                }
             } );
             try {
                 window.sessionStorage.setItem( 'aicfabMcpSection', id );
@@ -201,14 +205,33 @@
         tabs.forEach( function ( tab ) {
             tab.addEventListener( 'click', function ( event ) {
                 event.preventDefault();
-                show( tab.getAttribute( 'data-aicfab-section' ) );
+                var id = tab.getAttribute( 'data-aicfab-section' );
+                show( id );
+                // Keep the address in step, so the section can be bookmarked or shared.
+                if ( window.history && window.history.replaceState ) {
+                    window.history.replaceState( null, '', '#' + id );
+                }
             } );
         } );
 
-        var initial = sections[ 0 ].id;
-        var hash = String( window.location.hash || '' ).replace( '#', '' );
+        function fromHash() {
+            var hash = String( window.location.hash || '' ).replace( '#', '' );
+            var target = hash ? document.getElementById( hash ) : null;
+            return target && target.classList.contains( 'aicfab-mcp-section' ) ? hash : '';
+        }
 
-        if ( hash && document.getElementById( hash ) && document.getElementById( hash ).classList.contains( 'aicfab-mcp-section' ) ) {
+        // A link to another section of this page changes only the hash, which reloads nothing.
+        window.addEventListener( 'hashchange', function () {
+            var id = fromHash();
+            if ( id ) {
+                show( id );
+            }
+        } );
+
+        var initial = sections[ 0 ].id;
+        var hash = fromHash();
+
+        if ( hash ) {
             initial = hash;
         } else {
             try {

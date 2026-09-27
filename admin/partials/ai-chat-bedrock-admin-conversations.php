@@ -104,17 +104,12 @@ $filter_url = add_query_arg(
 				?>
 			</p>
 
-			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<?php wp_nonce_field( 'ai_chat_bedrock_export_gaps' ); ?>
-				<input type="hidden" name="action" value="ai_chat_bedrock_export_gaps">
-				<button type="submit" class="button"><?php esc_html_e( 'Download content gaps CSV', 'ai-chat-for-amazon-bedrock' ); ?></button>
-			</form>
-
 			<?php if ( empty( $aicfab_gaps ) ) : ?>
 				<p class="description">
 					<?php esc_html_e( 'Nothing to report yet. Gaps appear once visitors ask something the site has no content for, or mark an answer unhelpful.', 'ai-chat-for-amazon-bedrock' ); ?>
 				</p>
 			<?php else : ?>
+				<div class="aicfab-table-scroll">
 				<table class="widefat striped">
 					<thead>
 						<tr>
@@ -149,9 +144,16 @@ $filter_url = add_query_arg(
 					<?php endforeach; ?>
 					</tbody>
 				</table>
+				</div>
 				<p class="description">
 					<?php esc_html_e( 'Questions built from the same significant words are counted as one gap, in any order. Drafting opens the content generator with the subject filled in; the draft is yours to review before publishing.', 'ai-chat-for-amazon-bedrock' ); ?>
 				</p>
+				<?php // Only offered when there is something to download: an empty file would be a header row alone. ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="aicfab-gap-export">
+					<?php wp_nonce_field( 'ai_chat_bedrock_export_gaps' ); ?>
+					<input type="hidden" name="action" value="ai_chat_bedrock_export_gaps">
+					<button type="submit" class="button"><?php esc_html_e( 'Download content gaps CSV', 'ai-chat-for-amazon-bedrock' ); ?></button>
+				</form>
 			<?php endif; ?>
 
 			<h2><?php esc_html_e( 'Stored exchanges', 'ai-chat-for-amazon-bedrock' ); ?></h2>

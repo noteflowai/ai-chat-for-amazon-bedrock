@@ -211,20 +211,7 @@
 }
 
 .aicfab-status {
-	font-weight: 600;
 	white-space: nowrap;
-}
-
-.aicfab-status-pass {
-	color: #00713c;
-}
-
-.aicfab-status-warn {
-	color: #8a5700;
-}
-
-.aicfab-status-fail {
-	color: #b32d2e;
 }
 
 #aicfab-refresh-models-status,
@@ -514,4 +501,58 @@
 .aicfab-eval-bad {
 	color: #8a1f11;
 	font-weight: 600;
+}
+
+/* Chat profiles */
+.aicfab-profile-list {
+	margin-bottom: 24px;
+}
+
+.aicfab-inline-form {
+	display: inline;
+}
+
+.aicfab-profile-form {
+	max-width: 820px;
+}
+
+.aicfab-profile-form .submit .button + .button {
+	margin-left: 6px;
+}
+
+/* A card holding more than one report: separate them */
+.aicfab-card > h2:not(:first-child) {
+	margin-top: 22px;
+	padding-top: 18px;
+	border-top: 1px solid #f0f0f1;
+}
+
+.aicfab-card .aicfab-table-scroll {
+	overflow-x: auto;
+}
+
+.aicfab-gap-export {
+	margin: 10px 0 0;
+}
+
+/* Import and export */
+.aicfab-transfer {
+	max-width: 820px;
+}
+
+.aicfab-transfer > p {
+	max-width: 70ch;
+	color: #50575e;
+}
+
+.aicfab-transfer .aicfab-panel {
+	margin-top: 16px;
+}
+
+.aicfab-transfer .aicfab-panel h3 {
+	margin: 16px 0 6px;
+}
+
+.aicfab-transfer .form-table th {
+	width: 180px;
 }

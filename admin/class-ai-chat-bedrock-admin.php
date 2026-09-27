@@ -629,7 +629,7 @@ class AI_Chat_Bedrock_Admin {
 			$args['aicfab-applied'] = count( $result['applied'] );
 		}
 
-		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings' ) ) );
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings&tab=transfer' ) ) );
 		exit;
 	}
 
@@ -887,8 +887,10 @@ class AI_Chat_Bedrock_Admin {
 	public function log_conversations_render() {
 		$checked   = AI_Chat_Bedrock_Conversations::enabled();
 		$retention = AI_Chat_Bedrock_Conversations::retention_days();
-		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[log_conversations]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Store questions and answers for review', 'ai-chat-for-amazon-bedrock' ) . '</label> ';
-		echo '<label>' . esc_html__( 'Keep for', 'ai-chat-for-amazon-bedrock' ) . ' <input type="number" id="aicfab_field_log_retention_days" name="ai_chat_bedrock_settings[log_retention_days]" value="' . esc_attr( $retention ) . '" min="1" max="' . esc_attr( AI_Chat_Bedrock_Conversations::MAX_DAYS ) . '" style="width:80px"> ' . esc_html__( 'days', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'Conversation log', 'ai-chat-for-amazon-bedrock' ) . '</legend>';
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[log_conversations]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Store questions and answers for review', 'ai-chat-for-amazon-bedrock' ) . '</label><br>';
+		echo '<label for="aicfab_field_log_retention_days">' . esc_html__( 'Keep for', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="number" id="aicfab_field_log_retention_days" class="small-text" name="ai_chat_bedrock_settings[log_retention_days]" value="' . esc_attr( $retention ) . '" min="1" max="' . esc_attr( AI_Chat_Bedrock_Conversations::MAX_DAYS ) . '"> ' . esc_html__( 'days', 'ai-chat-for-amazon-bedrock' );
+		echo '</fieldset>';
 		echo '<p class="description">' . esc_html__( 'Disabled by default. When enabled, chat content is stored in the database, capped at 200 recent entries, and visible to administrators. Disclose this to your visitors.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function suggested_questions_render() {
@@ -1028,7 +1030,7 @@ class AI_Chat_Bedrock_Admin {
 		$this->text_input( 'chat_title', 'Chat with AI', 120 );
 	}
 	public function welcome_message_render() {
-		$this->text_input( 'welcome_message', 'Hello! How can I help you today?', 500 );
+		$this->text_input( 'welcome_message', 'Hello! How can I help you today?', 500, 'large-text' );
 	}
 	public function allow_public_chat_render() {
 		$checked = ! empty( $this->option( 'allow_public_chat', false ) );
@@ -1041,14 +1043,16 @@ class AI_Chat_Bedrock_Admin {
 	}
 	public function popup_site_wide_render() {
 		$checked = ! empty( $this->option( 'popup_site_wide', false ) );
-		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[popup_site_wide]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Show a floating chat button on every page', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'Floating chat', 'ai-chat-for-amazon-bedrock' ) . '</legend>';
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[popup_site_wide]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Show a floating chat button on every page', 'ai-chat-for-amazon-bedrock' ) . '</label><br>';
 		$profiles = AI_Chat_Bedrock_Profiles::choices();
-		echo ' <label style="margin-left:10px">' . esc_html__( 'Profile', 'ai-chat-for-amazon-bedrock' ) . ' <select id="aicfab_field_popup_profile" name="ai_chat_bedrock_settings[popup_profile]">';
+		echo '<label for="aicfab_field_popup_profile">' . esc_html__( 'Profile', 'ai-chat-for-amazon-bedrock' ) . '</label> <select id="aicfab_field_popup_profile" name="ai_chat_bedrock_settings[popup_profile]">';
 		$current = (string) $this->option( 'popup_profile', '' );
 		foreach ( $profiles as $key => $label ) {
 			echo '<option value="' . esc_attr( $key ) . '" ' . selected( $current, $key, false ) . '>' . esc_html( $label ) . '</option>';
 		}
-		echo '</select></label>';
+		echo '</select>';
+		echo '</fieldset>';
 		echo '<p class="description">' . esc_html__( 'Pages that already contain the chat block or shortcode are left unchanged. Use a profile with guest access if visitors should be able to chat.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function debug_mode_render() {
@@ -1365,8 +1369,8 @@ class AI_Chat_Bedrock_Admin {
 		$options = get_option( 'ai_chat_bedrock_settings', array() );
 		return isset( $options[ $key ] ) ? $options[ $key ] : $fallback;
 	}
-	private function text_input( $key, $fallback, $maxlength ) {
-		echo '<input type="text" class="regular-text" id="' . esc_attr( self::control_id( $key ) ) . '" name="ai_chat_bedrock_settings[' . esc_attr( $key ) . ']" value="' . esc_attr( $this->option( $key, $fallback ) ) . '" maxlength="' . absint( $maxlength ) . '">';
+	private function text_input( $key, $fallback, $maxlength, $css_class = 'regular-text' ) {
+		echo '<input type="text" class="' . esc_attr( $css_class ) . '" id="' . esc_attr( self::control_id( $key ) ) . '" name="ai_chat_bedrock_settings[' . esc_attr( $key ) . ']" value="' . esc_attr( $this->option( $key, $fallback ) ) . '" maxlength="' . absint( $maxlength ) . '">';
 	}
 	private function credential_input( $key, $password ) {
 		$constants  = array(

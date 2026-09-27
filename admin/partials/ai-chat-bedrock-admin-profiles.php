@@ -23,6 +23,24 @@ $models   = AI_Chat_Bedrock_Models::options();
 $value = function ( $key, $fallback = '' ) use ( $current ) {
 	return isset( $current[ $key ] ) && '' !== $current[ $key ] ? $current[ $key ] : $fallback;
 };
+
+// The main settings a profile inherits from, shown as placeholders so an empty field says what it means.
+$site    = get_option( 'ai_chat_bedrock_settings', array() );
+$site    = is_array( $site ) ? $site : array();
+$inherit = function ( $key, $fallback ) use ( $site ) {
+	return isset( $site[ $key ] ) && '' !== $site[ $key ] ? (string) $site[ $key ] : (string) $fallback;
+};
+// Stored limits use 0 for "inherit"; an empty field says that better than a zero.
+$limit  = function ( $key ) use ( $value ) {
+	$stored = $value( $key );
+	return '' === $stored || ( 'temperature' !== $key && 0 === (int) $stored ) ? '' : $stored;
+};
+$limits = array(
+	'max_tokens'            => array( __( 'Max tokens', 'ai-chat-for-amazon-bedrock' ), 0, 4000, 50, $inherit( 'max_tokens', 1000 ) ),
+	'temperature'           => array( __( 'Temperature', 'ai-chat-for-amazon-bedrock' ), 0, 1, 0.1, $inherit( 'temperature', 0.7 ) ),
+	'rate_limit_per_minute' => array( __( 'Requests per minute', 'ai-chat-for-amazon-bedrock' ), 0, 60, 1, $inherit( 'rate_limit_per_minute', 5 ) ),
+	'context_results'       => array( __( 'Passages per answer', 'ai-chat-for-amazon-bedrock' ), 0, 8, 1, $inherit( 'context_results', 3 ) ),
+);
 ?>
 <div class="wrap aicfab-dashboard">
 	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
@@ -39,7 +57,7 @@ $value = function ( $key, $fallback = '' ) use ( $current ) {
 	<?php endif; ?>
 
 	<?php if ( ! empty( $profiles ) ) : ?>
-		<table class="widefat striped" style="margin-bottom: 24px;">
+		<table class="widefat striped aicfab-profile-list">
 			<thead>
 				<tr>
 					<th scope="col"><?php esc_html_e( 'Profile', 'ai-chat-for-amazon-bedrock' ); ?></th>
@@ -60,7 +78,7 @@ $value = function ( $key, $fallback = '' ) use ( $current ) {
 						<td><code>[ai_chat_bedrock profile="<?php echo esc_html( $key ); ?>"]</code></td>
 						<td>
 							<a class="button button-small" href="<?php echo esc_url( add_query_arg( 'edit', $key, admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-profiles' ) ) ); ?>"><?php esc_html_e( 'Edit', 'ai-chat-for-amazon-bedrock' ); ?></a>
-							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline" data-aicfab-confirm="<?php esc_attr_e( 'Delete this profile? Chats that use it fall back to the main settings.', 'ai-chat-for-amazon-bedrock' ); ?>">
+							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="aicfab-inline-form" data-aicfab-confirm="<?php esc_attr_e( 'Delete this profile? Chats that use it fall back to the main settings.', 'ai-chat-for-amazon-bedrock' ); ?>">
 								<?php wp_nonce_field( 'ai_chat_bedrock_delete_profile' ); ?>
 								<input type="hidden" name="action" value="ai_chat_bedrock_delete_profile">
 								<input type="hidden" name="key" value="<?php echo esc_attr( $key ); ?>">
@@ -73,7 +91,7 @@ $value = function ( $key, $fallback = '' ) use ( $current ) {
 		</table>
 	<?php endif; ?>
 
-	<div class="aicfab-panel" style="max-width: 820px;">
+	<div class="aicfab-panel aicfab-profile-form">
 		<h2><?php echo esc_html( $current ? __( 'Edit profile', 'ai-chat-for-amazon-bedrock' ) : __( 'Add profile', 'ai-chat-for-amazon-bedrock' ) ); ?></h2>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<?php wp_nonce_field( 'ai_chat_bedrock_save_profile' ); ?>
@@ -108,11 +126,11 @@ $value = function ( $key, $fallback = '' ) use ( $current ) {
 				</tr>
 				<tr>
 					<th scope="row"><label for="aicfab_profile_title"><?php esc_html_e( 'Chat title', 'ai-chat-for-amazon-bedrock' ); ?></label></th>
-					<td><input type="text" id="aicfab_profile_title" name="chat_title" class="regular-text" maxlength="120" value="<?php echo esc_attr( $value( 'chat_title' ) ); ?>"></td>
+					<td><input type="text" id="aicfab_profile_title" name="chat_title" class="regular-text" maxlength="120" value="<?php echo esc_attr( $value( 'chat_title' ) ); ?>" placeholder="<?php echo esc_attr( $inherit( 'chat_title', 'Chat with AI' ) ); ?>"></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="aicfab_profile_welcome"><?php esc_html_e( 'Welcome message', 'ai-chat-for-amazon-bedrock' ); ?></label></th>
-					<td><input type="text" id="aicfab_profile_welcome" name="welcome_message" class="regular-text" maxlength="500" value="<?php echo esc_attr( $value( 'welcome_message' ) ); ?>"></td>
+					<td><input type="text" id="aicfab_profile_welcome" name="welcome_message" class="large-text" maxlength="500" value="<?php echo esc_attr( $value( 'welcome_message' ) ); ?>" placeholder="<?php echo esc_attr( $inherit( 'welcome_message', 'Hello! How can I help you today?' ) ); ?>"></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="aicfab_profile_suggestions"><?php esc_html_e( 'Suggested questions', 'ai-chat-for-amazon-bedrock' ); ?></label></th>
@@ -124,19 +142,18 @@ $value = function ( $key, $fallback = '' ) use ( $current ) {
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Limits', 'ai-chat-for-amazon-bedrock' ); ?></th>
 					<td>
-						<label><?php esc_html_e( 'Max tokens', 'ai-chat-for-amazon-bedrock' ); ?>
-							<input type="number" name="max_tokens" min="0" max="4000" step="50" style="width:100px" value="<?php echo esc_attr( $value( 'max_tokens', 0 ) ); ?>">
-						</label>
-						<label style="margin-left:14px"><?php esc_html_e( 'Temperature', 'ai-chat-for-amazon-bedrock' ); ?>
-							<input type="number" name="temperature" min="0" max="1" step="0.1" style="width:90px" value="<?php echo esc_attr( $value( 'temperature' ) ); ?>">
-						</label>
-						<label style="margin-left:14px"><?php esc_html_e( 'Requests per minute', 'ai-chat-for-amazon-bedrock' ); ?>
-							<input type="number" name="rate_limit_per_minute" min="0" max="60" style="width:90px" value="<?php echo esc_attr( $value( 'rate_limit_per_minute', 0 ) ); ?>">
-						</label>
-						<label style="margin-left:14px"><?php esc_html_e( 'Passages', 'ai-chat-for-amazon-bedrock' ); ?>
-							<input type="number" name="context_results" min="0" max="8" style="width:80px" value="<?php echo esc_attr( $value( 'context_results', 0 ) ); ?>">
-						</label>
-						<p class="description"><?php esc_html_e( 'Zero or empty means inherit the main settings.', 'ai-chat-for-amazon-bedrock' ); ?></p>
+						<fieldset>
+							<legend class="screen-reader-text"><?php esc_html_e( 'Limits', 'ai-chat-for-amazon-bedrock' ); ?></legend>
+							<table class="aicfab-role-limits" role="presentation">
+								<?php foreach ( $limits as $key => $aicfab_limit ) : ?>
+									<tr>
+										<th scope="row"><label for="aicfab_profile_<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $aicfab_limit[0] ); ?></label></th>
+										<td><input type="number" id="aicfab_profile_<?php echo esc_attr( $key ); ?>" name="<?php echo esc_attr( $key ); ?>" min="<?php echo esc_attr( $aicfab_limit[1] ); ?>" max="<?php echo esc_attr( $aicfab_limit[2] ); ?>" step="<?php echo esc_attr( $aicfab_limit[3] ); ?>" value="<?php echo esc_attr( $limit( $key ) ); ?>" placeholder="<?php echo esc_attr( $aicfab_limit[4] ); ?>"></td>
+									</tr>
+								<?php endforeach; ?>
+							</table>
+						</fieldset>
+						<p class="description"><?php esc_html_e( 'Leave a field empty to use the main setting, shown in grey.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 					</td>
 				</tr>
 				<tr>
@@ -160,7 +177,12 @@ $value = function ( $key, $fallback = '' ) use ( $current ) {
 					</td>
 				</tr>
 			</table>
-			<?php submit_button( $current ? __( 'Update profile', 'ai-chat-for-amazon-bedrock' ) : __( 'Add profile', 'ai-chat-for-amazon-bedrock' ) ); ?>
+			<p class="submit">
+				<?php submit_button( $current ? __( 'Update profile', 'ai-chat-for-amazon-bedrock' ) : __( 'Add profile', 'ai-chat-for-amazon-bedrock' ), 'primary', 'submit', false ); ?>
+				<?php if ( $current ) : ?>
+					<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-profiles' ) ); ?>"><?php esc_html_e( 'Cancel', 'ai-chat-for-amazon-bedrock' ); ?></a>
+				<?php endif; ?>
+			</p>
 		</form>
 	</div>
 </div>

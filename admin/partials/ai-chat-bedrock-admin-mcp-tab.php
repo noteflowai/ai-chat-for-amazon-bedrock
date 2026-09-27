@@ -17,12 +17,12 @@ $mcp_client = class_exists( 'AI_Chat_Bedrock_MCP_Client' ) ? new AI_Chat_Bedrock
 ?>
 <div class="wrap">
 	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-	<h2 class="nav-tab-wrapper aicfab-mcp-nav" role="tablist">
+	<nav class="nav-tab-wrapper aicfab-mcp-nav" aria-label="<?php esc_attr_e( 'MCP sections', 'ai-chat-for-amazon-bedrock' ); ?>">
 		<a href="#aicfab-mcp-servers" class="nav-tab nav-tab-active" data-aicfab-section="aicfab-mcp-servers"><?php esc_html_e( 'Servers', 'ai-chat-for-amazon-bedrock' ); ?></a>
 		<a href="#aicfab-mcp-clients" class="nav-tab" data-aicfab-section="aicfab-mcp-clients"><?php esc_html_e( 'AI clients', 'ai-chat-for-amazon-bedrock' ); ?></a>
 		<a href="#aicfab-mcp-policy" class="nav-tab" data-aicfab-section="aicfab-mcp-policy"><?php esc_html_e( 'Tool policy', 'ai-chat-for-amazon-bedrock' ); ?></a>
 		<a href="#aicfab-mcp-log" class="nav-tab" data-aicfab-section="aicfab-mcp-log"><?php esc_html_e( 'Activity', 'ai-chat-for-amazon-bedrock' ); ?></a>
-	</h2>
+	</nav>
 	<div class="ai-chat-bedrock-mcp-settings">
 		<div class="aicfab-mcp-section" id="aicfab-mcp-servers">
 		<h2><?php esc_html_e( 'Model Context Protocol (MCP)', 'ai-chat-for-amazon-bedrock' ); ?></h2>
@@ -30,16 +30,19 @@ $mcp_client = class_exists( 'AI_Chat_Bedrock_MCP_Client' ) ? new AI_Chat_Bedrock
 		<table class="form-table" role="presentation">
 			<tr>
 				<th scope="row"><label for="ai_chat_bedrock_enable_mcp"><?php esc_html_e( 'Enable MCP tools', 'ai-chat-for-amazon-bedrock' ); ?></label></th>
-				<td><input type="checkbox" id="ai_chat_bedrock_enable_mcp" value="1" <?php checked( get_option( 'ai_chat_bedrock_enable_mcp', false ) ); ?>></td>
+				<td>
+					<label><input type="checkbox" id="ai_chat_bedrock_enable_mcp" value="1" aria-describedby="aicfab-mcp-instant" <?php checked( get_option( 'ai_chat_bedrock_enable_mcp', false ) ); ?>> <?php esc_html_e( 'Let the chat call tools on MCP servers registered below', 'ai-chat-for-amazon-bedrock' ); ?></label>
+				</td>
 			</tr>
 			<tr>
 				<th scope="row"><label for="ai_chat_bedrock_mcp_public_access"><?php esc_html_e( 'Public WordPress MCP REST access', 'ai-chat-for-amazon-bedrock' ); ?></label></th>
 				<td>
-					<input type="checkbox" id="ai_chat_bedrock_mcp_public_access" value="1" <?php checked( get_option( 'ai_chat_bedrock_mcp_public_access', false ) ); ?>>
+					<label><input type="checkbox" id="ai_chat_bedrock_mcp_public_access" value="1" aria-describedby="aicfab-mcp-instant" <?php checked( get_option( 'ai_chat_bedrock_mcp_public_access', false ) ); ?>> <?php esc_html_e( 'Allow requests without signing in', 'ai-chat-for-amazon-bedrock' ); ?></label>
 					<p class="description"><?php esc_html_e( 'Disabled by default. When disabled, WordPress authentication is required. Public access exposes read-only published content and is rate limited.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 				</td>
 			</tr>
 		</table>
+		<p class="description" id="aicfab-mcp-instant"><?php esc_html_e( 'These two settings are saved as soon as you change them.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 
 		<div id="ai-chat-bedrock-mcp-servers-section" class="<?php echo esc_attr( get_option( 'ai_chat_bedrock_enable_mcp', false ) ? '' : 'hidden' ); ?>">
 			<h3><?php esc_html_e( 'External MCP servers', 'ai-chat-for-amazon-bedrock' ); ?></h3>

@@ -96,6 +96,10 @@
         return i18n.status_warn || 'Review';
     }
 
+    function statusTone(status) {
+        return { pass: 'is-good', warn: 'is-warn', fail: 'is-bad' }[status] || 'is-neutral';
+    }
+
     function renderChecks(checks) {
         const $tbody = $('#aicfab-diagnostics-table tbody');
         if (!$tbody.length) {
@@ -107,7 +111,9 @@
             const status = String(check.status || 'warn');
             const $row = $('<tr>', { 'data-check': String(check.id || '') });
             $row.append($('<td>').text(String(check.label || '')));
-            $row.append($('<td>', { 'class': 'aicfab-status aicfab-status-' + status }).text(statusLabel(status)));
+            $row.append($('<td>', { 'class': 'aicfab-status aicfab-status-' + status }).append(
+                $('<span>', { 'class': 'aicfab-pill ' + statusTone(status) }).text(statusLabel(status))
+            ));
             $row.append($('<td>').text(String(check.message || '')));
             $tbody.append($row);
         });
