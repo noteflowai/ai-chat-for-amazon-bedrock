@@ -952,7 +952,7 @@ class AI_Chat_Bedrock_Admin {
 		echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'Managed prompt', 'ai-chat-for-amazon-bedrock' ) . '</legend>';
 		$this->text_input( 'prompt_id', '', 2048 );
 		echo '<br><label for="aicfab_field_prompt_version">' . esc_html__( 'Version', 'ai-chat-for-amazon-bedrock' ) . '</label> ';
-		echo '<input type="text" id="aicfab_field_prompt_version" class="small-text" name="ai_chat_bedrock_settings[prompt_version]" value="' . esc_attr( (string) $this->option( 'prompt_version', '' ) ) . '" maxlength="10" placeholder="DRAFT">';
+		echo '<input type="text" id="aicfab_field_prompt_version" name="ai_chat_bedrock_settings[prompt_version]" value="' . esc_attr( (string) $this->option( 'prompt_version', '' ) ) . '" size="10" maxlength="10" placeholder="DRAFT">';
 		echo '</fieldset>';
 		echo '<p class="description">' . esc_html__( 'Optional. Point at a prompt in Amazon Bedrock Prompt Management and its text replaces the system prompt above, so one prompt can be reviewed in AWS and reused by every site. The prompt must live in the same region as the chat. Leave the version empty to follow the draft.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 

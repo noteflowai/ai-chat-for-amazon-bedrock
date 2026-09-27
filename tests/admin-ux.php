@@ -193,7 +193,7 @@ check_ux( false !== strpos( $eval_js, 'button.disabled = on;' ) && 2 === substr_
 foreach ( array( 'max_tokens', 'temperature', 'rate_limit_per_minute', 'context_results' ) as $key ) {
 	check_ux( false !== strpos( $admin_source, 'id="aicfab_field_' . $key . '" class="small-text"' ), "{$key} uses the small-text width" );
 }
-check_ux( false !== strpos( $admin_source, '<br><label for="aicfab_field_prompt_version">' ) && false !== strpos( $admin_source, 'id="aicfab_field_prompt_version" class="small-text"' ), 'the prompt version is labelled on its own line' );
+check_ux( false !== strpos( $admin_source, '<br><label for="aicfab_field_prompt_version">' ) && false !== strpos( $admin_source, 'id="aicfab_field_prompt_version" name="ai_chat_bedrock_settings[prompt_version]"' ), 'the prompt version is labelled on its own line' );
 check_ux( false !== strpos( $admin_source, '<div class="aicfab-prompt-error notice notice-error inline"><p>' ), 'a prompt error is a standard inline notice' );
 check_ux( false === strpos( $admin_source, 'suggested_questions]" rows="4" class="large-text code"' ), 'suggested questions are prose, not code' );
 
