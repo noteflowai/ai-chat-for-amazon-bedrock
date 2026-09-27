@@ -27,6 +27,8 @@ function is_wp_error( $value ) { return $value instanceof WP_Error; }
 function wp_json_encode( $value, $flags = 0 ) { return json_encode( $value, $flags ); }
 function wp_parse_url( $url, $component = -1 ) { return parse_url( $url, $component ); }
 function apply_filters( $hook, $value ) { return $value; }
+function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ) { return true; }
+function remove_filter( $hook, $callback, $priority = 10 ) { return true; }
 function wp_salt() { return 'test-salt'; }
 $GLOBALS['aicfab_test_transients'] = array();
 function get_transient( $key ) { return isset( $GLOBALS['aicfab_test_transients'][ $key ] ) ? $GLOBALS['aicfab_test_transients'][ $key ] : false; }

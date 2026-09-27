@@ -268,6 +268,51 @@ class AI_Chat_Bedrock_AWS {
 	}
 
 	/**
+	 * Send a request to an AWS endpoint through the WordPress HTTP API.
+	 *
+	 * WordPress's wp_safe_remote_*() refuses a host that resolves to a private address. An interface VPC
+	 * endpoint with private DNS does exactly that to bedrock-runtime.<region>.amazonaws.com (and to
+	 * STS and the other Bedrock services), so on EC2, ECS or EKS in such a VPC every non-streaming
+	 * call failed with "could not be reached". For the one AWS host of this request, and only while
+	 * it runs, that check is waived; the rest of wp_http_validate_url() (scheme, port, no user or
+	 * password in the URL) still applies, and any other host is still refused.
+	 *
+	 * @param string $method GET or POST.
+	 * @param string $url    Request URL.
+	 * @param array  $args   Arguments for wp_safe_remote_get() or wp_safe_remote_post().
+	 * @return array|WP_Error Response, or an error.
+	 */
+	private static function aws_remote( $method, $url, $args ) {
+		$host  = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+		$allow = null;
+		if ( self::is_aws_host( $host ) ) {
+			$allow = static function ( $external, $requested ) use ( $host ) {
+				return $external || strtolower( (string) $requested ) === $host;
+			};
+			add_filter( 'http_request_host_is_external', $allow, 10, 2 );
+		}
+		try {
+			return 'GET' === $method ? wp_safe_remote_get( $url, $args ) : wp_safe_remote_post( $url, $args );
+		} finally {
+			if ( $allow ) {
+				remove_filter( 'http_request_host_is_external', $allow, 10 );
+			}
+		}
+	}
+
+	/**
+	 * Whether a host name belongs to an AWS service endpoint: *.amazonaws.com, the China regions'
+	 * *.amazonaws.com.cn, or the dual-stack *.api.aws. VPC endpoint-specific names
+	 * (vpce-….bedrock-runtime.<region>.vpce.amazonaws.com) are included.
+	 *
+	 * @param string $host Host name.
+	 * @return bool
+	 */
+	public static function is_aws_host( $host ) {
+		return 1 === preg_match( '/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:amazonaws\.com|amazonaws\.com\.cn|api\.aws)$/', (string) $host );
+	}
+
+	/**
 	 * Create an embedding vector for one piece of text.
 	 *
 	 * Titan and Cohere use different request and response shapes, so both are
@@ -1188,7 +1233,8 @@ class AI_Chat_Bedrock_AWS {
 				'payload_bytes' => strlen( $body ),
 			)
 		);
-		$response = wp_safe_remote_post(
+		$response = self::aws_remote(
+			'POST',
 			$endpoint,
 			array(
 				'timeout'            => max( 10, min( 300, $timeout ) ),
@@ -1483,7 +1529,8 @@ class AI_Chat_Bedrock_AWS {
 			return new WP_Error( 'aicfab_encode_failed', __( 'The retrieval request could not be encoded.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
-		$response = wp_safe_remote_post(
+		$response = self::aws_remote(
+			'POST',
 			$endpoint,
 			array(
 				'timeout'            => 20,
@@ -1547,7 +1594,8 @@ class AI_Chat_Bedrock_AWS {
 			return $headers;
 		}
 
-		$response = wp_safe_remote_get(
+		$response = self::aws_remote(
+			'GET',
 			$endpoint,
 			array(
 				'timeout'            => 10,
@@ -1606,7 +1654,8 @@ class AI_Chat_Bedrock_AWS {
 		$host_prefix = preg_match( '/^[a-z][a-z0-9-]{0,40}$/', (string) $host_prefix ) ? (string) $host_prefix : 'bedrock';
 		$endpoint    = $this->service_endpoint( $host_prefix ) . $path;
 		$headers     = $this->signed_headers( $endpoint, '', 'GET' );
-		$response    = wp_safe_remote_get(
+		$response    = self::aws_remote(
+			'GET',
 			$endpoint,
 			array(
 				'timeout'            => 15,

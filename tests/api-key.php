@@ -64,6 +64,12 @@ function wp_parse_url( $url, $component = -1 ) {
 function apply_filters( $hook, $value ) {
 	return $value;
 }
+function add_filter( $hook, $callback, $priority = 10, $accepted_args = 1 ) {
+	return true;
+}
+function remove_filter( $hook, $callback, $priority = 10 ) {
+	return true;
+}
 function wp_salt() {
 	return 'test-salt';
 }
