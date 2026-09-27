@@ -394,6 +394,13 @@
     margin: 8px 0;
 }
 
+/* A policy is read line by line: scroll sideways rather than break a statement */
+.aicfab-policy {
+    white-space: pre;
+    overflow-wrap: normal;
+    overflow-x: auto;
+}
+
 /* Per-role request limits */
 .aicfab-role-limits {
     border-collapse: collapse;
@@ -514,7 +521,8 @@
 	display: inline;
 }
 
-.aicfab-profile-form {
+.aicfab-profile-form,
+.aicfab-generator-form {
 	max-width: 820px;
 }
 

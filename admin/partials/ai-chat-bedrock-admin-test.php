@@ -24,8 +24,9 @@ $temperature = isset( $options['temperature'] ) ? (float) $options['temperature'
 	</div>
 	<h2><?php esc_html_e( 'Current model settings', 'ai-chat-for-amazon-bedrock' ); ?></h2>
 	<table class="widefat striped"><tbody>
-		<tr><th><?php esc_html_e( 'Model', 'ai-chat-for-amazon-bedrock' ); ?></th><td><?php echo esc_html( $model_name ); ?></td></tr>
-		<tr><th><?php esc_html_e( 'Maximum tokens', 'ai-chat-for-amazon-bedrock' ); ?></th><td><?php echo esc_html( $max_tokens ); ?></td></tr>
-		<tr><th><?php esc_html_e( 'Temperature', 'ai-chat-for-amazon-bedrock' ); ?></th><td><?php echo esc_html( $temperature ); ?></td></tr>
+		<tr><th scope="row"><?php esc_html_e( 'Model', 'ai-chat-for-amazon-bedrock' ); ?></th><td><?php echo esc_html( $model_name ); ?></td></tr>
+		<tr><th scope="row"><?php esc_html_e( 'Maximum tokens', 'ai-chat-for-amazon-bedrock' ); ?></th><td><?php echo esc_html( $max_tokens ); ?></td></tr>
+		<tr><th scope="row"><?php esc_html_e( 'Temperature', 'ai-chat-for-amazon-bedrock' ); ?></th><td><?php echo esc_html( $temperature ); ?></td></tr>
 	</tbody></table>
+	<p><a href="<?php echo esc_url( admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings&tab=model' ) ); ?>"><?php esc_html_e( 'Change the model settings', 'ai-chat-for-amazon-bedrock' ); ?></a></p>
 </div>

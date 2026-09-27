@@ -56,10 +56,11 @@ $aicfab_runs  = AI_Chat_Bedrock_Eval::runs();
 	<p>
 		<button type="button" class="button" id="aicfab-eval-add"><?php esc_html_e( 'Add a case', 'ai-chat-for-amazon-bedrock' ); ?></button>
 		<button type="button" class="button" id="aicfab-eval-propose"><?php esc_html_e( 'Propose from recorded questions', 'ai-chat-for-amazon-bedrock' ); ?></button>
-		<button type="button" class="button button-primary" id="aicfab-eval-save"><?php esc_html_e( 'Save cases', 'ai-chat-for-amazon-bedrock' ); ?></button>
-		<button type="button" class="button button-primary" id="aicfab-eval-run"><?php esc_html_e( 'Run the checks', 'ai-chat-for-amazon-bedrock' ); ?></button>
+		<button type="button" class="button" id="aicfab-eval-save"><?php esc_html_e( 'Save cases', 'ai-chat-for-amazon-bedrock' ); ?></button>
+		<button type="button" class="button button-primary" id="aicfab-eval-run" aria-describedby="aicfab-eval-run-note"><?php esc_html_e( 'Save and run the checks', 'ai-chat-for-amazon-bedrock' ); ?></button>
 		<span id="aicfab-eval-status" role="status"></span>
 	</p>
+	<p class="description" id="aicfab-eval-run-note"><?php esc_html_e( 'Running saves the cases as shown first. Each case is one Amazon Bedrock request.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 
 	<div id="aicfab-eval-proposals" hidden>
 		<h3><?php esc_html_e( 'Proposed from recorded questions', 'ai-chat-for-amazon-bedrock' ); ?></h3>

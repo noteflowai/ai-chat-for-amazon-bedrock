@@ -43,6 +43,14 @@ function is_wp_error( $value ) { return $value instanceof WP_Error; }
 function wp_safe_redirect( $url ) { throw new AicfabUxRedirect( $url ); }
 function add_action() {}
 function add_filter() {}
+class AicfabUxJson extends RuntimeException {}
+$GLOBALS['aicfab_ux_meta']    = array();
+$GLOBALS['aicfab_ux_referer'] = true;
+function get_current_user_id() { return 7; }
+function update_user_meta( $user, $key, $value ) { $GLOBALS['aicfab_ux_meta'][ $user ][ $key ] = $value; return true; }
+function check_ajax_referer( $action, $arg = false, $stop = true ) { return 'ai_chat_bedrock_dismiss_setup_notice' === $action && $GLOBALS['aicfab_ux_referer'] ? 1 : false; }
+function wp_send_json_success( $data = null ) { throw new AicfabUxJson( 'success' ); }
+function wp_send_json_error( $data = null, $status = null ) { throw new AicfabUxJson( 'error ' . $status ); }
 
 class WP_Error {
 	private $message;
@@ -164,6 +172,52 @@ foreach ( array( 'ai_chat_bedrock_enable_mcp', 'ai_chat_bedrock_mcp_public_acces
 }
 check_ux( false !== strpos( $mcp, 'id="aicfab-mcp-instant"' ), 'the saves-immediately note exists' );
 check_ux( false !== strpos( $mcp_js, "addEventListener( 'hashchange'" ) && false !== strpos( $mcp_js, 'history.replaceState' ), 'MCP sections follow and update the address' );
+
+// Content generator: one control per row, hints in descriptions rather than placeholders
+// that vanish on typing, and no inline styles.
+$generator = file_get_contents( dirname( __DIR__ ) . '/admin/partials/ai-chat-bedrock-admin-generator.php' );
+check_ux( false === strpos( $generator, 'style=' ), 'the generator view has no inline styles' );
+check_ux( 1 === preg_match( '#<th scope="row"><label for="aicfab_length">#', $generator ), 'the draft length has a row of its own' );
+check_ux( 1 === preg_match( '/id="aicfab_language"[^>]*aria-describedby="aicfab_language_help"/', $generator ) && false === strpos( $generator, "placeholder=\"<?php esc_attr_e( 'Leave empty" ), 'the language hint is a description, not a placeholder' );
+check_ux( 0 === substr_count( $generator, '<div class="notice notice-success">' ) + substr_count( $generator, '<div class="notice notice-error">' ), 'the generator notices can be dismissed' );
+
+// Answer checks: one primary action, the run saves what is on screen, nothing sends twice.
+$eval    = file_get_contents( dirname( __DIR__ ) . '/admin/partials/ai-chat-bedrock-admin-eval.php' );
+$eval_js = file_get_contents( dirname( __DIR__ ) . '/admin/js/ai-chat-bedrock-eval.js' );
+check_ux( 1 === substr_count( $eval, 'button-primary' ), 'the answer checks screen has one primary button' );
+check_ux( 1 === preg_match( "/'aicfab-eval-run'.*?save\(\)\.then/s", $eval_js ), 'running the checks saves the table first' );
+check_ux( false !== strpos( $eval_js, 'button.disabled = on;' ) && 2 === substr_count( $eval_js, 'busy( true );' ), 'the buttons are disabled while a request is out' );
+
+// Settings fields: numbers use the core width class, the prompt version has its own line
+// and label, and a failed prompt read is a standard inline notice.
+foreach ( array( 'max_tokens', 'temperature', 'rate_limit_per_minute', 'context_results' ) as $key ) {
+	check_ux( false !== strpos( $admin_source, 'id="aicfab_field_' . $key . '" class="small-text"' ), "{$key} uses the small-text width" );
+}
+check_ux( false !== strpos( $admin_source, '<br><label for="aicfab_field_prompt_version">' ) && false !== strpos( $admin_source, 'id="aicfab_field_prompt_version" name="ai_chat_bedrock_settings[prompt_version]"' ), 'the prompt version is labelled on its own line' );
+check_ux( false !== strpos( $admin_source, '<div class="aicfab-prompt-error notice notice-error inline"><p>' ), 'a prompt error is a standard inline notice' );
+check_ux( false === strpos( $admin_source, 'suggested_questions]" rows="4" class="large-text code"' ), 'suggested questions are prose, not code' );
+
+// The setup notice can be dismissed, and the dismissal is remembered for the user.
+check_ux( false !== strpos( $admin_source, 'notice-warning is-dismissible aicfab-setup-notice' ), 'the setup notice has a dismiss button' );
+check_ux( false !== strpos( $admin_source, "update_user_meta( get_current_user_id(), 'aicfab_dismissed_setup_notice', 1 )" ), 'dismissing the setup notice is remembered' );
+foreach ( array( false => 'error 403', true => 'success' ) as $valid => $expected ) {
+	$GLOBALS['aicfab_ux_referer'] = (bool) $valid;
+	$GLOBALS['aicfab_ux_meta']    = array();
+	try {
+		$admin->ajax_dismiss_setup_notice();
+		check_ux( false, 'the dismissal answers with JSON' );
+	} catch ( AicfabUxJson $json ) {
+		check_ux( $expected === $json->getMessage(), "a dismissal with a valid nonce: {$valid}, answers {$expected}" );
+		check_ux( (bool) $valid === ! empty( $GLOBALS['aicfab_ux_meta'][7]['aicfab_dismissed_setup_notice'] ), 'only a checked request is remembered' );
+	}
+}
+$loader = file_get_contents( dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock.php' );
+check_ux( false !== strpos( $loader, "'wp_ajax_ai_chat_bedrock_dismiss_setup_notice', \$admin, 'ajax_dismiss_setup_notice'" ), 'the dismissal request is handled' );
+
+// Diagnostics lists its fixes as a list, and Test Chat labels its rows and links to the settings.
+check_ux( false !== strpos( $diagnostics, '<ul class="ul-disc">' ), 'the common fixes read as a bulleted list' );
+$test_view = file_get_contents( dirname( __DIR__ ) . '/admin/partials/ai-chat-bedrock-admin-test.php' );
+check_ux( 3 === substr_count( $test_view, '<th scope="row">' ) && false !== strpos( $test_view, 'tab=model' ), 'the test screen labels its rows and links to the model settings' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

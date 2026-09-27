@@ -25,20 +25,20 @@ $lengths        = AI_Chat_Bedrock_Content_Generator::lengths();
 	<p class="aicfab-lede"><?php esc_html_e( 'Turn a topic into a draft post with your configured Amazon Bedrock model. Output is always saved as a draft for you to review, edit and publish yourself.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 
 	<?php if ( 'draft' === $state && $draft instanceof WP_Post ) : ?>
-		<div class="notice notice-success">
+		<div class="notice notice-success is-dismissible">
 			<p>
 				<?php
 				printf(
 					/* translators: %s: draft title. */
-					esc_html__( 'Draft created: %s', 'ai-chat-for-amazon-bedrock' ),
+					esc_html__( 'Draft created: %s.', 'ai-chat-for-amazon-bedrock' ),
 					'<strong>' . esc_html( get_the_title( $draft ) ) . '</strong>'
 				);
 				?>
-				<a class="button button-primary" style="margin-left:10px" href="<?php echo esc_url( get_edit_post_link( $draft->ID ) ); ?>"><?php esc_html_e( 'Open in editor', 'ai-chat-for-amazon-bedrock' ); ?></a>
+				<a href="<?php echo esc_url( get_edit_post_link( $draft->ID ) ); ?>"><?php esc_html_e( 'Open in editor', 'ai-chat-for-amazon-bedrock' ); ?></a>
 			</p>
 		</div>
 	<?php elseif ( '' !== $state && 'draft' !== $state ) : ?>
-		<div class="notice notice-error">
+		<div class="notice notice-error is-dismissible">
 			<p>
 				<?php
 				$messages = array(
@@ -53,7 +53,7 @@ $lengths        = AI_Chat_Bedrock_Content_Generator::lengths();
 		</div>
 	<?php endif; ?>
 
-	<div class="aicfab-panel" style="max-width: 820px;">
+	<div class="aicfab-panel aicfab-generator-form">
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<?php wp_nonce_field( 'ai_chat_bedrock_generate_content' ); ?>
 			<input type="hidden" name="action" value="ai_chat_bedrock_generate_content">
@@ -79,7 +79,11 @@ $lengths        = AI_Chat_Bedrock_Content_Generator::lengths();
 								<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $label ); ?></option>
 							<?php endforeach; ?>
 						</select>
-						<label style="margin-left:14px" for="aicfab_length"><?php esc_html_e( 'Length', 'ai-chat-for-amazon-bedrock' ); ?></label>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="aicfab_length"><?php esc_html_e( 'Length', 'ai-chat-for-amazon-bedrock' ); ?></label></th>
+					<td>
 						<select id="aicfab_length" name="length">
 							<?php foreach ( $lengths as $key => $length ) : ?>
 								<option value="<?php echo esc_attr( $key ); ?>" <?php selected( 'medium', $key ); ?>><?php echo esc_html( $length['label'] ); ?></option>
@@ -90,14 +94,15 @@ $lengths        = AI_Chat_Bedrock_Content_Generator::lengths();
 				<tr>
 					<th scope="row"><label for="aicfab_language"><?php esc_html_e( 'Language', 'ai-chat-for-amazon-bedrock' ); ?></label></th>
 					<td>
-						<input type="text" id="aicfab_language" name="language" class="regular-text" maxlength="60" placeholder="<?php esc_attr_e( 'Leave empty to match the topic language', 'ai-chat-for-amazon-bedrock' ); ?>">
+						<input type="text" id="aicfab_language" name="language" class="regular-text" maxlength="60" aria-describedby="aicfab_language_help">
+						<p class="description" id="aicfab_language_help"><?php esc_html_e( 'Leave empty to write in the language of the topic.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 					</td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="aicfab_notes"><?php esc_html_e( 'Source notes', 'ai-chat-for-amazon-bedrock' ); ?></label></th>
 					<td>
-						<textarea id="aicfab_notes" name="notes" rows="6" class="large-text" maxlength="2000" placeholder="<?php esc_attr_e( 'Optional facts the draft should rely on. Treated as data, never as instructions.', 'ai-chat-for-amazon-bedrock' ); ?>"></textarea>
-						<p class="description"><?php esc_html_e( 'The model is instructed not to invent statistics, quotes, prices, dates or named sources. Review every draft before publishing.', 'ai-chat-for-amazon-bedrock' ); ?></p>
+						<textarea id="aicfab_notes" name="notes" rows="6" class="large-text" maxlength="2000" aria-describedby="aicfab_notes_help"></textarea>
+						<p class="description" id="aicfab_notes_help"><?php esc_html_e( 'Optional facts the draft should rely on. They are treated as data, never as instructions. The model is told not to invent statistics, quotes, prices, dates or named sources; review every draft before publishing.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 					</td>
 				</tr>
 			</table>
