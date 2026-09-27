@@ -257,6 +257,8 @@ check_ux( 4 <= substr_count( $conversations, '_n(' ) && 4 <= substr_count( $dash
 check_ux( false !== strpos( $conversations, "get_option( 'date_format' ) . ' ' . get_option( 'time_format' )" ) && false === strpos( $conversations, "'Y-m-d H:i'" ), 'log times follow the site date format' );
 check_ux( false !== strpos( $conversations, "'stream'  => __( 'Chat, streamed'" ) || false !== strpos( $conversations, "'Chat, streamed'" ), 'log sources are shown by name' );
 check_ux( false !== strpos( $conversations, '<div class="aicfab-table-scroll">' ), 'the log table scrolls on its own on a narrow screen' );
+$admin_css = file_get_contents( dirname( __DIR__ ) . '/admin/css/ai-chat-bedrock-admin.css' );
+check_ux( 1 === preg_match( '/\.aicfab-table-scroll \{[^}]*position: relative;[^}]*overflow-x: auto;/', $admin_css ), 'screen reader text in a scrolling table is clipped with it, not widening the page' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
