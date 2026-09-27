@@ -158,8 +158,9 @@ class AI_Chat_Bedrock_Rate_Limits {
 	public static function describe( $fallback ) {
 		$limits = self::all();
 		if ( empty( $limits ) ) {
-			/* translators: %d: requests per minute. */
-			return sprintf( __( 'Every visitor gets %d requests per minute.', 'ai-chat-for-amazon-bedrock' ), max( 1, (int) $fallback ) );
+			$per_minute = max( 1, (int) $fallback );
+			/* translators: %s: requests per minute. */
+			return sprintf( _n( 'Every visitor gets %s request per minute.', 'Every visitor gets %s requests per minute.', $per_minute, 'ai-chat-for-amazon-bedrock' ), number_format_i18n( $per_minute ) );
 		}
 
 		$names = self::roles();

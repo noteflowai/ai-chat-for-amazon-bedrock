@@ -28,9 +28,16 @@ $aicfab_paged  = isset( $_GET['paged'] ) ? absint( wp_unslash( $_GET['paged'] ) 
 $aicfab_log    = isset( $_GET['aicfab-log'] ) ? sanitize_key( wp_unslash( $_GET['aicfab-log'] ) ) : '';
 // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-$sources = array( 'chat', 'stream', 'editor', 'ability' );
-$source  = in_array( $source, $sources, true ) ? $source : '';
+$sources = array(
+	'chat'    => __( 'Chat', 'ai-chat-for-amazon-bedrock' ),
+	'stream'  => __( 'Chat, streamed', 'ai-chat-for-amazon-bedrock' ),
+	'editor'  => __( 'Editor tools', 'ai-chat-for-amazon-bedrock' ),
+	'ability' => __( 'Abilities API', 'ai-chat-for-amazon-bedrock' ),
+);
+$source  = isset( $sources[ $source ] ) ? $source : '';
 $rating  = in_array( $rating, array( 'up', 'down', 'none' ), true ) ? $rating : '';
+// Times follow the site's date and time formats, as they do everywhere else in the admin.
+$aicfab_datetime = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
 
 $results    = AI_Chat_Bedrock_Conversations::query(
 	array(
@@ -74,11 +81,16 @@ $filter_url = add_query_arg(
 	<?php else : ?>
 		<p class="aicfab-lede">
 			<?php
-			printf(
-				/* translators: 1: number of stored entries, 2: retention in days. */
-				esc_html__( 'Storing the most recent %1$d exchanges for up to %2$d days. Inform your visitors that chat content is recorded.', 'ai-chat-for-amazon-bedrock' ),
-				(int) $summary['count'],
-				(int) AI_Chat_Bedrock_Conversations::retention_days()
+			$aicfab_days = (int) AI_Chat_Bedrock_Conversations::retention_days();
+			echo esc_html(
+				sprintf(
+					/* translators: 1: number of stored exchanges, such as "12 exchanges", 2: retention, such as "30 days". */
+					__( 'Storing the most recent %1$s for up to %2$s. Inform your visitors that chat content is recorded.', 'ai-chat-for-amazon-bedrock' ),
+					/* translators: %s: number of stored exchanges. */
+					sprintf( _n( '%s exchange', '%s exchanges', (int) $summary['count'], 'ai-chat-for-amazon-bedrock' ), number_format_i18n( (int) $summary['count'] ) ),
+					/* translators: %s: number of days. */
+					sprintf( _n( '%s day', '%s days', $aicfab_days, 'ai-chat-for-amazon-bedrock' ), number_format_i18n( $aicfab_days ) )
+				)
 			);
 			?>
 		</p>
@@ -93,13 +105,15 @@ $filter_url = add_query_arg(
 			?>
 			<p>
 				<?php
-				printf(
-					/* translators: 1: number of questions asked, 2: number with no site content behind them, 3: percentage, 4: number of days. */
-					esc_html__( 'Of %1$s questions in the last %4$s days, %2$s had no site content behind the answer (%3$s%%). Those are subjects visitors expect you to cover.', 'ai-chat-for-amazon-bedrock' ),
-					esc_html( number_format_i18n( $aicfab_gap_summary['asked'] ) ),
-					esc_html( number_format_i18n( $aicfab_gap_summary['ungrounded'] ) ),
-					esc_html( number_format_i18n( $aicfab_gap_summary['percent'] ) ),
-					esc_html( number_format_i18n( $aicfab_gap_summary['days'] ) )
+				echo esc_html(
+					sprintf(
+						/* translators: 1: number of questions asked, 2: number with no site content behind them, 3: percentage, 4: number of days. */
+						_n( 'Of %1$s question in the last %4$s days, %2$s had no site content behind the answer (%3$s%%). Those are subjects visitors expect you to cover.', 'Of %1$s questions in the last %4$s days, %2$s had no site content behind the answer (%3$s%%). Those are subjects visitors expect you to cover.', (int) $aicfab_gap_summary['asked'], 'ai-chat-for-amazon-bedrock' ),
+						number_format_i18n( $aicfab_gap_summary['asked'] ),
+						number_format_i18n( $aicfab_gap_summary['ungrounded'] ),
+						number_format_i18n( $aicfab_gap_summary['percent'] ),
+						number_format_i18n( $aicfab_gap_summary['days'] )
+					)
 				);
 				?>
 			</p>
@@ -170,7 +184,7 @@ $filter_url = add_query_arg(
 					printf(
 						/* translators: %s: date of the oldest stored entry. */
 						esc_html__( 'Oldest entry: %s', 'ai-chat-for-amazon-bedrock' ),
-						esc_html( wp_date( 'Y-m-d H:i', (int) $summary['oldest'] ) )
+						esc_html( wp_date( $aicfab_datetime, (int) $summary['oldest'] ) )
 					);
 					?>
 				</p>
@@ -187,8 +201,8 @@ $filter_url = add_query_arg(
 			<label class="screen-reader-text" for="aicfab-log-source"><?php esc_html_e( 'Source', 'ai-chat-for-amazon-bedrock' ); ?></label>
 			<select id="aicfab-log-source" name="aicfab_source">
 				<option value=""><?php esc_html_e( 'All sources', 'ai-chat-for-amazon-bedrock' ); ?></option>
-				<?php foreach ( $sources as $option ) : ?>
-					<option value="<?php echo esc_attr( $option ); ?>" <?php selected( $source, $option ); ?>><?php echo esc_html( $option ); ?></option>
+				<?php foreach ( $sources as $option => $aicfab_source_label ) : ?>
+					<option value="<?php echo esc_attr( $option ); ?>" <?php selected( $source, $option ); ?>><?php echo esc_html( $aicfab_source_label ); ?></option>
 				<?php endforeach; ?>
 			</select>
 
@@ -225,16 +239,19 @@ $filter_url = add_query_arg(
 	<?php if ( ! empty( $entries ) ) : ?>
 		<p class="aicfab-log-count">
 			<?php
-			printf(
-				/* translators: 1: number of matching entries, 2: current page, 3: total pages. */
-				esc_html__( '%1$d matching entries, page %2$d of %3$d.', 'ai-chat-for-amazon-bedrock' ),
-				(int) $results['total'],
-				(int) $results['page'],
-				(int) $results['pages']
+			echo esc_html(
+				sprintf(
+					/* translators: 1: number of matching entries, 2: current page, 3: total pages. */
+					_n( '%1$s matching entry, page %2$s of %3$s.', '%1$s matching entries, page %2$s of %3$s.', (int) $results['total'], 'ai-chat-for-amazon-bedrock' ),
+					number_format_i18n( (int) $results['total'] ),
+					number_format_i18n( (int) $results['page'] ),
+					number_format_i18n( (int) $results['pages'] )
+				)
 			);
 			?>
 		</p>
 
+		<div class="aicfab-table-scroll">
 		<table class="widefat striped">
 			<thead>
 				<tr>
@@ -244,7 +261,7 @@ $filter_url = add_query_arg(
 					<th scope="col"><?php esc_html_e( 'Question', 'ai-chat-for-amazon-bedrock' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Answer', 'ai-chat-for-amazon-bedrock' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Rating', 'ai-chat-for-amazon-bedrock' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Tokens', 'ai-chat-for-amazon-bedrock' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Tokens (in / out)', 'ai-chat-for-amazon-bedrock' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -255,8 +272,8 @@ $filter_url = add_query_arg(
 					$symbol = 1 === $score ? __( 'Helpful', 'ai-chat-for-amazon-bedrock' ) : ( -1 === $score ? __( 'Not helpful', 'ai-chat-for-amazon-bedrock' ) : '—' );
 					?>
 					<tr>
-						<td><?php echo esc_html( wp_date( 'Y-m-d H:i', (int) $entry['time'] ) ); ?></td>
-						<td><?php echo esc_html( $entry['source'] ); ?></td>
+						<td><?php echo esc_html( wp_date( $aicfab_datetime, (int) $entry['time'] ) ); ?></td>
+						<td><?php echo esc_html( isset( $sources[ $entry['source'] ] ) ? $sources[ $entry['source'] ] : $entry['source'] ); ?></td>
 						<td><?php echo esc_html( $user ? $user->display_name : __( 'Guest', 'ai-chat-for-amazon-bedrock' ) ); ?></td>
 						<td><?php echo esc_html( wp_trim_words( $entry['question'], 22 ) ); ?></td>
 						<td><?php echo esc_html( wp_trim_words( $entry['answer'], 28 ) ); ?></td>
@@ -266,6 +283,7 @@ $filter_url = add_query_arg(
 				<?php endforeach; ?>
 			</tbody>
 		</table>
+		</div>
 
 		<?php if ( $results['pages'] > 1 ) : ?>
 			<div class="tablenav"><div class="tablenav-pages">

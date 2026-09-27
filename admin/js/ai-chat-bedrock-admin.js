@@ -8,13 +8,16 @@
         showNotice: function (message, type) {
             const allowed = ['success', 'error', 'warning', 'info'];
             type = allowed.indexOf(type) === -1 ? 'info' : type;
-            const $notice = $('<div>', { 'class': 'notice notice-' + type + ' is-dismissible' });
+            // One message at a time: repeated actions used to stack a notice per click.
+            $('.aicfab-js-notice').remove();
+            const $notice = $('<div>', { 'class': 'notice notice-' + type + ' is-dismissible aicfab-js-notice' });
             $notice.append($('<p>').text(String(message || '')));
-            const $button = $('<button>', { type: 'button', 'class': 'notice-dismiss' });
-            $button.append($('<span>', { 'class': 'screen-reader-text', text: 'Dismiss this notice.' }));
-            $notice.append($button);
             $('.wrap h1').first().after($notice);
-            $button.on('click', function () { $notice.remove(); });
+            // Core's common.js adds the dismiss button, with its translated label.
+            $(document).trigger('wp-updates-notice-added');
+            if (window.wp && window.wp.a11y && window.wp.a11y.speak) {
+                window.wp.a11y.speak(String(message || ''), 'error' === type ? 'assertive' : 'polite');
+            }
         },
 
         post: function (action, data) {
@@ -246,7 +249,7 @@
                 $result.empty();
                 if ( payload.edit_url ) {
                     $result.append(
-                        $( '<a>', { href: String( payload.edit_url ), 'class': 'button button-primary' } ).text( labels.generate_edit || '' )
+                        $( '<a>', { href: String( payload.edit_url ) } ).text( labels.generate_edit || '' )
                     );
                 }
                 if ( payload.fallback_model && labels.generate_fallback ) {

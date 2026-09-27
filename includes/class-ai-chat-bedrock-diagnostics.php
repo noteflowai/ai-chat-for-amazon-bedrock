@@ -213,9 +213,9 @@ class AI_Chat_Bedrock_Diagnostics {
 			__( 'Guest access', 'ai-chat-for-amazon-bedrock' ),
 			'warn',
 			sprintf(
-				/* translators: %d: requests allowed per visitor per minute. */
-				__( 'Guest chat is enabled with %d requests per visitor each minute. Confirm AWS Budgets and model pricing.', 'ai-chat-for-amazon-bedrock' ),
-				max( 1, $guest_limit )
+				/* translators: %s: requests allowed per visitor per minute. */
+				_n( 'Guest chat is enabled with %s request per visitor each minute. Confirm AWS Budgets and model pricing.', 'Guest chat is enabled with %s requests per visitor each minute. Confirm AWS Budgets and model pricing.', max( 1, $guest_limit ), 'ai-chat-for-amazon-bedrock' ),
+				number_format_i18n( max( 1, $guest_limit ) )
 			)
 		);
 	}

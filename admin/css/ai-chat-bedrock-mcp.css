@@ -13,20 +13,12 @@
     display: none !important;
 }
 
-/* MCP Servers table */
+/* MCP Servers table: core's widefat look, with the buttons centred on their row */
 #ai-chat-bedrock-mcp-servers-table {
     margin-top: 15px;
-    width: 100%;
-    border-collapse: collapse;
-}
-
-#ai-chat-bedrock-mcp-servers-table th {
-    text-align: left;
-    padding: 10px;
 }
 
 #ai-chat-bedrock-mcp-servers-table td {
-    padding: 10px;
     vertical-align: middle;
 }
 
@@ -52,7 +44,7 @@
 .ai-chat-bedrock-modal {
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 160000; /* above the admin menu and toolbar, as core's media modal is */
     left: 0;
     top: 0;
     width: 100%;
@@ -73,17 +65,26 @@
 }
 
 .ai-chat-bedrock-modal-close {
-    color: #aaa;
     float: right;
+    padding: 0 6px;
+    border: 0;
+    background: none;
+    color: #50575e;
     font-size: 28px;
-    font-weight: bold;
+    line-height: 1;
     cursor: pointer;
 }
 
 .ai-chat-bedrock-modal-close:hover,
 .ai-chat-bedrock-modal-close:focus {
-    color: black;
-    text-decoration: none;
+    color: #1d2327;
+}
+
+@media screen and (max-width: 782px) {
+    .ai-chat-bedrock-modal-content {
+        width: auto;
+        margin: 60px 12px;
+    }
 }
 
 /* Tool items in modal */

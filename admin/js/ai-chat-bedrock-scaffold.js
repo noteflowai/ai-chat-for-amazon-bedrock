@@ -78,6 +78,17 @@
 		return tr;
 	}
 
+	// Neither button may be pressed while the other is working: a new plan in the middle of
+	// creating drafts emptied the table the drafts were being written from.
+	function busy(on) {
+		['aicfab-scaffold-plan', 'aicfab-scaffold-create'].forEach(function (id) {
+			var button = document.getElementById(id);
+			if (button) {
+				button.disabled = on;
+			}
+		});
+	}
+
 	function planPages() {
 		var description = document.getElementById('aicfab-scaffold-description').value.trim();
 		if (!description) {
@@ -85,12 +96,13 @@
 			return;
 		}
 
-		var button = document.getElementById('aicfab-scaffold-plan');
-		button.disabled = true;
+		busy(true);
 		text('aicfab-scaffold-status', settings.i18n.thinking);
 
-		post('aicfab_scaffold_plan', { description: description }).then(function (response) {
-			button.disabled = false;
+		post('aicfab_scaffold_plan', { description: description }).catch(function () {
+			return { success: false };
+		}).then(function (response) {
+			busy(false);
 			if (!response.success) {
 				text('aicfab-scaffold-status', (response.data && response.data.message) || settings.i18n.unexpected);
 				return;
@@ -101,9 +113,14 @@
 				body.appendChild(row(page));
 			});
 			document.getElementById('aicfab-scaffold-plan-wrap').hidden = false;
-			text('aicfab-scaffold-status', settings.i18n.planReady.replace('%d', response.data.pages.length));
+			// Creating the drafts is the next step, so it becomes the one primary button.
+			document.getElementById('aicfab-scaffold-plan').classList.remove('button-primary');
+			text('aicfab-scaffold-status', response.data.message || '');
+			text('aicfab-scaffold-progress', '');
 		});
 	}
+
+	var counts = { created: 0, skipped: 0, failed: 0 };
 
 	function createNext(rows, index, description, done) {
 		if (index >= rows.length) {
@@ -115,6 +132,7 @@
 		var include = tr.querySelector('.aicfab-scaffold-include');
 		var result = tr.querySelector('.aicfab-scaffold-result');
 		if (!include.checked) {
+			counts.skipped++;
 			result.textContent = settings.i18n.skippedByYou;
 			createNext(rows, index + 1, description, done);
 			return;
@@ -125,12 +143,17 @@
 			description: description,
 			title: tr.querySelector('.aicfab-scaffold-title').value,
 			purpose: tr.querySelector('.aicfab-scaffold-purpose').textContent
+		}).catch(function () {
+			return { success: false };
 		}).then(function (response) {
 			if (!response.success) {
+				counts.failed++;
 				result.textContent = (response.data && response.data.message) || settings.i18n.unexpected;
 			} else if (response.data.skipped) {
+				counts.skipped++;
 				result.textContent = response.data.reason;
 			} else {
+				counts.created++;
 				result.textContent = '';
 				var link = document.createElement('a');
 				link.href = response.data.edit;
@@ -143,16 +166,21 @@
 	}
 
 	function createDrafts() {
-		var button = document.getElementById('aicfab-scaffold-create');
 		var description = document.getElementById('aicfab-scaffold-description').value.trim();
 		var rows = Array.prototype.slice.call(document.querySelectorAll('#aicfab-scaffold-plan-table tbody tr'));
 		if (!rows.length) {
 			return;
 		}
-		button.disabled = true;
+		counts = { created: 0, skipped: 0, failed: 0 };
+		busy(true);
 		createNext(rows, 0, description, function () {
-			button.disabled = false;
-			text('aicfab-scaffold-progress', settings.i18n.finished);
+			busy(false);
+			// Say what happened. This used to report every page as created, even when some
+			// had failed or been left out.
+			text('aicfab-scaffold-progress', settings.i18n.finished
+				.replace('%1$d', counts.created)
+				.replace('%2$d', counts.skipped)
+				.replace('%3$d', counts.failed));
 		});
 	}
 

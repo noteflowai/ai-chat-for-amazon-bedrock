@@ -357,7 +357,16 @@ class AI_Chat_Bedrock_Scaffold {
 		if ( is_wp_error( $specs ) ) {
 			wp_send_json_error( array( 'message' => $specs->get_error_message() ) );
 		}
-		wp_send_json_success( array( 'pages' => $specs ) );
+		wp_send_json_success(
+			array(
+				'pages'   => $specs,
+				'message' => sprintf(
+					/* translators: %s: number of pages proposed. */
+					_n( '%s page proposed. Review it before creating the draft.', '%s pages proposed. Review them before creating drafts.', count( $specs ), 'ai-chat-for-amazon-bedrock' ),
+					number_format_i18n( count( $specs ) )
+				),
+			)
+		);
 	}
 
 	/**

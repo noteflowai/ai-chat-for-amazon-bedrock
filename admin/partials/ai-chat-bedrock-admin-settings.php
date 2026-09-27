@@ -58,10 +58,12 @@ $base        = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings' )
 		?>
 		<div class="notice notice-success is-dismissible"><p>
 			<?php
-			printf(
-				/* translators: %s: number of items whose stored vectors were deleted. */
-				esc_html__( 'Index deleted: the vectors of %s items were removed.', 'ai-chat-for-amazon-bedrock' ),
-				esc_html( number_format_i18n( $aicfab_cleared ) )
+			echo esc_html(
+				sprintf(
+					/* translators: %s: number of items whose stored vectors were deleted. */
+					_n( 'Index deleted: the vectors of %s item were removed.', 'Index deleted: the vectors of %s items were removed.', $aicfab_cleared, 'ai-chat-for-amazon-bedrock' ),
+					number_format_i18n( $aicfab_cleared )
+				)
 			);
 			?>
 		</p></div>

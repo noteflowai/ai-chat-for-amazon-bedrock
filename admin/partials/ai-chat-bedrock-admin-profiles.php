@@ -77,12 +77,13 @@ $limits = array(
 						<td><?php echo esc_html( 'inherit' === $profile['enable_site_context'] ? __( 'Inherit', 'ai-chat-for-amazon-bedrock' ) : ( 'on' === $profile['enable_site_context'] ? __( 'On', 'ai-chat-for-amazon-bedrock' ) : __( 'Off', 'ai-chat-for-amazon-bedrock' ) ) ); ?></td>
 						<td><code>[ai_chat_bedrock profile="<?php echo esc_html( $key ); ?>"]</code></td>
 						<td>
-							<a class="button button-small" href="<?php echo esc_url( add_query_arg( 'edit', $key, admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-profiles' ) ) ); ?>"><?php esc_html_e( 'Edit', 'ai-chat-for-amazon-bedrock' ); ?></a>
+							<?php // Every row has the same two buttons, so each names its profile for screen readers. ?>
+							<a class="button button-small" href="<?php echo esc_url( add_query_arg( 'edit', $key, admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-profiles' ) ) ); ?>"><?php esc_html_e( 'Edit', 'ai-chat-for-amazon-bedrock' ); ?><span class="screen-reader-text"> <?php echo esc_html( $profile['label'] ); ?></span></a>
 							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="aicfab-inline-form" data-aicfab-confirm="<?php esc_attr_e( 'Delete this profile? Chats that use it fall back to the main settings.', 'ai-chat-for-amazon-bedrock' ); ?>">
 								<?php wp_nonce_field( 'ai_chat_bedrock_delete_profile' ); ?>
 								<input type="hidden" name="action" value="ai_chat_bedrock_delete_profile">
 								<input type="hidden" name="key" value="<?php echo esc_attr( $key ); ?>">
-								<button type="submit" class="button button-small"><?php esc_html_e( 'Delete', 'ai-chat-for-amazon-bedrock' ); ?></button>
+								<button type="submit" class="button button-small"><?php esc_html_e( 'Delete', 'ai-chat-for-amazon-bedrock' ); ?><span class="screen-reader-text"> <?php echo esc_html( $profile['label'] ); ?></span></button>
 							</form>
 						</td>
 					</tr>
@@ -135,7 +136,7 @@ $limits = array(
 				<tr>
 					<th scope="row"><label for="aicfab_profile_suggestions"><?php esc_html_e( 'Suggested questions', 'ai-chat-for-amazon-bedrock' ); ?></label></th>
 					<td>
-						<textarea id="aicfab_profile_suggestions" name="suggested_questions" rows="3" class="large-text code"><?php echo esc_textarea( $value( 'suggested_questions' ) ); ?></textarea>
+						<textarea id="aicfab_profile_suggestions" name="suggested_questions" rows="3" class="large-text"><?php echo esc_textarea( $value( 'suggested_questions' ) ); ?></textarea>
 						<p class="description"><?php esc_html_e( 'One per line, up to four. Leave empty to inherit the main settings.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 					</td>
 				</tr>
@@ -148,7 +149,7 @@ $limits = array(
 								<?php foreach ( $limits as $key => $aicfab_limit ) : ?>
 									<tr>
 										<th scope="row"><label for="aicfab_profile_<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $aicfab_limit[0] ); ?></label></th>
-										<td><input type="number" id="aicfab_profile_<?php echo esc_attr( $key ); ?>" name="<?php echo esc_attr( $key ); ?>" min="<?php echo esc_attr( $aicfab_limit[1] ); ?>" max="<?php echo esc_attr( $aicfab_limit[2] ); ?>" step="<?php echo esc_attr( $aicfab_limit[3] ); ?>" value="<?php echo esc_attr( $limit( $key ) ); ?>" placeholder="<?php echo esc_attr( $aicfab_limit[4] ); ?>"></td>
+										<td><input type="number" id="aicfab_profile_<?php echo esc_attr( $key ); ?>" class="small-text" name="<?php echo esc_attr( $key ); ?>" min="<?php echo esc_attr( $aicfab_limit[1] ); ?>" max="<?php echo esc_attr( $aicfab_limit[2] ); ?>" step="<?php echo esc_attr( $aicfab_limit[3] ); ?>" value="<?php echo esc_attr( $limit( $key ) ); ?>" placeholder="<?php echo esc_attr( $aicfab_limit[4] ); ?>"></td>
 									</tr>
 								<?php endforeach; ?>
 							</table>
