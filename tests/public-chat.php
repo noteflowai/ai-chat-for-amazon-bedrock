@@ -126,29 +126,66 @@ function rest_url( $path = '' ) {
 	return 'https://example.com/wp-json/' . $path;
 }
 function plugin_dir_url( $file ) {
-	return 'https://example.com/wp-content/plugins/ai-chat-for-amazon-bedrock/';
+	return 'https://example.com/wp-content/plugins/ai-chat-for-amazon-bedrock/' . basename( dirname( $file ) ) . '/';
 }
 function plugin_dir_path( $file ) {
 	return dirname( __DIR__ ) . '/public/';
 }
-function wp_register_script( ...$args ) {
+/*
+ * WordPress's asset registry, as far as it matters here: a handle is registered once. A later
+ * wp_register_*(), or a wp_enqueue_*() that brings a source, for a handle already taken changes
+ * nothing, and the first file stays. Localised data goes with the handle.
+ */
+$GLOBALS['aicfab_assets']       = array();
+$GLOBALS['aicfab_localized_on'] = array();
+function aicfab_asset_add( $type, $handle, $src, $deps ) {
+	if ( isset( $GLOBALS['aicfab_assets'][ $type ][ $handle ] ) ) {
+		return false;
+	}
+	$GLOBALS['aicfab_assets'][ $type ][ $handle ] = array( 'src' => $src, 'deps' => (array) $deps, 'enqueued' => false );
 	return true;
 }
-function wp_register_style( ...$args ) {
-	return true;
+function aicfab_asset_enqueue( $type, $handle, $src, $deps ) {
+	if ( '' !== $src ) {
+		aicfab_asset_add( $type, $handle, $src, $deps );
+	}
+	if ( isset( $GLOBALS['aicfab_assets'][ $type ][ $handle ] ) ) {
+		$GLOBALS['aicfab_assets'][ $type ][ $handle ]['enqueued'] = true;
+	}
 }
-function wp_enqueue_script( ...$args ) {
-	return true;
+function wp_register_script( $handle, $src = '', $deps = array(), ...$rest ) {
+	return aicfab_asset_add( 'script', $handle, $src, $deps );
 }
-function wp_enqueue_style( ...$args ) {
-	return true;
+function wp_register_style( $handle, $src = '', $deps = array(), ...$rest ) {
+	return aicfab_asset_add( 'style', $handle, $src, $deps );
+}
+function wp_enqueue_script( $handle, $src = '', $deps = array(), ...$rest ) {
+	aicfab_asset_enqueue( 'script', $handle, $src, $deps );
+}
+function wp_enqueue_style( $handle, $src = '', $deps = array(), ...$rest ) {
+	aicfab_asset_enqueue( 'style', $handle, $src, $deps );
 }
 function wp_localize_script( $handle, $name, $data ) {
-	$GLOBALS['aicfab_localized'][ $name ] = $data;
+	$GLOBALS['aicfab_localized'][ $name ]    = $data;
+	$GLOBALS['aicfab_localized_on'][ $name ] = $handle;
 	return true;
 }
+/** The file behind a handle, or '' for none. */
+function aicfab_file( $type, $handle ) {
+	return isset( $GLOBALS['aicfab_assets'][ $type ][ $handle ] ) ? basename( (string) parse_url( $GLOBALS['aicfab_assets'][ $type ][ $handle ]['src'], PHP_URL_PATH ) ) : '';
+}
+/** The files the page loads, of one type. */
+function aicfab_loaded( $type ) {
+	$files = array();
+	foreach ( isset( $GLOBALS['aicfab_assets'][ $type ] ) ? $GLOBALS['aicfab_assets'][ $type ] : array() as $handle => $asset ) {
+		if ( $asset['enqueued'] ) {
+			$files[] = aicfab_file( $type, $handle );
+		}
+	}
+	return $files;
+}
 function is_admin() {
-	return false;
+	return ! empty( $GLOBALS['aicfab_is_admin'] );
 }
 function shortcode_atts( $pairs, $atts, $shortcode = '' ) {
 	$atts = (array) $atts;
@@ -270,6 +307,9 @@ class AI_Chat_Bedrock_Conversations {
 class AI_Chat_Bedrock_Feedback {
 	const REST_ROUTE = '/feedback';
 }
+class AI_Chat_Bedrock_Generator_Stream {
+	const REST_ROUTE = '/generate';
+}
 
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-profiles.php';
@@ -278,6 +318,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-request.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wp-mcp-server.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-stream.php';
 require dirname( __DIR__ ) . '/public/class-ai-chat-bedrock-public.php';
+require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 
 function aicfab_reset_pub( $settings = array() ) {
 	$GLOBALS['aicfab_transients'] = array();
@@ -468,6 +509,52 @@ check_pub( false !== strpos( $aicfab_good, 'height: 42rem' ), 'A valid height is
 
 $aicfab_hostile_title = $aicfab_public->display_chat_interface( array( 'title' => '<script>alert(1)</script>Hi' ) );
 check_pub( false === strpos( $aicfab_hostile_title, '<script>alert(1)</script>' ), 'A script tag in the title is not rendered.' );
+
+// --- The Test Chat screen in wp-admin ------------------------------------------
+
+/*
+ * The screen renders the shortcode inside wp-admin, so the admin assets are enqueued first
+ * (admin_enqueue_scripts) and the chat's own when the shortcode runs. Both have to reach the page,
+ * each with its own data. While they shared a handle, the chat there had neither its script nor
+ * its styles: a chat box that did nothing.
+ */
+aicfab_reset_pub();
+$GLOBALS['aicfab_assets']       = array();
+$GLOBALS['aicfab_localized']    = array();
+$GLOBALS['aicfab_localized_on'] = array();
+$GLOBALS['aicfab_is_admin']     = true;
+$GLOBALS['aicfab_logged_in']    = true;
+$aicfab_admin                   = new AI_Chat_Bedrock_Admin( 'ai-chat-for-amazon-bedrock', 'test' );
+$aicfab_admin->enqueue_styles( 'ai-chat-bedrock_page_ai-chat-for-amazon-bedrock-test' );
+$aicfab_admin->enqueue_scripts( 'ai-chat-bedrock_page_ai-chat-for-amazon-bedrock-test' );
+$aicfab_test_screen = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array( 'width' => '600px', 'height' => '500px' ) );
+
+check_pub( false !== strpos( $aicfab_test_screen, 'ai-chat-bedrock-container' ), 'The Test Chat screen renders the chat.' );
+check_pub( in_array( 'ai-chat-bedrock-public.js', aicfab_loaded( 'script' ), true ), 'The Test Chat screen loads the chat script.' );
+check_pub( in_array( 'ai-chat-bedrock-public.css', aicfab_loaded( 'style' ), true ), 'The Test Chat screen loads the chat styles.' );
+check_pub( in_array( 'ai-chat-bedrock-admin.js', aicfab_loaded( 'script' ), true ), 'The admin script still loads there.' );
+check_pub( in_array( 'ai-chat-bedrock-admin.css', aicfab_loaded( 'style' ), true ), 'The admin styles still load there.' );
+check_pub(
+	'ai-chat-bedrock-public.js' === aicfab_file( 'script', $GLOBALS['aicfab_localized_on']['ai_chat_bedrock_params'] ?? '' ),
+	'The chat parameters go with the chat script.'
+);
+check_pub(
+	'ai-chat-bedrock-admin.js' === aicfab_file( 'script', $GLOBALS['aicfab_localized_on']['ai_chat_bedrock_admin'] ?? '' ),
+	'The admin parameters go with the admin script.'
+);
+
+// The MCP screen's script names the admin script as a dependency, by handle.
+$GLOBALS['aicfab_assets'] = array();
+$aicfab_admin->enqueue_scripts( 'ai-chat-bedrock_page_ai-chat-for-amazon-bedrock-mcp' );
+$aicfab_mcp_deps = $GLOBALS['aicfab_assets']['script']['ai-chat-for-amazon-bedrock-mcp']['deps'] ?? array();
+check_pub( in_array( 'ai-chat-bedrock-admin.js', array_map( function ( $handle ) { return aicfab_file( 'script', $handle ); }, $aicfab_mcp_deps ), true ), 'The MCP script depends on the admin script.' );
+
+// The front end still uses the plain plugin name, which themes may dequeue by.
+$GLOBALS['aicfab_assets']   = array();
+$GLOBALS['aicfab_is_admin'] = false;
+( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array() );
+check_pub( 'ai-chat-bedrock-public.js' === aicfab_file( 'script', 'ai-chat-for-amazon-bedrock' ), 'The chat script keeps its handle.' );
+check_pub( 'ai-chat-bedrock-public.css' === aicfab_file( 'style', 'ai-chat-for-amazon-bedrock' ), 'The chat styles keep their handle.' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

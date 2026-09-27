@@ -29,7 +29,7 @@ class AI_Chat_Bedrock_Admin {
 		if ( ! $this->is_plugin_screen( $hook_suffix ) ) {
 			return;
 		}
-		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/ai-chat-bedrock-admin.css', array(), $this->version );
+		wp_enqueue_style( $this->admin_handle(), plugin_dir_url( __FILE__ ) . 'css/ai-chat-bedrock-admin.css', array(), $this->version );
 		if ( false !== strpos( $hook_suffix, $this->plugin_name . '-mcp' ) ) {
 			wp_enqueue_style( $this->plugin_name . '-mcp', plugin_dir_url( __FILE__ ) . 'css/ai-chat-bedrock-mcp.css', array(), $this->version );
 		}
@@ -39,7 +39,7 @@ class AI_Chat_Bedrock_Admin {
 		if ( ! $this->is_plugin_screen( $hook_suffix ) ) {
 			return;
 		}
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-admin.js', array( 'jquery' ), $this->version, true );
+		wp_enqueue_script( $this->admin_handle(), plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-admin.js', array( 'jquery' ), $this->version, true );
 
 		if ( false !== strpos( (string) $hook_suffix, $this->plugin_name . '-eval' ) ) {
 			wp_enqueue_script( $this->plugin_name . '-eval', plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-eval.js', array(), $this->version, true );
@@ -109,7 +109,7 @@ class AI_Chat_Bedrock_Admin {
 			);
 		}
 		wp_localize_script(
-			$this->plugin_name,
+			$this->admin_handle(),
 			'ai_chat_bedrock_admin',
 			array(
 				'ajax_url'     => admin_url( 'admin-ajax.php' ),
@@ -160,7 +160,7 @@ class AI_Chat_Bedrock_Admin {
 			)
 		);
 		if ( false !== strpos( $hook_suffix, $this->plugin_name . '-mcp' ) ) {
-			wp_enqueue_script( $this->plugin_name . '-mcp', plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-mcp.js', array( 'jquery', $this->plugin_name ), $this->version, true );
+			wp_enqueue_script( $this->plugin_name . '-mcp', plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-mcp.js', array( 'jquery', $this->admin_handle() ), $this->version, true );
 		}
 	}
 
@@ -1239,6 +1239,15 @@ class AI_Chat_Bedrock_Admin {
 		$this->notice( 'aicfab_settings_saved', __( 'Settings saved.', 'ai-chat-for-amazon-bedrock' ), 'success' );
 
 		return $output;
+	}
+
+	/**
+	 * The handle of the admin script and stylesheet. The chat's own assets use the bare plugin name,
+	 * and the Test Chat screen needs both: sharing the handle made WordPress keep whichever was
+	 * registered first, the admin one, so the chat there had neither its script nor its styles.
+	 */
+	private function admin_handle() {
+		return $this->plugin_name . '-admin';
 	}
 
 	private function is_plugin_screen( $hook_suffix ) {
