@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.46.0
+Stable tag: 1.47.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -372,6 +372,9 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.47.0 =
+* Export the Content gaps panel as CSV for editorial planning. Administrators can download the same ranked gaps from the last 30 days, with occurrence counts, the latest question time in UTC, and grounding counts for the exchanges contributing to each gap. Downloads require a nonce, preserve CSV quoting and backslashes, and neutralize spreadsheet formulas. No new data is collected or sent to Bedrock.
+
 = 1.46.0 =
 * Connect with an Amazon Bedrock API key. Until now a first answer needed an IAM user, an access key pair and a policy, which is where most new sites stopped. Paste one key from the Bedrock console into the settings, define `AI_CHAT_BEDROCK_API_KEY` in `wp-config.php`, or set `AWS_BEARER_TOKEN_BEDROCK`. The key is stored encrypted and withheld from settings exports. It covers chat, streaming, the model list and embeddings; Knowledge Bases, Prompt Management and AgentCore Gateway do not accept API keys, so they keep using a role or access keys and say so instead of failing unsigned. The generated IAM policy adds `bedrock:CallWithBearerToken` when a key is configured, and Diagnostics warns about short-term keys that expire within 12 hours.
 * OpenAI gpt-oss, Qwen3, DeepSeek R1, Llama 4, Mistral Large, Kimi and the other chat models in the model list now answer properly. They were sent a plain "User: ... Assistant:" prompt, which gpt-oss and Qwen3 rejected outright and DeepSeek R1 answered by writing both sides of the conversation. They now go through the Bedrock Converse API, which applies each model's own chat format; checked by invoking each one, buffered and streamed. A configured guardrail is sent in the Converse request body, because Converse ignores the headers used before. When a model refuses temperature or a system prompt, the request is retried once without it and the model is remembered.
@@ -733,6 +736,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.47.0 =
+Adds a protected CSV download to the Content gaps panel. Existing logging settings and stored conversations are unchanged.
 
 = 1.46.0 =
 Connect with an Amazon Bedrock API key instead of an IAM user. gpt-oss, Qwen3, DeepSeek R1, Llama 4, Mistral Large and Kimi now answer through the Converse API, and Claude prompts are cached.

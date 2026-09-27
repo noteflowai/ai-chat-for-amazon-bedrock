@@ -96,6 +96,7 @@ class AI_Chat_Bedrock {
 		$this->loader->add_filter( 'handle_bulk_actions-upload', $admin, 'handle_media_bulk_action', 10, 3 );
 		$this->loader->add_action( 'admin_notices', $admin, 'render_media_notice' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_export_conversations', $admin, 'handle_export_conversations' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_export_gaps', $admin, 'handle_export_gaps' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_export_settings', $admin, 'handle_export_settings' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_import_settings', $admin, 'handle_import_settings' );
 		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_index_embeddings', $admin, 'ajax_index_embeddings' );

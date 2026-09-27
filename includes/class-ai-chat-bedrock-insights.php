@@ -235,6 +235,29 @@ class AI_Chat_Bedrock_Insights {
 	}
 
 	/**
+	 * Content-gap rows for editorial planning, in the same order as the panel.
+	 *
+	 * Counts describe the exchanges contributing to a gap, not every answer
+	 * about the subject. Grounded contributors were marked unhelpful.
+	 *
+	 * @param array $args Optional limit and days, as for content_gaps().
+	 * @return array CSV header followed by data rows.
+	 */
+	public static function export_rows( $args = array() ) {
+		$rows = array( array( 'question', 'occurrences', 'last_asked_utc', 'grounded_count', 'ungrounded_count' ) );
+		foreach ( self::content_gaps( $args ) as $gap ) {
+			$rows[] = array(
+				$gap['question'],
+				(int) $gap['asked'],
+				gmdate( 'Y-m-d H:i:s', (int) $gap['last'] ),
+				(int) $gap['asked'] - (int) $gap['ungrounded'],
+				(int) $gap['ungrounded'],
+			);
+		}
+		return $rows;
+	}
+
+	/**
 	 * Counts for the panel heading.
 	 *
 	 * @param int $days Window in days.
