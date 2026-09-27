@@ -219,6 +219,47 @@ check_ux( false !== strpos( $diagnostics, '<ul class="ul-disc">' ), 'the common 
 $test_view = file_get_contents( dirname( __DIR__ ) . '/admin/partials/ai-chat-bedrock-admin-test.php' );
 check_ux( 3 === substr_count( $test_view, '<th scope="row">' ) && false !== strpos( $test_view, 'tab=model' ), 'the test screen labels its rows and links to the model settings' );
 
+// Third pass. Profiles: limits use the core number width, suggested questions are prose, and the
+// Edit and Delete buttons of each row say which profile they act on.
+check_ux( false !== strpos( $profiles, 'id="aicfab_profile_<?php echo esc_attr( $key ); ?>" class="small-text"' ), 'profile limits use the small-text width' );
+check_ux( false === strpos( $profiles, 'large-text code' ), 'profile suggested questions are prose, not code' );
+check_ux( 2 <= substr_count( $profiles, '<span class="screen-reader-text"> <?php echo esc_html( $profile[\'label\'] ); ?></span>' ), 'profile row buttons name their profile' );
+
+// MCP: the signing region has a visible label and a description, the tables follow core, row
+// buttons name their server, Remove recovers after a failure, and the tools dialog behaves.
+check_ux( false !== strpos( $mcp, '<label for="ai_chat_bedrock_mcp_auth_region">' ) && false !== strpos( $mcp, 'aria-describedby="aicfab_mcp_auth_region_help"' ), 'the signing region is labelled and described' );
+check_ux( 1 === preg_match( '/id="ai_chat_bedrock_mcp_auth_region"(?![^>]*placeholder=)[^>]*>/', $mcp ), 'the region hint is a description, not a placeholder' );
+check_ux( false === strpos( $mcp, '<th>' ), 'MCP table headers have a scope' );
+check_ux( false !== strpos( $mcp, 'id="aicfab_mcp_max_rounds" class="small-text"' ), 'the tool round limit uses the small-text width' );
+check_ux( false !== strpos( $mcp, "wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' )" ), 'MCP dates follow the site format' );
+check_ux( false !== strpos( $mcp_js, "'class': 'screen-reader-text'" ) && 3 === substr_count( $mcp_js, 'rowButton(\'ai-chat-bedrock-' ), 'MCP row buttons name their server' );
+check_ux( 1 === preg_match( "/ai_chat_bedrock_unregister_mcp_server.*?\.always\(/s", $mcp_js ), 'the Remove button recovers after a failed request' );
+check_ux( false !== strpos( $mcp_js, "'Escape' === event.key" ) && false !== strpos( $mcp_js, '.trigger(\'focus\')' ), 'the tools dialog closes on Escape and manages focus' );
+
+// Notices added by script get core's translated dismiss button and are announced.
+check_ux( false !== strpos( $admin_js, "trigger('wp-updates-notice-added')" ) && false === strpos( $admin_js, 'Dismiss this notice.' ), 'script notices use the core dismiss button' );
+check_ux( false !== strpos( $admin_js, 'wp.a11y.speak' ), 'script notices are announced' );
+check_ux( false === strpos( $admin_js, "'button button-primary'" ), 'the streamed generator result is a link, not a second primary button' );
+
+// Site builder: the example is a description, and the summary counts what really happened.
+$scaffold    = file_get_contents( dirname( __DIR__ ) . '/admin/partials/ai-chat-bedrock-admin-scaffold.php' );
+$scaffold_js = file_get_contents( dirname( __DIR__ ) . '/admin/js/ai-chat-bedrock-scaffold.js' );
+check_ux( false === strpos( $scaffold, 'placeholder=' ) && false !== strpos( $scaffold, 'aria-describedby="aicfab-scaffold-description-help"' ), 'the site description example is a description, not a placeholder' );
+check_ux( false !== strpos( $scaffold_js, "classList.remove('button-primary')" ), 'once a plan is shown, creating drafts is the one primary action' );
+check_ux( false !== strpos( $scaffold_js, 'button.disabled = on;' ) && 2 === substr_count( $scaffold_js, 'busy(true);' ), 'the site builder buttons are disabled while a request is out' );
+check_ux( false !== strpos( $scaffold_js, "replace('%3\$d', counts.failed)" ) && false === strpos( $scaffold_js, 'planReady' ), 'the site builder summary counts created, skipped and failed pages' );
+
+// Counts are translated with plural forms, dates follow the site settings, and log sources
+// are shown by name rather than by their internal keys.
+$conversations = file_get_contents( dirname( __DIR__ ) . '/admin/partials/ai-chat-bedrock-admin-conversations.php' );
+$dashboard     = file_get_contents( dirname( __DIR__ ) . '/admin/partials/ai-chat-bedrock-admin-display.php' );
+check_ux( 4 <= substr_count( $conversations, '_n(' ) && 4 <= substr_count( $dashboard, '_n(' ) && 2 <= substr_count( $admin_source, '_n(' ), 'counts use plural forms' );
+check_ux( false !== strpos( $conversations, "get_option( 'date_format' ) . ' ' . get_option( 'time_format' )" ) && false === strpos( $conversations, "'Y-m-d H:i'" ), 'log times follow the site date format' );
+check_ux( false !== strpos( $conversations, "'stream'  => __( 'Chat, streamed'" ) || false !== strpos( $conversations, "'Chat, streamed'" ), 'log sources are shown by name' );
+check_ux( false !== strpos( $conversations, '<div class="aicfab-table-scroll">' ), 'the log table scrolls on its own on a narrow screen' );
+$admin_css = file_get_contents( dirname( __DIR__ ) . '/admin/css/ai-chat-bedrock-admin.css' );
+check_ux( 1 === preg_match( '/\.aicfab-table-scroll \{[^}]*position: relative;[^}]*overflow-x: auto;/', $admin_css ), 'screen reader text in a scrolling table is clipped with it, not widening the page' );
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

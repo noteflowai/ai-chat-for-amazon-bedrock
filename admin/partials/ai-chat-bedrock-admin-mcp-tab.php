@@ -66,20 +66,27 @@ $mcp_client = class_exists( 'AI_Chat_Bedrock_MCP_Client' ) ? new AI_Chat_Bedrock
 						<td><input type="password" id="ai_chat_bedrock_mcp_auth_token" class="regular-text" autocomplete="new-password"><p class="description"><?php esc_html_e( 'Stored encrypted and never displayed again.', 'ai-chat-for-amazon-bedrock' ); ?></p></td>
 					</tr>
 					<tr class="aicfab-auth-sigv4" style="display:none">
-						<th scope="row"><label for="ai_chat_bedrock_mcp_auth_service"><?php esc_html_e( 'Signing service and region', 'ai-chat-for-amazon-bedrock' ); ?></label></th>
+						<th scope="row"><?php esc_html_e( 'SigV4 signing', 'ai-chat-for-amazon-bedrock' ); ?></th>
 						<td>
-							<input type="text" id="ai_chat_bedrock_mcp_auth_service" class="regular-text" value="bedrock-agentcore" maxlength="60">
-							<input type="text" id="ai_chat_bedrock_mcp_auth_region" aria-label="<?php esc_attr_e( 'SigV4 signing region', 'ai-chat-for-amazon-bedrock' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Region (optional)', 'ai-chat-for-amazon-bedrock' ); ?>" maxlength="30">
-							<p class="description"><?php esc_html_e( 'Leave the region empty to use the region configured for Bedrock.', 'ai-chat-for-amazon-bedrock' ); ?></p>
+							<fieldset>
+								<legend class="screen-reader-text"><?php esc_html_e( 'SigV4 signing', 'ai-chat-for-amazon-bedrock' ); ?></legend>
+								<label for="ai_chat_bedrock_mcp_auth_service"><?php esc_html_e( 'Service', 'ai-chat-for-amazon-bedrock' ); ?></label>
+								<input type="text" id="ai_chat_bedrock_mcp_auth_service" class="regular-text" value="bedrock-agentcore" maxlength="60"><br>
+								<label for="ai_chat_bedrock_mcp_auth_region"><?php esc_html_e( 'Region', 'ai-chat-for-amazon-bedrock' ); ?></label>
+								<input type="text" id="ai_chat_bedrock_mcp_auth_region" size="16" maxlength="30" aria-describedby="aicfab_mcp_auth_region_help">
+							</fieldset>
+							<p class="description" id="aicfab_mcp_auth_region_help"><?php esc_html_e( 'Optional. Leave the region empty to use the region configured for Bedrock.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 						</td>
 					</tr>
 				</table>
 				<p><button type="button" id="ai_chat_bedrock_add_mcp_server" class="button button-primary"><?php esc_html_e( 'Add server', 'ai-chat-for-amazon-bedrock' ); ?></button></p>
 			</div>
-			<table class="widefat" id="ai-chat-bedrock-mcp-servers-table">
-				<thead><tr><th><?php esc_html_e( 'Name', 'ai-chat-for-amazon-bedrock' ); ?></th><th><?php esc_html_e( 'URL', 'ai-chat-for-amazon-bedrock' ); ?></th><th><?php esc_html_e( 'Status', 'ai-chat-for-amazon-bedrock' ); ?></th><th><?php esc_html_e( 'Tools', 'ai-chat-for-amazon-bedrock' ); ?></th><th><?php esc_html_e( 'Actions', 'ai-chat-for-amazon-bedrock' ); ?></th></tr></thead>
+			<div class="aicfab-table-scroll">
+			<table class="widefat striped" id="ai-chat-bedrock-mcp-servers-table">
+				<thead><tr><th scope="col"><?php esc_html_e( 'Name', 'ai-chat-for-amazon-bedrock' ); ?></th><th scope="col"><?php esc_html_e( 'URL', 'ai-chat-for-amazon-bedrock' ); ?></th><th scope="col"><?php esc_html_e( 'Status', 'ai-chat-for-amazon-bedrock' ); ?></th><th scope="col"><?php esc_html_e( 'Tools', 'ai-chat-for-amazon-bedrock' ); ?></th><th scope="col"><?php esc_html_e( 'Actions', 'ai-chat-for-amazon-bedrock' ); ?></th></tr></thead>
 				<tbody><tr class="no-items"><td colspan="5"><?php esc_html_e( 'No MCP servers registered.', 'ai-chat-for-amazon-bedrock' ); ?></td></tr></tbody>
 			</table>
+			</div>
 		</div>
 
 		<div id="ai-chat-bedrock-mcp-tools-modal" class="ai-chat-bedrock-modal" role="dialog" aria-modal="true" aria-labelledby="aicfab-mcp-tools-title" style="display:none">
@@ -141,11 +148,11 @@ $mcp_client = class_exists( 'AI_Chat_Bedrock_MCP_Client' ) ? new AI_Chat_Bedrock
 							<tr>
 								<td><?php echo esc_html( $grant['client'] ); ?></td>
 								<td><?php echo esc_html( $grant['user'] ); ?></td>
-								<td><?php echo esc_html( $grant['created'] ? wp_date( 'Y-m-d H:i', $grant['created'] ) : '—' ); ?></td>
+								<td><?php echo esc_html( $grant['created'] ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $grant['created'] ) : '—' ); ?></td>
 								<td class="aicfab-status aicfab-status-<?php echo $grant['active'] ? 'pass' : 'warn'; ?>">
 									<?php echo esc_html( $grant['active'] ? __( 'Active', 'ai-chat-for-amazon-bedrock' ) : __( 'Expired, refreshable', 'ai-chat-for-amazon-bedrock' ) ); ?>
 								</td>
-								<td><label><input type="checkbox" name="revoke[]" value="<?php echo esc_attr( $grant['id'] ); ?>"> <?php esc_html_e( 'Revoke', 'ai-chat-for-amazon-bedrock' ); ?></label></td>
+								<td><label><input type="checkbox" name="revoke[]" value="<?php echo esc_attr( $grant['id'] ); ?>"> <?php esc_html_e( 'Revoke', 'ai-chat-for-amazon-bedrock' ); ?><span class="screen-reader-text"> <?php echo esc_html( $grant['client'] ); ?></span></label></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
@@ -188,7 +195,7 @@ $mcp_client = class_exists( 'AI_Chat_Bedrock_MCP_Client' ) ? new AI_Chat_Bedrock
 				<tr>
 					<th scope="row"><label for="aicfab_mcp_max_rounds"><?php esc_html_e( 'Maximum tool rounds', 'ai-chat-for-amazon-bedrock' ); ?></label></th>
 					<td>
-						<input type="number" id="aicfab_mcp_max_rounds" name="mcp_max_rounds" min="1" max="<?php echo esc_attr( AI_Chat_Bedrock_Tool_Policy::MAX_ROUNDS_LIMIT ); ?>" value="<?php echo esc_attr( AI_Chat_Bedrock_Tool_Policy::max_rounds() ); ?>">
+						<input type="number" id="aicfab_mcp_max_rounds" class="small-text" name="mcp_max_rounds" min="1" max="<?php echo esc_attr( AI_Chat_Bedrock_Tool_Policy::MAX_ROUNDS_LIMIT ); ?>" value="<?php echo esc_attr( AI_Chat_Bedrock_Tool_Policy::max_rounds() ); ?>">
 						<p class="description"><?php esc_html_e( 'How many times the model may call tools and continue reasoning for one visitor message.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 					</td>
 				</tr>
@@ -227,7 +234,7 @@ $mcp_client = class_exists( 'AI_Chat_Bedrock_MCP_Client' ) ? new AI_Chat_Bedrock
 							<tr>
 								<td><code><?php echo esc_html( $name ); ?></code><br><span class="description"><?php echo esc_html( wp_trim_words( $description, 18 ) ); ?></span></td>
 								<td><?php echo esc_html( $mutating ? __( 'Changes data', 'ai-chat-for-amazon-bedrock' ) : __( 'Read only', 'ai-chat-for-amazon-bedrock' ) ); ?></td>
-								<td><label><input type="checkbox" name="tool_allow[]" value="<?php echo esc_attr( $name ); ?>" <?php checked( $allowed ); ?>> <?php esc_html_e( 'Allow', 'ai-chat-for-amazon-bedrock' ); ?></label></td>
+								<td><label><input type="checkbox" name="tool_allow[]" value="<?php echo esc_attr( $name ); ?>" <?php checked( $allowed ); ?>> <?php esc_html_e( 'Allow', 'ai-chat-for-amazon-bedrock' ); ?><span class="screen-reader-text"> <?php echo esc_html( $name ); ?></span></label></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
@@ -267,7 +274,12 @@ $mcp_client = class_exists( 'AI_Chat_Bedrock_MCP_Client' ) ? new AI_Chat_Bedrock
 							<td class="aicfab-status aicfab-status-<?php echo 'ok' === $entry['status'] ? 'pass' : 'fail'; ?>">
 								<?php echo esc_html( 'ok' === $entry['status'] ? __( 'Success', 'ai-chat-for-amazon-bedrock' ) : ( '' !== $entry['error'] ? $entry['error'] : __( 'Error', 'ai-chat-for-amazon-bedrock' ) ) ); ?>
 							</td>
-							<td><?php echo esc_html( $entry['duration'] > 0 ? $entry['duration'] . ' ms' : '—' ); ?></td>
+							<td>
+								<?php
+								/* translators: %s: duration in milliseconds. */
+								echo esc_html( $entry['duration'] > 0 ? sprintf( __( '%s ms', 'ai-chat-for-amazon-bedrock' ), number_format_i18n( (int) $entry['duration'] ) ) : '—' );
+								?>
+							</td>
 							<td><?php echo esc_html( ! empty( $entry['keys'] ) ? implode( ', ', $entry['keys'] ) : '—' ); ?></td>
 						</tr>
 					<?php endforeach; ?>

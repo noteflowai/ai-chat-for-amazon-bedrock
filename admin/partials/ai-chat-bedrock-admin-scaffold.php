@@ -26,8 +26,16 @@ if ( ! current_user_can( AI_Chat_Bedrock_Scaffold::CAPABILITY ) ) {
 	<h2 class="title"><?php esc_html_e( 'What is this site about?', 'ai-chat-for-amazon-bedrock' ); ?></h2>
 	<p>
 		<label class="screen-reader-text" for="aicfab-scaffold-description"><?php esc_html_e( 'Site description', 'ai-chat-for-amazon-bedrock' ); ?></label>
-		<textarea id="aicfab-scaffold-description" class="large-text" rows="4"
-			placeholder="<?php echo esc_attr__( 'A two-person bicycle repair shop in Utrecht. We service city bikes and e-bikes, sell refurbished bikes, and offer a pickup service within the city.', 'ai-chat-for-amazon-bedrock' ); ?>"></textarea>
+		<textarea id="aicfab-scaffold-description" class="large-text" rows="4" aria-describedby="aicfab-scaffold-description-help"></textarea>
+	</p>
+	<p class="description" id="aicfab-scaffold-description-help">
+		<?php
+		printf(
+			/* translators: %s: an example description of a site. */
+			esc_html__( 'For example: %s', 'ai-chat-for-amazon-bedrock' ),
+			esc_html__( 'A two-person bicycle repair shop in Utrecht. We service city bikes and e-bikes, sell refurbished bikes, and offer a pickup service within the city.', 'ai-chat-for-amazon-bedrock' )
+		);
+		?>
 	</p>
 	<p>
 		<button type="button" class="button button-primary" id="aicfab-scaffold-plan"><?php esc_html_e( 'Suggest pages', 'ai-chat-for-amazon-bedrock' ); ?></button>

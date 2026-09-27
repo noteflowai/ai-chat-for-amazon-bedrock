@@ -19,6 +19,18 @@
         });
     }
 
+    // Every row has the same buttons, so each names its server for screen readers. The
+    // visible part is a span of its own, so a busy label can replace it and leave the name.
+    function rowButton(className, label, server) {
+        return $('<button>', { type: 'button', 'class': 'button ' + className })
+            .attr('data-server', server)
+            .append($('<span>', { 'class': 'aicfab-button-label', text: label }), $('<span>', { 'class': 'screen-reader-text', text: ' ' + server }));
+    }
+
+    function busy($button, label) {
+        $button.prop('disabled', !!label).find('.aicfab-button-label').text(label || $button.data('label'));
+    }
+
     function renderServers(servers) {
         const $body = $('#ai-chat-bedrock-mcp-servers-table tbody').empty();
         const names = servers ? Object.keys(servers) : [];
@@ -40,10 +52,10 @@
                     : (server.reason ? config.i18n.unavailable + ' — ' + String(server.reason) : config.i18n.unavailable)
             })));
             const $tools = $('<td>');
-            $tools.append($('<button>', { type: 'button', 'class': 'button ai-chat-bedrock-view-tools', text: config.i18n.view_tools }).attr('data-server', name));
-            $tools.append(' ', $('<button>', { type: 'button', 'class': 'button ai-chat-bedrock-refresh-tools', text: config.i18n.refresh }).attr('data-server', name));
+            $tools.append(rowButton('ai-chat-bedrock-view-tools', config.i18n.view_tools, name));
+            $tools.append(' ', rowButton('ai-chat-bedrock-refresh-tools', config.i18n.refresh, name));
             $row.append($tools);
-            $row.append($('<td>').append($('<button>', { type: 'button', 'class': 'button ai-chat-bedrock-remove-server', text: config.i18n.remove }).attr('data-server', name)));
+            $row.append($('<td>').append(rowButton('ai-chat-bedrock-remove-server', config.i18n.remove, name)));
             $body.append($row);
         });
     }
@@ -136,25 +148,51 @@
 
     $('#ai-chat-bedrock-mcp-servers-table').on('click', '.ai-chat-bedrock-remove-server', function () {
         if (!window.confirm(config.i18n.confirm_remove_server)) { return; }
-        const $button = $(this).prop('disabled', true).text(config.i18n.removing);
+        const $button = $(this).data('label', config.i18n.remove);
+        busy($button, config.i18n.removing);
+        // A removal that fails leaves the row, so its button has to come back: it used to
+        // stay disabled on "Removing…" until the page was reloaded.
         request({ action: 'ai_chat_bedrock_unregister_mcp_server', nonce: config.mcp_nonce, server_name: $button.data('server') })
             .done(function (response) { notice(response.data.message, response.success ? 'success' : 'error'); if (response.success) { loadServers(); } })
-            .fail(function () { notice(config.i18n.ajax_error, 'error'); });
+            .fail(function () { notice(config.i18n.ajax_error, 'error'); })
+            .always(function () { busy($button, ''); });
     }).on('click', '.ai-chat-bedrock-refresh-tools', function () {
-        const $button = $(this).prop('disabled', true).text(config.i18n.refreshing);
+        const $button = $(this).data('label', config.i18n.refresh);
+        busy($button, config.i18n.refreshing);
         request({ action: 'ai_chat_bedrock_discover_mcp_tools', nonce: config.mcp_nonce, server_name: $button.data('server') })
             .done(function (response) { notice(response.data.message, response.success ? 'success' : 'error'); if (response.success) { loadServers(); } })
             .fail(function () { notice(config.i18n.ajax_error, 'error'); })
-            .always(function () { $button.prop('disabled', false).text(config.i18n.refresh); });
+            .always(function () { busy($button, ''); });
     }).on('click', '.ai-chat-bedrock-view-tools', function () {
         const name = $(this).data('server');
-        $('#ai-chat-bedrock-mcp-tools-modal').show();
+        openModal(this);
         $('#ai-chat-bedrock-mcp-tools-list').empty().append($('<p>').text(config.i18n.loading_tools));
         request({ action: 'ai_chat_bedrock_get_mcp_servers', nonce: config.mcp_nonce }, 'GET')
-            .done(function (response) { renderTools(response.success && response.data.servers[name] ? response.data.servers[name].tools : []); });
+            .done(function (response) { renderTools(response.success && response.data.servers[name] ? response.data.servers[name].tools : []); })
+            .fail(function () { $('#ai-chat-bedrock-mcp-tools-list').empty().append($('<p>').text(config.i18n.ajax_error)); });
     });
 
-    $('.ai-chat-bedrock-modal-close').on('click', function () { $('.ai-chat-bedrock-modal').hide(); });
+    // The tools dialog: focus moves into it, Escape or a click outside closes it, and focus
+    // returns to the button that opened it.
+    let opener = null;
+    function openModal(button) {
+        opener = button;
+        $('#ai-chat-bedrock-mcp-tools-modal').show().find('.ai-chat-bedrock-modal-close').trigger('focus');
+    }
+    function closeModal() {
+        const $modal = $('#ai-chat-bedrock-mcp-tools-modal');
+        if (!$modal.is(':visible')) { return; }
+        $modal.hide();
+        if (opener && document.body.contains(opener)) { opener.focus(); }
+        opener = null;
+    }
+    $('.ai-chat-bedrock-modal-close').on('click', closeModal);
+    $('#ai-chat-bedrock-mcp-tools-modal').on('click', function (event) {
+        if (event.target === this) { closeModal(); }
+    });
+    $(document).on('keydown', function (event) {
+        if ('Escape' === event.key) { closeModal(); }
+    });
     loadServers();
 })(jQuery);
 

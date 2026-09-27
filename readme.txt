@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.47.5
+Stable tag: 1.47.6
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -371,6 +371,15 @@ what a good answer says.
 
 
 == Changelog ==
+
+= 1.47.6 =
+* Counts are translated with proper plural forms everywhere in wp-admin ("1 request", "3 requests"), so languages with other plural rules read correctly too. Dates in the conversation log and the MCP connections follow the date and time format set under Settings > General.
+* Conversation log: sources are shown by name ("Chat, streamed", "Editor tools") instead of their internal keys, the token column says it is input / output, and the table scrolls sideways on a phone instead of widening the page.
+* Chat profiles: limits use WordPress's standard narrow number field, suggested questions are no longer in a code font, and screen readers hear which profile each Edit and Delete button belongs to.
+* MCP: the SigV4 region has a visible label and its hint stays under the field. Server buttons name their server for screen readers, and Remove comes back after a failed request instead of staying on "Removing…". The tools dialog takes focus when it opens, closes with Escape or a click outside, returns focus to the button that opened it, sits above the admin menu and fits a phone screen.
+* Site builder: the example description stays under the field instead of disappearing as you type. Once a plan is shown, creating the drafts is the one primary button, and neither button can be pressed while the other is working. The summary at the end says how many drafts were created, skipped and failed; it used to say "finished" whatever happened.
+* Messages that appear after an action replace each other instead of piling up, have WordPress's own translated dismiss button and are announced to screen readers.
+* The streamed content generator shows "Open in editor" as a link, like the page does without JavaScript.
 
 = 1.47.5 =
 * The "no usable AWS credentials" notice shown across wp-admin can now be dismissed, and stays dismissed for you. It was meant to be dismissible, but nothing recorded the dismissal, so it came back on every screen.
@@ -770,6 +779,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.47.6 =
+Plural forms and site date formats throughout wp-admin, clearer MCP and profile screens, and an accurate site builder summary.
 
 = 1.47.5 =
 The setup notice can be dismissed, and running answer checks saves your edits first and cannot be sent twice.

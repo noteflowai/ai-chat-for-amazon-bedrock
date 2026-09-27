@@ -39,7 +39,7 @@ class AI_Chat_Bedrock_Admin {
 		if ( ! $this->is_plugin_screen( $hook_suffix ) ) {
 			return;
 		}
-		wp_enqueue_script( $this->admin_handle(), plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-admin.js', array( 'jquery' ), $this->version, true );
+		wp_enqueue_script( $this->admin_handle(), plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-admin.js', array( 'jquery', 'common', 'wp-a11y' ), $this->version, true );
 
 		if ( false !== strpos( (string) $hook_suffix, $this->plugin_name . '-eval' ) ) {
 			wp_enqueue_script( $this->plugin_name . '-eval', plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-eval.js', array(), $this->version, true );
@@ -93,14 +93,13 @@ class AI_Chat_Bedrock_Admin {
 					'i18n'    => array(
 						'describeFirst' => __( 'Describe the site first.', 'ai-chat-for-amazon-bedrock' ),
 						'thinking'      => __( 'Working out which pages this site needs…', 'ai-chat-for-amazon-bedrock' ),
-						/* translators: %d: number of pages proposed. */
-						'planReady'     => __( '%d pages proposed. Review them before creating drafts.', 'ai-chat-for-amazon-bedrock' ),
 						'writing'       => __( 'Writing…', 'ai-chat-for-amazon-bedrock' ),
 						'skippedByYou'  => __( 'Skipped.', 'ai-chat-for-amazon-bedrock' ),
 						'editDraft'     => __( 'Edit the draft', 'ai-chat-for-amazon-bedrock' ),
 						/* translators: 1: pages handled so far, 2: pages in total. */
 						'progress'      => __( '%1$d of %2$d done…', 'ai-chat-for-amazon-bedrock' ),
-						'finished'      => __( 'Finished. Every page was created as a draft.', 'ai-chat-for-amazon-bedrock' ),
+						/* translators: 1: drafts created, 2: pages skipped, 3: pages that failed. */
+						'finished'      => __( 'Finished. Drafts created: %1$d. Skipped: %2$d. Failed: %3$d.', 'ai-chat-for-amazon-bedrock' ),
 						'unexpected'    => __( 'The request could not be completed.', 'ai-chat-for-amazon-bedrock' ),
 						'includeLabel'  => __( 'Include', 'ai-chat-for-amazon-bedrock' ),
 						'titleLabel'    => __( 'Page title', 'ai-chat-for-amazon-bedrock' ),
@@ -842,13 +841,18 @@ class AI_Chat_Bedrock_Admin {
 
 		$today = AI_Chat_Bedrock_Usage::today_totals();
 		$week  = AI_Chat_Bedrock_Usage::totals( 7 );
-		echo '<p>' . sprintf(
-			/* translators: 1: requests today, 2: input tokens today, 3: output tokens today, 4: requests in the last seven days. */
-			esc_html__( 'Today: %1$d requests, %2$d input tokens, %3$d output tokens. Last 7 days: %4$d requests.', 'ai-chat-for-amazon-bedrock' ),
-			(int) $today['requests'],
-			(int) $today['input_tokens'],
-			(int) $today['output_tokens'],
-			(int) $week['requests']
+		echo '<p>' . esc_html(
+			sprintf(
+				/* translators: 1: requests today, 2: input tokens today, 3: output tokens today. */
+				_n( 'Today: %1$s request, %2$s input tokens, %3$s output tokens.', 'Today: %1$s requests, %2$s input tokens, %3$s output tokens.', (int) $today['requests'], 'ai-chat-for-amazon-bedrock' ),
+				number_format_i18n( (int) $today['requests'] ),
+				number_format_i18n( (int) $today['input_tokens'] ),
+				number_format_i18n( (int) $today['output_tokens'] )
+			) . ' ' . sprintf(
+				/* translators: %s: requests in the last seven days. */
+				_n( 'Last 7 days: %s request.', 'Last 7 days: %s requests.', (int) $week['requests'], 'ai-chat-for-amazon-bedrock' ),
+				number_format_i18n( (int) $week['requests'] )
+			)
 		) . '</p>';
 	}
 	public function guardrail_id_render() {
@@ -927,13 +931,13 @@ class AI_Chat_Bedrock_Admin {
 
 		echo '<fieldset>';
 		echo '<legend class="screen-reader-text">' . esc_html__( 'Requests per minute for each role', 'ai-chat-for-amazon-bedrock' ) . '</legend>';
-		echo '<table class="aicfab-role-limits"><tbody>';
+		echo '<table class="aicfab-role-limits" role="presentation"><tbody>';
 
 		foreach ( AI_Chat_Bedrock_Rate_Limits::roles() as $role => $label ) {
 			$field = 'aicfab_role_limit_' . $role;
 			$value = isset( $limits[ $role ] ) ? (int) $limits[ $role ] : '';
 			printf(
-				'<tr><th scope="row"><label for="%1$s">%2$s</label></th><td><input type="number" id="%1$s" name="ai_chat_bedrock_settings[role_limits][%3$s]" value="%4$s" min="0" max="%5$d" step="1" placeholder="%6$s"></td></tr>',
+				'<tr><th scope="row"><label for="%1$s">%2$s</label></th><td><input type="number" id="%1$s" class="small-text" name="ai_chat_bedrock_settings[role_limits][%3$s]" value="%4$s" min="0" max="%5$d" step="1" placeholder="%6$s"></td></tr>',
 				esc_attr( $field ),
 				esc_html( $label ),
 				esc_attr( $role ),
@@ -992,17 +996,19 @@ class AI_Chat_Bedrock_Admin {
 		}
 
 		$status = AI_Chat_Bedrock_Embeddings::status();
-		echo '<p class="aicfab-index-status" role="status">';
-		printf(
-			/* translators: 1: indexed item count, 2: total published item count. */
-			esc_html__( 'Indexed %1$d of %2$d published items.', 'ai-chat-for-amazon-bedrock' ),
-			(int) $status['indexed'],
-			(int) $status['total']
+		echo '<p class="aicfab-index-status">';
+		echo esc_html(
+			sprintf(
+				/* translators: 1: indexed item count, 2: total published item count. */
+				_n( 'Indexed %1$s of %2$s published item.', 'Indexed %1$s of %2$s published items.', (int) $status['total'], 'ai-chat-for-amazon-bedrock' ),
+				number_format_i18n( (int) $status['indexed'] ),
+				number_format_i18n( (int) $status['total'] )
+			)
 		);
 		echo '</p>';
 		// The delete handler was there, but nothing on any screen submitted to it. This field
 		// sits inside the settings form, so its button belongs to a form printed after that one.
-		echo '<p><button type="button" class="button" id="aicfab-index-embeddings">' . esc_html__( 'Index content now', 'ai-chat-for-amazon-bedrock' ) . '</button> <button type="submit" class="button" form="aicfab-clear-embeddings">' . esc_html__( 'Delete the index', 'ai-chat-for-amazon-bedrock' ) . '</button> <span id="aicfab-index-progress"></span></p>';
+		echo '<p><button type="button" class="button" id="aicfab-index-embeddings">' . esc_html__( 'Index content now', 'ai-chat-for-amazon-bedrock' ) . '</button> <button type="submit" class="button" form="aicfab-clear-embeddings">' . esc_html__( 'Delete the index', 'ai-chat-for-amazon-bedrock' ) . '</button> <span id="aicfab-index-progress" role="status"></span></p>';
 		$background = ! empty( $this->option( 'embedding_background', false ) );
 		echo '<p><label><input type="checkbox" name="ai_chat_bedrock_settings[embedding_background]" value="1" ' . checked( $background, true, false ) . '> ' . esc_html__( 'Keep the index up to date in the background', 'ai-chat-for-amazon-bedrock' ) . '</label></p>';
 		if ( $background ) {

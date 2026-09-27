@@ -34,6 +34,12 @@ function apply_filters( $hook, $value ) {
 function __( $text, $domain = null ) {
 	return $text;
 }
+function _n( $single, $plural, $number, $domain = null ) {
+	return 1 === (int) $number ? $single : $plural;
+}
+function number_format_i18n( $number ) {
+	return number_format( $number );
+}
 function is_user_logged_in() {
 	return (bool) $GLOBALS['aicfab_logged_in'];
 }

@@ -537,7 +537,10 @@
 	border-top: 1px solid #f0f0f1;
 }
 
-.aicfab-card .aicfab-table-scroll {
+/* Positioned, so the screen-reader-text spans in its rows, which are absolutely positioned,
+   are clipped with the table instead of widening the page on a phone. */
+.aicfab-table-scroll {
+	position: relative;
 	overflow-x: auto;
 }
 

@@ -124,7 +124,7 @@ foreach ( array( 'max_tokens', 'temperature', 'system_prompt', 'suggested_questi
 }
 
 $mcp_source = file_get_contents( dirname( __DIR__ ) . '/admin/partials/ai-chat-bedrock-admin-mcp-tab.php' );
-check( false !== strpos( $mcp_source, 'SigV4 signing region' ), 'The MCP signing region input has an accessible name.' );
+check( false !== strpos( $mcp_source, '<label for="ai_chat_bedrock_mcp_auth_region">' ), 'The MCP signing region input has an accessible name.' );
 
 // --- A chat that cannot answer is not shown to visitors ----------------------
 

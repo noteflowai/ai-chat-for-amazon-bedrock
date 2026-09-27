@@ -97,28 +97,32 @@ $aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 				<?php
 				if ( $daily_limit > 0 ) {
 					printf(
-						/* translators: 1: requests today, 2: daily request limit, 3: requests in the last seven days. */
-						esc_html__( 'Daily limit: %1$d of %2$d used. Last 7 days: %3$d requests.', 'ai-chat-for-amazon-bedrock' ),
-						(int) $today['requests'],
-						(int) $daily_limit,
-						(int) $week['requests']
+						/* translators: 1: requests today, 2: daily request limit. */
+						esc_html__( 'Daily limit: %1$s of %2$s used.', 'ai-chat-for-amazon-bedrock' ),
+						esc_html( number_format_i18n( (int) $today['requests'] ) ),
+						esc_html( number_format_i18n( (int) $daily_limit ) )
 					);
 				} else {
-					printf(
-						/* translators: %d: requests in the last seven days. */
-						esc_html__( 'No plugin-side daily limit. Last 7 days: %d requests.', 'ai-chat-for-amazon-bedrock' ),
-						(int) $week['requests']
-					);
+					esc_html_e( 'No plugin-side daily limit.', 'ai-chat-for-amazon-bedrock' );
 				}
+				echo ' ' . esc_html(
+					sprintf(
+						/* translators: %s: requests in the last seven days. */
+						_n( 'Last 7 days: %s request.', 'Last 7 days: %s requests.', (int) $week['requests'], 'ai-chat-for-amazon-bedrock' ),
+						number_format_i18n( (int) $week['requests'] )
+					)
+				);
 				?>
 			</p>
 			<?php if ( ! empty( $week['cache_read_tokens'] ) ) : ?>
 				<p class="aicfab-card-detail">
 					<?php
-					printf(
-						/* translators: %s: number of input tokens read from the Claude prompt cache in the last seven days. */
-						esc_html__( 'Prompt cache, last 7 days: %s input tokens reused at a tenth of the input price.', 'ai-chat-for-amazon-bedrock' ),
-						esc_html( number_format_i18n( (int) $week['cache_read_tokens'] ) )
+					echo esc_html(
+						sprintf(
+							/* translators: %s: number of input tokens read from the Claude prompt cache in the last seven days. */
+							_n( 'Prompt cache, last 7 days: %s input token reused at a tenth of the input price.', 'Prompt cache, last 7 days: %s input tokens reused at a tenth of the input price.', (int) $week['cache_read_tokens'], 'ai-chat-for-amazon-bedrock' ),
+							number_format_i18n( (int) $week['cache_read_tokens'] )
+						)
 					);
 					?>
 				</p>
@@ -144,12 +148,14 @@ $aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 						<span class="aicfab-usage-bar" aria-hidden="true"><span style="width: <?php echo esc_attr( (string) $aicfab_bar ); ?>%"></span></span>
 						<span class="aicfab-usage-count">
 							<?php
-							printf(
-								/* translators: 1: request count, 2: input tokens, 3: output tokens. */
-								esc_html__( '%1$s requests · %2$s in / %3$s out', 'ai-chat-for-amazon-bedrock' ),
-								esc_html( number_format_i18n( $row['requests'] ) ),
-								esc_html( number_format_i18n( $row['input_tokens'] ) ),
-								esc_html( number_format_i18n( $row['output_tokens'] ) )
+							echo esc_html(
+								sprintf(
+									/* translators: 1: request count, 2: input tokens, 3: output tokens. */
+									_n( '%1$s request · %2$s in / %3$s out', '%1$s requests · %2$s in / %3$s out', (int) $row['requests'], 'ai-chat-for-amazon-bedrock' ),
+									number_format_i18n( $row['requests'] ),
+									number_format_i18n( $row['input_tokens'] ),
+									number_format_i18n( $row['output_tokens'] )
+								)
 							);
 							?>
 						</span>
@@ -194,11 +200,13 @@ $aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 					<?php esc_html_e( 'Setup is complete. The chat is live on this site.', 'ai-chat-for-amazon-bedrock' ); ?>
 				<?php else : ?>
 					<?php
-					printf(
-						/* translators: 1: steps completed, 2: steps in total. */
-						esc_html__( 'Step %1$s of %2$s done.', 'ai-chat-for-amazon-bedrock' ),
-						esc_html( number_format_i18n( $aicfab_progress['done'] ) ),
-						esc_html( number_format_i18n( $aicfab_progress['total'] ) )
+					echo esc_html(
+						sprintf(
+							/* translators: 1: steps completed, 2: steps in total. */
+							_n( '%1$s of %2$s step done.', '%1$s of %2$s steps done.', (int) $aicfab_progress['total'], 'ai-chat-for-amazon-bedrock' ),
+							number_format_i18n( $aicfab_progress['done'] ),
+							number_format_i18n( $aicfab_progress['total'] )
+						)
 					);
 					?>
 				<?php endif; ?>

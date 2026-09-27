@@ -26,6 +26,7 @@ function sanitize_key( $value ) { return preg_replace( '/[^a-z0-9_\-]/', '', str
 function wp_strip_all_tags( $value ) { return strip_tags( (string) $value ); }
 function absint( $value ) { return abs( (int) $value ); }
 function __( $text, $domain = null ) { return $text; }
+function _n( $single, $plural, $number, $domain = null ) { return 1 === (int) $number ? $single : $plural; }
 function esc_html( $text ) { return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8' ); }
 function esc_attr( $text ) { return esc_html( $text ); }
 function esc_url( $text ) { return esc_html( $text ); }
