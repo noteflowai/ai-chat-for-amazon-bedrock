@@ -264,7 +264,7 @@ class AI_Chat_Bedrock_Admin {
 		check_admin_referer( 'ai_chat_bedrock_clear_embeddings' );
 
 		$cleared = AI_Chat_Bedrock_Embeddings::clear();
-		wp_safe_redirect( add_query_arg( 'aicfab-cleared', (int) $cleared, admin_url( 'admin.php?page=' . $this->plugin_name . '-settings' ) ) );
+		wp_safe_redirect( add_query_arg( 'aicfab-cleared', (int) $cleared, admin_url( 'admin.php?page=' . $this->plugin_name . '-settings&tab=knowledge' ) ) );
 		exit;
 	}
 
@@ -659,11 +659,21 @@ class AI_Chat_Bedrock_Admin {
 			wp_send_json_error( array( 'message' => $models->get_error_message() ), 400 );
 		}
 
+		// The model menus are refilled in place from this list, instead of asking for a reload
+		// that would also throw away unsaved changes on the screen. A list, so the order holds.
+		$choices = array();
+		foreach ( $models as $value => $label ) {
+			$choices[] = array(
+				'value' => (string) $value,
+				'label' => (string) $label,
+			);
+		}
 		wp_send_json_success(
 			array(
 				/* translators: %d: number of models discovered. */
-				'message' => sprintf( __( '%d models available. Reload the page to see the updated list.', 'ai-chat-for-amazon-bedrock' ), count( $models ) ),
+				'message' => sprintf( _n( '%d model available. The model menus are up to date.', '%d models available. The model menus are up to date.', count( $models ), 'ai-chat-for-amazon-bedrock' ), count( $models ) ),
 				'count'   => count( $models ),
+				'models'  => $choices,
 			)
 		);
 	}
@@ -964,7 +974,9 @@ class AI_Chat_Bedrock_Admin {
 			(int) $status['total']
 		);
 		echo '</p>';
-		echo '<p><button type="button" class="button" id="aicfab-index-embeddings">' . esc_html__( 'Index content now', 'ai-chat-for-amazon-bedrock' ) . '</button> <span id="aicfab-index-progress"></span></p>';
+		// The delete handler was there, but nothing on any screen submitted to it. This field
+		// sits inside the settings form, so its button belongs to a form printed after that one.
+		echo '<p><button type="button" class="button" id="aicfab-index-embeddings">' . esc_html__( 'Index content now', 'ai-chat-for-amazon-bedrock' ) . '</button> <button type="submit" class="button" form="aicfab-clear-embeddings">' . esc_html__( 'Delete the index', 'ai-chat-for-amazon-bedrock' ) . '</button> <span id="aicfab-index-progress"></span></p>';
 		$background = ! empty( $this->option( 'embedding_background', false ) );
 		echo '<p><label><input type="checkbox" name="ai_chat_bedrock_settings[embedding_background]" value="1" ' . checked( $background, true, false ) . '> ' . esc_html__( 'Keep the index up to date in the background', 'ai-chat-for-amazon-bedrock' ) . '</label></p>';
 		if ( $background ) {
@@ -1239,6 +1251,19 @@ class AI_Chat_Bedrock_Admin {
 		$this->notice( 'aicfab_settings_saved', __( 'Settings saved.', 'ai-chat-for-amazon-bedrock' ), 'success' );
 
 		return $output;
+	}
+
+	/**
+	 * The one-off notice flags the plugin's redirects add. WordPress takes them out of the
+	 * address bar once the page has loaded, as it does its own, so reloading or bookmarking
+	 * the page does not show the notice again.
+	 *
+	 * @param array $args Query arguments WordPress removes.
+	 * @return array
+	 */
+	public function removable_query_args( $args ) {
+		$args = is_array( $args ) ? $args : array();
+		return array_merge( $args, array( 'aicfab-alt', 'aicfab-alt-done', 'aicfab-alt-skipped', 'aicfab-alt-failed', 'aicfab-applied', 'aicfab-cleared', 'aicfab-generated', 'aicfab-log', 'aicfab-message', 'aicfab-profile', 'aicfab-transfer' ) );
 	}
 
 	/**

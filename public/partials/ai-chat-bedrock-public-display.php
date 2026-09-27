@@ -27,7 +27,7 @@ $launcher        = isset( $atts['launcher'] ) ? $atts['launcher'] : __( 'Chat', 
 	</button>
 	<div class="ai-chat-bedrock-popup-panel" id="<?php echo esc_attr( $panel_id ); ?>" hidden>
 <?php endif; ?>
-<div class="ai-chat-bedrock-container<?php echo 'popup' === $aicfab_mode ? ' is-popup' : ''; ?>" data-profile="<?php echo esc_attr( $profile ); ?>" style="width: <?php echo esc_attr( $atts['width'] ); ?>;">
+<div class="ai-chat-bedrock-container<?php echo 'popup' === $aicfab_mode ? ' is-popup' : ''; ?>" data-profile="<?php echo esc_attr( $profile ); ?>" data-welcome="<?php echo esc_attr( $welcome_message ); ?>" style="width: <?php echo esc_attr( $atts['width'] ); ?>;">
 	<?php
 	// A page title is h1, so the chat title is h2. It used to be h3, which skipped a
 	// level both here and on the Test Chat screen.

@@ -58,8 +58,9 @@ function get_user_by( $field, $value ) {
 function rest_ensure_response( $value ) { return new WP_REST_Response( $value ); }
 function plugin_dir_path( $file ) { return rtrim( dirname( $file ), '/' ) . '/'; }
 function plugin_dir_url( $file ) { return 'https://example.test/plugin/'; }
-function wp_enqueue_script() { return true; }
+function wp_enqueue_script( $handle ) { $GLOBALS['aicfab_enqueued'][] = $handle; return true; }
 function wp_localize_script() { return true; }
+function get_current_screen() { return $GLOBALS['aicfab_screen']; }
 
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-conversations.php';
@@ -132,6 +133,8 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wp-mcp-server.php'
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-editor-assistant.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-feedback.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-request.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-profiles.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-media-assistant.php';
 
 check_conv( ! AI_Chat_Bedrock_Editor_Assistant::enabled(), 'The editor assistant must be disabled by default.' );
 $GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] = array( 'editor_assistant' => true );
@@ -153,6 +156,16 @@ $missing = $assistant->handle_request( new WP_REST_Request( array( 'action_type'
 check_conv( is_wp_error( $missing ) && 'aicfab_missing_language' === $missing->get_error_code(), 'Translation without a language must be refused.' );
 $long = $assistant->handle_request( new WP_REST_Request( array( 'action_type' => 'improve', 'text' => str_repeat( 'a', AI_Chat_Bedrock_Editor_Assistant::MAX_INPUT + 10 ) ) ) );
 check_conv( is_wp_error( $long ) && 'aicfab_text_too_long' === $long->get_error_code(), 'Oversized input must be refused.' );
+
+// The sidebar loads in the post editor only: the same hook fires in the widgets and site
+// editors, where its wp-editor dependency makes WordPress warn.
+foreach ( array( 'post' => true, 'widgets' => false, 'site-editor' => false, 'customize' => false, '' => false ) as $aicfab_base => $aicfab_expected ) {
+	$GLOBALS['aicfab_screen']   = '' === $aicfab_base ? null : (object) array( 'base' => $aicfab_base );
+	$GLOBALS['aicfab_enqueued'] = array();
+	$assistant->enqueue_editor_assets();
+	$aicfab_loaded = in_array( 'ai-chat-bedrock-editor-assistant', $GLOBALS['aicfab_enqueued'], true );
+	check_conv( $aicfab_expected === $aicfab_loaded, 'The editor sidebar is ' . ( $aicfab_expected ? '' : 'not ' ) . 'loaded on ' . ( '' === $aicfab_base ? 'a request without a screen' : "the $aicfab_base screen" ) . '.' );
+}
 
 $GLOBALS['aicfab_caps']['edit_posts'] = false;
 $forbidden = $assistant->check_permission();
@@ -252,7 +265,27 @@ $guest = $feedback->check_permission();
 check_conv( is_wp_error( $guest ) && 'aicfab_forbidden' === $guest->get_error_code(), 'Guests are refused unless guest chat is on.' );
 $GLOBALS['aicfab_options']['ai_chat_bedrock_settings']['allow_public_chat'] = true;
 check_conv( true === $feedback->check_permission(), 'Guests may rate when guest chat is enabled.' );
+
+// Guest access can come from the chat's profile, and feedback follows the same rule as the
+// chat: guests of a guest profile could chat but were refused when they rated an answer.
+$GLOBALS['aicfab_options'][ AI_Chat_Bedrock_Profiles::OPTION ] = array(
+	'guests'  => array( 'allow_public_chat' => 'on' ),
+	'members' => array( 'allow_public_chat' => 'off' ),
+);
+$GLOBALS['aicfab_options']['ai_chat_bedrock_settings']['allow_public_chat'] = false;
+$rate_as = function ( $profile ) use ( $feedback ) {
+	return $feedback->check_permission( new WP_REST_Request( array( 'entry' => $GLOBALS['id_one'], 'rating' => 'up', 'profile' => $profile ) ) );
+};
+check_conv( true === $rate_as( 'guests' ), 'Guests may rate answers of a profile that allows guests.' );
+check_conv( is_wp_error( $rate_as( '' ) ), 'Guests are still refused for the default chat when guest chat is off.' );
+check_conv( is_wp_error( $rate_as( 'members' ) ), 'Guests are refused for a signed-in-only profile.' );
+check_conv( is_wp_error( $rate_as( 'no-such-profile' ) ), 'An unknown profile falls back to the main setting.' );
+$GLOBALS['aicfab_options']['ai_chat_bedrock_settings']['allow_public_chat'] = true;
+check_conv( is_wp_error( $rate_as( 'members' ) ), 'A signed-in-only profile refuses guests even when guest chat is on.' );
+check_conv( true === $rate_as( '' ), 'Guests may rate the default chat when guest chat is on.' );
+unset( $GLOBALS['aicfab_options'][ AI_Chat_Bedrock_Profiles::OPTION ] );
 $GLOBALS['aicfab_logged_in'] = true;
+check_conv( true === $rate_as( 'members' ), 'Signed-in users may always rate.' );
 
 // --- Suggested questions --------------------------------------------------
 

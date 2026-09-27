@@ -29,6 +29,14 @@
 			"type": "string",
 			"default": ""
 		},
+		"mode": {
+			"type": "string",
+			"default": ""
+		},
+		"launcher": {
+			"type": "string",
+			"default": ""
+		},
 		"height": {
 			"type": "string",
 			"default": "500px"
@@ -38,5 +46,6 @@
 			"default": "100%"
 		}
 	},
-	"editorScript": "file:./editor.js"
+	"editorScript": "file:./editor.js",
+	"editorStyle": "file:../../public/css/ai-chat-bedrock-public.css"
 }

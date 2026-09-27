@@ -310,6 +310,14 @@ class AI_Chat_Bedrock_Feedback {
 class AI_Chat_Bedrock_Generator_Stream {
 	const REST_ROUTE = '/generate';
 }
+class AI_Chat_Bedrock_Models {
+	public static function refresh() {
+		return array( 'jp.anthropic.claude-haiku-4-5' => 'Claude Haiku 4.5', 'global.openai.gpt-6-luna' => 'GPT-6 Luna' );
+	}
+}
+function _n( $single, $plural, $number, $domain = null ) {
+	return 1 === (int) $number ? $single : $plural;
+}
 
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-profiles.php';
@@ -555,6 +563,84 @@ $GLOBALS['aicfab_is_admin'] = false;
 ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array() );
 check_pub( 'ai-chat-bedrock-public.js' === aicfab_file( 'script', 'ai-chat-for-amazon-bedrock' ), 'The chat script keeps its handle.' );
 check_pub( 'ai-chat-bedrock-public.css' === aicfab_file( 'style', 'ai-chat-for-amazon-bedrock' ), 'The chat styles keep their handle.' );
+
+// --- A chat with a profile, and the chat block -----------------------------------
+
+// Clearing the chat put back the site-wide greeting instead of the profile's, because the
+// script only had the site-wide one. The markup now carries the one it showed.
+aicfab_reset_pub();
+$GLOBALS['aicfab_opts'][ AI_Chat_Bedrock_Profiles::OPTION ] = array( 'support' => array( 'welcome_message' => 'Support desk here.' ) );
+$aicfab_profiled = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array( 'profile' => 'support' ) );
+check_pub( false !== strpos( $aicfab_profiled, 'data-welcome="Support desk here."' ), 'The chat carries its profile\'s greeting for when it is cleared.' );
+$aicfab_default = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array() );
+check_pub( false !== strpos( $aicfab_default, 'data-welcome="Hello there."' ), 'Without a profile it carries the site greeting.' );
+$aicfab_script = file_get_contents( dirname( __DIR__ ) . '/public/js/ai-chat-bedrock-public.js' );
+check_pub( false !== strpos( $aicfab_script, "attr('data-welcome')" ) && false === strpos( $aicfab_script, '.text(params.welcome_message)' ), 'Clearing the chat restores the greeting from the markup.' );
+check_pub( 1 === preg_match( '/JSON\.stringify\(\{ entry: entryId, rating: value, profile: profile \}\)/', $aicfab_script ), 'A rating names the chat\'s profile, which decides whether guests may rate.' );
+
+// Every attribute the block's render callback reads is one the block declares, or the editor
+// cannot set it: mode and launcher were read but not declared, so a block was never a popup.
+$aicfab_block = json_decode( file_get_contents( dirname( __DIR__ ) . '/blocks/chat/block.json' ), true );
+$aicfab_source = file_get_contents( dirname( __DIR__ ) . '/public/class-ai-chat-bedrock-public.php' );
+preg_match( '/function render_chat_block.*?foreach \( array\( ([^)]*) \) as \$key \)/s', $aicfab_source, $aicfab_read );
+$aicfab_read = isset( $aicfab_read[1] ) ? array_map( function ( $key ) { return trim( $key, " '" ); }, explode( ',', $aicfab_read[1] ) ) : array();
+check_pub( count( $aicfab_read ) >= 7, 'The attributes the render callback reads were found.' );
+foreach ( $aicfab_read as $aicfab_key ) {
+	check_pub( isset( $aicfab_block['attributes'][ $aicfab_key ] ), "The block declares the $aicfab_key attribute." );
+}
+$aicfab_popup_block = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->render_chat_block( array( 'mode' => 'popup', 'launcher' => 'Ask us' ) );
+check_pub( false !== strpos( $aicfab_popup_block, 'ai-chat-bedrock-popup' ) && false !== strpos( $aicfab_popup_block, 'Ask us' ), 'A block set to popup renders as a floating button with its label.' );
+
+// The editor preview is styled like the page. The path points outside the block directory, so
+// check that it resolves to the chat's stylesheet.
+$aicfab_editor_style = isset( $aicfab_block['editorStyle'] ) ? (string) $aicfab_block['editorStyle'] : '';
+$aicfab_editor_css   = 0 === strpos( $aicfab_editor_style, 'file:' ) ? realpath( dirname( __DIR__ ) . '/blocks/chat/' . substr( $aicfab_editor_style, 5 ) ) : false;
+check_pub( realpath( dirname( __DIR__ ) . '/public/css/ai-chat-bedrock-public.css' ) === $aicfab_editor_css, 'The block editor loads the chat\'s stylesheet.' );
+
+// --- Admin screens: what a redirect announces is shown, and deleting asks first ---------
+
+$aicfab_admin_dir = dirname( __DIR__ ) . '/admin';
+$aicfab_views     = '';
+foreach ( array_merge( array( $aicfab_admin_dir . '/class-ai-chat-bedrock-admin.php' ), glob( $aicfab_admin_dir . '/partials/*.php' ) ) as $aicfab_view ) {
+	$aicfab_views .= file_get_contents( $aicfab_view );
+}
+$aicfab_handlers = file_get_contents( $aicfab_admin_dir . '/class-ai-chat-bedrock-admin.php' );
+
+// Each flag a redirect sets is read by a screen: "conversations deleted" was set and never shown.
+preg_match_all( "/(?:add_query_arg\\(\\s*|\\\$args\\[\\s*)'(aicfab-[a-z-]+)'|'(aicfab-[a-z-]+)'\\s*=>/", $aicfab_handlers, $aicfab_found );
+$aicfab_flags = array_unique( array_filter( array_merge( $aicfab_found[1], $aicfab_found[2] ) ) );
+check_pub( count( $aicfab_flags ) >= 10, 'The notice flags set by redirects were found.' );
+$aicfab_removable = $aicfab_admin->removable_query_args( array( 'updated' ) );
+check_pub( in_array( 'updated', $aicfab_removable, true ), 'WordPress\'s own removable arguments are kept.' );
+foreach ( $aicfab_flags as $aicfab_flag ) {
+	check_pub( 1 === preg_match( "/_GET\\[\\s*'" . preg_quote( $aicfab_flag, '/' ) . "'\\s*\\]/", $aicfab_views ), "A screen reads the $aicfab_flag flag its redirect sets." );
+	check_pub( in_array( $aicfab_flag, $aicfab_removable, true ), "The $aicfab_flag flag leaves the address bar once shown." );
+}
+
+// Every action that deletes or disconnects for good asks before it runs.
+foreach ( array( 'ai_chat_bedrock_clear_conversations', 'ai_chat_bedrock_delete_profile', 'ai_chat_bedrock_clear_embeddings' ) as $aicfab_action ) {
+	check_pub( 1 === preg_match( '/<form (?:(?!<\/form>).)*?data-aicfab-confirm="<\?php esc_attr_e\( \'[^\']+\'(?:(?!<\/form>).)*value="' . $aicfab_action . '"/s', $aicfab_views ), "The $aicfab_action form asks for confirmation." );
+}
+check_pub( 1 === preg_match( '/name="revoke_all"[^>]*data-aicfab-confirm="[^"]+"/', $aicfab_views ), 'Revoking every connection asks for confirmation.' );
+$aicfab_admin_js = file_get_contents( $aicfab_admin_dir . '/js/ai-chat-bedrock-admin.js' );
+check_pub( false !== strpos( $aicfab_admin_js, "'form[data-aicfab-confirm]'" ) && false !== strpos( $aicfab_admin_js, "'button[data-aicfab-confirm]'" ), 'The admin script asks the confirmation questions.' );
+
+// The index could not be deleted from any screen, though its handler existed.
+check_pub( false !== strpos( $aicfab_views, 'form="aicfab-clear-embeddings"' ) && false !== strpos( $aicfab_views, 'id="aicfab-clear-embeddings"' ), 'A button submits the delete-index form.' );
+
+// Refreshing the model list refills the menus, rather than asking for a reload.
+$GLOBALS['aicfab_logged_in'] = true;
+$GLOBALS['aicfab_nonce_ok']  = true;
+try {
+	$aicfab_admin->ajax_refresh_models();
+	$aicfab_refreshed = null;
+} catch ( Aicfab_Sent $sent ) {
+	$aicfab_refreshed = $sent;
+}
+check_pub( $aicfab_refreshed && $aicfab_refreshed->ok && 2 === count( $aicfab_refreshed->payload['models'] ), 'Refreshing returns the model list.' );
+check_pub( $aicfab_refreshed && array( 'value' => 'jp.anthropic.claude-haiku-4-5', 'label' => 'Claude Haiku 4.5' ) === $aicfab_refreshed->payload['models'][0], 'The list is in order, as value and label.' );
+check_pub( $aicfab_refreshed && false === stripos( $aicfab_refreshed->payload['message'], 'reload' ), 'Refreshing no longer asks for a reload.' );
+check_pub( false !== strpos( $aicfab_admin_js, 'refillModelMenus(response.data.models)' ), 'The admin script refills the model menus.' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

@@ -47,6 +47,22 @@ $base        = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings' )
 			?>
 		</p></div>
 	<?php endif; ?>
+	<?php
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only notice state.
+	if ( isset( $_GET['aicfab-cleared'] ) ) :
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$aicfab_cleared = absint( $_GET['aicfab-cleared'] );
+		?>
+		<div class="notice notice-success is-dismissible"><p>
+			<?php
+			printf(
+				/* translators: %s: number of items whose stored vectors were deleted. */
+				esc_html__( 'Index deleted: the vectors of %s items were removed.', 'ai-chat-for-amazon-bedrock' ),
+				esc_html( number_format_i18n( $aicfab_cleared ) )
+			);
+			?>
+		</p></div>
+	<?php endif; ?>
 
 	<nav class="nav-tab-wrapper" aria-label="<?php esc_attr_e( 'Settings sections', 'ai-chat-for-amazon-bedrock' ); ?>">
 		<?php foreach ( $aicfab_tabs as $key => $aicfab_tab ) : ?>
@@ -65,6 +81,13 @@ $base        = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings' )
 		submit_button();
 		?>
 	</form>
+
+	<?php if ( 'knowledge' === $current && AI_Chat_Bedrock_Embeddings::enabled() ) : ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="aicfab-clear-embeddings" data-aicfab-confirm="<?php esc_attr_e( 'Delete the index? Answers use keyword search until the content is indexed again.', 'ai-chat-for-amazon-bedrock' ); ?>">
+			<?php wp_nonce_field( 'ai_chat_bedrock_clear_embeddings' ); ?>
+			<input type="hidden" name="action" value="ai_chat_bedrock_clear_embeddings">
+		</form>
+	<?php endif; ?>
 
 	<?php if ( 'aws' === $current ) : ?>
 		<div class="ai-chat-bedrock-settings-info">

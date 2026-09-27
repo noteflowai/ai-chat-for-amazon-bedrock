@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.47.2
+Stable tag: 1.47.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -371,6 +371,17 @@ what a good answer says.
 
 
 == Changelog ==
+
+= 1.47.3 =
+* Guests could not rate answers when guest access came from the chat's profile rather than the main setting, which is how the floating chat's settings suggest allowing guests: the thumbs did nothing. Feedback now follows the same rule as the chat, profile included; a signed-in-only profile also refuses guest ratings when the main setting allows guests.
+* Clearing a chat that uses a profile put back the site-wide welcome message instead of the profile's.
+* The chat block's preview in the editor had no styles, and its Send and Clear buttons looked usable but did nothing. The preview is now styled like the page and marked as a preview that cannot be used.
+* The chat block can be a floating button, as the shortcode's `mode="popup"` can: Display and Button label settings in the block sidebar.
+* Semantic search: the index can be deleted from the Grounding settings (Delete the index). The action existed, but no screen offered it.
+* Refresh model list updates the model menus in place, keeping unsaved choices, instead of asking for a reload.
+* Deleting a profile, deleting all stored conversations, deleting the index and revoking every AI client connection now ask for confirmation first. Deleting all conversations now confirms it has done so.
+* Notices shown after an action no longer come back when the page is reloaded; like WordPress's own, their flags are removed from the address bar.
+* The editor assistant sidebar loads in the post editor only. The widgets and site editors fired the same hook, and there its `wp-editor` dependency made WordPress warn.
 
 = 1.47.2 =
 * The Test Chat screen in wp-admin showed the chat box, but it did nothing: sending a message had no effect and the box had no styles. The screen loads both the admin script and the chat's own, and both were registered under the same handle, so WordPress kept the admin one, registered first, and never loaded the chat script or its stylesheet. The admin script and stylesheet now have a handle of their own (`ai-chat-for-amazon-bedrock-admin`); the chat's handle is unchanged, so a theme that dequeues it by name is not affected. Front-end pages were never affected.
@@ -742,6 +753,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.47.3 =
+Guest ratings on profile chats, the block's editor preview and popup mode, and confirmations before deleting.
 
 = 1.47.2 =
 Fixes the Test Chat screen in wp-admin, where the chat did not respond.

@@ -149,7 +149,7 @@ $mcp_client = class_exists( 'AI_Chat_Bedrock_MCP_Client' ) ? new AI_Chat_Bedrock
 				</table>
 				<p>
 					<?php submit_button( __( 'Revoke selected', 'ai-chat-for-amazon-bedrock' ), 'secondary', 'submit', false ); ?>
-					<button type="submit" name="revoke_all" value="1" class="button"><?php esc_html_e( 'Revoke all connections', 'ai-chat-for-amazon-bedrock' ); ?></button>
+					<button type="submit" name="revoke_all" value="1" class="button" data-aicfab-confirm="<?php esc_attr_e( 'Disconnect every AI client? Each one has to be authorised again.', 'ai-chat-for-amazon-bedrock' ); ?>"><?php esc_html_e( 'Revoke all connections', 'ai-chat-for-amazon-bedrock' ); ?></button>
 				</p>
 			</form>
 		<?php endif; ?>

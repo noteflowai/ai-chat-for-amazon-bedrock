@@ -9,6 +9,7 @@
 	var TextControl = components.TextControl;
 	var SelectControl = components.SelectControl;
 	var Notice = components.Notice;
+	var Disabled = components.Disabled;
 	var ServerSideRender = serverSideRender && serverSideRender.default ? serverSideRender.default : serverSideRender;
 
 	blocks.registerBlockType( 'ai-chat-bedrock/chat', {
@@ -27,6 +28,8 @@
 					// Falls back to a text field if the list could not be provided.
 					( window.aicfabBlock && window.aicfabBlock.profiles && window.aicfabBlock.profiles.length )
 						? el( SelectControl, {
+							__nextHasNoMarginBottom: true,
+							__next40pxDefaultSize: true,
 							label: __( 'Chat profile', 'ai-chat-for-amazon-bedrock' ),
 							help: __( 'Profiles are managed on the Chat Profiles screen.', 'ai-chat-for-amazon-bedrock' ),
 							value: attributes.profile,
@@ -36,6 +39,8 @@
 							}
 						} )
 						: el( TextControl, {
+							__nextHasNoMarginBottom: true,
+							__next40pxDefaultSize: true,
 							label: __( 'Chat profile key', 'ai-chat-for-amazon-bedrock' ),
 							help: __( 'Leave empty to use the site default settings.', 'ai-chat-for-amazon-bedrock' ),
 							value: attributes.profile,
@@ -44,6 +49,8 @@
 							}
 						} ),
 					el( TextControl, {
+						__nextHasNoMarginBottom: true,
+						__next40pxDefaultSize: true,
 						label: __( 'Title', 'ai-chat-for-amazon-bedrock' ),
 						help: __( 'Leave empty to use the title from the plugin settings.', 'ai-chat-for-amazon-bedrock' ),
 						value: attributes.title,
@@ -51,7 +58,36 @@
 							setAttributes( { title: value } );
 						}
 					} ),
+					// The render callback always read these two, but the block could not set them.
+					el( SelectControl, {
+						__nextHasNoMarginBottom: true,
+						__next40pxDefaultSize: true,
+						label: __( 'Display', 'ai-chat-for-amazon-bedrock' ),
+						help: 'popup' === attributes.mode
+							? __( 'A button in the corner of the page opens the chat. The preview shows it opened.', 'ai-chat-for-amazon-bedrock' )
+							: __( 'The chat sits where the block is.', 'ai-chat-for-amazon-bedrock' ),
+						value: attributes.mode || 'inline',
+						options: [
+							{ value: 'inline', label: __( 'In the page', 'ai-chat-for-amazon-bedrock' ) },
+							{ value: 'popup', label: __( 'Floating button', 'ai-chat-for-amazon-bedrock' ) }
+						],
+						onChange: function ( value ) {
+							setAttributes( { mode: 'popup' === value ? 'popup' : '' } );
+						}
+					} ),
+					'popup' === attributes.mode && el( TextControl, {
+						__nextHasNoMarginBottom: true,
+						__next40pxDefaultSize: true,
+						label: __( 'Button label', 'ai-chat-for-amazon-bedrock' ),
+						help: __( 'Leave empty for “Chat”.', 'ai-chat-for-amazon-bedrock' ),
+						value: attributes.launcher,
+						onChange: function ( value ) {
+							setAttributes( { launcher: value } );
+						}
+					} ),
 					el( TextControl, {
+						__nextHasNoMarginBottom: true,
+						__next40pxDefaultSize: true,
 						label: __( 'Input placeholder', 'ai-chat-for-amazon-bedrock' ),
 						value: attributes.placeholder,
 						onChange: function ( value ) {
@@ -59,6 +95,8 @@
 						}
 					} ),
 					el( TextControl, {
+						__nextHasNoMarginBottom: true,
+						__next40pxDefaultSize: true,
 						label: __( 'Height', 'ai-chat-for-amazon-bedrock' ),
 						help: __( 'For example 500px or 60vh.', 'ai-chat-for-amazon-bedrock' ),
 						value: attributes.height,
@@ -67,6 +105,8 @@
 						}
 					} ),
 					el( TextControl, {
+						__nextHasNoMarginBottom: true,
+						__next40pxDefaultSize: true,
 						label: __( 'Width', 'ai-chat-for-amazon-bedrock' ),
 						help: __( 'For example 100% or 720px.', 'ai-chat-for-amazon-bedrock' ),
 						value: attributes.width,
@@ -77,12 +117,18 @@
 				)
 			);
 
+			// A picture of the chat, not a working one: the chat's script is not loaded in the
+			// editor, so its buttons did nothing. A popup is previewed opened out in place, since
+			// a floating button would sit over the editor.
 			var preview = ServerSideRender
-				? el( ServerSideRender, {
-					block: 'ai-chat-bedrock/chat',
-					attributes: attributes,
-					key: 'preview'
-				} )
+				? el(
+					Disabled,
+					{ key: 'preview' },
+					el( ServerSideRender, {
+						block: 'ai-chat-bedrock/chat',
+						attributes: Object.assign( {}, attributes, { mode: '' } )
+					} )
+				)
 				: el(
 					Notice,
 					{ status: 'info', isDismissible: false, key: 'preview' },

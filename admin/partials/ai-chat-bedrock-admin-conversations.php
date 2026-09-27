@@ -25,6 +25,7 @@ $aicfab_search = isset( $_GET['aicfab_s'] ) ? sanitize_text_field( wp_unslash( $
 $source        = isset( $_GET['aicfab_source'] ) ? sanitize_key( wp_unslash( $_GET['aicfab_source'] ) ) : '';
 $rating        = isset( $_GET['aicfab_rating'] ) ? sanitize_key( wp_unslash( $_GET['aicfab_rating'] ) ) : '';
 $aicfab_paged  = isset( $_GET['paged'] ) ? absint( wp_unslash( $_GET['paged'] ) ) : 1;
+$aicfab_log    = isset( $_GET['aicfab-log'] ) ? sanitize_key( wp_unslash( $_GET['aicfab-log'] ) ) : '';
 // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 $sources = array( 'chat', 'stream', 'editor', 'ability' );
@@ -58,6 +59,10 @@ $filter_url = add_query_arg(
 ?>
 <div class="wrap aicfab-dashboard">
 	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+
+	<?php if ( 'cleared' === $aicfab_log ) : ?>
+		<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'All stored conversations were deleted.', 'ai-chat-for-amazon-bedrock' ); ?></p></div>
+	<?php endif; ?>
 
 	<?php if ( ! $enabled ) : ?>
 		<div class="notice notice-info">
@@ -206,7 +211,7 @@ $filter_url = add_query_arg(
 				<button type="submit" class="button"><?php esc_html_e( 'Export CSV', 'ai-chat-for-amazon-bedrock' ); ?></button>
 			</form>
 			<?php if ( $summary['count'] > 0 ) : ?>
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" data-aicfab-confirm="<?php esc_attr_e( 'Delete every stored conversation? This cannot be undone.', 'ai-chat-for-amazon-bedrock' ); ?>">
 					<?php wp_nonce_field( 'ai_chat_bedrock_clear_conversations' ); ?>
 					<input type="hidden" name="action" value="ai_chat_bedrock_clear_conversations">
 					<button type="submit" class="button"><?php esc_html_e( 'Delete all stored conversations', 'ai-chat-for-amazon-bedrock' ); ?></button>

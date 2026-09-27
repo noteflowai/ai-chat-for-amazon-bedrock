@@ -30,12 +30,16 @@ class AI_Chat_Bedrock_Feedback {
 				'callback'            => array( $this, 'handle_request' ),
 				'permission_callback' => array( $this, 'check_permission' ),
 				'args'                => array(
-					'entry'  => array(
+					'entry'   => array(
 						'required' => true,
 						'type'     => 'string',
 					),
-					'rating' => array(
+					'rating'  => array(
 						'required' => true,
+						'type'     => 'string',
+					),
+					'profile' => array(
+						'required' => false,
 						'type'     => 'string',
 					),
 				),
@@ -46,16 +50,19 @@ class AI_Chat_Bedrock_Feedback {
 	/**
 	 * Feedback follows the same audience as the chat itself.
 	 *
+	 * That includes the chat's profile: guests allowed by a profile could chat but not
+	 * rate the answers when only the main setting was read here.
+	 *
+	 * @param WP_REST_Request|null $request Request instance.
 	 * @return true|WP_Error
 	 */
-	public function check_permission() {
+	public function check_permission( $request = null ) {
 		if ( ! AI_Chat_Bedrock_Conversations::enabled() ) {
 			return new WP_Error( 'aicfab_feedback_disabled', __( 'Feedback is not collected on this site.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 404 ) );
 		}
 
-		$options = get_option( 'ai_chat_bedrock_settings', array() );
-		$options = is_array( $options ) ? $options : array();
-		if ( ! is_user_logged_in() && empty( $options['allow_public_chat'] ) ) {
+		$profile = $request ? AI_Chat_Bedrock_Profiles::sanitize_key( (string) $request->get_param( 'profile' ) ) : '';
+		if ( ! AI_Chat_Bedrock_Security::can_use_chat( AI_Chat_Bedrock_Profiles::resolve( $profile ) ) ) {
 			return new WP_Error( 'aicfab_forbidden', __( 'Please sign in to send feedback.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 401 ) );
 		}
 

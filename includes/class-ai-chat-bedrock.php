@@ -80,6 +80,7 @@ class AI_Chat_Bedrock {
 		$security = new AI_Chat_Bedrock_Security();
 		$this->loader->add_action( 'admin_enqueue_scripts', $admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $admin, 'enqueue_scripts' );
+		$this->loader->add_filter( 'removable_query_args', $admin, 'removable_query_args' );
 		$this->loader->add_action( 'admin_menu', $admin, 'add_plugin_admin_menu' );
 		$this->loader->add_action( 'admin_init', $admin, 'register_settings' );
 		$this->loader->add_action( 'admin_init', $security, 'maybe_migrate_credentials' );

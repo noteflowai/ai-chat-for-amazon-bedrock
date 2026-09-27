@@ -60,7 +60,7 @@ $value = function ( $key, $fallback = '' ) use ( $current ) {
 						<td><code>[ai_chat_bedrock profile="<?php echo esc_html( $key ); ?>"]</code></td>
 						<td>
 							<a class="button button-small" href="<?php echo esc_url( add_query_arg( 'edit', $key, admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-profiles' ) ) ); ?>"><?php esc_html_e( 'Edit', 'ai-chat-for-amazon-bedrock' ); ?></a>
-							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline">
+							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline" data-aicfab-confirm="<?php esc_attr_e( 'Delete this profile? Chats that use it fall back to the main settings.', 'ai-chat-for-amazon-bedrock' ); ?>">
 								<?php wp_nonce_field( 'ai_chat_bedrock_delete_profile' ); ?>
 								<input type="hidden" name="action" value="ai_chat_bedrock_delete_profile">
 								<input type="hidden" name="key" value="<?php echo esc_attr( $key ); ?>">
