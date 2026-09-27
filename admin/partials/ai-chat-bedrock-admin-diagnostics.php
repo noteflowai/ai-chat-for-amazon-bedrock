@@ -26,6 +26,11 @@ $labels          = array(
 	'warn' => __( 'Review', 'ai-chat-for-amazon-bedrock' ),
 	'fail' => __( 'Action required', 'ai-chat-for-amazon-bedrock' ),
 );
+$tones           = array(
+	'pass' => 'is-good',
+	'warn' => 'is-warn',
+	'fail' => 'is-bad',
+);
 ?>
 <div class="wrap">
 	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
@@ -48,7 +53,7 @@ $labels          = array(
 			<?php foreach ( $checks as $check ) : ?>
 				<tr data-check="<?php echo esc_attr( $check['id'] ); ?>">
 					<td><?php echo esc_html( $check['label'] ); ?></td>
-					<td class="aicfab-status aicfab-status-<?php echo esc_attr( $check['status'] ); ?>"><?php echo esc_html( isset( $labels[ $check['status'] ] ) ? $labels[ $check['status'] ] : $check['status'] ); ?></td>
+					<td class="aicfab-status aicfab-status-<?php echo esc_attr( $check['status'] ); ?>"><span class="aicfab-pill <?php echo esc_attr( isset( $tones[ $check['status'] ] ) ? $tones[ $check['status'] ] : 'is-neutral' ); ?>"><?php echo esc_html( isset( $labels[ $check['status'] ] ) ? $labels[ $check['status'] ] : $check['status'] ); ?></span></td>
 					<td><?php echo esc_html( $check['message'] ); ?></td>
 				</tr>
 			<?php endforeach; ?>
@@ -64,9 +69,9 @@ $labels          = array(
 			<code><?php echo esc_html( AI_Chat_Bedrock_Iam_Policy::display_identity( $aicfab_arn ) ); ?></code>
 		</p>
 	<?php else : ?>
-		<p class="notice notice-warning inline" style="padding:8px 12px">
+		<div class="notice notice-warning inline"><p>
 			<?php esc_html_e( 'The AWS identity could not be read, so the account ID below is a wildcard. Replace it with your account ID, or grant sts:GetCallerIdentity to have it filled in automatically.', 'ai-chat-for-amazon-bedrock' ); ?>
-		</p>
+		</p></div>
 	<?php endif; ?>
 
 	<p>

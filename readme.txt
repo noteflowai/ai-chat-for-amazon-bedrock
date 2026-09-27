@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.47.3
+Stable tag: 1.47.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -371,6 +371,14 @@ what a good answer says.
 
 
 == Changelog ==
+
+= 1.47.4 =
+* Settings: moving a configuration to another site has a tab of its own, Import and export, instead of repeating under every group of options. After an import the page returns to that tab with the result.
+* Settings: the welcome message field is as wide as the other long text, so a sentence is no longer cut off while you type it. The Conversation log and Floating chat rows put their second control (days to keep, profile) on a line of its own, like WordPress's own Discussion settings.
+* Chat profiles: the four limits are laid out one per row with their own labels. An empty field means the main setting, which is shown in grey, instead of a 0 that looked like a real value. Editing a profile has a Cancel button.
+* Diagnostics: each check's status is shown as a coloured badge, the same as on the overview.
+* Conversations: the content gaps CSV button appears once there is something to download, below the report, and the stored exchanges are set apart from it.
+* MCP: the section links are announced as navigation, the address follows the section you pick so it can be bookmarked, and links to another section of the same page work. The two settings that save as soon as you change them have a label next to the checkbox and say so.
 
 = 1.47.3 =
 * Guests could not rate answers when guest access came from the chat's profile rather than the main setting, which is how the floating chat's settings suggest allowing guests: the thumbs did nothing. Feedback now follows the same rule as the chat, profile included; a signed-in-only profile also refuses guest ratings when the main setting allows guests.
@@ -753,6 +761,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.47.4 =
+Tidier settings screens: import and export on its own tab, clearer profile limits and status badges.
 
 = 1.47.3 =
 Guest ratings on profile chats, the block's editor preview and popup mode, and confirmations before deleting.

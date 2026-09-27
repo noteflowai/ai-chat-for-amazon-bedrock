@@ -15,9 +15,12 @@ if ( ! current_user_can( 'manage_options' ) ) {
 }
 
 $aicfab_tabs = AI_Chat_Bedrock_Admin::tabs();
+// Import and export is a tab of its own, with no settings form: moving a configuration is a
+// one-off task, not something to scroll past under every group of options.
+$aicfab_nav  = $aicfab_tabs + array( 'transfer' => array( 'label' => __( 'Import and export', 'ai-chat-for-amazon-bedrock' ) ) );
 $current     = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'aws'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-$current     = isset( $aicfab_tabs[ $current ] ) ? $current : 'aws';
-$aicfab_page = $aicfab_tabs[ $current ]['page'];
+$current     = isset( $aicfab_nav[ $current ] ) ? $current : 'aws';
+$aicfab_page = isset( $aicfab_tabs[ $current ] ) ? $aicfab_tabs[ $current ]['page'] : '';
 $base        = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings' );
 ?>
 <div class="wrap">
@@ -65,12 +68,13 @@ $base        = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings' )
 	<?php endif; ?>
 
 	<nav class="nav-tab-wrapper" aria-label="<?php esc_attr_e( 'Settings sections', 'ai-chat-for-amazon-bedrock' ); ?>">
-		<?php foreach ( $aicfab_tabs as $key => $aicfab_tab ) : ?>
+		<?php foreach ( $aicfab_nav as $key => $aicfab_tab ) : ?>
 			<a class="nav-tab <?php echo $key === $current ? 'nav-tab-active' : ''; ?>"
-				href="<?php echo esc_url( add_query_arg( 'tab', $key, $base ) ); ?>"><?php echo esc_html( $aicfab_tab['label'] ); ?></a>
+				href="<?php echo esc_url( add_query_arg( 'tab', $key, $base ) ); ?>"<?php echo $key === $current ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $aicfab_tab['label'] ); ?></a>
 		<?php endforeach; ?>
 	</nav>
 
+	<?php if ( '' !== $aicfab_page ) : ?>
 	<form method="post" action="options.php">
 		<?php
 		settings_fields( 'ai_chat_bedrock_settings' );
@@ -81,6 +85,7 @@ $base        = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings' )
 		submit_button();
 		?>
 	</form>
+	<?php endif; ?>
 
 	<?php if ( 'knowledge' === $current && AI_Chat_Bedrock_Embeddings::enabled() ) : ?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="aicfab-clear-embeddings" data-aicfab-confirm="<?php esc_attr_e( 'Delete the index? Answers use keyword search until the content is indexed again.', 'ai-chat-for-amazon-bedrock' ); ?>">
@@ -101,33 +106,42 @@ $base        = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings' )
 		</div>
 	<?php endif; ?>
 
-	<hr>
+	<?php if ( 'transfer' === $current ) : ?>
+		<div class="aicfab-transfer">
+			<h2><?php esc_html_e( 'Move this configuration to another site', 'ai-chat-for-amazon-bedrock' ); ?></h2>
+			<p>
+				<?php esc_html_e( 'Everything except credentials travels: models, prompts, profiles, limits, grounding, MCP servers and the tool policy. AWS keys and MCP tokens are never written to the file, because they are encrypted for this site and a configuration file is not a safe place for them.', 'ai-chat-for-amazon-bedrock' ); ?>
+			</p>
 
-	<h2><?php esc_html_e( 'Move this configuration to another site', 'ai-chat-for-amazon-bedrock' ); ?></h2>
-	<p class="description">
-		<?php esc_html_e( 'Everything except credentials travels: models, prompts, profiles, limits, grounding, MCP servers and the tool policy. AWS keys and MCP tokens are never written to the file, because they are encrypted for this site and a configuration file is not a safe place for them.', 'ai-chat-for-amazon-bedrock' ); ?>
-	</p>
+			<div class="aicfab-panel">
+				<h3><?php esc_html_e( 'Export', 'ai-chat-for-amazon-bedrock' ); ?></h3>
+				<p class="description"><?php esc_html_e( 'Downloads a JSON file with the current configuration of this site.', 'ai-chat-for-amazon-bedrock' ); ?></p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<?php wp_nonce_field( 'ai_chat_bedrock_export_settings' ); ?>
+					<input type="hidden" name="action" value="ai_chat_bedrock_export_settings">
+					<p><button type="submit" class="button button-secondary"><?php esc_html_e( 'Download configuration', 'ai-chat-for-amazon-bedrock' ); ?></button></p>
+				</form>
+			</div>
 
-	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-		<?php wp_nonce_field( 'ai_chat_bedrock_export_settings' ); ?>
-		<input type="hidden" name="action" value="ai_chat_bedrock_export_settings">
-		<p><button type="submit" class="button"><?php esc_html_e( 'Download configuration', 'ai-chat-for-amazon-bedrock' ); ?></button></p>
-	</form>
-
-	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
-		<?php wp_nonce_field( 'ai_chat_bedrock_import_settings' ); ?>
-		<input type="hidden" name="action" value="ai_chat_bedrock_import_settings">
-		<p>
-			<label for="aicfab_import_file"><?php esc_html_e( 'Configuration file', 'ai-chat-for-amazon-bedrock' ); ?></label><br>
-			<input type="file" id="aicfab_import_file" name="aicfab_import_file" accept="application/json,.json">
-		</p>
-		<p>
-			<label for="aicfab_import_json"><?php esc_html_e( 'Or paste the file contents', 'ai-chat-for-amazon-bedrock' ); ?></label><br>
-			<textarea id="aicfab_import_json" name="aicfab_import_json" class="large-text code" rows="4"></textarea>
-		</p>
-		<p>
-			<button type="submit" class="button"><?php esc_html_e( 'Apply configuration', 'ai-chat-for-amazon-bedrock' ); ?></button>
-			<span class="description"><?php esc_html_e( 'Existing values are overwritten. Credentials are left alone.', 'ai-chat-for-amazon-bedrock' ); ?></span>
-		</p>
-	</form>
+			<div class="aicfab-panel">
+				<h3><?php esc_html_e( 'Import', 'ai-chat-for-amazon-bedrock' ); ?></h3>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" enctype="multipart/form-data">
+					<?php wp_nonce_field( 'ai_chat_bedrock_import_settings' ); ?>
+					<input type="hidden" name="action" value="ai_chat_bedrock_import_settings">
+					<table class="form-table" role="presentation">
+						<tr>
+							<th scope="row"><label for="aicfab_import_file"><?php esc_html_e( 'Configuration file', 'ai-chat-for-amazon-bedrock' ); ?></label></th>
+							<td><input type="file" id="aicfab_import_file" name="aicfab_import_file" accept="application/json,.json"></td>
+						</tr>
+						<tr>
+							<th scope="row"><label for="aicfab_import_json"><?php esc_html_e( 'Or paste the file contents', 'ai-chat-for-amazon-bedrock' ); ?></label></th>
+							<td><textarea id="aicfab_import_json" name="aicfab_import_json" class="large-text code" rows="6"></textarea></td>
+						</tr>
+					</table>
+					<p class="description" id="aicfab-import-note"><?php esc_html_e( 'Existing values are overwritten. Credentials are left alone.', 'ai-chat-for-amazon-bedrock' ); ?></p>
+					<p class="submit"><button type="submit" class="button button-primary" aria-describedby="aicfab-import-note"><?php esc_html_e( 'Apply configuration', 'ai-chat-for-amazon-bedrock' ); ?></button></p>
+				</form>
+			</div>
+		</div>
+	<?php endif; ?>
 </div>

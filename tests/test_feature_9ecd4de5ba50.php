@@ -48,6 +48,15 @@ function admin_url( $path = '' ) { return 'https://example.test/wp-admin/' . $pa
 function add_query_arg( $args, $url ) { return $url . '?' . http_build_query( $args ); }
 function get_admin_page_title() { return 'Conversations'; }
 function number_format_i18n( $number ) { return number_format( $number ); }
+function wp_date( $format, $timestamp ) { return gmdate( $format, $timestamp ); }
+// Enough of the list view's helpers to render stored entries.
+function wp_trim_words( $text, $words = 55 ) { return implode( ' ', array_slice( preg_split( '/\s+/', (string) $text ), 0, $words ) ); }
+function wp_kses_post( $html ) { return (string) $html; }
+function wp_unslash( $value ) { return $value; }
+function selected( $a, $b, $echo = true ) { $out = (string) $a === (string) $b ? ' selected="selected"' : ''; if ( $echo ) { echo $out; } return $out; }
+function paginate_links( $args = array() ) { return ''; }
+function esc_attr_e( $text, $domain = null ) { echo esc_attr( $text ); }
+function esc_attr__( $text, $domain = null ) { return esc_attr( $text ); }
 function wp_nonce_field( $action ) {
 	echo '<input type="hidden" name="_wpnonce" value="' . esc_attr( 'nonce-' . $action ) . '">';
 }
@@ -182,18 +191,25 @@ foreach ( array_slice( $rows, 1 ) as $index => $row ) {
 }
 gap_check( gap_download( 'download-empty' ) === array( $header ), 'An empty download still contains the header' );
 
-// Render the actual empty panel and inspect its form rather than matching PHP source.
+// Render the actual panel and inspect its form rather than matching PHP source.
+function gap_render() {
+	$_GET = array();
+	ob_start();
+	require __DIR__ . '/../admin/partials/ai-chat-bedrock-admin-conversations.php';
+	$document = new DOMDocument();
+	$previous = libxml_use_internal_errors( true );
+	$document->loadHTML( ob_get_clean() );
+	libxml_clear_errors();
+	libxml_use_internal_errors( $previous );
+	return new DOMXPath( $document );
+}
 $GLOBALS['gap_options']['ai_chat_bedrock_conversations'] = array();
-$_GET = array();
-ob_start();
-require __DIR__ . '/../admin/partials/ai-chat-bedrock-admin-conversations.php';
-$html = ob_get_clean();
-$document = new DOMDocument();
-$previous = libxml_use_internal_errors( true );
-$document->loadHTML( $html );
-libxml_clear_errors();
-libxml_use_internal_errors( $previous );
-$xpath = new DOMXPath( $document );
+$xpath = gap_render();
+gap_check( 0 === $xpath->query( '//form[input[@name="action" and @value="ai_chat_bedrock_export_gaps"]]' )->length, 'With no gaps there is nothing to download, so no button' );
+gap_check( false !== strpos( $xpath->document->textContent, 'Nothing to report yet' ), 'The empty report says why it is empty' );
+
+gap_fixture();
+$xpath = gap_render();
 $forms = $xpath->query( '//form[input[@name="action" and @value="ai_chat_bedrock_export_gaps"]]' );
 gap_check( 1 === $forms->length, 'The content-gap panel renders one export form' );
 $form = $forms->item( 0 );
