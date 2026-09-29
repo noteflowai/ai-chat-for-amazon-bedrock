@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.47.6
+Stable tag: 1.48.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -371,6 +371,9 @@ what a good answer says.
 
 
 == Changelog ==
+
+= 1.48.0 =
+* Conversations: the Content gaps panel has a Period control: the last 7, 30 or 90 days. The summary, the table and the content gaps CSV all cover the chosen period. A 7-day or 90-day file says so in its name (`-7d-`, `-90d-`); a 30-day download keeps its old name. The period stays selected while you search, filter, page through or reset the conversation log. Thirty days is still the default.
 
 = 1.47.6 =
 * Counts are translated with proper plural forms everywhere in wp-admin ("1 request", "3 requests"), so languages with other plural rules read correctly too. Dates in the conversation log and the MCP connections follow the date and time format set under Settings > General.
@@ -779,6 +782,9 @@ what a good answer says.
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.48.0 =
+Choose a 7, 30 or 90-day period for the content gaps panel and its CSV. The default 30-day view and download are unchanged.
 
 = 1.47.6 =
 Plural forms and site date formats throughout wp-admin, clearer MCP and profile screens, and an accurate site builder summary.

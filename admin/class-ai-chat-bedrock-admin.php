@@ -307,7 +307,7 @@ class AI_Chat_Bedrock_Admin {
 	}
 
 	/**
-	 * Download the same content gaps shown in the 30-day editorial panel.
+	 * Download the same content gaps shown in the editorial panel, for the period it shows.
 	 */
 	public function handle_export_gaps() {
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -315,8 +315,11 @@ class AI_Chat_Bedrock_Admin {
 		}
 		check_admin_referer( 'ai_chat_bedrock_export_gaps' );
 
-		$rows     = AI_Chat_Bedrock_Insights::export_rows( array( 'days' => 30 ) );
-		$filename = 'ai-chat-bedrock-content-gaps-' . gmdate( 'Ymd-His' ) . '.csv';
+		// Read only once the capability and nonce are checked. A missing or unrecognised period exports 30 days.
+		$raw_days = isset( $_POST['aicfab_gap_days'] ) && is_scalar( $_POST['aicfab_gap_days'] ) ? wp_unslash( $_POST['aicfab_gap_days'] ) : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- only 7, 30 or 90 pass gap_window().
+		$days     = AI_Chat_Bedrock_Insights::gap_window( $raw_days );
+		$rows     = AI_Chat_Bedrock_Insights::export_rows( array( 'days' => $days ) );
+		$filename = AI_Chat_Bedrock_Insights::export_filename( $days, time() );
 		nocache_headers();
 		header( 'Content-Type: text/csv; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );

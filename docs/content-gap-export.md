@@ -5,10 +5,27 @@ Open **AI Chat for Amazon Bedrock → Conversations** as an administrator and se
 articles, for example explanations of missing robot evaluation results or experiment
 procedures. Downloading does not create posts, collect additional data, or call Bedrock.
 
-The file contains the same ranked gaps as the panel: up to 15 groups from the last
-30 days of retained visitor exchanges. The conversation list's search, source and
-rating filters do not change this panel or its download. An empty report downloads
-only the header.
+Pick the window first. **Period**, at the top of the panel, offers Last 7 days,
+Last 30 days and Last 90 days; choose one and select **Show**. The summary, the table
+and the download then cover that window. The file contains the same ranked gaps as
+the panel: up to 15 groups from the retained visitor exchanges in the chosen period.
+Thirty days is the default, and any other value in the address falls back to it.
+
+The period stays selected while you search, filter, page through or reset the
+conversation list below. That list's search, source and rating filters do not change
+the panel or its download. The period is not saved: opening the screen again shows
+30 days. When there are no gaps in the period, the panel says so for that number of
+days and offers no download.
+
+File names carry the period, except for the default:
+
+- 30 days: `ai-chat-bedrock-content-gaps-YYYYMMDD-HHMMSS.csv`, as before
+- 7 days: `ai-chat-bedrock-content-gaps-7d-YYYYMMDD-HHMMSS.csv`
+- 90 days: `ai-chat-bedrock-content-gaps-90d-YYYYMMDD-HHMMSS.csv`
+
+The time in the name is UTC. Retention and the 200-entry log cap limit how far back
+any period reaches, so on a site that keeps less than 90 days, 90 days can show the
+same gaps as 30.
 
 Columns are `question`, `occurrences`, `last_asked_utc`, `grounded_count` and
 `ungrounded_count`. Counts include only exchanges that contribute to the gap:
