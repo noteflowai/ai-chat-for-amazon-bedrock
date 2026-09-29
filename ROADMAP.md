@@ -12,9 +12,17 @@ The plugin remains useful for general WordPress sites. A particular site's edito
 
 ## Current baseline
 
-Reviewed `530e7e2` / v1.48.0. Streaming chat, Bedrock integration, retrieval, evaluation and tool/MCP capabilities already exist. Role-based AWS credentials, permission checks, restricted tools and package checks are valuable foundations.
+Reviewed `530e7e2` / v1.48.0. Streaming chat, Bedrock integration, retrieval, evaluation and tool/MCP capabilities already exist. Native WordPress AI Client registration, Abilities and live integration checks also exist. Role-based AWS credentials, permission checks, restricted tools and package checks are valuable foundations.
 
 Published-only retrieval, guest-chat defaults and draft-only content tools must retain their existing boundaries. The review did not establish external site adoption, answer usefulness or cost per resolved question.
+
+## External evidence and positioning — reviewed 2026-09-29
+
+[WordPress 7's native AI Client](https://make.wordpress.org/core/2026/03/24/introducing-the-ai-client-in-wordpress-7-0/) provides a provider-neutral prompt API and Connectors setup. The [Abilities API](https://make.wordpress.org/ai/handbook/projects/abilities-api/) standardizes discoverable capabilities with authorization. Generic chat and another independent tool registry face increasing platform overlap.
+
+This plugin already integrates both APIs; its release history includes a real hook-wiring correction verified against live WordPress. Prioritize compatibility with the native workflow, Bedrock role credentials, AWS operational controls, permitted site knowledge and useful citations. Retain standalone chat where it serves an observed site need.
+
+Extend WP-01/WP-03 with a 30-day operator comparison: the same site questions and native AI Client workflow, using current plugin defaults and a simple permitted baseline. Record setup failures, citation correctness, actual provider/model where available, latency and cost per accepted answer. Native `model_preference` is a preference, so do not infer the executed model from configuration. Seek three independent operators; defer new provider/tool breadth if grounded answers or recurring use remain unproven.
 
 ## Now
 
