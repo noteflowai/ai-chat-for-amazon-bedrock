@@ -258,6 +258,54 @@ class AI_Chat_Bedrock_Insights {
 	}
 
 	/**
+	 * Periods, in days, that the content gaps panel and its download offer.
+	 */
+	const GAP_WINDOWS = array( 7, 30, 90 );
+
+	/**
+	 * Period used when none, or an unrecognised one, is asked for. It is what 1.47.6 always used.
+	 */
+	const DEFAULT_GAP_WINDOW = 30;
+
+	/**
+	 * The content gaps period a request asked for, or the default.
+	 *
+	 * Only a PHP int or a string made of digits alone is read, and only 7, 30 or 90 are
+	 * accepted. \z, unlike $, does not let a trailing newline through, and nothing is
+	 * coerced: "-7", "7abc", " 90" and "90.5" are all the default, not a nearby window.
+	 *
+	 * @param mixed $raw Requested period, typically straight from the request.
+	 * @return int 7, 30 or 90.
+	 */
+	public static function gap_window( $raw ) {
+		if ( is_int( $raw ) ) {
+			$value = $raw;
+		} elseif ( is_string( $raw ) && 1 === preg_match( '/\A[0-9]+\z/', $raw ) ) {
+			$value = (int) $raw;
+		} else {
+			return self::DEFAULT_GAP_WINDOW;
+		}
+		return in_array( $value, self::GAP_WINDOWS, true ) ? $value : self::DEFAULT_GAP_WINDOW;
+	}
+
+	/**
+	 * File name for a content gaps download.
+	 *
+	 * The default period keeps the name it always had, so anything that collects these
+	 * files keeps working; the other periods say which window the file covers.
+	 *
+	 * @param mixed    $days Period in days; validated with gap_window().
+	 * @param int|null $time Unix time for the name, in UTC. Defaults to now.
+	 * @return string
+	 */
+	public static function export_filename( $days, $time = null ) {
+		$days  = self::gap_window( $days );
+		$time  = null === $time ? time() : (int) $time;
+		$range = self::DEFAULT_GAP_WINDOW === $days ? '' : $days . 'd-';
+		return 'ai-chat-bedrock-content-gaps-' . $range . gmdate( 'Ymd-His', $time ) . '.csv';
+	}
+
+	/**
 	 * Counts for the panel heading.
 	 *
 	 * @param int $days Window in days.

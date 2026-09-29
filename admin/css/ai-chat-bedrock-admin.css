@@ -548,6 +548,15 @@
 	margin: 10px 0 0;
 }
 
+/* Content gaps period: label, select and Show on one line, wrapping on a phone */
+.aicfab-gap-period {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 12px;
+}
+
 /* Import and export */
 .aicfab-transfer {
 	max-width: 820px;

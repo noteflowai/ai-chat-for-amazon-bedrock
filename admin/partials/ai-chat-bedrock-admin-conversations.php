@@ -26,6 +26,10 @@ $source        = isset( $_GET['aicfab_source'] ) ? sanitize_key( wp_unslash( $_G
 $rating        = isset( $_GET['aicfab_rating'] ) ? sanitize_key( wp_unslash( $_GET['aicfab_rating'] ) ) : '';
 $aicfab_paged  = isset( $_GET['paged'] ) ? absint( wp_unslash( $_GET['paged'] ) ) : 1;
 $aicfab_log    = isset( $_GET['aicfab-log'] ) ? sanitize_key( wp_unslash( $_GET['aicfab-log'] ) ) : '';
+// Content gaps period: only 7, 30 or 90 pass, anything else is the 30-day default.
+$aicfab_gap_days = AI_Chat_Bedrock_Insights::gap_window( isset( $_GET['aicfab_gap_days'] ) && is_scalar( $_GET['aicfab_gap_days'] ) ? wp_unslash( $_GET['aicfab_gap_days'] ) : null ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- validated by gap_window().
+// Carried in log URLs only when it is not the default, so default URLs stay as they were.
+$aicfab_gap_param = AI_Chat_Bedrock_Insights::DEFAULT_GAP_WINDOW === $aicfab_gap_days ? '' : (string) $aicfab_gap_days;
 // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 $sources = array(
@@ -53,15 +57,29 @@ $page_base  = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-conversation
 $filter_url = add_query_arg(
 	array_filter(
 		array(
-			'aicfab_s'      => $aicfab_search,
-			'aicfab_source' => $source,
-			'aicfab_rating' => $rating,
+			'aicfab_s'        => $aicfab_search,
+			'aicfab_source'   => $source,
+			'aicfab_rating'   => $rating,
+			'aicfab_gap_days' => $aicfab_gap_param,
 		),
 		static function ( $value ) {
 			return '' !== $value;
 		}
 	),
 	$page_base
+);
+// Reset clears the log's own filters; a chosen gap period stays.
+$aicfab_reset_url = '' === $aicfab_gap_param ? $page_base : add_query_arg( 'aicfab_gap_days', $aicfab_gap_param, $page_base );
+// The period form keeps the log filters, but not the page: a new period starts the log at page 1.
+$aicfab_gap_keep = array_filter(
+	array(
+		'aicfab_s'      => $aicfab_search,
+		'aicfab_source' => $source,
+		'aicfab_rating' => $rating,
+	),
+	static function ( $value ) {
+		return '' !== $value;
+	}
 );
 ?>
 <div class="wrap aicfab-dashboard">
@@ -99,9 +117,32 @@ $filter_url = add_query_arg(
 	<div class="aicfab-cards">
 		<div class="aicfab-card">
 			<h2><?php esc_html_e( 'Content gaps', 'ai-chat-for-amazon-bedrock' ); ?></h2>
+			<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="aicfab-gap-period">
+				<input type="hidden" name="page" value="ai-chat-for-amazon-bedrock-conversations">
+				<?php foreach ( $aicfab_gap_keep as $aicfab_keep_name => $aicfab_keep_value ) : ?>
+					<input type="hidden" name="<?php echo esc_attr( $aicfab_keep_name ); ?>" value="<?php echo esc_attr( $aicfab_keep_value ); ?>">
+				<?php endforeach; ?>
+				<label for="aicfab-gap-days"><?php esc_html_e( 'Period', 'ai-chat-for-amazon-bedrock' ); ?></label>
+				<select id="aicfab-gap-days" name="aicfab_gap_days">
+					<?php foreach ( AI_Chat_Bedrock_Insights::GAP_WINDOWS as $aicfab_gap_option ) : ?>
+						<option value="<?php echo esc_attr( $aicfab_gap_option ); ?>" <?php selected( $aicfab_gap_days, $aicfab_gap_option ); ?>>
+							<?php
+							echo esc_html(
+								sprintf(
+									/* translators: %s: number of days. */
+									_n( 'Last %s day', 'Last %s days', $aicfab_gap_option, 'ai-chat-for-amazon-bedrock' ),
+									number_format_i18n( $aicfab_gap_option )
+								)
+							);
+							?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+				<button type="submit" class="button"><?php esc_html_e( 'Show', 'ai-chat-for-amazon-bedrock' ); ?></button>
+			</form>
 			<?php
-			$aicfab_gap_summary = AI_Chat_Bedrock_Insights::summary( 30 );
-			$aicfab_gaps        = AI_Chat_Bedrock_Insights::content_gaps( array( 'days' => 30 ) );
+			$aicfab_gap_summary = AI_Chat_Bedrock_Insights::summary( $aicfab_gap_days );
+			$aicfab_gaps        = AI_Chat_Bedrock_Insights::content_gaps( array( 'days' => $aicfab_gap_days ) );
 			?>
 			<p>
 				<?php
@@ -120,7 +161,15 @@ $filter_url = add_query_arg(
 
 			<?php if ( empty( $aicfab_gaps ) ) : ?>
 				<p class="description">
-					<?php esc_html_e( 'Nothing to report yet. Gaps appear once visitors ask something the site has no content for, or mark an answer unhelpful.', 'ai-chat-for-amazon-bedrock' ); ?>
+					<?php
+					echo esc_html(
+						sprintf(
+							/* translators: %s: number of days in the chosen period. */
+							_n( 'Nothing to report yet for the last %s day. Gaps appear once visitors ask something the site has no content for, or mark an answer unhelpful. Try a longer period if you expected results.', 'Nothing to report yet for the last %s days. Gaps appear once visitors ask something the site has no content for, or mark an answer unhelpful. Try a longer period if you expected results.', (int) $aicfab_gap_summary['days'], 'ai-chat-for-amazon-bedrock' ),
+							number_format_i18n( $aicfab_gap_summary['days'] )
+						)
+					);
+					?>
 				</p>
 			<?php else : ?>
 				<div class="aicfab-table-scroll">
@@ -166,6 +215,7 @@ $filter_url = add_query_arg(
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="aicfab-gap-export">
 					<?php wp_nonce_field( 'ai_chat_bedrock_export_gaps' ); ?>
 					<input type="hidden" name="action" value="ai_chat_bedrock_export_gaps">
+					<input type="hidden" name="aicfab_gap_days" value="<?php echo esc_attr( $aicfab_gap_days ); ?>">
 					<button type="submit" class="button"><?php esc_html_e( 'Download content gaps CSV', 'ai-chat-for-amazon-bedrock' ); ?></button>
 				</form>
 			<?php endif; ?>
@@ -195,6 +245,9 @@ $filter_url = add_query_arg(
 	<?php if ( $enabled ) : ?>
 		<form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="aicfab-log-filters">
 			<input type="hidden" name="page" value="ai-chat-for-amazon-bedrock-conversations">
+			<?php if ( '' !== $aicfab_gap_param ) : ?>
+				<input type="hidden" name="aicfab_gap_days" value="<?php echo esc_attr( $aicfab_gap_param ); ?>">
+			<?php endif; ?>
 			<label class="screen-reader-text" for="aicfab-log-search"><?php esc_html_e( 'Search conversations', 'ai-chat-for-amazon-bedrock' ); ?></label>
 			<input type="search" id="aicfab-log-search" name="aicfab_s" value="<?php echo esc_attr( $aicfab_search ); ?>" placeholder="<?php esc_attr_e( 'Search questions and answers', 'ai-chat-for-amazon-bedrock' ); ?>" class="regular-text">
 
@@ -216,7 +269,7 @@ $filter_url = add_query_arg(
 
 			<button type="submit" class="button"><?php esc_html_e( 'Filter', 'ai-chat-for-amazon-bedrock' ); ?></button>
 			<?php if ( '' !== $aicfab_search || '' !== $source || '' !== $rating ) : ?>
-				<a class="button-link" href="<?php echo esc_url( $page_base ); ?>"><?php esc_html_e( 'Reset', 'ai-chat-for-amazon-bedrock' ); ?></a>
+				<a class="button-link" href="<?php echo esc_url( $aicfab_reset_url ); ?>"><?php esc_html_e( 'Reset', 'ai-chat-for-amazon-bedrock' ); ?></a>
 			<?php endif; ?>
 		</form>
 
