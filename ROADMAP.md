@@ -22,6 +22,8 @@ Published-only retrieval, guest-chat defaults and draft-only content tools must 
 
 This plugin already integrates both APIs; its release history includes a real hook-wiring correction verified against live WordPress. Prioritize compatibility with the native workflow, Bedrock role credentials, AWS operational controls, permitted site knowledge and useful citations. Retain standalone chat where it serves an observed site need.
 
+[AI Engine](https://wordpress.org/plugins/ai-engine/) already advertises chat, knowledge retrieval and MCP. A community [Bedrock AI Client provider](https://github.com/itzmekhokan/ai-provider-for-bedrock) also exists; its README describes a thin API-key/OpenAI-compatible path. Native Bedrock support is therefore not unique by itself. Treat these as comparison candidates, not independently verified quality claims. Match the task, model/region, permitted data and authentication requirements; an API-key-only path is not automatically an equivalent baseline for a role-credential deployment.
+
 Extend WP-01/WP-03 with a 30-day operator comparison: the same site questions and native AI Client workflow, using current plugin defaults and a simple permitted baseline. Record setup failures, citation correctness, actual provider/model where available, latency and cost per accepted answer. Native `model_preference` is a preference, so do not infer the executed model from configuration. Seek three independent operators; defer new provider/tool breadth if grounded answers or recurring use remain unproven.
 
 ## Now
