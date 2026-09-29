@@ -1,5 +1,7 @@
 # AI Agents & Chat for Amazon Bedrock
 
+Product direction and acceptance milestones: [Roadmap](ROADMAP.md).
+
 The source for the WordPress plugin published at
 <https://wordpress.org/plugins/ai-chat-for-amazon-bedrock/>. This tree is what the
 released package is built from, so the code here is the code that gets installed.
