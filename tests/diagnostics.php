@@ -144,6 +144,7 @@ function delete_transient( $key ) {
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-models.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-rate-limits.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-diagnostics.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-translation.php';
 
 $GLOBALS['aicfab_opts'] = array(
 	'ai_chat_bedrock_settings' => array(

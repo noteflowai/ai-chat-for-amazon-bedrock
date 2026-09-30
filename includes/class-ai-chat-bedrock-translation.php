@@ -19,6 +19,32 @@ if ( ! defined( 'ABSPATH' ) ) {
 class AI_Chat_Bedrock_Translation {
 
 	/**
+	 * Puts sentences one after another the way the admin's language does.
+	 *
+	 * English leaves a space between sentences. Chinese and Japanese end one with a
+	 * full-width stop and leave none, so the separator is theirs to translate.
+	 *
+	 * @param string ...$sentences Sentences in order; empty ones are skipped.
+	 * @return string
+	 */
+	public static function sentences( ...$sentences ) {
+		$text = '';
+		foreach ( $sentences as $sentence ) {
+			$sentence = (string) $sentence;
+			if ( '' === $sentence ) {
+				continue;
+			}
+			$text = '' === $text ? $sentence : sprintf(
+				/* translators: 1: a sentence, 2: the sentence after it. Languages that put no space between sentences leave it out. */
+				_x( '%1$s %2$s', 'two sentences in a row', 'ai-chat-for-amazon-bedrock' ),
+				$text,
+				$sentence
+			);
+		}
+		return $text;
+	}
+
+	/**
 	 * The group the strings are listed under in the multilingual plugin.
 	 */
 	const CONTEXT = 'AI Chat for Amazon Bedrock';

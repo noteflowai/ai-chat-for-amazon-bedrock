@@ -3,6 +3,10 @@ Full changelog. The readme lists the latest releases only.
 
 == Changelog ==
 
+= 1.55.0 =
+* The settings screens, dashboard, diagnostics, conversation log, MCP pages and block editor read in Simplified Chinese (zh_CN) and Japanese (ja). 1.52.0 translated only what visitors read in the chat, so a Chinese or Japanese admin saw these screens in English, with a few translated words among them. As before, a language pack from translate.wordpress.org replaces the bundled translation once there is one.
+* Where a message puts two sentences together, Chinese and Japanese no longer get a space after the full stop between them.
+
 = 1.54.0 =
 * The popup chat's Send button and footer are always on screen. Themes that give every form's text box a tall fixed height, Blocksy among them, pushed them below the popup's edge, where signed-in visitors could not reach them. The chat now sets its own text box height, and on a short window the conversation and then the suggestions shrink first.
 * New Color scheme setting under Chat: Light, Dark, or follow the visitor's device. Light is the default. Until now the chat always followed the device, so a visitor in dark mode saw a dark panel on a light theme; choose "Follow the visitor's device" to keep that.

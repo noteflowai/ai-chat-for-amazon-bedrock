@@ -98,21 +98,22 @@ $aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 			</div>
 			<p class="aicfab-card-detail">
 				<?php
-				if ( $daily_limit > 0 ) {
-					printf(
+				$limit_sentence = $daily_limit > 0
+					? sprintf(
 						/* translators: 1: requests today, 2: daily request limit. */
-						esc_html__( 'Daily limit: %1$s of %2$s used.', 'ai-chat-for-amazon-bedrock' ),
-						esc_html( number_format_i18n( (int) $today['requests'] ) ),
-						esc_html( number_format_i18n( (int) $daily_limit ) )
-					);
-				} else {
-					esc_html_e( 'No plugin-side daily limit.', 'ai-chat-for-amazon-bedrock' );
-				}
-				echo ' ' . esc_html(
-					sprintf(
-						/* translators: %s: requests in the last seven days. */
-						_n( 'Last 7 days: %s request.', 'Last 7 days: %s requests.', (int) $week['requests'], 'ai-chat-for-amazon-bedrock' ),
-						number_format_i18n( (int) $week['requests'] )
+						__( 'Daily limit: %1$s of %2$s used.', 'ai-chat-for-amazon-bedrock' ),
+						number_format_i18n( (int) $today['requests'] ),
+						number_format_i18n( (int) $daily_limit )
+					)
+					: __( 'No plugin-side daily limit.', 'ai-chat-for-amazon-bedrock' );
+				echo esc_html(
+					AI_Chat_Bedrock_Translation::sentences(
+						$limit_sentence,
+						sprintf(
+							/* translators: %s: requests in the last seven days. */
+							_n( 'Last 7 days: %s request.', 'Last 7 days: %s requests.', (int) $week['requests'], 'ai-chat-for-amazon-bedrock' ),
+							number_format_i18n( (int) $week['requests'] )
+						)
 					)
 				);
 				?>

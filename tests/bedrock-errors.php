@@ -19,6 +19,10 @@ function __( $text, $domain = null ) {
 	return $text;
 }
 
+function _x( $text, $context, $domain = null ) {
+	return $text;
+}
+
 class AI_Chat_Bedrock_Iam_Policy {
 	public static function is_inference_profile( $model_id ) {
 		foreach ( array( 'us.', 'eu.', 'apac.', 'apne.', 'global.' ) as $prefix ) {
@@ -31,6 +35,7 @@ class AI_Chat_Bedrock_Iam_Policy {
 }
 
 require_once __DIR__ . '/../includes/class-ai-chat-bedrock-bedrock-errors.php';
+require_once __DIR__ . '/../includes/class-ai-chat-bedrock-translation.php';
 
 $failures = array();
 function check_error( $condition, $message ) {

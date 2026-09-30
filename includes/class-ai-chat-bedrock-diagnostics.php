@@ -129,18 +129,18 @@ class AI_Chat_Bedrock_Diagnostics {
 		$state   = in_array( $status['source'], array( 'options' ), true ) ? 'warn' : 'pass';
 		$message = $status['message'];
 		if ( 'options' === $status['source'] ) {
-			$message .= ' ' . __( 'Consider wp-config.php constants or an IAM role so keys are not stored in the database.', 'ai-chat-for-amazon-bedrock' );
+			$message = AI_Chat_Bedrock_Translation::sentences( $message, __( 'Consider wp-config.php constants or an IAM role so keys are not stored in the database.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		if ( 0 === strpos( $status['source'], 'api_key_' ) ) {
 			if ( ! empty( $status['temporary'] ) ) {
-				$state    = 'warn';
-				$message .= ' ' . __( 'This is a short-term key, which stops working within 12 hours. Use a long-term key or an IAM role.', 'ai-chat-for-amazon-bedrock' );
+				$state   = 'warn';
+				$message = AI_Chat_Bedrock_Translation::sentences( $message, __( 'This is a short-term key, which stops working within 12 hours. Use a long-term key or an IAM role.', 'ai-chat-for-amazon-bedrock' ) );
 			}
 			// Agents endpoints refuse API keys, so a feature that uses them needs signing credentials too.
 			$needs_signing = ! empty( $options['knowledge_base_id'] ) || ! empty( $options['prompt_id'] );
 			if ( $needs_signing && ! ( new AI_Chat_Bedrock_AWS() )->has_signing_credentials() ) {
-				$state    = 'warn';
-				$message .= ' ' . __( 'A Knowledge Base or managed prompt is configured, and those only accept signed requests. Add access keys or an IAM role for them; chat keeps using the API key.', 'ai-chat-for-amazon-bedrock' );
+				$state   = 'warn';
+				$message = AI_Chat_Bedrock_Translation::sentences( $message, __( 'A Knowledge Base or managed prompt is configured, and those only accept signed requests. Add access keys or an IAM role for them; chat keeps using the API key.', 'ai-chat-for-amazon-bedrock' ) );
 			}
 		}
 		return $this->result( 'credentials', __( 'AWS credentials', 'ai-chat-for-amazon-bedrock' ), $state, $message );
@@ -381,7 +381,7 @@ class AI_Chat_Bedrock_Diagnostics {
 			);
 		}
 		if ( ! empty( $index['problems'] ) ) {
-			return $this->result( 'vector_store', $label, 'fail', implode( ' ', $index['problems'] ) );
+			return $this->result( 'vector_store', $label, 'fail', AI_Chat_Bedrock_Translation::sentences( ...$index['problems'] ) );
 		}
 		return $this->result( 'vector_store', $label, 'pass', __( 'The S3 Vectors index exists and matches the embedding model.', 'ai-chat-for-amazon-bedrock' ) );
 	}
@@ -407,14 +407,17 @@ class AI_Chat_Bedrock_Diagnostics {
 		$message = $result['message'];
 		if ( isset( $result['duration'] ) ) {
 			/* translators: %d: round trip duration in milliseconds. */
-			$message .= ' ' . sprintf( __( 'Round trip took %d ms.', 'ai-chat-for-amazon-bedrock' ), (int) $result['duration'] );
+			$message = AI_Chat_Bedrock_Translation::sentences( $message, sprintf( __( 'Round trip took %d ms.', 'ai-chat-for-amazon-bedrock' ), (int) $result['duration'] ) );
 		}
 		if ( isset( $result['usage']['input_tokens'], $result['usage']['output_tokens'] ) ) {
-			$message .= ' ' . sprintf(
-				/* translators: 1: input token count, 2: output token count. */
-				__( 'Tokens used: %1$d input, %2$d output.', 'ai-chat-for-amazon-bedrock' ),
-				(int) $result['usage']['input_tokens'],
-				(int) $result['usage']['output_tokens']
+			$message = AI_Chat_Bedrock_Translation::sentences(
+				$message,
+				sprintf(
+					/* translators: 1: input token count, 2: output token count. */
+					__( 'Tokens used: %1$d input, %2$d output.', 'ai-chat-for-amazon-bedrock' ),
+					(int) $result['usage']['input_tokens'],
+					(int) $result['usage']['output_tokens']
+				)
 			);
 		}
 		return $this->result( 'invocation', __( 'Model invocation', 'ai-chat-for-amazon-bedrock' ), 'pass', $message );

@@ -312,7 +312,7 @@ class AI_Chat_Bedrock_Admin {
 			wp_send_json_error( array( 'message' => $message ), 400 );
 		}
 		if ( ! empty( $index['problems'] ) ) {
-			wp_send_json_error( array( 'message' => implode( ' ', $index['problems'] ) ), 400 );
+			wp_send_json_error( array( 'message' => AI_Chat_Bedrock_Translation::sentences( ...$index['problems'] ) ), 400 );
 		}
 		wp_send_json_success(
 			array(
@@ -913,16 +913,19 @@ class AI_Chat_Bedrock_Admin {
 		$today = AI_Chat_Bedrock_Usage::today_totals();
 		$week  = AI_Chat_Bedrock_Usage::totals( 7 );
 		echo '<p>' . esc_html(
-			sprintf(
-				/* translators: 1: requests today, 2: input tokens today, 3: output tokens today. */
-				_n( 'Today: %1$s request, %2$s input tokens, %3$s output tokens.', 'Today: %1$s requests, %2$s input tokens, %3$s output tokens.', (int) $today['requests'], 'ai-chat-for-amazon-bedrock' ),
-				number_format_i18n( (int) $today['requests'] ),
-				number_format_i18n( (int) $today['input_tokens'] ),
-				number_format_i18n( (int) $today['output_tokens'] )
-			) . ' ' . sprintf(
-				/* translators: %s: requests in the last seven days. */
-				_n( 'Last 7 days: %s request.', 'Last 7 days: %s requests.', (int) $week['requests'], 'ai-chat-for-amazon-bedrock' ),
-				number_format_i18n( (int) $week['requests'] )
+			AI_Chat_Bedrock_Translation::sentences(
+				sprintf(
+					/* translators: 1: requests today, 2: input tokens today, 3: output tokens today. */
+					_n( 'Today: %1$s request, %2$s input tokens, %3$s output tokens.', 'Today: %1$s requests, %2$s input tokens, %3$s output tokens.', (int) $today['requests'], 'ai-chat-for-amazon-bedrock' ),
+					number_format_i18n( (int) $today['requests'] ),
+					number_format_i18n( (int) $today['input_tokens'] ),
+					number_format_i18n( (int) $today['output_tokens'] )
+				),
+				sprintf(
+					/* translators: %s: requests in the last seven days. */
+					_n( 'Last 7 days: %s request.', 'Last 7 days: %s requests.', (int) $week['requests'], 'ai-chat-for-amazon-bedrock' ),
+					number_format_i18n( (int) $week['requests'] )
+				)
 			)
 		) . '</p>';
 	}
@@ -1078,22 +1081,20 @@ class AI_Chat_Bedrock_Admin {
 		$status = AI_Chat_Bedrock_Embeddings::status();
 		echo '<p class="aicfab-index-status">';
 		echo esc_html(
-			sprintf(
-				/* translators: 1: indexed item count, 2: total published item count. */
-				_n( 'Indexed %1$s of %2$s published item.', 'Indexed %1$s of %2$s published items.', (int) $status['total'], 'ai-chat-for-amazon-bedrock' ),
-				number_format_i18n( (int) $status['indexed'] ),
-				number_format_i18n( (int) $status['total'] )
-			)
-		);
-		if ( ! empty( $status['delete_pending'] ) ) {
-			echo ' ' . esc_html(
+			AI_Chat_Bedrock_Translation::sentences(
 				sprintf(
+					/* translators: 1: indexed item count, 2: total published item count. */
+					_n( 'Indexed %1$s of %2$s published item.', 'Indexed %1$s of %2$s published items.', (int) $status['total'], 'ai-chat-for-amazon-bedrock' ),
+					number_format_i18n( (int) $status['indexed'] ),
+					number_format_i18n( (int) $status['total'] )
+				),
+				empty( $status['delete_pending'] ) ? '' : sprintf(
 					/* translators: %s: number of vectors waiting to be deleted. */
 					_n( '%s removed passage is still waiting to be deleted from S3 Vectors.', '%s removed passages are still waiting to be deleted from S3 Vectors.', (int) $status['delete_pending'], 'ai-chat-for-amazon-bedrock' ),
 					number_format_i18n( (int) $status['delete_pending'] )
 				)
-			);
-		}
+			)
+		);
 		echo '</p>';
 		if ( isset( $status['searchable'] ) && (int) $status['total'] > (int) $status['searchable'] ) {
 			echo '<div class="notice notice-warning inline"><p>' . esc_html(

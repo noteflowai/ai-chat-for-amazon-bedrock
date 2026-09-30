@@ -503,16 +503,17 @@ class AI_Chat_Bedrock_Eval {
 			empty( $missing ) && empty( $invented ),
 			empty( $missing ) && empty( $invented )
 				? __( 'Required text present; nothing from the forbidden list appeared.', 'ai-chat-for-amazon-bedrock' )
-				: trim(
-					( $missing ? sprintf(
+				: AI_Chat_Bedrock_Translation::sentences(
+					$missing ? sprintf(
 						/* translators: %s: comma separated required strings. */
 						__( 'Missing: %s.', 'ai-chat-for-amazon-bedrock' ),
 						implode( ', ', $missing )
-					) : '' ) . ' ' . ( $invented ? sprintf(
+					) : '',
+					$invented ? sprintf(
 						/* translators: %s: comma separated forbidden strings. */
 						__( 'Stated: %s.', 'ai-chat-for-amazon-bedrock' ),
 						implode( ', ', $invented )
-					) : '' )
+					) : ''
 				)
 		);
 
