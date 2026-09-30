@@ -117,15 +117,17 @@ class AI_Chat_Bedrock_Bedrock_Errors {
 		if ( false !== strpos( $haystack, 'is not authorized to perform' ) ) {
 			return array(
 				'kind'    => 'iam_denied',
-				'message' => self::denied_action_message( $detail ) . self::credential_note( $credentials ),
+				'message' => AI_Chat_Bedrock_Translation::sentences( self::denied_action_message( $detail ), self::credential_note( $credentials ) ),
 			);
 		}
 
 		if ( 403 === $status || 401 === $status ) {
 			return array(
 				'kind'    => 'forbidden',
-				'message' => __( 'Amazon Bedrock refused the request. Attach the generated IAM policy from the Diagnostics screen, and confirm model access is granted in this region.', 'ai-chat-for-amazon-bedrock' )
-					. self::credential_note( $credentials ),
+				'message' => AI_Chat_Bedrock_Translation::sentences(
+					__( 'Amazon Bedrock refused the request. Attach the generated IAM policy from the Diagnostics screen, and confirm model access is granted in this region.', 'ai-chat-for-amazon-bedrock' ),
+					self::credential_note( $credentials )
+				),
 			);
 		}
 
@@ -181,9 +183,9 @@ class AI_Chat_Bedrock_Bedrock_Errors {
 		$source = (string) $credentials['source'];
 
 		if ( 0 === strpos( $source, 'api_key_' ) ) {
-			$note = ' ' . __( 'The request used an Amazon Bedrock API key. Bedrock refuses a key that has expired or been revoked, and one whose IAM identity lacks bedrock:CallWithBearerToken or permission for this model.', 'ai-chat-for-amazon-bedrock' );
+			$note = __( 'The request used an Amazon Bedrock API key. Bedrock refuses a key that has expired or been revoked, and one whose IAM identity lacks bedrock:CallWithBearerToken or permission for this model.', 'ai-chat-for-amazon-bedrock' );
 			if ( ! empty( $credentials['temporary'] ) ) {
-				$note .= ' ' . __( 'It is a short-term key, which lasts at most 12 hours. Use a long-term key or an IAM role for a site that has to keep working.', 'ai-chat-for-amazon-bedrock' );
+				$note = AI_Chat_Bedrock_Translation::sentences( $note, __( 'It is a short-term key, which lasts at most 12 hours. Use a long-term key or an IAM role for a site that has to keep working.', 'ai-chat-for-amazon-bedrock' ) );
 			}
 			return $note;
 		}
@@ -192,12 +194,12 @@ class AI_Chat_Bedrock_Bedrock_Errors {
 		}
 
 		/* translators: %s: where the AWS credentials came from. */
-		$note = ' ' . sprintf( __( 'The request used credentials from %s.', 'ai-chat-for-amazon-bedrock' ), $labels[ $source ] );
+		$note = sprintf( __( 'The request used credentials from %s.', 'ai-chat-for-amazon-bedrock' ), $labels[ $source ] );
 
 		// A role refreshes itself. Anything else carrying a session token does not.
 		$is_role = in_array( $source, array( 'container_role', 'instance_role' ), true );
 		if ( ! $is_role && ! empty( $credentials['temporary'] ) ) {
-			$note .= ' ' . __( 'Those are temporary credentials, which nothing renews once they expire. Replace them, or use an IAM role instead.', 'ai-chat-for-amazon-bedrock' );
+			$note = AI_Chat_Bedrock_Translation::sentences( $note, __( 'Those are temporary credentials, which nothing renews once they expire. Replace them, or use an IAM role instead.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
 		return $note;

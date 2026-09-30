@@ -77,7 +77,7 @@ class AI_Chat_Bedrock_CLI {
 				WP_CLI::error( $index->get_error_message() );
 			}
 			if ( ! empty( $index['problems'] ) ) {
-				WP_CLI::error( implode( ' ', $index['problems'] ) );
+				WP_CLI::error( AI_Chat_Bedrock_Translation::sentences( ...$index['problems'] ) );
 			}
 		}
 
