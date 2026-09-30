@@ -20,6 +20,11 @@ class AI_Chat_Bedrock_Usage {
 	const MAX_MODEL_ID   = 120;
 
 	/**
+	 * Failure categories for chat calls that reached Bedrock and still failed, in display order.
+	 */
+	const FAILURE_CATEGORIES = array( 'throttled', 'access_denied', 'validation', 'unavailable', 'network', 'other' );
+
+	/**
 	 * Record one completed Bedrock invocation.
 	 *
 	 * Embeddings are counted apart from answers. Indexing a site makes one per passage, and
@@ -276,6 +281,112 @@ class AI_Chat_Bedrock_Usage {
 	}
 
 	/**
+	 * Sort a final chat failure into one fixed category.
+	 *
+	 * A plain rule table over the HTTP status and the plugin's own error code. No error text
+	 * is read or stored.
+	 *
+	 * @param int    $status HTTP status of the reported failure, 0 when none was received.
+	 * @param string $code   Plugin error code.
+	 * @return string One of FAILURE_CATEGORIES.
+	 */
+	public static function classify_failure( int $status, string $code ) {
+		if ( 429 === $status ) {
+			return 'throttled';
+		}
+		if ( 401 === $status || 403 === $status ) {
+			return 'access_denied';
+		}
+		if ( 400 === $status ) {
+			return 'validation';
+		}
+		if ( $status >= 500 && $status <= 599 ) {
+			return 'unavailable';
+		}
+		if ( 0 === $status && in_array( $code, array( 'aicfab_unreachable', 'aicfab_stream_interrupted' ), true ) ) {
+			return 'network';
+		}
+		return 'other';
+	}
+
+	/**
+	 * Count one chat call that reached Bedrock and finally failed.
+	 *
+	 * Only the category counter changes. Requests, tokens, models and the daily cap are
+	 * left alone, and nothing about the conversation or the visitor is stored.
+	 *
+	 * @param string $category One of FAILURE_CATEGORIES. Anything else counts as other.
+	 * @return void
+	 */
+	public static function record_failure( $category = 'other' ) {
+		$category = is_string( $category ) && in_array( $category, self::FAILURE_CATEGORIES, true ) ? $category : 'other';
+		$today    = self::today();
+		$totals   = self::all();
+
+		if ( ! isset( $totals[ $today ] ) || ! is_array( $totals[ $today ] ) ) {
+			$totals[ $today ] = array(
+				'requests'      => 0,
+				'input_tokens'  => 0,
+				'output_tokens' => 0,
+				'models'        => array(),
+			);
+		}
+
+		$failures              = isset( $totals[ $today ]['failures'] ) && is_array( $totals[ $today ]['failures'] ) ? $totals[ $today ]['failures'] : array();
+		$failures[ $category ] = ( isset( $failures[ $category ] ) ? max( 0, (int) $failures[ $category ] ) : 0 ) + 1;
+
+		$totals[ $today ]['failures'] = $failures;
+
+		update_option( self::OPTION, self::prune( $totals ), false );
+	}
+
+	/**
+	 * Final chat failures over a number of days, by category in fixed order.
+	 *
+	 * @param int $days Days to include, including today.
+	 * @return array With total and by_category keys.
+	 */
+	public static function failure_totals( $days = 7 ) {
+		$days   = max( 1, min( self::RETENTION_DAYS, absint( $days ) ) );
+		$totals = self::all();
+		$by     = array_fill_keys( self::FAILURE_CATEGORIES, 0 );
+
+		for ( $offset = 0; $offset < $days; $offset++ ) {
+			$day = gmdate( 'Y-m-d', time() - ( $offset * DAY_IN_SECONDS ) );
+			if ( ! isset( $totals[ $day ]['failures'] ) || ! is_array( $totals[ $day ]['failures'] ) ) {
+				continue;
+			}
+			foreach ( self::clean_failures( $totals[ $day ]['failures'] ) as $category => $count ) {
+				$by[ $category ] += $count;
+			}
+		}
+
+		return array(
+			'total'       => (int) array_sum( $by ),
+			'by_category' => $by,
+		);
+	}
+
+	/**
+	 * Keep only allowlisted failure categories with positive counts.
+	 *
+	 * @param mixed $failures Stored failure map.
+	 * @return array
+	 */
+	private static function clean_failures( $failures ) {
+		$clean = array();
+		if ( ! is_array( $failures ) ) {
+			return $clean;
+		}
+		foreach ( self::FAILURE_CATEGORIES as $category ) {
+			if ( isset( $failures[ $category ] ) && is_numeric( $failures[ $category ] ) && (int) $failures[ $category ] > 0 ) {
+				$clean[ $category ] = (int) $failures[ $category ];
+			}
+		}
+		return $clean;
+	}
+
+	/**
 	 * Delete all usage counters.
 	 */
 	public static function reset() {
@@ -320,6 +431,10 @@ class AI_Chat_Bedrock_Usage {
 				if ( ! empty( $entry[ $counter ] ) ) {
 					$clean[ $day ][ $counter ] = (int) $entry[ $counter ];
 				}
+			}
+			$failures = self::clean_failures( isset( $entry['failures'] ) ? $entry['failures'] : array() );
+			if ( ! empty( $failures ) ) {
+				$clean[ $day ]['failures'] = $failures;
 			}
 		}
 		return $clean;

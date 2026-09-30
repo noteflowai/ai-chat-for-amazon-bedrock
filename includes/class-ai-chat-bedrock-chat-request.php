@@ -55,7 +55,7 @@ class AI_Chat_Bedrock_Chat_Request {
 	/**
 	 * The chat's color scheme: light, dark, or auto to follow the visitor's device.
 	 *
-	 * Light unless chosen otherwise. Until 1.53.0 the chat followed the device, so a visitor
+	 * Light unless chosen otherwise. Until 1.54.0 the chat followed the device, so a visitor
 	 * in dark mode saw a dark panel on a light theme, which is what most themes are.
 	 *
 	 * @param mixed $value Saved or submitted value.

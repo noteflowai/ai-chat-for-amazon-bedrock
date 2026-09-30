@@ -3,13 +3,16 @@ Full changelog. The readme lists the latest releases only.
 
 == Changelog ==
 
-= 1.53.0 =
+= 1.54.0 =
 * The popup chat's Send button and footer are always on screen. Themes that give every form's text box a tall fixed height, Blocksy among them, pushed them below the popup's edge, where signed-in visitors could not reach them. The chat now sets its own text box height, and on a short window the conversation and then the suggestions shrink first.
 * New Color scheme setting under Chat: Light, Dark, or follow the visitor's device. Light is the default. Until now the chat always followed the device, so a visitor in dark mode saw a dark panel on a light theme; choose "Follow the visitor's device" to keep that.
 * On iPhone, tapping the chat's text box no longer zooms the page in.
 * On touch screens, opening the popup no longer brings up the keyboard over the greeting and suggested questions.
 * The Clear chat button shows its border again.
 * Embeddings made for search and site indexing are counted separately in the usage summary and no longer count against the daily request limit, which indexing a site could use up before anyone chatted.
+
+= 1.53.0 =
+* The dashboard now counts chat requests that reached Amazon Bedrock and still failed, today and over the last seven days, by cause: throttled, access denied, rejected request, service unavailable, network or other. Setup errors that send no request are not counted, and no message or error text is stored.
 
 = 1.52.1 =
 * The token count under each answer reads in Chinese and Japanese too. 1.52.0 left it in English.
