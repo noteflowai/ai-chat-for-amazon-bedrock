@@ -134,19 +134,17 @@ class AI_Chat_Bedrock_Security {
 	public static function check_rate_limit( $bucket, $limit, $window = 60 ) {
 		$limit  = max( 1, (int) $limit );
 		$window = max( 1, (int) $window );
-		$key    = 'aicfab_rl_' . md5( sanitize_key( $bucket ) . '|' . self::client_identifier() );
-		$count  = get_transient( $key );
+		// The counter belongs to the current window and dies with it. Keyed by client alone, every
+		// request re-armed the expiry, so a steady client never saw its count reset.
+		$slot  = (int) floor( time() / $window );
+		$key   = 'aicfab_rl_' . md5( sanitize_key( $bucket ) . '|' . $window . '|' . $slot . '|' . self::client_identifier() );
+		$count = (int) get_transient( $key );
 
-		if ( false === $count ) {
-			set_transient( $key, 1, $window );
-			return true;
-		}
-
-		if ( (int) $count >= $limit ) {
+		if ( $count >= $limit ) {
 			return false;
 		}
 
-		set_transient( $key, (int) $count + 1, $window );
+		set_transient( $key, $count + 1, $window );
 		return true;
 	}
 
@@ -215,6 +213,36 @@ class AI_Chat_Bedrock_Security {
 		return function_exists( 'mb_substr' ) ? mb_substr( $value, $start, $length, 'UTF-8' ) : substr( $value, $start, $length );
 	}
 
+	/**
+	 * Cut a UTF-8 string to at most $bytes bytes without splitting a character.
+	 *
+	 * @param string $value UTF-8 text.
+	 * @param int    $bytes Maximum length in bytes.
+	 * @return string
+	 */
+	public static function truncate_bytes( $value, $bytes ) {
+		$value = (string) $value;
+		$bytes = max( 0, (int) $bytes );
+		if ( strlen( $value ) <= $bytes ) {
+			return $value;
+		}
+		$cut = substr( $value, 0, $bytes );
+		// Drop a trailing partial sequence: continuation bytes, then the lead byte they belong to.
+		$end = strlen( $cut );
+		$i   = $end;
+		while ( $i > 0 && ( ord( $cut[ $i - 1 ] ) & 0xC0 ) === 0x80 ) {
+			--$i;
+		}
+		if ( $i > 0 ) {
+			$lead   = ord( $cut[ $i - 1 ] );
+			$needed = $lead >= 0xF0 ? 4 : ( $lead >= 0xE0 ? 3 : ( $lead >= 0xC0 ? 2 : 1 ) );
+			if ( $end - ( $i - 1 ) < $needed ) {
+				$cut = substr( $cut, 0, $i - 1 );
+			}
+		}
+		return $cut;
+	}
+
 	private static function encryption_key() {
 		return hash( 'sha256', wp_salt( 'auth' ) . '|ai-chat-for-amazon-bedrock|credentials', true );
 	}
@@ -224,6 +252,18 @@ class AI_Chat_Bedrock_Security {
 			return 'user:' . get_current_user_id();
 		}
 		$address = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : 'unknown';
+
+		/**
+		 * The visitor's IP address, used only to rate limit guests. It is hashed and never stored.
+		 *
+		 * Behind a load balancer or CDN every guest arrives from the proxy's address and they
+		 * all share one limit. A site behind a proxy it controls can return the address that
+		 * proxy reports, such as CloudFront-Viewer-Address. Never return a header a visitor
+		 * can set directly, or anyone can escape the limit by sending a new value each time.
+		 *
+		 * @param string $address REMOTE_ADDR.
+		 */
+		$address = (string) apply_filters( 'ai_chat_bedrock_client_ip', $address );
 		return 'guest:' . hash_hmac( 'sha256', $address, wp_salt( 'nonce' ) );
 	}
 }

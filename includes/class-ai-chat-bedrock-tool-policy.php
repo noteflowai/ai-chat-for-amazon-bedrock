@@ -59,6 +59,23 @@ class AI_Chat_Bedrock_Tool_Policy {
 			'rotate',
 			'move',
 			'rename',
+			'add',
+			'approve',
+			'cancel',
+			'refund',
+			'charge',
+			'grant',
+			'assign',
+			'trash',
+			'restore',
+			'import',
+			'sync',
+			'schedule',
+			'submit',
+			'register',
+			'invite',
+			'modify',
+			'change',
 		);
 	}
 
@@ -70,10 +87,29 @@ class AI_Chat_Bedrock_Tool_Policy {
 	 * @return bool
 	 */
 	public static function is_mutating( $tool_name, $description = '' ) {
-		$haystack = strtolower( $tool_name . ' ' . $description );
+		// Split camelCase and snake_case into words, so "display" is not "pay" and "credit" is not "edit".
+		$split = static function ( $text ) {
+			$text  = preg_replace( '/([a-z0-9])([A-Z])/', '$1 $2', (string) $text );
+			$words = preg_split( '/[^a-z0-9]+/', strtolower( (string) $text ), -1, PREG_SPLIT_NO_EMPTY );
+			return is_array( $words ) ? $words : array();
+		};
+		$name  = $split( $tool_name );
+		$words = array_merge( $name, $split( $description ) );
+
 		foreach ( self::mutation_markers() as $marker ) {
-			if ( false !== strpos( $haystack, $marker ) ) {
-				return true;
+			if ( '_' === substr( $marker, -1 ) ) {
+				// set_, put_ and post_ name a verb only at the start of a tool name part.
+				$verb = rtrim( $marker, '_' );
+				if ( in_array( $verb, $name, true ) ) {
+					return true;
+				}
+				continue;
+			}
+			foreach ( $words as $word ) {
+				// Inflections count too: deletes, updated, publishing.
+				if ( $word === $marker || ( strlen( $marker ) > 3 && 0 === strpos( $word, $marker ) ) || in_array( $word, array( $marker . 's', $marker . 'ed', $marker . 'ing', $marker . 'd' ), true ) ) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -157,24 +193,29 @@ class AI_Chat_Bedrock_Tool_Policy {
 	/**
 	 * Whether a specific tool may be offered to the model and executed.
 	 *
-	 * @param string $tool_name   Prefixed tool name.
-	 * @param string $description Tool description.
+	 * @param string    $tool_name   Prefixed tool name.
+	 * @param string    $description Tool description.
+	 * @param bool|null $read_only   What the tool declares about itself: true for read only,
+	 *                               false for a tool that changes something or does not say,
+	 *                               null when the tool format has no such declaration and
+	 *                               the name and description are all there is to go on.
 	 * @return bool
 	 */
-	public static function is_tool_allowed( $tool_name, $description = '' ) {
+	public static function is_tool_allowed( $tool_name, $description = '', $read_only = null ) {
 		$tool_name = self::normalize_tool_name( $tool_name );
 		if ( '' === $tool_name ) {
 			return false;
 		}
 
-		$policy = self::policy();
+		$mutating = null === $read_only ? self::is_mutating( $tool_name, $description ) : ! $read_only;
+		$policy   = self::policy();
 		if ( isset( $policy[ $tool_name ] ) ) {
 			$allowed = 'allow' === $policy[ $tool_name ];
 		} else {
-			$allowed = ! self::is_mutating( $tool_name, $description );
+			$allowed = ! $mutating;
 		}
 
-		if ( $allowed && self::is_mutating( $tool_name, $description ) && ! current_user_can( 'manage_options' ) ) {
+		if ( $allowed && $mutating && ! current_user_can( 'manage_options' ) ) {
 			$allowed = (bool) apply_filters( 'ai_chat_bedrock_allow_mutating_tools_for_non_admins', false, $tool_name );
 		}
 

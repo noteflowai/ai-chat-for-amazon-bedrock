@@ -98,6 +98,7 @@ class AI_Chat_Bedrock_Diagnostics {
 		$checks[] = $this->check_mcp();
 		$checks[] = $this->check_guardrail( $options );
 		$checks[] = $this->check_knowledge_base( $options );
+		$checks[] = $this->check_vector_store( $options );
 
 		if ( $include_live ) {
 			$checks[] = $this->check_live_invocation( $options );
@@ -331,6 +332,58 @@ class AI_Chat_Bedrock_Diagnostics {
 		}
 
 		return $this->result( 'knowledge_base', $label, 'pass', __( 'The knowledge base answered a test query.', 'ai-chat-for-amazon-bedrock' ) );
+	}
+
+	/**
+	 * Whether the semantic search index can be used.
+	 *
+	 * @param array $options Plugin settings.
+	 * @return array
+	 */
+	private function check_vector_store( $options ) {
+		$label = __( 'Semantic search index', 'ai-chat-for-amazon-bedrock' );
+		$model = isset( $options['embedding_model_id'] ) ? (string) $options['embedding_model_id'] : '';
+		if ( '' === $model || ! class_exists( 'AI_Chat_Bedrock_Embeddings' ) ) {
+			return $this->result( 'vector_store', $label, 'pass', __( 'Semantic search is off; answers use keyword search.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		if ( 's3_vectors' !== AI_Chat_Bedrock_Embeddings::store( $options ) ) {
+			$status = AI_Chat_Bedrock_Embeddings::status( $model );
+			if ( (int) $status['total'] > AI_Chat_Bedrock_Embeddings::MAX_CANDIDATES ) {
+				return $this->result(
+					'vector_store',
+					$label,
+					'warn',
+					sprintf(
+						/* translators: 1: published item count, 2: items compared per question. */
+						__( 'Vectors are stored in the WordPress database, which compares a question with %2$s of the %1$s published items. Amazon S3 Vectors searches all of them.', 'ai-chat-for-amazon-bedrock' ),
+						number_format_i18n( (int) $status['total'] ),
+						number_format_i18n( AI_Chat_Bedrock_Embeddings::MAX_CANDIDATES )
+					)
+				);
+			}
+			return $this->result( 'vector_store', $label, 'pass', __( 'Vectors are stored in the WordPress database.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		if ( ! AI_Chat_Bedrock_S3_Vectors::enabled( $options ) ) {
+			return $this->result( 'vector_store', $label, 'fail', __( 'Amazon S3 Vectors is chosen, but the bucket or index name is missing, so semantic search is off.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		$index = AI_Chat_Bedrock_S3_Vectors::describe_index( $model, $options );
+		if ( is_wp_error( $index ) ) {
+			return $this->result(
+				'vector_store',
+				$label,
+				'fail',
+				sprintf(
+					/* translators: %s: reason the index could not be read. */
+					__( 'The S3 Vectors index could not be read: %s', 'ai-chat-for-amazon-bedrock' ),
+					$index->get_error_message()
+				)
+			);
+		}
+		if ( ! empty( $index['problems'] ) ) {
+			return $this->result( 'vector_store', $label, 'fail', implode( ' ', $index['problems'] ) );
+		}
+		return $this->result( 'vector_store', $label, 'pass', __( 'The S3 Vectors index exists and matches the embedding model.', 'ai-chat-for-amazon-bedrock' ) );
 	}
 
 	private function check_mcp() {

@@ -40,6 +40,8 @@ class AI_Chat_Bedrock_Public {
 				'feedback_url'      => AI_Chat_Bedrock_Conversations::enabled() ? rest_url( AI_Chat_Bedrock_WP_MCP_Server::NAMESPACE_V1 . AI_Chat_Bedrock_Feedback::REST_ROUTE ) : '',
 				'welcome_message'   => isset( $options['welcome_message'] ) ? $options['welcome_message'] : __( 'Hello! How can I help you today?', 'ai-chat-for-amazon-bedrock' ),
 				'max_message_chars' => 4000,
+				// The language of the page, so answers are drawn from content in the same language first.
+				'language'          => AI_Chat_Bedrock_Content::current_language(),
 				'i18n'              => array(
 					'generic_error'     => __( 'The request could not be completed. Please try again.', 'ai-chat-for-amazon-bedrock' ),
 					'stopped'           => __( 'Answer stopped.', 'ai-chat-for-amazon-bedrock' ),
@@ -67,6 +69,10 @@ class AI_Chat_Bedrock_Public {
 					'fallback_used'     => __( 'The main model was unavailable, so %s answered.', 'ai-chat-for-amazon-bedrock' ),
 					/* translators: 1: input tokens, 2: output tokens. */
 					'usage'             => __( 'Tokens: %1$d in / %2$d out', 'ai-chat-for-amazon-bedrock' ),
+					'you'               => _x( 'You', 'chat avatar for the visitor', 'ai-chat-for-amazon-bedrock' ),
+					'assistant'         => _x( 'AI', 'chat avatar for the assistant', 'ai-chat-for-amazon-bedrock' ),
+					'sources'           => __( 'Sources', 'ai-chat-for-amazon-bedrock' ),
+					'opens_new_tab'     => __( '(opens in a new tab)', 'ai-chat-for-amazon-bedrock' ),
 				),
 			)
 		);
@@ -232,15 +238,47 @@ class AI_Chat_Bedrock_Public {
 		return ob_get_clean();
 	}
 
+	/**
+	 * Hand the chat fresh nonces.
+	 *
+	 * A page cache serves the nonces a page was rendered with, and they stop verifying a
+	 * day later, so a visitor on a cached page could no longer send a message. The script
+	 * asks here once when a request is refused for a stale nonce, then retries. Nothing is
+	 * given away: a nonce is a CSRF token, and another origin cannot read this response.
+	 * admin-ajax.php already sends no-cache headers, so the answer is never cached itself.
+	 */
+	public function handle_refresh_nonce() {
+		if ( 'POST' !== strtoupper( isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Method not allowed.', 'ai-chat-for-amazon-bedrock' ) ), 405 );
+		}
+		if ( ! AI_Chat_Bedrock_Security::check_rate_limit( 'nonce', 30 ) ) {
+			wp_send_json_error( array( 'message' => __( 'Too many requests. Please wait a minute and try again.', 'ai-chat-for-amazon-bedrock' ) ), 429 );
+		}
+		wp_send_json_success(
+			array(
+				'nonce'      => wp_create_nonce( 'ai_chat_bedrock_nonce' ),
+				'rest_nonce' => wp_create_nonce( 'wp_rest' ),
+			)
+		);
+	}
+
 	public function handle_chat_message() {
 		if ( 'POST' !== strtoupper( isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Method not allowed.', 'ai-chat-for-amazon-bedrock' ) ), 405 );
 		}
 		if ( ! check_ajax_referer( 'ai_chat_bedrock_nonce', 'nonce', false ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'ai-chat-for-amazon-bedrock' ) ), 403 );
+			wp_send_json_error(
+				array(
+					'message' => __( 'Security check failed.', 'ai-chat-for-amazon-bedrock' ),
+					'code'    => 'aicfab_bad_nonce',
+				),
+				403
+			);
 		}
 		$profile = isset( $_POST['profile'] ) ? AI_Chat_Bedrock_Profiles::sanitize_key( wp_unslash( $_POST['profile'] ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitize_key() validates against stored profiles.
 		$options = AI_Chat_Bedrock_Profiles::resolve( $profile );
+		// Checked against the languages the site serves, so any other value means every language.
+		$options['_retrieval_language'] = AI_Chat_Bedrock_Content::request_language( isset( $_POST['lang'] ) ? sanitize_key( wp_unslash( $_POST['lang'] ) ) : '' );
 
 		if ( ! AI_Chat_Bedrock_Security::can_use_chat( $options ) ) {
 			wp_send_json_error( array( 'message' => __( 'Please sign in to use the chat.', 'ai-chat-for-amazon-bedrock' ) ), 401 );
@@ -287,6 +325,9 @@ class AI_Chat_Bedrock_Public {
 			if ( ! empty( $response['steps'] ) && is_array( $response['steps'] ) ) {
 				$response['data']['steps']           = $response['steps'];
 				$response['data']['steps_truncated'] = ! empty( $response['steps_truncated'] );
+			}
+			if ( ! empty( $built['sources'] ) ) {
+				$response['data']['sources'] = $built['sources'];
 			}
 		}
 

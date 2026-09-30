@@ -4,10 +4,13 @@
  *
  * Keyword search only finds passages that share words with the question. An
  * embedding index finds passages that share meaning, which is what visitors
- * actually ask for. Vectors live in post meta, so no custom table is created and
- * uninstalling removes them with the rest of the plugin data.
+ * actually ask for. By default one vector per post lives in post meta, so no custom
+ * table is created and uninstalling removes them with the rest of the plugin data.
+ * Larger sites can keep a vector per passage in Amazon S3 Vectors instead (see
+ * AI_Chat_Bedrock_S3_Vectors).
  *
- * Only published, publicly readable content is ever indexed or returned.
+ * Only published, publicly readable content is ever indexed or returned, and only
+ * the part of it a signed-out visitor can read (see AI_Chat_Bedrock_Content).
  *
  * @package AI_Chat_Bedrock
  */
@@ -22,11 +25,26 @@ class AI_Chat_Bedrock_Embeddings {
 	const META_MODEL  = '_aicfab_embedding_model';
 	const META_HASH   = '_aicfab_embedding_hash';
 
+	/**
+	 * The reference (store, model, extraction version) a post was last processed for, whether
+	 * that produced vectors or found nothing to index. A post whose state differs is pending.
+	 */
+	const META_STATE    = '_aicfab_index_state';
+	const META_RETRY    = '_aicfab_index_retry';
+	const META_FAILURES = '_aicfab_index_failures';
+
 	const MAX_TEXT_CHARS = 6000;
 	const MAX_CANDIDATES = 500;
 	const BATCH_SIZE     = 5;
 	const CRON_HOOK      = 'ai_chat_bedrock_index_embeddings';
 	const CRON_BATCH     = 10;
+
+	/**
+	 * Message of the last indexing failure in this request.
+	 *
+	 * @var string
+	 */
+	private static $last_error = '';
 
 	/**
 	 * Embedding models this plugin knows how to call.
@@ -52,12 +70,8 @@ class AI_Chat_Bedrock_Embeddings {
 	 * @return string
 	 */
 	public static function model( $options = null ) {
-		if ( ! is_array( $options ) ) {
-			$options = get_option( 'ai_chat_bedrock_settings', array() );
-			$options = is_array( $options ) ? $options : array();
-		}
-
-		$model = isset( $options['embedding_model_id'] ) ? sanitize_text_field( (string) $options['embedding_model_id'] ) : '';
+		$options = self::options( $options );
+		$model   = isset( $options['embedding_model_id'] ) ? sanitize_text_field( (string) $options['embedding_model_id'] ) : '';
 		if ( '' === $model || ! preg_match( '#^[A-Za-z0-9][A-Za-z0-9._:/-]*$#', $model ) ) {
 			return '';
 		}
@@ -71,7 +85,12 @@ class AI_Chat_Bedrock_Embeddings {
 	 * @return bool
 	 */
 	public static function enabled( $options = null ) {
-		return '' !== self::model( $options );
+		$options = self::options( $options );
+		if ( '' === self::model( $options ) ) {
+			return false;
+		}
+		// S3 Vectors chosen but not configured yet: nothing to search and nowhere to write.
+		return 's3_vectors' !== self::store( $options ) || AI_Chat_Bedrock_S3_Vectors::enabled( $options );
 	}
 
 	/**
@@ -81,39 +100,80 @@ class AI_Chat_Bedrock_Embeddings {
 	 * @return array
 	 */
 	public static function post_types( $options = null ) {
-		if ( ! is_array( $options ) ) {
-			$options = get_option( 'ai_chat_bedrock_settings', array() );
-			$options = is_array( $options ) ? $options : array();
-		}
-
-		$types = isset( $options['context_post_types'] ) && is_array( $options['context_post_types'] )
+		$options = self::options( $options );
+		$types   = isset( $options['context_post_types'] ) && is_array( $options['context_post_types'] )
 			? array_map( 'sanitize_key', $options['context_post_types'] )
 			: array( 'post', 'page' );
-		$types = array_values( array_filter( $types, 'post_type_exists' ) );
+		$types   = array_values( array_filter( $types, 'post_type_exists' ) );
 
 		return empty( $types ) ? array( 'post', 'page' ) : $types;
 	}
 
 	/**
-	 * Text used to represent one post in the index.
+	 * Where vectors are kept: post_meta, or s3_vectors for an Amazon S3 Vectors index.
+	 *
+	 * @param array $options Plugin options.
+	 * @return string
+	 */
+	public static function store( $options = null ) {
+		$options = self::options( $options );
+		return isset( $options['vector_store'] ) && 's3_vectors' === $options['vector_store'] ? 's3_vectors' : 'post_meta';
+	}
+
+	/**
+	 * Number of dimensions an embedding model produces, or 0 when it is not known.
+	 *
+	 * @param string $model Embedding model.
+	 * @return int
+	 */
+	public static function dimension( $model ) {
+		$known     = array(
+			'amazon.titan-embed-text-v2:0' => 1024,
+			'amazon.titan-embed-text-v1'   => 1536,
+			'cohere.embed-english-v3'      => 1024,
+			'cohere.embed-multilingual-v3' => 1024,
+		);
+		$dimension = isset( $known[ $model ] ) ? $known[ $model ] : 0;
+
+		/**
+		 * The vector size of an embedding model, used to create and check an S3 Vectors index.
+		 *
+		 * @param int    $dimension Dimensions, 0 when unknown.
+		 * @param string $model     Model identifier.
+		 */
+		return absint( apply_filters( 'ai_chat_bedrock_embedding_dimension', $dimension, $model ) );
+	}
+
+	/**
+	 * What a post's index state has to equal for the post to count as done: the store, its
+	 * location, the model and the text extraction version.
+	 *
+	 * @param string $model   Embedding model.
+	 * @param array  $options Plugin options.
+	 * @return string
+	 */
+	public static function reference( $model, $options = null ) {
+		$options = self::options( $options );
+		if ( 's3_vectors' === self::store( $options ) ) {
+			return AI_Chat_Bedrock_S3_Vectors::reference( $model, $options );
+		}
+		return 'post_meta|' . $model . '|' . AI_Chat_Bedrock_Content::VERSION;
+	}
+
+	/**
+	 * Text used to represent one post in the post meta index: what a signed-out visitor can
+	 * read, title first.
 	 *
 	 * @param WP_Post $post Post object.
 	 * @return string
 	 */
 	public static function post_text( $post ) {
-		if ( ! $post instanceof WP_Post ) {
-			return '';
-		}
-
-		$body = wp_strip_all_tags( strip_shortcodes( (string) $post->post_content ) );
-		$body = trim( preg_replace( '/\s+/', ' ', (string) $body ) );
-		$text = trim( get_the_title( $post ) . "\n\n" . $body );
-
+		$text = AI_Chat_Bedrock_Content::flatten( AI_Chat_Bedrock_Content::public_text( $post ) );
 		return AI_Chat_Bedrock_Security::string_substr( $text, 0, self::MAX_TEXT_CHARS );
 	}
 
 	/**
-	 * Index one post, unless its stored vector is already current.
+	 * Index one post, unless its stored vectors are already current.
 	 *
 	 * @param int    $post_id Post ID.
 	 * @param string $model   Embedding model.
@@ -121,43 +181,53 @@ class AI_Chat_Bedrock_Embeddings {
 	 * @return string One of indexed, skipped, unsupported, or an error code.
 	 */
 	public static function index_post( $post_id, $model = '', $force = false ) {
-		$post  = get_post( absint( $post_id ) );
-		$model = '' !== $model ? $model : self::model();
+		$options = self::options( null );
+		$post    = get_post( absint( $post_id ) );
+		$model   = '' !== $model ? $model : self::model( $options );
 
 		if ( '' === $model ) {
 			return 'aicfab_no_embedding_model';
 		}
-		if ( ! $post instanceof WP_Post || 'publish' !== $post->post_status || '' !== $post->post_password ) {
+		if ( ! $post instanceof WP_Post ) {
 			return 'unsupported';
 		}
-		if ( ! in_array( $post->post_type, self::post_types(), true ) ) {
+		$reference = self::reference( $model, $options );
+		$s3        = 's3_vectors' === self::store( $options );
+
+		if ( ! AI_Chat_Bedrock_Content::is_public( $post ) || ! in_array( $post->post_type, self::post_types( $options ), true ) ) {
+			self::forget( $post->ID, $options );
+			self::settle( $post, $reference );
 			return 'unsupported';
 		}
 
-		$text = self::post_text( $post );
-		if ( '' === $text ) {
-			return 'unsupported';
+		if ( $s3 ) {
+			$result = AI_Chat_Bedrock_S3_Vectors::index_post( $post, $model, $force, $options );
+		} else {
+			$result = self::index_post_meta( $post, $model, $force );
 		}
 
-		$hash = md5( $text );
-		if ( ! $force
-			&& (string) get_post_meta( $post->ID, self::META_HASH, true ) === $hash
-			&& (string) get_post_meta( $post->ID, self::META_MODEL, true ) === $model
-			&& '' !== (string) get_post_meta( $post->ID, self::META_VECTOR, true ) ) {
-			return 'skipped';
+		if ( 'indexed' === $result || 'skipped' === $result || 'unsupported' === $result ) {
+			// A post with no readable text is settled too, or it would lead the queue forever.
+			self::settle( $post, $reference );
+			return $result;
 		}
 
-		$aws    = new AI_Chat_Bedrock_AWS();
-		$vector = $aws->embed( $text, $model );
-		if ( is_wp_error( $vector ) ) {
-			return $vector->get_error_code();
-		}
+		// Try a failing post again later instead of on every run, so it cannot block the queue.
+		$failures = absint( get_post_meta( $post->ID, self::META_FAILURES, true ) ) + 1;
+		update_post_meta( $post->ID, self::META_FAILURES, $failures );
+		update_post_meta( $post->ID, self::META_RETRY, time() + min( DAY_IN_SECONDS, HOUR_IN_SECONDS * ( 2 ** min( 5, $failures - 1 ) ) ) );
+		return $result;
+	}
 
-		update_post_meta( $post->ID, self::META_VECTOR, self::pack( $vector ) );
-		update_post_meta( $post->ID, self::META_MODEL, $model );
-		update_post_meta( $post->ID, self::META_HASH, $hash );
-
-		return 'indexed';
+	/**
+	 * Remember why indexing failed, so the batch can say it, and return the error code.
+	 *
+	 * @param WP_Error $error Error.
+	 * @return string
+	 */
+	public static function failed( $error ) {
+		self::$last_error = $error->get_error_message();
+		return (string) $error->get_error_code();
 	}
 
 	/**
@@ -167,8 +237,9 @@ class AI_Chat_Bedrock_Embeddings {
 	 * @return array Counts plus how many posts still need indexing.
 	 */
 	public static function index_batch( $batch = self::BATCH_SIZE ) {
-		$model = self::model();
-		if ( '' === $model ) {
+		$options = self::options( null );
+		$model   = self::model( $options );
+		if ( '' === $model || ! self::enabled( $options ) ) {
 			return array(
 				'indexed'   => 0,
 				'skipped'   => 0,
@@ -178,8 +249,12 @@ class AI_Chat_Bedrock_Embeddings {
 			);
 		}
 
+		if ( 's3_vectors' === self::store( $options ) ) {
+			AI_Chat_Bedrock_S3_Vectors::process_queue( $options );
+		}
+
 		$batch   = max( 1, min( 20, absint( $batch ) ) );
-		$pending = self::pending_ids( $model, $batch );
+		$pending = self::pending_ids( self::reference( $model, $options ), $batch, $options );
 		$counts  = array(
 			'indexed' => 0,
 			'skipped' => 0,
@@ -194,8 +269,10 @@ class AI_Chat_Bedrock_Embeddings {
 				++$counts['skipped'];
 			} else {
 				++$counts['failed'];
-				// A credential or model problem will repeat for every post, so stop early.
-				if ( in_array( $result, array( 'aicfab_no_credentials', 'aicfab_invalid_model', 'aicfab_no_embedding_model' ), true ) ) {
+				$counts['error']   = $result;
+				$counts['message'] = self::$last_error;
+				// A credential, model or permission problem will repeat for every post, so stop early.
+				if ( in_array( $result, array( 'aicfab_no_credentials', 'aicfab_invalid_model', 'aicfab_no_embedding_model' ), true ) || 0 === strpos( (string) $result, 'aicfab_s3v_' ) ) {
 					break;
 				}
 			}
@@ -209,14 +286,16 @@ class AI_Chat_Bedrock_Embeddings {
 	}
 
 	/**
-	 * Index coverage for the configured model.
+	 * Index coverage for the configured model and store.
 	 *
 	 * @param string $model Embedding model.
 	 * @return array
 	 */
 	public static function status( $model = '' ) {
-		$model = '' !== $model ? $model : self::model();
-		$total = self::count_published();
+		$options = self::options( null );
+		$model   = '' !== $model ? $model : self::model( $options );
+		$total   = self::count_published( $options );
+		$store   = self::store( $options );
 
 		if ( '' === $model ) {
 			return array(
@@ -224,12 +303,13 @@ class AI_Chat_Bedrock_Embeddings {
 				'indexed' => 0,
 				'pending' => $total,
 				'model'   => '',
+				'store'   => $store,
 			);
 		}
 
-		$indexed = new WP_Query(
+		$done = new WP_Query(
 			array(
-				'post_type'              => self::post_types(),
+				'post_type'              => self::post_types( $options ),
 				'post_status'            => 'publish',
 				'posts_per_page'         => 1,
 				'fields'                 => 'ids',
@@ -237,42 +317,48 @@ class AI_Chat_Bedrock_Embeddings {
 				'ignore_sticky_posts'    => true,
 				'update_post_term_cache' => false,
 				'update_post_meta_cache' => false,
-				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- a vector index has to be selected by meta; the result set is capped.
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- index state is recorded in post meta; only the count is read.
 				'meta_query'             => array(
-					'relation' => 'AND',
 					array(
-						'key'     => self::META_VECTOR,
-						'compare' => 'EXISTS',
-					),
-					array(
-						'key'     => self::META_MODEL,
-						'value'   => $model,
+						'key'     => self::META_STATE,
+						'value'   => self::reference( $model, $options ),
 						'compare' => '=',
 					),
 				),
 			)
 		);
 
-		$done = (int) $indexed->found_posts;
-		return array(
+		$done   = (int) $done->found_posts;
+		$status = array(
 			'total'   => $total,
 			'indexed' => min( $done, $total ),
 			'pending' => max( 0, $total - $done ),
 			'model'   => $model,
+			'store'   => $store,
 		);
+		if ( 's3_vectors' === $store ) {
+			$queue                    = get_option( AI_Chat_Bedrock_S3_Vectors::QUEUE_OPTION, array() );
+			$status['delete_pending'] = is_array( $queue ) ? count( $queue ) : 0;
+		} else {
+			// Only this many posts are compared per question when vectors live in post meta.
+			$status['searchable'] = min( $total, self::MAX_CANDIDATES );
+		}
+		return $status;
 	}
 
 	/**
 	 * Find passages whose meaning matches the question.
 	 *
-	 * @param string $query   Visitor question.
-	 * @param int    $limit   Maximum passages.
-	 * @param array  $options Plugin options.
+	 * @param string $query    Visitor question.
+	 * @param int    $limit    Maximum passages.
+	 * @param array  $options  Plugin options.
+	 * @param string $language Language slug of the page the question was asked on, if known.
 	 * @return array
 	 */
-	public static function search( $query, $limit = 3, $options = null ) {
-		$model = self::model( $options );
-		if ( '' === $model ) {
+	public static function search( $query, $limit = 3, $options = null, $language = '' ) {
+		$options = self::options( $options );
+		$model   = self::model( $options );
+		if ( '' === $model || ! self::enabled( $options ) ) {
 			return array();
 		}
 
@@ -281,10 +367,13 @@ class AI_Chat_Bedrock_Embeddings {
 			return array();
 		}
 
-		$aws    = new AI_Chat_Bedrock_AWS();
-		$vector = $aws->embed( $query, $model );
-		if ( is_wp_error( $vector ) ) {
+		$vector = self::query_vector( $query, $model, $options );
+		if ( empty( $vector ) ) {
 			return array();
+		}
+
+		if ( 's3_vectors' === self::store( $options ) ) {
+			return AI_Chat_Bedrock_S3_Vectors::search( $vector, $query, $limit, $options, $language );
 		}
 
 		$candidates = new WP_Query(
@@ -296,6 +385,8 @@ class AI_Chat_Bedrock_Embeddings {
 				'ignore_sticky_posts'    => true,
 				'no_found_rows'          => true,
 				'update_post_term_cache' => false,
+				// Polylang would otherwise limit the candidates to the language of the current request.
+				'lang'                   => '',
 				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- a vector index has to be selected by meta; the result set is capped.
 				'meta_query'             => array(
 					'relation' => 'AND',
@@ -314,7 +405,7 @@ class AI_Chat_Bedrock_Embeddings {
 
 		$scored = array();
 		foreach ( $candidates->posts as $post ) {
-			if ( ! $post instanceof WP_Post || 'publish' !== $post->post_status || '' !== $post->post_password ) {
+			if ( ! AI_Chat_Bedrock_Content::is_public( $post ) ) {
 				continue;
 			}
 
@@ -343,6 +434,22 @@ class AI_Chat_Bedrock_Embeddings {
 			}
 		);
 
+		// Prefer pages in the visitor's language, but answer from another language rather than not at all.
+		$language = sanitize_key( (string) $language );
+		if ( '' !== $language ) {
+			$same = array_values(
+				array_filter(
+					$scored,
+					static function ( $hit ) use ( $language ) {
+						return AI_Chat_Bedrock_Content::language( $hit['post'] ) === $language;
+					}
+				)
+			);
+			if ( ! empty( $same ) ) {
+				$scored = $same;
+			}
+		}
+
 		/*
 		 * Cosine scores are not comparable across embedding models, and an absolute
 		 * threshold alone is unreliable. Measured with Titan Text Embeddings V2 on a
@@ -365,8 +472,8 @@ class AI_Chat_Bedrock_Embeddings {
 				continue;
 			}
 
-			$content = wp_strip_all_tags( strip_shortcodes( (string) $hit['post']->post_content ) );
-			$content = trim( preg_replace( '/\s+/', ' ', (string) $content ) );
+			// Quote the part of the page that matches the question, not its first paragraph.
+			$content = AI_Chat_Bedrock_Content::best_passage( AI_Chat_Bedrock_Content::public_text( $hit['post'] ), $query, AI_Chat_Bedrock_Retrieval::MAX_PASSAGE_CHARS );
 			if ( '' === $content ) {
 				continue;
 			}
@@ -410,10 +517,7 @@ class AI_Chat_Bedrock_Embeddings {
 	 * @return bool
 	 */
 	public static function background_enabled( $options = null ) {
-		if ( ! is_array( $options ) ) {
-			$options = get_option( 'ai_chat_bedrock_settings', array() );
-			$options = is_array( $options ) ? $options : array();
-		}
+		$options = self::options( $options );
 		return ! empty( $options['embedding_background'] );
 	}
 
@@ -449,7 +553,8 @@ class AI_Chat_Bedrock_Embeddings {
 	}
 
 	/**
-	 * Drop the stored vector when a post changes, so it is re-embedded.
+	 * Mark a changed post for re-indexing, and take it out of the index at once when it is
+	 * no longer public (unpublished, trashed, made private or given a password).
 	 *
 	 * @param int $post_id Post ID.
 	 */
@@ -458,15 +563,56 @@ class AI_Chat_Bedrock_Embeddings {
 		if ( $post_id < 1 ) {
 			return;
 		}
-		delete_post_meta( $post_id, self::META_HASH );
+		if ( ( function_exists( 'wp_is_post_revision' ) && wp_is_post_revision( $post_id ) )
+			|| ( function_exists( 'wp_is_post_autosave' ) && wp_is_post_autosave( $post_id ) ) ) {
+			return;
+		}
+
+		foreach ( array( self::META_HASH, self::META_STATE, self::META_RETRY, self::META_FAILURES, AI_Chat_Bedrock_S3_Vectors::META_HASH ) as $meta ) {
+			delete_post_meta( $post_id, $meta );
+		}
+		AI_Chat_Bedrock_Content::flush( $post_id );
+
+		$post = get_post( $post_id );
+		if ( ! AI_Chat_Bedrock_Content::is_public( $post ) ) {
+			self::forget( $post_id );
+		}
+	}
+
+	/**
+	 * Remove a post's vectors wherever they are kept.
+	 *
+	 * @param int   $post_id Post ID.
+	 * @param array $options Plugin options.
+	 */
+	public static function forget( $post_id, $options = null ) {
+		$post_id = absint( $post_id );
+		if ( $post_id < 1 ) {
+			return;
+		}
+		$options = self::options( $options );
+		delete_post_meta( $post_id, self::META_VECTOR );
+		delete_post_meta( $post_id, self::META_MODEL );
+		if ( AI_Chat_Bedrock_S3_Vectors::enabled( $options ) ) {
+			AI_Chat_Bedrock_S3_Vectors::remove_post( $post_id, $options );
+		}
 	}
 
 	/**
 	 * Remove every stored vector.
 	 *
-	 * @return int Number of posts cleared.
+	 * @return int|WP_Error Number of posts cleared.
 	 */
 	public static function clear() {
+		$options = self::options( null );
+		$cleared = 0;
+		if ( AI_Chat_Bedrock_S3_Vectors::enabled( $options ) ) {
+			$cleared = AI_Chat_Bedrock_S3_Vectors::clear( $options );
+			if ( is_wp_error( $cleared ) ) {
+				return $cleared;
+			}
+		}
+
 		$query = new WP_Query(
 			array(
 				'post_type'              => 'any',
@@ -486,14 +632,23 @@ class AI_Chat_Bedrock_Embeddings {
 			)
 		);
 
-		$cleared = 0;
 		foreach ( $query->posts as $post_id ) {
 			delete_post_meta( (int) $post_id, self::META_VECTOR );
 			delete_post_meta( (int) $post_id, self::META_MODEL );
-			delete_post_meta( (int) $post_id, self::META_HASH );
 			++$cleared;
 		}
+		self::reset();
 		return $cleared;
+	}
+
+	/**
+	 * Mark every post as needing a fresh embedding. The current vectors stay searchable
+	 * until each post is re-indexed, so a full rebuild causes no gap in answers.
+	 */
+	public static function reset() {
+		foreach ( array( self::META_HASH, self::META_STATE, self::META_RETRY, self::META_FAILURES, AI_Chat_Bedrock_S3_Vectors::META_HASH ) as $meta ) {
+			delete_post_meta_by_key( $meta );
+		}
 	}
 
 	/**
@@ -556,10 +711,82 @@ class AI_Chat_Bedrock_Embeddings {
 		return is_array( $values ) ? array_values( $values ) : array();
 	}
 
-	private static function pending_ids( $model, $batch ) {
+	private static function index_post_meta( $post, $model, $force ) {
+		$text = self::post_text( $post );
+		if ( '' === $text ) {
+			delete_post_meta( $post->ID, self::META_VECTOR );
+			delete_post_meta( $post->ID, self::META_MODEL );
+			return 'unsupported';
+		}
+
+		$hash = md5( $text );
+		if ( ! $force
+			&& (string) get_post_meta( $post->ID, self::META_HASH, true ) === $hash
+			&& (string) get_post_meta( $post->ID, self::META_MODEL, true ) === $model
+			&& '' !== (string) get_post_meta( $post->ID, self::META_VECTOR, true ) ) {
+			return 'skipped';
+		}
+
+		$aws    = new AI_Chat_Bedrock_AWS();
+		$vector = $aws->embed( $text, $model, 'document' );
+		if ( is_wp_error( $vector ) ) {
+			return self::failed( $vector );
+		}
+
+		update_post_meta( $post->ID, self::META_VECTOR, self::pack( $vector ) );
+		update_post_meta( $post->ID, self::META_MODEL, $model );
+		update_post_meta( $post->ID, self::META_HASH, $hash );
+		return 'indexed';
+	}
+
+	/**
+	 * Record that a post is done for the current reference.
+	 *
+	 * @param WP_Post $post      Post.
+	 * @param string  $reference Reference.
+	 */
+	private static function settle( $post, $reference ) {
+		// Only published posts are ever pending, so there is nothing to record for the rest.
+		if ( 'publish' === $post->post_status ) {
+			update_post_meta( $post->ID, self::META_STATE, $reference );
+		}
+		delete_post_meta( $post->ID, self::META_RETRY );
+		delete_post_meta( $post->ID, self::META_FAILURES );
+	}
+
+	/**
+	 * The embedding of a question, reused for a few minutes: visitors ask the same thing
+	 * again, and each embedding is a paid request.
+	 *
+	 * @param string $query   Question.
+	 * @param string $model   Embedding model.
+	 * @param array  $options Plugin options.
+	 * @return array Empty on failure.
+	 */
+	private static function query_vector( $query, $model, $options ) {
+		$key = 'q:' . md5( $model . '|' . $query );
+		if ( function_exists( 'wp_cache_get' ) ) {
+			$cached = wp_cache_get( $key, AI_Chat_Bedrock_Content::CACHE_GROUP );
+			if ( is_array( $cached ) && ! empty( $cached ) ) {
+				return $cached;
+			}
+		}
+
+		$aws    = new AI_Chat_Bedrock_AWS( $options );
+		$vector = $aws->embed( $query, $model, 'query' );
+		if ( is_wp_error( $vector ) || empty( $vector ) ) {
+			return array();
+		}
+		if ( function_exists( 'wp_cache_set' ) ) {
+			wp_cache_set( $key, $vector, AI_Chat_Bedrock_Content::CACHE_GROUP, 5 * MINUTE_IN_SECONDS );
+		}
+		return $vector;
+	}
+
+	private static function pending_ids( $reference, $batch, $options ) {
 		$query = new WP_Query(
 			array(
-				'post_type'              => self::post_types(),
+				'post_type'              => self::post_types( $options ),
 				'post_status'            => 'publish',
 				'posts_per_page'         => $batch,
 				'fields'                 => 'ids',
@@ -568,23 +795,36 @@ class AI_Chat_Bedrock_Embeddings {
 				'no_found_rows'          => true,
 				'update_post_term_cache' => false,
 				'update_post_meta_cache' => false,
+				'lang'                   => '',
 				'orderby'                => 'modified',
 				'order'                  => 'DESC',
-				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- a vector index has to be selected by meta; the result set is capped.
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- index state is recorded in post meta; the result set is one batch.
 				'meta_query'             => array(
-					'relation' => 'OR',
+					'relation' => 'AND',
 					array(
-						'key'     => self::META_VECTOR,
-						'compare' => 'NOT EXISTS',
+						'relation' => 'OR',
+						array(
+							'key'     => self::META_STATE,
+							'compare' => 'NOT EXISTS',
+						),
+						array(
+							'key'     => self::META_STATE,
+							'value'   => $reference,
+							'compare' => '!=',
+						),
 					),
 					array(
-						'key'     => self::META_HASH,
-						'compare' => 'NOT EXISTS',
-					),
-					array(
-						'key'     => self::META_MODEL,
-						'value'   => $model,
-						'compare' => '!=',
+						'relation' => 'OR',
+						array(
+							'key'     => self::META_RETRY,
+							'compare' => 'NOT EXISTS',
+						),
+						array(
+							'key'     => self::META_RETRY,
+							'value'   => time(),
+							'compare' => '<=',
+							'type'    => 'NUMERIC',
+						),
 					),
 				),
 			)
@@ -593,10 +833,10 @@ class AI_Chat_Bedrock_Embeddings {
 		return array_map( 'intval', $query->posts );
 	}
 
-	private static function count_published() {
+	private static function count_published( $options ) {
 		$query = new WP_Query(
 			array(
-				'post_type'              => self::post_types(),
+				'post_type'              => self::post_types( $options ),
 				'post_status'            => 'publish',
 				'posts_per_page'         => 1,
 				'fields'                 => 'ids',
@@ -604,8 +844,17 @@ class AI_Chat_Bedrock_Embeddings {
 				'ignore_sticky_posts'    => true,
 				'update_post_term_cache' => false,
 				'update_post_meta_cache' => false,
+				'lang'                   => '',
 			)
 		);
-		return min( self::MAX_CANDIDATES, (int) $query->found_posts );
+		return (int) $query->found_posts;
+	}
+
+	private static function options( $options ) {
+		if ( is_array( $options ) ) {
+			return $options;
+		}
+		$options = get_option( 'ai_chat_bedrock_settings', array() );
+		return is_array( $options ) ? $options : array();
 	}
 }

@@ -328,10 +328,10 @@ $aicfab_gap_keep = array_filter(
 						<td><?php echo esc_html( wp_date( $aicfab_datetime, (int) $entry['time'] ) ); ?></td>
 						<td><?php echo esc_html( isset( $sources[ $entry['source'] ] ) ? $sources[ $entry['source'] ] : $entry['source'] ); ?></td>
 						<td><?php echo esc_html( $user ? $user->display_name : __( 'Guest', 'ai-chat-for-amazon-bedrock' ) ); ?></td>
-						<td><?php echo esc_html( wp_trim_words( $entry['question'], 22 ) ); ?></td>
-						<td><?php echo esc_html( wp_trim_words( $entry['answer'], 28 ) ); ?></td>
+						<td><?php echo esc_html( wp_trim_words( isset( $entry['question'] ) ? (string) $entry['question'] : '', 22 ) ); ?></td>
+						<td><?php echo esc_html( wp_trim_words( isset( $entry['answer'] ) ? (string) $entry['answer'] : '', 28 ) ); ?></td>
 						<td><?php echo esc_html( $symbol ); ?></td>
-						<td><?php echo esc_html( (int) $entry['input_tokens'] . ' / ' . (int) $entry['output_tokens'] ); ?></td>
+						<td><?php echo esc_html( ( isset( $entry['input_tokens'] ) ? (int) $entry['input_tokens'] : 0 ) . ' / ' . ( isset( $entry['output_tokens'] ) ? (int) $entry['output_tokens'] : 0 ) ); ?></td>
 					</tr>
 				<?php endforeach; ?>
 			</tbody>

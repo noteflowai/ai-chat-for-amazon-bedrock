@@ -51,7 +51,11 @@ class AI_Chat_Bedrock_Abilities {
 	 * @return bool
 	 */
 	public static function tools_enabled() {
-		$enabled = (bool) get_option( 'ai_chat_bedrock_abilities_tools', false );
+		// The settings screen stores the switch in the settings array; older versions used an option of its own.
+		$settings = get_option( 'ai_chat_bedrock_settings', array() );
+		$enabled  = is_array( $settings ) && array_key_exists( 'abilities_tools', $settings )
+			? ! empty( $settings['abilities_tools'] )
+			: (bool) get_option( 'ai_chat_bedrock_abilities_tools', false );
 		return (bool) apply_filters( 'ai_chat_bedrock_abilities_tools_enabled', $enabled && self::available() );
 	}
 
@@ -293,7 +297,7 @@ class AI_Chat_Bedrock_Abilities {
 			);
 
 			$ability = '' !== $ability_id ? $this->get_ability( $ability_id ) : null;
-			if ( null === $ability || ! AI_Chat_Bedrock_Tool_Policy::is_tool_allowed( $tool_name, $this->ability_description( $ability ) ) ) {
+			if ( null === $ability || ! AI_Chat_Bedrock_Tool_Policy::is_tool_allowed( $tool_name, $this->ability_description( $ability ), $this->ability_readonly( $ability ) ) ) {
 				$clean['error'] = array(
 					'code'    => 'ability_not_allowed',
 					'message' => __( 'This ability is not allowed by the site policy.', 'ai-chat-for-amazon-bedrock' ),
@@ -364,7 +368,7 @@ class AI_Chat_Bedrock_Abilities {
 
 			$tool_name   = self::TOOL_PREFIX . str_replace( array( '/', '-' ), array( '__', '_' ), $id );
 			$description = $this->ability_description( $ability );
-			if ( ! AI_Chat_Bedrock_Tool_Policy::is_tool_allowed( $tool_name, $description ) ) {
+			if ( ! AI_Chat_Bedrock_Tool_Policy::is_tool_allowed( $tool_name, $description, $this->ability_readonly( $ability ) ) ) {
 				continue;
 			}
 			if ( ! $this->ability_permitted( $ability ) ) {
@@ -442,6 +446,25 @@ class AI_Chat_Bedrock_Abilities {
 		return '';
 	}
 
+	/**
+	 * Whether an ability declares itself read only. The Abilities API has an annotation for
+	 * it, so an ability that does not set it is not assumed to be harmless: it is offered to
+	 * the model only once an administrator allows it in the tool policy.
+	 *
+	 * @param WP_Ability|array $ability Ability.
+	 * @return bool
+	 */
+	private function ability_readonly( $ability ) {
+		$meta = array();
+		if ( is_object( $ability ) && method_exists( $ability, 'get_meta' ) ) {
+			$meta = (array) $ability->get_meta();
+		} elseif ( is_array( $ability ) && isset( $ability['meta'] ) && is_array( $ability['meta'] ) ) {
+			$meta = $ability['meta'];
+		}
+		$annotations = isset( $meta['annotations'] ) && is_array( $meta['annotations'] ) ? $meta['annotations'] : array();
+		return ! empty( $annotations['readonly'] ) && empty( $annotations['destructive'] );
+	}
+
 	private function ability_schema( $ability ) {
 		$schema = array(
 			'type'       => 'object',
@@ -489,7 +512,7 @@ class AI_Chat_Bedrock_Abilities {
 		if ( is_string( $encoded ) && strlen( $encoded ) > 20000 ) {
 			return array(
 				'truncated' => true,
-				'preview'   => substr( $encoded, 0, 20000 ),
+				'preview'   => AI_Chat_Bedrock_Security::truncate_bytes( $encoded, 20000 ),
 			);
 		}
 		return $result;

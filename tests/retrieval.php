@@ -30,6 +30,7 @@ $GLOBALS['aicfab_posts']      = array();
 
 class WP_Post {
 	public $ID            = 0;
+	public $post_modified_gmt = '';
 	public $post_title    = '';
 	public $post_content  = '';
 	public $post_status   = 'publish';
@@ -106,8 +107,9 @@ function wp_strip_all_tags( $text ) {
 function strip_shortcodes( $text ) {
 	return preg_replace( '/\[[^\]]*\]/', '', (string) $text );
 }
-function esc_url_raw( $url ) {
-	return $url;
+function esc_url_raw( $url, $protocols = null ) {
+	$scheme = strtolower( (string) parse_url( (string) $url, PHP_URL_SCHEME ) );
+	return null !== $protocols && ! in_array( $scheme, $protocols, true ) ? '' : $url;
 }
 function wp_reset_postdata() {}
 function is_wp_error( $thing ) {
@@ -122,6 +124,7 @@ function _x( $text, $context, $domain = null ) {
 }
 
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-content.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-retrieval.php';
 
 $aicfab_options = array( 'enable_site_context' => true, 'context_results' => 3 );
@@ -313,6 +316,31 @@ $GLOBALS['aicfab_force_scores'] = true;
 AI_Chat_Bedrock_Retrieval::context( 'hours', $aicfab_options, $aicfab_score );
 $GLOBALS['aicfab_force_scores'] = false;
 check_ret( 0.42 === $aicfab_score, 'The highest passage score is reported, got ' . var_export( $aicfab_score, true ) );
+
+// --- Sources shown under an answer ----------------------------------------------
+
+$aicfab_sources = AI_Chat_Bedrock_Retrieval::sources(
+	array(
+		array( 'title' => '<b>Refunds</b>', 'url' => 'https://example.test/refunds/' ),
+		array( 'title' => 'Refunds again', 'url' => 'https://example.test/refunds/' ),
+		array( 'title' => 'Script', 'url' => 'javascript:alert(1)' ),
+		array( 'title' => 'Bucket', 'url' => 's3://bucket/doc.pdf' ),
+		array( 'title' => 'Mentions', 'url' => 'https://example.test/mention/', 'weak' => true ),
+		array( 'title' => 'No link', 'url' => '' ),
+		array( 'title' => '', 'url' => 'https://example.test/untitled/' ),
+		array( 'title' => 'Third', 'url' => 'https://example.test/third/' ),
+		array( 'title' => 'Fourth', 'url' => 'https://example.test/fourth/' ),
+	)
+);
+check_ret( 3 === count( $aicfab_sources ), 'At most three sources are listed: ' . count( $aicfab_sources ) );
+check_ret( array( 'title' => 'Refunds', 'url' => 'https://example.test/refunds/' ) === $aicfab_sources[0], 'A source has a plain title and its link.' );
+check_ret( 'https://example.test/untitled/' === $aicfab_sources[1]['title'], 'An untitled source is named by its link.' );
+check_ret( 'https://example.test/third/' === $aicfab_sources[2]['url'], 'Duplicates, other schemes, weak matches and missing links are skipped.' );
+
+$aicfab_sources          = null;
+$GLOBALS['aicfab_posts'] = array( new WP_Post( array( 'ID' => 15, 'post_title' => 'Hours', 'post_content' => 'Nine to five.' ) ) );
+AI_Chat_Bedrock_Retrieval::context( 'hours', $aicfab_options, $aicfab_score, $aicfab_weak, $aicfab_sources );
+check_ret( array( array( 'title' => 'Hours', 'url' => 'https://example.com/?p=15' ) ) === $aicfab_sources, 'The context reports the page it used as a source.' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

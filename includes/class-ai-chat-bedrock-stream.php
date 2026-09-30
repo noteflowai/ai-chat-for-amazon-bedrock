@@ -48,6 +48,10 @@ class AI_Chat_Bedrock_Stream {
 						'required' => false,
 						'type'     => 'string',
 					),
+					'lang'    => array(
+						'required' => false,
+						'type'     => 'string',
+					),
 				),
 			)
 		);
@@ -61,6 +65,7 @@ class AI_Chat_Bedrock_Stream {
 	 */
 	public function check_permission( $request ) {
 		$nonce = (string) $request->get_param( 'nonce' );
+		// The script refreshes its nonces and retries once when it sees this code.
 		if ( ! wp_verify_nonce( $nonce, 'ai_chat_bedrock_nonce' ) ) {
 			return new WP_Error( 'aicfab_bad_nonce', __( 'Security check failed.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 403 ) );
 		}
@@ -93,7 +98,10 @@ class AI_Chat_Bedrock_Stream {
 	public function stream( $request ) {
 		$profile = AI_Chat_Bedrock_Profiles::sanitize_key( (string) $request->get_param( 'profile' ) );
 		$options = AI_Chat_Bedrock_Profiles::resolve( $profile );
-		$built   = AI_Chat_Bedrock_Chat_Request::build( $request->get_param( 'message' ), (string) $request->get_param( 'history' ), $options );
+
+		$options['_retrieval_language'] = AI_Chat_Bedrock_Content::request_language( (string) $request->get_param( 'lang' ) );
+
+		$built = AI_Chat_Bedrock_Chat_Request::build( $request->get_param( 'message' ), (string) $request->get_param( 'history' ), $options );
 
 		$this->send_headers();
 
@@ -164,6 +172,9 @@ class AI_Chat_Bedrock_Stream {
 			if ( ! empty( $response['steps_truncated'] ) ) {
 				$done['steps_truncated'] = true;
 			}
+		}
+		if ( ! empty( $built['sources'] ) ) {
+			$done['sources'] = $built['sources'];
 		}
 		$this->send_event( 'done', $done );
 		$this->finish();

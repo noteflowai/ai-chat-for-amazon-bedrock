@@ -112,8 +112,9 @@ class AI_Chat_Bedrock_Admin {
 			'ai_chat_bedrock_admin',
 			array(
 				'ajax_url'     => admin_url( 'admin-ajax.php' ),
-				'nonce'        => wp_create_nonce( 'ai_chat_bedrock_nonce' ),
+				'nonce'        => wp_create_nonce( 'ai_chat_bedrock_admin' ),
 				'mcp_nonce'    => wp_create_nonce( 'ai_chat_bedrock_mcp_nonce' ),
+				's3v_nonce'    => wp_create_nonce( 'ai_chat_bedrock_s3_vectors' ),
 				'rest_nonce'   => wp_create_nonce( 'wp_rest' ),
 				'generate_url' => rest_url( AI_Chat_Bedrock_WP_MCP_Server::NAMESPACE_V1 . AI_Chat_Bedrock_Generator_Stream::REST_ROUTE ),
 				'i18n'         => array(
@@ -244,7 +245,7 @@ class AI_Chat_Bedrock_Admin {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'ai-chat-for-amazon-bedrock' ) ), 403 );
 		}
-		check_ajax_referer( 'ai_chat_bedrock_nonce', 'nonce' );
+		check_ajax_referer( 'ai_chat_bedrock_admin', 'nonce' );
 
 		if ( ! AI_Chat_Bedrock_Embeddings::enabled() ) {
 			wp_send_json_error( array( 'message' => __( 'Choose an embedding model first.', 'ai-chat-for-amazon-bedrock' ) ), 400 );
@@ -263,8 +264,65 @@ class AI_Chat_Bedrock_Admin {
 		check_admin_referer( 'ai_chat_bedrock_clear_embeddings' );
 
 		$cleared = AI_Chat_Bedrock_Embeddings::clear();
-		wp_safe_redirect( add_query_arg( 'aicfab-cleared', (int) $cleared, admin_url( 'admin.php?page=' . $this->plugin_name . '-settings&tab=knowledge' ) ) );
+		$target  = admin_url( 'admin.php?page=' . $this->plugin_name . '-settings&tab=knowledge' );
+		if ( is_wp_error( $cleared ) ) {
+			// Nothing local was reset, so the index and the records of it still agree.
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'aicfab-transfer' => 'error',
+						'aicfab-message'  => rawurlencode( $cleared->get_error_message() ),
+					),
+					$target
+				)
+			);
+			exit;
+		}
+		wp_safe_redirect( add_query_arg( 'aicfab-cleared', (int) $cleared, $target ) );
 		exit;
+	}
+
+	/**
+	 * Check or create the configured S3 Vectors index.
+	 */
+	public function ajax_s3_vectors() {
+		if ( ! current_user_can( 'manage_options' ) || ! check_ajax_referer( 'ai_chat_bedrock_s3_vectors', 'nonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'ai-chat-for-amazon-bedrock' ) ), 403 );
+		}
+		$options = get_option( 'ai_chat_bedrock_settings', array() );
+		$options = is_array( $options ) ? $options : array();
+		$model   = isset( $options['embedding_model_id'] ) ? (string) $options['embedding_model_id'] : '';
+		if ( '' === $model || ! AI_Chat_Bedrock_S3_Vectors::enabled( $options ) ) {
+			wp_send_json_error( array( 'message' => __( 'Choose an embedding model, Amazon S3 Vectors, a bucket and an index, and save first.', 'ai-chat-for-amazon-bedrock' ) ), 400 );
+		}
+
+		$operation = isset( $_POST['op'] ) ? sanitize_key( wp_unslash( $_POST['op'] ) ) : 'check';
+		if ( 'create' === $operation ) {
+			$created = AI_Chat_Bedrock_S3_Vectors::create_index( $model, $options );
+			if ( is_wp_error( $created ) && 'aicfab_s3v_ConflictException' !== $created->get_error_code() ) {
+				wp_send_json_error( array( 'message' => $created->get_error_message() ), 400 );
+			}
+		}
+
+		$index = AI_Chat_Bedrock_S3_Vectors::describe_index( $model, $options );
+		if ( is_wp_error( $index ) ) {
+			$message = 'aicfab_s3v_NotFoundException' === $index->get_error_code()
+				? __( 'The index does not exist yet. Create it here, or in the Amazon S3 console with the cosine metric and text and title as non-filterable metadata.', 'ai-chat-for-amazon-bedrock' )
+				: $index->get_error_message();
+			wp_send_json_error( array( 'message' => $message ), 400 );
+		}
+		if ( ! empty( $index['problems'] ) ) {
+			wp_send_json_error( array( 'message' => implode( ' ', $index['problems'] ) ), 400 );
+		}
+		wp_send_json_success(
+			array(
+				'message' => sprintf(
+					/* translators: %d: vector dimension. */
+					__( 'The index is ready: %d dimensions, cosine metric.', 'ai-chat-for-amazon-bedrock' ),
+					(int) $index['dimension']
+				),
+			)
+		);
 	}
 
 	/**
@@ -648,6 +706,7 @@ class AI_Chat_Bedrock_Admin {
 			$args['aicfab-message'] = rawurlencode( $result->get_error_message() );
 		} else {
 			$args['aicfab-applied'] = count( $result['applied'] );
+			$args['aicfab-skipped'] = count( $result['skipped'] );
 		}
 
 		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings&tab=transfer' ) ) );
@@ -671,7 +730,7 @@ class AI_Chat_Bedrock_Admin {
 	 * Refresh the Bedrock model catalog for the configured region.
 	 */
 	public function ajax_refresh_models() {
-		if ( ! current_user_can( 'manage_options' ) || ! check_ajax_referer( 'ai_chat_bedrock_nonce', 'nonce', false ) ) {
+		if ( ! current_user_can( 'manage_options' ) || ! check_ajax_referer( 'ai_chat_bedrock_admin', 'nonce', false ) ) {
 			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'ai-chat-for-amazon-bedrock' ) ), 403 );
 		}
 		if ( ! AI_Chat_Bedrock_Security::check_rate_limit( 'admin_refresh_models', 10, 60 ) ) {
@@ -706,7 +765,7 @@ class AI_Chat_Bedrock_Admin {
 	 * Run diagnostics, including a live Bedrock invocation.
 	 */
 	public function ajax_run_diagnostics() {
-		if ( ! current_user_can( 'manage_options' ) || ! check_ajax_referer( 'ai_chat_bedrock_nonce', 'nonce', false ) ) {
+		if ( ! current_user_can( 'manage_options' ) || ! check_ajax_referer( 'ai_chat_bedrock_admin', 'nonce', false ) ) {
 			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'ai-chat-for-amazon-bedrock' ) ), 403 );
 		}
 		if ( ! AI_Chat_Bedrock_Security::check_rate_limit( 'admin_diagnostics', 6, 60 ) ) {
@@ -749,7 +808,9 @@ class AI_Chat_Bedrock_Admin {
 		add_settings_section( 'aicfab_knowledge', __( 'Answer grounding', 'ai-chat-for-amazon-bedrock' ), array( $this, 'knowledge_section_callback' ), 'aicfab_tab_knowledge' );
 		$this->field( 'enable_site_context', __( 'Use site content', 'ai-chat-for-amazon-bedrock' ), 'enable_site_context_render', 'aicfab_knowledge' );
 		$this->field( 'context_results', __( 'Passages per answer', 'ai-chat-for-amazon-bedrock' ), 'context_results_render', 'aicfab_knowledge' );
+		$this->field( 'show_sources', __( 'Show sources', 'ai-chat-for-amazon-bedrock' ), 'show_sources_render', 'aicfab_knowledge' );
 		$this->field( 'embedding_model_id', __( 'Semantic search', 'ai-chat-for-amazon-bedrock' ), 'embedding_model_render', 'aicfab_knowledge' );
+		$this->field( 'vector_store', __( 'Vector store', 'ai-chat-for-amazon-bedrock' ), 'vector_store_render', 'aicfab_knowledge' );
 		$this->field( 'knowledge_base_id', __( 'Bedrock knowledge base ID', 'ai-chat-for-amazon-bedrock' ), 'knowledge_base_id_render', 'aicfab_knowledge' );
 		$this->field( 'abilities_tools', __( 'WordPress abilities as tools', 'ai-chat-for-amazon-bedrock' ), 'abilities_tools_render', 'aicfab_knowledge' );
 		$this->field( 'site_abilities', __( 'Site content abilities', 'ai-chat-for-amazon-bedrock' ), 'site_abilities_render', 'aicfab_knowledge' );
@@ -769,6 +830,12 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'role_limits', __( 'Per-role limits', 'ai-chat-for-amazon-bedrock' ), 'role_limits_render', 'aicfab_chat' );
 		$this->field( 'popup_site_wide', __( 'Floating chat', 'ai-chat-for-amazon-bedrock' ), 'popup_site_wide_render', 'aicfab_chat' );
 		$this->field( 'debug_mode', __( 'Debug logging', 'ai-chat-for-amazon-bedrock' ), 'debug_mode_render', 'aicfab_chat' );
+
+		add_settings_section( 'aicfab_integrations', __( 'Fixes for other plugins', 'ai-chat-for-amazon-bedrock' ), array( $this, 'integrations_section_callback' ), 'aicfab_tab_integrations' );
+		$this->field( 'github_read_scope', __( 'GitHub sign-in scope', 'ai-chat-for-amazon-bedrock' ), 'github_read_scope_render', 'aicfab_integrations' );
+		$this->field( 'social_only_registration', __( 'Registration', 'ai-chat-for-amazon-bedrock' ), 'social_only_registration_render', 'aicfab_integrations' );
+		$this->field( 'hreflang_x_default', __( 'Default language for search engines', 'ai-chat-for-amazon-bedrock' ), 'hreflang_x_default_render', 'aicfab_integrations' );
+		$this->field( 'organization_author', __( 'Article author', 'ai-chat-for-amazon-bedrock' ), 'organization_author_render', 'aicfab_integrations' );
 	}
 
 	public function display_plugin_admin_page() {
@@ -884,6 +951,11 @@ class AI_Chat_Bedrock_Admin {
 		echo '<input type="number" id="aicfab_field_context_results" class="small-text" name="ai_chat_bedrock_settings[context_results]" value="' . esc_attr( max( 1, min( 8, $value ) ) ) . '" min="1" max="8">';
 		echo '<p class="description">' . esc_html__( 'More passages improve grounding but increase input tokens and cost.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
+	public function show_sources_render() {
+		$checked = ! empty( $this->option( 'show_sources', false ) );
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[show_sources]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'List links to the pages an answer was drawn from', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Up to three links under each answer, to published pages and knowledge base documents with a web address. Pages that only share a single word with the question are not listed.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
 	public function knowledge_base_id_render() {
 		$this->text_input( 'knowledge_base_id', '', 64 );
 		echo '<p class="description">' . esc_html__( 'Optional. Queries an existing Amazon Bedrock knowledge base with the Retrieve API. Requires bedrock:Retrieve permission for that knowledge base.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
@@ -992,7 +1064,11 @@ class AI_Chat_Bedrock_Admin {
 	public function embedding_model_render() {
 		$choices = array( '' => __( 'Off, use keyword search only', 'ai-chat-for-amazon-bedrock' ) ) + AI_Chat_Bedrock_Embeddings::models();
 		$this->select( 'embedding_model_id', $choices, '' );
-		echo '<p class="description">' . esc_html__( 'Finds content by meaning instead of shared words. It adds one embedding request per question, plus one per post while indexing. Keyword search still runs when nothing relevant is found.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Finds content by meaning instead of shared words. It adds one embedding request per question, plus one per passage while indexing. Keyword search still runs when nothing relevant is found. Only what a signed-out visitor can read is indexed.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+
+		// Always printed: a checkbox that is missing from the form is saved as unchecked.
+		$background = ! empty( $this->option( 'embedding_background', false ) );
+		echo '<p><label><input type="checkbox" name="ai_chat_bedrock_settings[embedding_background]" value="1" ' . checked( $background, true, false ) . '> ' . esc_html__( 'Keep the index up to date in the background', 'ai-chat-for-amazon-bedrock' ) . '</label></p>';
 
 		if ( ! AI_Chat_Bedrock_Embeddings::enabled() ) {
 			return;
@@ -1008,12 +1084,28 @@ class AI_Chat_Bedrock_Admin {
 				number_format_i18n( (int) $status['total'] )
 			)
 		);
+		if ( ! empty( $status['delete_pending'] ) ) {
+			echo ' ' . esc_html(
+				sprintf(
+					/* translators: %s: number of vectors waiting to be deleted. */
+					_n( '%s removed passage is still waiting to be deleted from S3 Vectors.', '%s removed passages are still waiting to be deleted from S3 Vectors.', (int) $status['delete_pending'], 'ai-chat-for-amazon-bedrock' ),
+					number_format_i18n( (int) $status['delete_pending'] )
+				)
+			);
+		}
 		echo '</p>';
+		if ( isset( $status['searchable'] ) && (int) $status['total'] > (int) $status['searchable'] ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html(
+				sprintf(
+					/* translators: %s: number of items compared per question. */
+					__( 'With vectors stored in the WordPress database, each question is compared with the %s most recent items only. Choose Amazon S3 Vectors below to search everything.', 'ai-chat-for-amazon-bedrock' ),
+					number_format_i18n( (int) $status['searchable'] )
+				)
+			) . '</p></div>';
+		}
 		// The delete handler was there, but nothing on any screen submitted to it. This field
 		// sits inside the settings form, so its button belongs to a form printed after that one.
 		echo '<p><button type="button" class="button" id="aicfab-index-embeddings">' . esc_html__( 'Index content now', 'ai-chat-for-amazon-bedrock' ) . '</button> <button type="submit" class="button" form="aicfab-clear-embeddings">' . esc_html__( 'Delete the index', 'ai-chat-for-amazon-bedrock' ) . '</button> <span id="aicfab-index-progress" role="status"></span></p>';
-		$background = ! empty( $this->option( 'embedding_background', false ) );
-		echo '<p><label><input type="checkbox" name="ai_chat_bedrock_settings[embedding_background]" value="1" ' . checked( $background, true, false ) . '> ' . esc_html__( 'Keep the index up to date in the background', 'ai-chat-for-amazon-bedrock' ) . '</label></p>';
 		if ( $background ) {
 			$next = wp_next_scheduled( AI_Chat_Bedrock_Embeddings::CRON_HOOK );
 			echo '<p class="description">';
@@ -1029,6 +1121,94 @@ class AI_Chat_Bedrock_Admin {
 			echo '</p>';
 		}
 		echo '<p class="description">' . esc_html__( 'Indexing runs in small batches. Editing a post marks it for re-indexing on the next run.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+
+	public function vector_store_render() {
+		$store = AI_Chat_Bedrock_Embeddings::store( get_option( 'ai_chat_bedrock_settings', array() ) );
+		echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'Vector store', 'ai-chat-for-amazon-bedrock' ) . '</legend>';
+		$this->select(
+			'vector_store',
+			array(
+				'post_meta'  => __( 'WordPress database (small sites)', 'ai-chat-for-amazon-bedrock' ),
+				's3_vectors' => __( 'Amazon S3 Vectors', 'ai-chat-for-amazon-bedrock' ),
+			),
+			'post_meta'
+		);
+		echo '<p class="description">' . esc_html__( 'The database keeps one vector per post and compares a question with the most recent 500. Amazon S3 Vectors stores every passage of every post and searches all of them, at a cost per stored gigabyte and per query.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+
+		echo '<p><label for="aicfab_field_s3_vectors_bucket">' . esc_html__( 'Vector bucket', 'ai-chat-for-amazon-bedrock' ) . '</label><br>';
+		$this->text_input( 's3_vectors_bucket', '', 63 );
+		echo '</p><p><label for="aicfab_field_s3_vectors_index">' . esc_html__( 'Vector index', 'ai-chat-for-amazon-bedrock' ) . '</label><br>';
+		$this->text_input( 's3_vectors_index', '', 63 );
+		echo '</p><p><label for="aicfab_field_s3_vectors_region">' . esc_html__( 'Region of the bucket', 'ai-chat-for-amazon-bedrock' ) . '</label><br>';
+		$this->select( 's3_vectors_region', array( '' => __( 'Same as Amazon Bedrock', 'ai-chat-for-amazon-bedrock' ) ) + AI_Chat_Bedrock_Models::regions(), '' );
+		echo '</p></fieldset>';
+		echo '<p class="description">' . esc_html__( 'Create the vector bucket in the Amazon S3 console, then check or create the index here. Several sites can share one index: each only reads and deletes its own vectors. Needs s3vectors:PutVectors, QueryVectors, GetVectors, DeleteVectors, ListVectors and GetIndex, plus CreateIndex to create it from here.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+
+		if ( 's3_vectors' === $store && AI_Chat_Bedrock_S3_Vectors::enabled() ) {
+			echo '<p><button type="button" class="button" id="aicfab-s3v-check" data-op="check">' . esc_html__( 'Check the index', 'ai-chat-for-amazon-bedrock' ) . '</button> <button type="button" class="button" id="aicfab-s3v-create" data-op="create">' . esc_html__( 'Create the index', 'ai-chat-for-amazon-bedrock' ) . '</button> <span id="aicfab-s3v-status" role="status"></span></p>';
+		}
+	}
+
+	public function integrations_section_callback() {
+		echo '<p>' . esc_html__( 'Optional adjustments to plugins this site runs. Each is off until you turn it on, and does nothing while the plugin it adjusts is inactive.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+	public function github_read_scope_render() {
+		$this->integration_checkbox(
+			'github_read_scope',
+			'fluentauth',
+			__( 'Ask GitHub for read-only access when visitors sign in with GitHub', 'ai-chat-for-amazon-bedrock' ),
+			__( 'FluentAuth requests the "user" scope, which also lets the site change the visitor\'s GitHub profile. Signing in only needs read:user and user:email.', 'ai-chat-for-amazon-bedrock' ),
+			__( 'Requires FluentAuth.', 'ai-chat-for-amazon-bedrock' )
+		);
+	}
+	public function social_only_registration_render() {
+		$this->integration_checkbox(
+			'social_only_registration',
+			'fluentauth',
+			__( 'Sign up through social login only', 'ai-chat-for-amazon-bedrock' ),
+			__( 'Social sign-up needs "Anyone can register", which also opens the WordPress registration form. That form emails a password link and attracts spam accounts. This sends it to the login page, where the social buttons are, and hides the Register link.', 'ai-chat-for-amazon-bedrock' ),
+			__( 'Requires FluentAuth.', 'ai-chat-for-amazon-bedrock' )
+		);
+	}
+	public function hreflang_x_default_render() {
+		$detected  = AI_Chat_Bedrock_Integrations::detected();
+		$languages = AI_Chat_Bedrock_Integrations::languages();
+		$current   = (string) $this->option( 'hreflang_x_default', '' );
+		if ( '' !== $current && ! isset( $languages[ $current ] ) ) {
+			$languages[ $current ] = $current;
+		}
+		echo '<select id="aicfab_field_hreflang_x_default" name="ai_chat_bedrock_settings[hreflang_x_default]" ' . disabled( $detected['polylang'], false, false ) . '>';
+		echo '<option value="">' . esc_html__( 'None', 'ai-chat-for-amazon-bedrock' ) . '</option>';
+		foreach ( $languages as $slug => $name ) {
+			echo '<option value="' . esc_attr( $slug ) . '" ' . selected( $current, $slug, false ) . '>' . esc_html( $name ) . '</option>';
+		}
+		echo '</select>';
+		if ( ! $detected['polylang'] && '' !== $current ) {
+			echo '<input type="hidden" name="ai_chat_bedrock_settings[hreflang_x_default]" value="' . esc_attr( $current ) . '">';
+		}
+		echo '<p class="description">' . esc_html( $detected['polylang'] ? __( 'Polylang lists each translation of a page for search engines but no x-default, so they guess which one to show a reader whose language the site does not have. The edition chosen here is named as the default.', 'ai-chat-for-amazon-bedrock' ) : __( 'Requires Polylang.', 'ai-chat-for-amazon-bedrock' ) ) . '</p>';
+	}
+	public function organization_author_render() {
+		$this->integration_checkbox(
+			'organization_author',
+			'yoast',
+			__( 'Credit articles to the organization', 'ai-chat-for-amazon-bedrock' ),
+			__( 'Yoast SEO names the account that published a post as its author. When Yoast is set to represent an organization, this names the organization instead, in structured data, the author meta tag and Slack previews.', 'ai-chat-for-amazon-bedrock' ),
+			__( 'Requires Yoast SEO.', 'ai-chat-for-amazon-bedrock' )
+		);
+	}
+
+	private function integration_checkbox( $key, $plugin, $label, $description, $missing ) {
+		$detected = AI_Chat_Bedrock_Integrations::detected();
+		$active   = ! empty( $detected[ $plugin ] );
+		$checked  = ! empty( $this->option( $key, false ) );
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[' . esc_attr( $key ) . ']" value="1" ' . checked( $checked, true, false ) . ' ' . disabled( $active, false, false ) . '> ' . esc_html( $label ) . '</label>';
+		echo '<p class="description">' . esc_html( $active ? $description : $missing ) . '</p>';
+		if ( ! $active && $checked ) {
+			// A disabled checkbox is not submitted, so keep the choice until the plugin is back.
+			echo '<input type="hidden" name="ai_chat_bedrock_settings[' . esc_attr( $key ) . ']" value="1">';
+		}
 	}
 
 	public function media_assistant_render() {
@@ -1208,6 +1388,7 @@ class AI_Chat_Bedrock_Admin {
 
 		$output['enable_site_context'] = ! empty( $input['enable_site_context'] );
 		$output['context_results']     = max( 1, min( 8, isset( $input['context_results'] ) ? absint( $input['context_results'] ) : 3 ) );
+		$output['show_sources']        = ! empty( $input['show_sources'] );
 		$output['abilities_tools']     = ! empty( $input['abilities_tools'] );
 		$output['site_abilities']      = ! empty( $input['site_abilities'] );
 		$output['editor_assistant']    = ! empty( $input['editor_assistant'] );
@@ -1222,6 +1403,28 @@ class AI_Chat_Bedrock_Admin {
 		}
 		$output['embedding_model_id']   = $embedding;
 		$output['embedding_background'] = ! empty( $input['embedding_background'] );
+
+		$store                  = isset( $input['vector_store'] ) ? sanitize_key( $input['vector_store'] ) : 'post_meta';
+		$output['vector_store'] = 's3_vectors' === $store ? 's3_vectors' : 'post_meta';
+		foreach ( array( 's3_vectors_bucket', 's3_vectors_index' ) as $key ) {
+			$name           = isset( $input[ $key ] ) ? strtolower( trim( sanitize_text_field( $input[ $key ] ) ) ) : '';
+			$output[ $key ] = '' === $name || AI_Chat_Bedrock_S3_Vectors::valid_name( $name ) ? $name : '';
+			if ( '' !== $name && '' === $output[ $key ] ) {
+				$this->notice( $key, __( 'S3 Vectors bucket and index names are 3 to 63 lowercase letters, digits, hyphens or dots; the value was cleared.', 'ai-chat-for-amazon-bedrock' ) );
+			}
+		}
+		$vector_region               = isset( $input['s3_vectors_region'] ) ? sanitize_key( $input['s3_vectors_region'] ) : '';
+		$output['s3_vectors_region'] = isset( $regions[ $vector_region ] ) ? $vector_region : '';
+		if ( 's3_vectors' === $output['vector_store'] && ( '' === $output['s3_vectors_bucket'] || '' === $output['s3_vectors_index'] ) ) {
+			$this->notice( 'vector_store', __( 'Amazon S3 Vectors needs a bucket and an index name. Until both are set, semantic search is off.', 'ai-chat-for-amazon-bedrock' ), 'warning' );
+		}
+
+		$output['github_read_scope']        = ! empty( $input['github_read_scope'] );
+		$output['social_only_registration'] = ! empty( $input['social_only_registration'] );
+		$output['organization_author']      = ! empty( $input['organization_author'] );
+		$x_default                          = isset( $input['hreflang_x_default'] ) ? sanitize_key( $input['hreflang_x_default'] ) : '';
+		$languages                          = AI_Chat_Bedrock_Integrations::languages();
+		$output['hreflang_x_default']       = '' === $x_default || empty( $languages ) || isset( $languages[ $x_default ] ) ? $x_default : '';
 
 		$prompt_id = isset( $input['prompt_id'] ) ? trim( sanitize_text_field( $input['prompt_id'] ) ) : '';
 		if ( '' !== $prompt_id && ! preg_match( '#^[A-Za-z0-9:._/-]{1,2048}$#', $prompt_id ) ) {
@@ -1240,9 +1443,6 @@ class AI_Chat_Bedrock_Admin {
 		}
 		$retention_days               = isset( $input['log_retention_days'] ) ? absint( $input['log_retention_days'] ) : AI_Chat_Bedrock_Conversations::DEFAULT_DAYS;
 		$output['log_retention_days'] = max( 1, min( AI_Chat_Bedrock_Conversations::MAX_DAYS, $retention_days ) );
-		update_option( AI_Chat_Bedrock_Conversations::OPTION_ENABLED, $output['log_conversations'], false );
-		update_option( AI_Chat_Bedrock_Conversations::OPTION_RETENTION, $output['log_retention_days'], false );
-		update_option( 'ai_chat_bedrock_site_abilities', $output['site_abilities'], false );
 
 		$knowledge_base = isset( $input['knowledge_base_id'] ) ? trim( sanitize_text_field( $input['knowledge_base_id'] ) ) : '';
 		if ( '' === $knowledge_base || preg_match( '/^[A-Za-z0-9]{1,64}$/', $knowledge_base ) ) {
@@ -1274,13 +1474,28 @@ class AI_Chat_Bedrock_Admin {
 					$merged[ $key ] = $output[ $key ];
 				}
 			}
-			foreach ( array( 'aws_access_key', 'aws_secret_key', 'aws_session_token', 'bedrock_api_key', 'enable_streaming', 'log_retention_days', 'popup_profile', 'guardrail_version' ) as $paired ) {
-				if ( in_array( $paired, $submitted, true ) && array_key_exists( $paired, $output ) ) {
-					$merged[ $paired ] = $output[ $paired ];
+			// Keys a field renders next to its own control, which the field list does not name.
+			foreach ( self::COMPANION_FIELDS as $owner => $companions ) {
+				if ( ! in_array( $owner, $submitted, true ) ) {
+					continue;
+				}
+				foreach ( $companions as $companion ) {
+					if ( array_key_exists( $companion, $output ) ) {
+						$merged[ $companion ] = $output[ $companion ];
+					}
 				}
 			}
 			$output = $merged;
 		}
+
+		/*
+		 * Some settings are also kept in options of their own, which other code reads without
+		 * loading the settings array. They are written from the merged result, so saving one
+		 * tab no longer switched off the conversation log and site abilities set on another.
+		 */
+		update_option( AI_Chat_Bedrock_Conversations::OPTION_ENABLED, ! empty( $output['log_conversations'] ), false );
+		update_option( AI_Chat_Bedrock_Conversations::OPTION_RETENTION, isset( $output['log_retention_days'] ) ? (int) $output['log_retention_days'] : AI_Chat_Bedrock_Conversations::DEFAULT_DAYS, false );
+		update_option( 'ai_chat_bedrock_site_abilities', ! empty( $output['site_abilities'] ), false );
 
 		// WordPress registers its own "Settings saved" against the 'general' slug, which a
 		// settings_errors() call filtered to this plugin's slug never shows. Without this the
@@ -1300,7 +1515,7 @@ class AI_Chat_Bedrock_Admin {
 	 */
 	public function removable_query_args( $args ) {
 		$args = is_array( $args ) ? $args : array();
-		return array_merge( $args, array( 'aicfab-alt', 'aicfab-alt-done', 'aicfab-alt-skipped', 'aicfab-alt-failed', 'aicfab-applied', 'aicfab-cleared', 'aicfab-generated', 'aicfab-log', 'aicfab-message', 'aicfab-profile', 'aicfab-transfer' ) );
+		return array_merge( $args, array( 'aicfab-alt', 'aicfab-alt-done', 'aicfab-alt-skipped', 'aicfab-alt-failed', 'aicfab-applied', 'aicfab-cleared', 'aicfab-generated', 'aicfab-log', 'aicfab-message', 'aicfab-profile', 'aicfab-skipped', 'aicfab-transfer' ) );
 	}
 
 	/**
@@ -1315,6 +1530,17 @@ class AI_Chat_Bedrock_Admin {
 	private function is_plugin_screen( $hook_suffix ) {
 		return false !== strpos( (string) $hook_suffix, $this->plugin_name );
 	}
+	/**
+	 * Settings rendered inside another field's row, saved whenever that field's tab is.
+	 */
+	const COMPANION_FIELDS = array(
+		'log_conversations'  => array( 'log_retention_days' ),
+		'popup_site_wide'    => array( 'popup_profile' ),
+		'prompt_id'          => array( 'prompt_version' ),
+		'embedding_model_id' => array( 'embedding_background' ),
+		'vector_store'       => array( 's3_vectors_bucket', 's3_vectors_index', 's3_vectors_region' ),
+	);
+
 	const CHECKBOX_FIELDS = array(
 		'embedding_background',
 		'abilities_tools',
@@ -1328,6 +1554,10 @@ class AI_Chat_Bedrock_Admin {
 		'media_assistant',
 		'popup_site_wide',
 		'site_abilities',
+		'show_sources',
+		'github_read_scope',
+		'social_only_registration',
+		'organization_author',
 	);
 
 	/**
@@ -1342,11 +1572,12 @@ class AI_Chat_Bedrock_Admin {
 
 	private function field( $id, $title, $callback, $section ) {
 		$pages = array(
-			'aicfab_aws'        => 'aicfab_tab_aws',
-			'aicfab_model'      => 'aicfab_tab_model',
-			'aicfab_governance' => 'aicfab_tab_governance',
-			'aicfab_knowledge'  => 'aicfab_tab_knowledge',
-			'aicfab_chat'       => 'aicfab_tab_chat',
+			'aicfab_aws'          => 'aicfab_tab_aws',
+			'aicfab_model'        => 'aicfab_tab_model',
+			'aicfab_governance'   => 'aicfab_tab_governance',
+			'aicfab_knowledge'    => 'aicfab_tab_knowledge',
+			'aicfab_chat'         => 'aicfab_tab_chat',
+			'aicfab_integrations' => 'aicfab_tab_integrations',
 		);
 		$page  = isset( $pages[ $section ] ) ? $pages[ $section ] : 'aicfab_tab_chat';
 
@@ -1366,25 +1597,29 @@ class AI_Chat_Bedrock_Admin {
 	 */
 	public static function tabs() {
 		return array(
-			'aws'        => array(
+			'aws'          => array(
 				'page'  => 'aicfab_tab_aws',
 				'label' => __( 'AWS', 'ai-chat-for-amazon-bedrock' ),
 			),
-			'model'      => array(
+			'model'        => array(
 				'page'  => 'aicfab_tab_model',
 				'label' => __( 'Model', 'ai-chat-for-amazon-bedrock' ),
 			),
-			'chat'       => array(
+			'chat'         => array(
 				'page'  => 'aicfab_tab_chat',
 				'label' => __( 'Chat', 'ai-chat-for-amazon-bedrock' ),
 			),
-			'knowledge'  => array(
+			'knowledge'    => array(
 				'page'  => 'aicfab_tab_knowledge',
 				'label' => __( 'Grounding', 'ai-chat-for-amazon-bedrock' ),
 			),
-			'governance' => array(
+			'governance'   => array(
 				'page'  => 'aicfab_tab_governance',
 				'label' => __( 'Safety and spend', 'ai-chat-for-amazon-bedrock' ),
+			),
+			'integrations' => array(
+				'page'  => 'aicfab_tab_integrations',
+				'label' => __( 'Integrations', 'ai-chat-for-amazon-bedrock' ),
 			),
 		);
 	}

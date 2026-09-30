@@ -313,16 +313,6 @@ class AI_Chat_Bedrock_AWS {
 	}
 
 	/**
-	 * Create an embedding vector for one piece of text.
-	 *
-	 * Titan and Cohere use different request and response shapes, so both are
-	 * handled here rather than in the caller.
-	 *
-	 * @param string $text     Text to embed.
-	 * @param string $model_id Embedding model identifier.
-	 * @return array|WP_Error List of floats, or an error.
-	 */
-	/**
 	 * Read a guardrail so a misconfiguration is caught before a visitor hits it.
 	 *
 	 * Bedrock fails closed on a wrong guardrail identifier: every request is refused with a
@@ -360,7 +350,19 @@ class AI_Chat_Bedrock_AWS {
 		);
 	}
 
-	public function embed( $text, $model_id ) {
+	/**
+	 * Create an embedding vector for one piece of text.
+	 *
+	 * Titan and Cohere use different request and response shapes, so both are
+	 * handled here rather than in the caller.
+	 *
+	 * @param string $text     Text to embed.
+	 * @param string $model_id Embedding model identifier.
+	 * @param string $purpose  document for indexed text, query for a question. Cohere embeds the
+	 *                         two differently and retrieves noticeably better when told which is which.
+	 * @return array|WP_Error List of floats, or an error.
+	 */
+	public function embed( $text, $model_id, $purpose = 'document' ) {
 		$text = trim( (string) $text );
 		if ( '' === $text ) {
 			return new WP_Error( 'aicfab_empty_text', __( 'There is nothing to embed.', 'ai-chat-for-amazon-bedrock' ) );
@@ -379,7 +381,7 @@ class AI_Chat_Bedrock_AWS {
 		$payload = false !== strpos( $model_id, 'cohere' )
 			? array(
 				'texts'      => array( $text ),
-				'input_type' => 'search_document',
+				'input_type' => 'query' === $purpose ? 'search_query' : 'search_document',
 			)
 			: array( 'inputText' => $text );
 
@@ -1557,6 +1559,106 @@ class AI_Chat_Bedrock_AWS {
 			return new WP_Error( 'aicfab_invalid_response', __( 'The knowledge base returned an invalid response.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		return $data;
+	}
+
+	/**
+	 * Call the Amazon S3 Vectors API.
+	 *
+	 * Every operation is a signed JSON POST to https://s3vectors.<region>.api.aws/<Operation>.
+	 * S3 Vectors accepts only Signature Version 4, never a Bedrock API key.
+	 *
+	 * @param string $operation One of the operations listed below.
+	 * @param array  $payload   Request body.
+	 * @param string $region    Region of the vector bucket, when it differs from the Bedrock Region.
+	 * @return array|WP_Error Decoded response, or an error whose data holds the HTTP status.
+	 */
+	public function s3_vectors( $operation, $payload, $region = '' ) {
+		$operations = array( 'CreateIndex', 'DeleteVectors', 'GetIndex', 'GetVectorBucket', 'GetVectors', 'ListIndexes', 'ListVectors', 'PutVectors', 'QueryVectors' );
+		if ( ! in_array( $operation, $operations, true ) ) {
+			return new WP_Error( 'aicfab_s3v_operation', __( 'That S3 Vectors operation is not supported.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		$missing = $this->missing_credentials( 's3vectors', false );
+		if ( null !== $missing ) {
+			return $missing;
+		}
+
+		$saved  = $this->region;
+		$region = '' !== (string) $region ? sanitize_key( (string) $region ) : $this->region;
+		if ( ! preg_match( '/^[a-z]{2}(?:-gov)?-[a-z]+-\d$/', $region ) ) {
+			return new WP_Error( 'aicfab_invalid_region', __( 'The configured AWS region is invalid.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		// S3 Vectors lives under api.aws, not amazonaws.com. An API endpoint, not offloaded assets.
+		$default  = 'https://s3vectors.' . $region . '.api.aws'; // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent
+		$base     = (string) apply_filters( 'ai_chat_bedrock_service_endpoint', $default, 's3vectors', $region );
+		$base     = 0 === strpos( $base, 'https://' ) ? untrailingslashit( $base ) : $default;
+		$endpoint = $base . '/' . $operation;
+		$body     = wp_json_encode( empty( $payload ) ? new stdClass() : $payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+		if ( false === $body ) {
+			return new WP_Error( 'aicfab_encode_failed', __( 'The S3 Vectors request could not be encoded.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		$this->region = $region;
+		try {
+			$headers = $this->signed_headers( $endpoint, $body, 'POST', 's3vectors', array(), false );
+		} finally {
+			$this->region = $saved;
+		}
+
+		$response = self::aws_remote(
+			'POST',
+			$endpoint,
+			array(
+				'timeout'            => 30,
+				'redirection'        => 0,
+				'httpversion'        => '1.1',
+				'reject_unsafe_urls' => true,
+				'headers'            => $headers,
+				'body'               => $body,
+			)
+		);
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'aicfab_transport', __( 'Amazon S3 Vectors could not be reached.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 0 ) );
+		}
+
+		$status = (int) wp_remote_retrieve_response_code( $response );
+		$data   = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+		if ( $status < 200 || $status >= 300 ) {
+			$type = (string) wp_remote_retrieve_header( $response, 'x-amzn-errortype' );
+			if ( '' === $type && is_array( $data ) && isset( $data['__type'] ) && is_string( $data['__type'] ) ) {
+				$type = substr( (string) strrchr( '#' . $data['__type'], '#' ), 1 );
+			}
+			$type = preg_replace( '/[^A-Za-z]/', '', (string) strtok( $type, ':' ) );
+			if ( '' === $type ) {
+				$by_status = array(
+					403 => 'AccessDeniedException',
+					404 => 'NotFoundException',
+					409 => 'ConflictException',
+					429 => 'TooManyRequestsException',
+				);
+				$type      = isset( $by_status[ $status ] ) ? $by_status[ $status ] : 'HttpError';
+			}
+			$this->log_debug(
+				'S3 Vectors error',
+				array(
+					'status' => $status,
+					'code'   => $type,
+				)
+			);
+			$message = is_array( $data ) && isset( $data['message'] ) ? sanitize_text_field( (string) $data['message'] ) : '';
+			if ( 403 === $status || 'AccessDeniedException' === $type ) {
+				$message = __( 'The AWS identity is not authorized for this S3 Vectors operation. Add the s3vectors actions from the IAM policy on the Diagnostics screen.', 'ai-chat-for-amazon-bedrock' );
+			} elseif ( '' === $message ) {
+				/* translators: %d: HTTP status code returned by Amazon S3 Vectors. */
+				$message = sprintf( __( 'Amazon S3 Vectors returned HTTP %d.', 'ai-chat-for-amazon-bedrock' ), $status );
+			}
+			return new WP_Error(
+				'aicfab_s3v_' . $type,
+				$message,
+				array( 'status' => $status )
+			);
+		}
+		return is_array( $data ) ? $data : array();
 	}
 
 	/**

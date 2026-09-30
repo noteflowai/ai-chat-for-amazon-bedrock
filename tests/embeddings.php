@@ -64,6 +64,20 @@ function delete_post_meta( $id, $key ) {
 	unset( $GLOBALS['aicfab_meta'][ $id ][ $key ] );
 	return true;
 }
+function delete_post_meta_by_key( $key ) {
+	foreach ( $GLOBALS['aicfab_meta'] as $id => $meta ) {
+		unset( $GLOBALS['aicfab_meta'][ $id ][ $key ] );
+	}
+	return true;
+}
+function update_option( $name, $value, $autoload = null ) {
+	$GLOBALS['aicfab_options'][ $name ] = $value;
+	return true;
+}
+function delete_option( $name ) {
+	unset( $GLOBALS['aicfab_options'][ $name ] );
+	return true;
+}
 function is_wp_error( $thing ) {
 	return $thing instanceof WP_Error;
 }
@@ -83,6 +97,7 @@ function wp_unschedule_event( $timestamp, $hook ) {
 
 class WP_Post {
 	public $ID = 0;
+	public $post_modified_gmt = '';
 	public $post_title = '';
 	public $post_content = '';
 	public $post_status = 'publish';
@@ -136,6 +151,12 @@ class WP_Query {
 }
 
 class AI_Chat_Bedrock_Security {
+	public static function string_length( $value ) {
+		return function_exists( 'mb_strlen' ) ? mb_strlen( (string) $value ) : strlen( (string) $value );
+	}
+	public static function truncate_bytes( $value, $bytes ) {
+		return mb_strcut( (string) $value, 0, $bytes, 'UTF-8' );
+	}
 	public static function string_substr( $value, $start, $length ) {
 		return function_exists( 'mb_substr' ) ? mb_substr( (string) $value, $start, $length ) : substr( (string) $value, $start, $length );
 	}
@@ -159,7 +180,9 @@ class AI_Chat_Bedrock_AWS {
 	}
 }
 
+require_once __DIR__ . '/../includes/class-ai-chat-bedrock-content.php';
 require_once __DIR__ . '/../includes/class-ai-chat-bedrock-embeddings.php';
+require_once __DIR__ . '/../includes/class-ai-chat-bedrock-s3-vectors.php';
 
 $failures = array();
 function check_emb( $condition, $message ) {

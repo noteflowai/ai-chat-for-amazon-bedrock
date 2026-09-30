@@ -278,7 +278,7 @@ class AI_Chat_Bedrock_Site_Abilities {
 				'title'   => get_the_title( $post ),
 				'url'     => get_permalink( $post ),
 				'type'    => $post->post_type,
-				'excerpt' => $this->plain_text( $post->post_content, 400 ),
+				'excerpt' => $this->plain_text( $post, 400 ),
 			);
 		}
 		wp_reset_postdata();
@@ -306,7 +306,7 @@ class AI_Chat_Bedrock_Site_Abilities {
 			'title'   => get_the_title( $post ),
 			'url'     => get_permalink( $post ),
 			'type'    => $post->post_type,
-			'content' => $this->plain_text( $post->post_content, self::MAX_EXCERPT ),
+			'content' => $this->plain_text( $post, self::MAX_EXCERPT ),
 		);
 	}
 
@@ -367,7 +367,7 @@ class AI_Chat_Bedrock_Site_Abilities {
 		}
 
 		$title   = get_the_title( $post );
-		$content = $this->plain_text( $post->post_content, 2000 );
+		$content = $this->plain_text( $post, 2000 );
 		$words   = preg_split( '/\s+/', $content, -1, PREG_SPLIT_NO_EMPTY );
 		$words   = is_array( $words ) ? $words : array();
 
@@ -467,12 +467,23 @@ class AI_Chat_Bedrock_Site_Abilities {
 			return false;
 		}
 		$type = get_post_type_object( $post->post_type );
-		return $type && ! empty( $type->public );
+		return $type && ! empty( $type->public ) && AI_Chat_Bedrock_Content::is_public( $post );
 	}
 
-	private function plain_text( $content, $limit ) {
-		$text = wp_strip_all_tags( strip_shortcodes( (string) $content ) );
-		$text = preg_replace( '/\s+/', ' ', (string) $text );
-		return AI_Chat_Bedrock_Security::string_substr( trim( (string) $text ), 0, absint( $limit ) );
+	/**
+	 * The post as a signed-out visitor reads it, without the title. The stored markup can
+	 * hold members-only sections, and an agent calling these abilities is not a member.
+	 *
+	 * @param WP_Post $post  Post.
+	 * @param int     $limit Characters.
+	 * @return string
+	 */
+	private function plain_text( $post, $limit ) {
+		$text  = AI_Chat_Bedrock_Content::public_text( $post );
+		$title = trim( (string) get_the_title( $post ) );
+		if ( '' !== $title && 0 === strpos( $text, $title ) ) {
+			$text = substr( $text, strlen( $title ) );
+		}
+		return AI_Chat_Bedrock_Security::string_substr( AI_Chat_Bedrock_Content::flatten( $text ), 0, absint( $limit ) );
 	}
 }

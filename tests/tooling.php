@@ -221,6 +221,17 @@ $cases = array(
 		},
 	),
 	array(
+		'label'  => 'a changelog longer than the directory shows',
+		'fail_line' => 'readme limits exceeded',
+		'output'    => 'changelog is too long',
+		'break'  => function ( $sandbox ) {
+			$readme = $sandbox . '/readme.txt';
+			$body   = file_get_contents( $readme );
+			$long   = "= 0.0.3 =\n" . str_repeat( "* An entry that makes the changelog too long.\n", 120 ) . "\n";
+			file_put_contents( $readme, str_replace( "== Changelog ==\n\n", "== Changelog ==\n\n" . $long, $body ) );
+		},
+	),
+	array(
 		'label'  => 'an upgrade notice longer than the directory allows',
 		'fail_line' => 'readme limits exceeded',
 		'output'    => 'over 300 chars: 0.0.2',

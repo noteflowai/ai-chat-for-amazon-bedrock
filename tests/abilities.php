@@ -115,12 +115,16 @@ class Aicfab_Test_Ability {
 	public $permitted;
 	public $result;
 	public $ran = false;
+	public $meta = array( 'annotations' => array( 'readonly' => true ) );
 
 	public function __construct( $name, $description, $permitted = true, $result = 'done' ) {
 		$this->name        = $name;
 		$this->description = $description;
 		$this->permitted   = $permitted;
 		$this->result      = $result;
+	}
+	public function get_meta() {
+		return $this->meta;
 	}
 	public function get_name() {
 		return $this->name;
@@ -226,6 +230,32 @@ check_ab(
 foreach ( $aicfab_names as $aicfab_name ) {
 	check_ab( 0 === strpos( $aicfab_name, AI_Chat_Bedrock_Abilities::TOOL_PREFIX ), 'Every tool carries the ability prefix.' );
 }
+
+/*
+ * The name of an ability says little about what it does: "cancel-order" contains none of
+ * the words a keyword guess looks for. Only an ability that declares itself read only is
+ * offered without an administrator allowing it.
+ */
+$aicfab_cancel       = new Aicfab_Test_Ability( 'acme/cancel-order', 'Cancel an order' );
+$aicfab_cancel->meta = array();
+$aicfab_quiet        = new Aicfab_Test_Ability( 'acme/stock-level', 'Stock level of a product' );
+$aicfab_quiet->meta  = array( 'annotations' => array( 'readonly' => false ) );
+$aicfab_nuke         = new Aicfab_Test_Ability( 'acme/stock-reset', 'Stock level' );
+$aicfab_nuke->meta   = array( 'annotations' => array( 'readonly' => true, 'destructive' => true ) );
+$GLOBALS['aicfab_abilities'] = array( $aicfab_cancel, $aicfab_quiet, $aicfab_nuke );
+$GLOBALS['aicfab_caps']      = array( 'edit_posts' => true, 'manage_options' => true );
+check_ab( array() === $aicfab_abilities_obj->available_ability_tools(), 'Abilities that do not declare themselves read only are not offered by default.' );
+$GLOBALS['aicfab_opts']['ai_chat_bedrock_mcp_tool_policy'] = array( 'wpability___acme__stock_level' => 'allow' );
+$aicfab_tools = $aicfab_abilities_obj->available_ability_tools();
+check_ab( 1 === count( $aicfab_tools ) && 'wpability___acme__stock_level' === $aicfab_tools[0]['name'], 'An administrator can allow one explicitly.' );
+unset( $GLOBALS['aicfab_opts']['ai_chat_bedrock_mcp_tool_policy'] );
+$GLOBALS['aicfab_caps'] = array( 'edit_posts' => true );
+
+// Word matching, not substring matching: display is not pay and credit is not edit.
+check_ab( false === AI_Chat_Bedrock_Tool_Policy::is_mutating( 'acme_display_credit', 'Display the credit balance' ), 'Words that merely contain a marker are not mutating.' );
+check_ab( true === AI_Chat_Bedrock_Tool_Policy::is_mutating( 'acme_refund_order', '' ), 'A refund is mutating.' );
+check_ab( true === AI_Chat_Bedrock_Tool_Policy::is_mutating( 'getThing', 'Deletes the thing after reading' ), 'An inflected marker in the description counts.' );
+check_ab( true === AI_Chat_Bedrock_Tool_Policy::is_mutating( 'set_title', '' ), 'A set_ tool is mutating.' );
 
 /*
  * A site owner can deny a specific tool on the MCP policy screen. Nothing asserted that the
