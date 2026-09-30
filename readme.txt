@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.52.1
+Stable tag: 1.53.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -95,6 +95,15 @@ tokens were read from that cache instead of being billed at the full price.
 Token counts are what Bedrock reported and are not a price estimate. Rate limiting reduces
 accidental usage but guarantees nothing about your bill, so review Amazon Bedrock pricing and set
 AWS Budgets before opening a chat to public traffic.
+
+The dashboard also counts chat requests that reached Amazon Bedrock and still failed after any
+fallback model, today (Failed requests in Usage today) and for the last seven days (the "Failed
+chat requests" line under the usage panel). Failures are grouped as throttled, access denied,
+rejected request, service unavailable, network or other, using only the HTTP status and the
+plugin's error code. Setup problems that never send a request, such as missing credentials, an
+invalid region or the daily cap, are not counted, and a request rescued by the fallback model is
+not a failure. Diagnostics model tests are counted too. These are counters only: no message,
+error text or identity is kept, and they measure what this site saw, not AWS service health.
 
 = The rest =
 
@@ -394,6 +403,9 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.53.0 =
+* The dashboard now counts chat requests that reached Amazon Bedrock and still failed, today and over the last seven days, by cause: throttled, access denied, rejected request, service unavailable, network or other. Setup errors that send no request are not counted, and no message or error text is stored.
+
 = 1.52.1 =
 * The token count under each answer reads in Chinese and Japanese too. 1.52.0 left it in English.
 
@@ -406,6 +418,9 @@ what a good answer says.
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.53.0 =
+The dashboard counts failed Bedrock chat requests by cause, today and over seven days. Counters only; no messages are stored.
 
 = 1.52.1 =
 The token count under each answer in Chinese and Japanese.

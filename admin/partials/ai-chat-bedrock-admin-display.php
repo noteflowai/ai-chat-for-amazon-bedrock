@@ -24,6 +24,8 @@ $streaming   = ( ! isset( $options['enable_streaming'] ) || 'off' !== $options['
 $mcp_enabled = (bool) get_option( 'ai_chat_bedrock_enable_mcp', false );
 $today       = AI_Chat_Bedrock_Usage::today_totals();
 $week        = AI_Chat_Bedrock_Usage::totals( 7 );
+$failed_day  = AI_Chat_Bedrock_Usage::failure_totals( 1 );
+$failed_week = AI_Chat_Bedrock_Usage::failure_totals( 7 );
 $daily_limit = AI_Chat_Bedrock_Usage::daily_limit( $options );
 $series      = AI_Chat_Bedrock_Usage::daily_series( 7 );
 $by_model    = AI_Chat_Bedrock_Usage::by_model( 7 );
@@ -92,6 +94,7 @@ $aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 				<div><span class="aicfab-metric"><?php echo esc_html( number_format_i18n( $today['requests'] ) ); ?></span><span class="aicfab-metric-label"><?php esc_html_e( 'requests', 'ai-chat-for-amazon-bedrock' ); ?></span></div>
 				<div><span class="aicfab-metric"><?php echo esc_html( number_format_i18n( $today['input_tokens'] ) ); ?></span><span class="aicfab-metric-label"><?php esc_html_e( 'input tokens', 'ai-chat-for-amazon-bedrock' ); ?></span></div>
 				<div><span class="aicfab-metric"><?php echo esc_html( number_format_i18n( $today['output_tokens'] ) ); ?></span><span class="aicfab-metric-label"><?php esc_html_e( 'output tokens', 'ai-chat-for-amazon-bedrock' ); ?></span></div>
+				<div><span class="aicfab-metric"><?php echo esc_html( number_format_i18n( (int) $failed_day['total'] ) ); ?></span><span class="aicfab-metric-label"><?php esc_html_e( 'failed requests', 'ai-chat-for-amazon-bedrock' ); ?></span></div>
 			</div>
 			<p class="aicfab-card-detail">
 				<?php
@@ -190,6 +193,63 @@ $aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 				<?php esc_html_e( 'Counters only, kept for 30 days. Token counts are what Amazon Bedrock reported and are not a price estimate; check AWS Cost Explorer for billing.', 'ai-chat-for-amazon-bedrock' ); ?>
 			</p>
 		<?php endif; ?>
+
+		<p class="aicfab-card-detail aicfab-usage-failures">
+			<?php
+			if ( (int) $failed_week['total'] < 1 ) {
+				esc_html_e( 'No failed chat requests recorded in the last 7 days.', 'ai-chat-for-amazon-bedrock' );
+			} else {
+				// The first category starts a sentence, so it has its own capitalized label.
+				$aicfab_first_labels = array(
+					'throttled'     => _x( 'Throttled', 'failure category, starting a sentence', 'ai-chat-for-amazon-bedrock' ),
+					'access_denied' => _x( 'Access denied', 'failure category, starting a sentence', 'ai-chat-for-amazon-bedrock' ),
+					'validation'    => _x( 'Rejected request', 'failure category, starting a sentence', 'ai-chat-for-amazon-bedrock' ),
+					'unavailable'   => _x( 'Service unavailable', 'failure category, starting a sentence', 'ai-chat-for-amazon-bedrock' ),
+					'network'       => _x( 'Network', 'failure category, starting a sentence', 'ai-chat-for-amazon-bedrock' ),
+					'other'         => _x( 'Other', 'failure category, starting a sentence', 'ai-chat-for-amazon-bedrock' ),
+				);
+				$aicfab_later_labels = array(
+					'throttled'     => _x( 'throttled', 'failure category, inside a list', 'ai-chat-for-amazon-bedrock' ),
+					'access_denied' => _x( 'access denied', 'failure category, inside a list', 'ai-chat-for-amazon-bedrock' ),
+					'validation'    => _x( 'rejected request', 'failure category, inside a list', 'ai-chat-for-amazon-bedrock' ),
+					'unavailable'   => _x( 'service unavailable', 'failure category, inside a list', 'ai-chat-for-amazon-bedrock' ),
+					'network'       => _x( 'network', 'failure category, inside a list', 'ai-chat-for-amazon-bedrock' ),
+					'other'         => _x( 'other', 'failure category, inside a list', 'ai-chat-for-amazon-bedrock' ),
+				);
+				/* translators: 1: failure category name, 2: number of failed chat requests in that category. */
+				$aicfab_item_format   = _x( '%1$s %2$s', 'failure category and count', 'ai-chat-for-amazon-bedrock' );
+				$aicfab_failure_parts = array();
+				foreach ( $failed_week['by_category'] as $aicfab_category => $aicfab_count ) {
+					$aicfab_labels = empty( $aicfab_failure_parts ) ? $aicfab_first_labels : $aicfab_later_labels;
+					if ( (int) $aicfab_count > 0 && isset( $aicfab_labels[ $aicfab_category ] ) ) {
+						$aicfab_failure_parts[] = sprintf( $aicfab_item_format, $aicfab_labels[ $aicfab_category ], number_format_i18n( (int) $aicfab_count ) );
+					}
+				}
+				$aicfab_count_sentence = sprintf(
+					/* translators: %s: chat requests that reached Amazon Bedrock and failed in the last seven days. */
+					__( 'Failed chat requests, last 7 days: %s.', 'ai-chat-for-amazon-bedrock' ),
+					number_format_i18n( (int) $failed_week['total'] )
+				);
+				if ( empty( $aicfab_failure_parts ) ) {
+					echo esc_html( $aicfab_count_sentence );
+				} else {
+					$aicfab_list_sentence = sprintf(
+						/* translators: %s: failure categories with their counts, joined by the list separator. */
+						_x( '%s.', 'sentence listing failure categories', 'ai-chat-for-amazon-bedrock' ),
+						implode( _x( ', ', 'failure category list separator', 'ai-chat-for-amazon-bedrock' ), $aicfab_failure_parts )
+					);
+					echo esc_html(
+						sprintf(
+							/* translators: 1: sentence with the failed request total, 2: sentence listing the failure categories. */
+							_x( '%1$s %2$s', 'failed request total then category list', 'ai-chat-for-amazon-bedrock' ),
+							$aicfab_count_sentence,
+							$aicfab_list_sentence
+						)
+					);
+				}
+			}
+			?>
+		</p>
 	</div>
 
 	<div class="aicfab-columns">

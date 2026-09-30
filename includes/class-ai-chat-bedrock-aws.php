@@ -54,6 +54,13 @@ class AI_Chat_Bedrock_AWS {
 
 	private $overrides = array();
 
+	/**
+	 * Whether the current chat call has sent at least one Bedrock HTTP request.
+	 *
+	 * @var bool
+	 */
+	private $request_sent = false;
+
 	public function __construct( $overrides = array() ) {
 		$this->overrides         = is_array( $overrides ) ? $overrides : array();
 		$options                 = get_option( 'ai_chat_bedrock_settings', array() );
@@ -179,6 +186,8 @@ class AI_Chat_Bedrock_AWS {
 	 * @return array WordPress AJAX-compatible response data.
 	 */
 	public function handle_chat_message( $message_data ) {
+		$this->request_sent = false;
+
 		$prepared = $this->prepare_request( $message_data );
 		if ( is_wp_error( $prepared ) ) {
 			return $this->error( $prepared->get_error_message(), $prepared->get_error_code() );
@@ -186,17 +195,17 @@ class AI_Chat_Bedrock_AWS {
 
 		$response = $this->invoke_model( $prepared['payload'], $prepared['model_id'], $prepared['api'] );
 		if ( ! $this->should_fall_back( $response ) ) {
-			return $response;
+			return $this->record_chat_outcome( $response );
 		}
 
 		$fallback = $this->fallback_model_id( $prepared['model_id'] );
 		if ( '' === $fallback ) {
-			return $response;
+			return $this->record_chat_outcome( $response );
 		}
 
 		$retry = $this->prepare_request( $message_data, $fallback );
 		if ( is_wp_error( $retry ) ) {
-			return $response;
+			return $this->record_chat_outcome( $response );
 		}
 
 		$this->log_debug(
@@ -209,11 +218,11 @@ class AI_Chat_Bedrock_AWS {
 		$second = $this->invoke_model( $retry['payload'], $fallback, $retry['api'] );
 		if ( empty( $second['success'] ) ) {
 			// The primary failure is the more useful one to report, but keep the retry visible.
-			return $this->with_fallback_failure( $response, $second );
+			return $this->record_chat_outcome( $this->with_fallback_failure( $response, $second ) );
 		}
 
 		$second['fallback_model'] = $fallback;
-		return $second;
+		return $this->record_chat_outcome( $second );
 	}
 
 	/**
@@ -593,6 +602,8 @@ class AI_Chat_Bedrock_AWS {
 	 * @return array Response array with the complete message, tool calls and usage.
 	 */
 	public function stream_chat_message( $message_data, $on_delta ) {
+		$this->request_sent = false;
+
 		if ( ! self::streaming_supported() ) {
 			return $this->error( __( 'Streaming is not available on this server.', 'ai-chat-for-amazon-bedrock' ), 'aicfab_streaming_unavailable' );
 		}
@@ -618,17 +629,17 @@ class AI_Chat_Bedrock_AWS {
 
 		$response = $this->stream_once( $observer, $prepared );
 		if ( $emitted || ! $this->should_fall_back( $response ) ) {
-			return $response;
+			return $this->record_chat_outcome( $response );
 		}
 
 		$fallback = $this->fallback_model_id( $prepared['model_id'] );
 		if ( '' === $fallback ) {
-			return $response;
+			return $this->record_chat_outcome( $response );
 		}
 
 		$retry = $this->prepare_request( $message_data, $fallback );
 		if ( is_wp_error( $retry ) ) {
-			return $response;
+			return $this->record_chat_outcome( $response );
 		}
 
 		$this->log_debug(
@@ -640,11 +651,11 @@ class AI_Chat_Bedrock_AWS {
 		);
 		$second = $this->stream_once( $observer, $retry );
 		if ( empty( $second['success'] ) ) {
-			return $this->with_fallback_failure( $response, $second );
+			return $this->record_chat_outcome( $this->with_fallback_failure( $response, $second ) );
 		}
 
 		$second['fallback_model'] = $fallback;
-		return $second;
+		return $this->record_chat_outcome( $second );
 	}
 
 	/**
@@ -762,6 +773,8 @@ class AI_Chat_Bedrock_AWS {
 				},
 			)
 		);
+
+		$this->request_sent = true;
 
 		$completed = curl_exec( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_exec
 		$stopped   = ! empty( $state['stopped'] );
@@ -1235,7 +1248,9 @@ class AI_Chat_Bedrock_AWS {
 				'payload_bytes' => strlen( $body ),
 			)
 		);
-		$response = self::aws_remote(
+		// From here on a request leaves the site, so a final failure of this chat call counts.
+		$this->request_sent = true;
+		$response           = self::aws_remote(
 			'POST',
 			$endpoint,
 			array(
@@ -1347,6 +1362,25 @@ class AI_Chat_Bedrock_AWS {
 			$usage['output_tokens'] = (int) $output;
 		}
 		return $usage;
+	}
+
+	/**
+	 * Count a chat call's final failure, once, when it actually reached Bedrock.
+	 *
+	 * Called on every return of handle_chat_message() and stream_chat_message() after the
+	 * first request was prepared. Configuration errors never send a request and are not
+	 * counted. Only the status and error code are used; no message text is stored.
+	 *
+	 * @param array $result Final result returned to the caller.
+	 * @return array The same result, unchanged.
+	 */
+	private function record_chat_outcome( $result ) {
+		if ( is_array( $result ) && empty( $result['success'] ) && $this->request_sent && class_exists( 'AI_Chat_Bedrock_Usage' ) ) {
+			$status = isset( $result['data']['status'] ) ? (int) $result['data']['status'] : 0;
+			$code   = isset( $result['data']['code'] ) ? (string) $result['data']['code'] : '';
+			AI_Chat_Bedrock_Usage::record_failure( AI_Chat_Bedrock_Usage::classify_failure( $status, $code ) );
+		}
+		return $result;
 	}
 
 	private function record_usage( $usage, $model_id = '' ) {
