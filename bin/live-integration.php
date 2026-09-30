@@ -195,6 +195,24 @@ $aicfab_erasers   = apply_filters( 'wp_privacy_personal_data_erasers', array() )
 aicfab_live( isset( $aicfab_exporters['ai-chat-for-amazon-bedrock'] ), 'the privacy exporter is registered' );
 aicfab_live( isset( $aicfab_erasers['ai-chat-for-amazon-bedrock'] ), 'the privacy eraser is registered' );
 
+/*
+ * The bundled translations, through WordPress's own just-in-time loading. The suite calls the
+ * filter directly, so whether WordPress asks it, and then reads the file it points at, is asked here.
+ */
+if ( version_compare( get_bloginfo( 'version' ), '6.6', '<' ) ) {
+	aicfab_note( 'skipped: WordPress before 6.6 reads translations from language packs only' );
+} else {
+	$aicfab_locale = static function () {
+		return 'ja';
+	};
+	add_filter( 'determine_locale', $aicfab_locale );
+	unload_textdomain( 'ai-chat-for-amazon-bedrock', true );
+	$aicfab_send = __( 'Send', 'ai-chat-for-amazon-bedrock' );
+	remove_filter( 'determine_locale', $aicfab_locale );
+	unload_textdomain( 'ai-chat-for-amazon-bedrock', true );
+	aicfab_live( '送信' === $aicfab_send, 'a Japanese page reads the chat in the bundled Japanese', $aicfab_send );
+}
+
 $aicfab_routes = array();
 foreach ( rest_get_server()->get_routes() as $aicfab_route => $aicfab_handlers ) {
 	if ( false !== strpos( $aicfab_route, 'ai-chat-bedrock' ) ) {

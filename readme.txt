@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.51.1
+Stable tag: 1.52.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -175,7 +175,7 @@ Confirm that the model is available and enabled in the configured AWS Region, th
 
 = Does the chat work on a multilingual site? =
 
-Yes, with Polylang or WPML. The chat title, welcome message and suggested questions are listed for translation under "AI Chat for Amazon Bedrock" in Languages > Translations (Polylang) or String Translation (WPML), including those of each profile, and each edition of the site shows its own. Answers are asked for in the language of the page, and with Polylang are drawn from pages in that language first. Keep the system prompt in one language; it is not translated.
+Yes, with Polylang or WPML. The chat title, welcome message and suggested questions are listed for translation under "AI Chat for Amazon Bedrock" in Languages > Translations (Polylang) or String Translation (WPML), including those of each profile, and each edition of the site shows its own. Answers are asked for in the language of the page, and with Polylang are drawn from pages in that language first. Keep the system prompt in one language; it is not translated. The chat's own buttons and notices come in Simplified Chinese and Japanese with the plugin, and in other languages once translate.wordpress.org has them.
 
 = Why can guests not use the chat? =
 
@@ -394,6 +394,9 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.52.0 =
+* The chat's buttons, sign-in prompt, placeholder and notices read in Simplified Chinese (zh_CN) and Japanese (ja) on sites or pages in those languages. translate.wordpress.org has no translation for this plugin yet, so they showed in English on every Chinese and Japanese page, next to a title and greeting already translated. The translations ship in the plugin's languages folder and are used only when WordPress has no language pack for the locale, so a language pack from translate.wordpress.org takes over once there is one. Needs WordPress 6.6 or later; on older versions the chat stays in English as before.
+
 = 1.51.1 =
 * With Polylang, the chat's title, welcome message and suggested questions are listed once in Languages > Translations. 1.51.0 also registered them through Polylang's WPML compatibility layer, which listed each one twice; that copy is removed the next time an administrator opens wp-admin.
 
@@ -402,14 +405,12 @@ what a good answer says.
 * Multilingual sites: the chat title, welcome message and suggested questions, of the main settings and of every profile, are registered with Polylang or WPML under "AI Chat for Amazon Bedrock", and shown translated in each language. Translate them in Languages > Translations (Polylang) or String Translation (WPML). Before, they appeared in the language they were typed in on every edition of the site.
 * Source links and site abilities show post titles as plain text. A title with an ampersand or curly quotes showed its HTML entity, such as `&#038;`, under the answer.
 
-= 1.50.0 =
-* Security: members-only blocks are left out of the index and of answers wherever the text is read. Block Visibility hides blocks only on front-end requests, so text indexed with the Index content now button, or retrieved for a chat sent from wp-admin, could include blocks it shows only to signed-in visitors. Any block with Block Visibility rules is now removed before the post is rendered, and the new `ai_chat_bedrock_block_is_restricted` filter lets a site name blocks another plugin restricts. After the update every post counts as not yet indexed, and until it is indexed again an answer quotes its text as read now rather than the stored passage. Run Index content now, or let background indexing catch up.
-* Chat: a visitor the chat is not open to sees a sign-in link instead of a message box, and returns to the same page after signing in. Before, a guest could type a question and only then learn that the chat was for members. The new `ai_chat_bedrock_sign_in_url` filter points the link at a custom sign-in page, or leaves the chat out for guests when it returns an empty string.
-* With Polylang, the settings screen counts indexed posts and clears the index in every language, not only the admin's own, so indexing no longer looks unfinished.
-
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.52.0 =
+The chat's buttons and notices in Chinese and Japanese.
 
 = 1.51.1 =
 With Polylang, the chat's strings are listed once for translation instead of twice.

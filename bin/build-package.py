@@ -25,7 +25,7 @@ SECRET_PATTERNS = (
     re.compile(r'svn_[A-Za-z0-9]{20,}'),
     re.compile(r'-----BEGIN [A-Z ]*PRIVATE KEY-----'),
 )
-TEXT_SUFFIXES = {'.php', '.js', '.css', '.txt', '.json', '.pot', '.md', '.xml'}
+TEXT_SUFFIXES = {'.php', '.js', '.css', '.txt', '.json', '.pot', '.po', '.md', '.xml'}
 
 
 def read_distignore():

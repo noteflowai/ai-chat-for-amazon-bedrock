@@ -1,0 +1,274 @@
+# Translation of AI Agents & Chat for Amazon Bedrock in Chinese (China).
+# This file is distributed under the GPL-2.0-or-later.
+# Covers what a visitor reads in the chat. Everything else falls back to English.
+msgid ""
+msgstr ""
+"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.52.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
+"Language-Team: Chinese (China)\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Domain: ai-chat-for-amazon-bedrock\n"
+
+#: admin/class-ai-chat-bedrock-admin.php:103
+#: admin/class-ai-chat-bedrock-admin.php:138
+#: includes/class-ai-chat-bedrock-abilities.php:206
+#: includes/class-ai-chat-bedrock-content-generator.php:79
+#: includes/class-ai-chat-bedrock-editor-assistant.php:163
+#: includes/class-ai-chat-bedrock-editor-assistant.php:245
+#: includes/class-ai-chat-bedrock-generator-stream.php:116
+#: includes/class-ai-chat-bedrock-media-assistant.php:190
+#: includes/class-ai-chat-bedrock-media-assistant.php:256
+#: includes/class-ai-chat-bedrock-scaffold.php:64
+#: includes/class-ai-chat-bedrock-stream.php:143
+msgid "The request could not be completed."
+msgstr "无法完成请求。"
+
+#: admin/class-ai-chat-bedrock-admin.php:290
+#: admin/class-ai-chat-bedrock-admin.php:582
+#: admin/class-ai-chat-bedrock-admin.php:734
+#: admin/class-ai-chat-bedrock-admin.php:769
+#: includes/class-ai-chat-bedrock-mcp-integration.php:355
+#: includes/class-ai-chat-bedrock-stream.php:70
+#: public/class-ai-chat-bedrock-public.php:293
+msgid "Security check failed."
+msgstr "安全校验失败。"
+
+#: admin/class-ai-chat-bedrock-admin.php:737
+#: admin/class-ai-chat-bedrock-admin.php:772
+#: includes/class-ai-chat-bedrock-editor-assistant.php:110
+#: includes/class-ai-chat-bedrock-feedback.php:70
+#: includes/class-ai-chat-bedrock-media-assistant.php:106
+msgid "Too many requests. Please wait a moment."
+msgstr "请求过于频繁，请稍候。"
+
+#: admin/class-ai-chat-bedrock-admin.php:826
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:137
+#: public/partials/ai-chat-bedrock-public-display.php:59
+msgid "Suggested questions"
+msgstr "推荐问题"
+
+#: admin/class-ai-chat-bedrock-admin.php:1610
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:36
+#: public/class-ai-chat-bedrock-public.php:214
+#: public/class-ai-chat-bedrock-public.php:235
+#: public/partials/ai-chat-bedrock-public-display.php:20
+msgid "Chat"
+msgstr "对话"
+
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:265
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:325
+#: public/class-ai-chat-bedrock-public.php:54
+msgid "Helpful"
+msgstr "有帮助"
+
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:266
+#: admin/partials/ai-chat-bedrock-admin-conversations.php:325
+#: public/class-ai-chat-bedrock-public.php:55
+msgid "Not helpful"
+msgstr "没有帮助"
+
+#: admin/partials/ai-chat-bedrock-admin-generator.php:48
+#: includes/class-ai-chat-bedrock-aws.php:541
+#: includes/class-ai-chat-bedrock-chat-request.php:97
+#: includes/class-ai-chat-bedrock-core-ai.php:204
+msgid "The daily Amazon Bedrock request limit for this site has been reached."
+msgstr "本站今日的 Amazon Bedrock 请求次数已达上限。"
+
+#: admin/partials/ai-chat-bedrock-admin-test.php:14
+#: public/class-ai-chat-bedrock-public.php:215
+msgid "Chat with AI"
+msgstr "与 AI 对话"
+
+#: includes/class-ai-chat-bedrock-chat-request.php:80
+#: includes/class-ai-chat-bedrock-chat-request.php:85
+msgid "Message cannot be empty."
+msgstr "消息不能为空。"
+
+#: includes/class-ai-chat-bedrock-chat-request.php:88
+msgid "Message exceeds the 4,000 character limit."
+msgstr "消息超过 4,000 字符的上限。"
+
+#: includes/class-ai-chat-bedrock-chat-request.php:111
+msgid "Conversation history is too large."
+msgstr "对话记录过长。"
+
+#: includes/class-ai-chat-bedrock-chat-request.php:230
+msgid "I used the available tools to gather information."
+msgstr "我已使用可用工具收集信息。"
+
+#: includes/class-ai-chat-bedrock-feedback.php:61
+msgid "Feedback is not collected on this site."
+msgstr "本站不收集反馈。"
+
+#: includes/class-ai-chat-bedrock-feedback.php:66
+msgid "Please sign in to send feedback."
+msgstr "请登录后再提交反馈。"
+
+#: includes/class-ai-chat-bedrock-feedback.php:87
+msgid "The rating must be up or down."
+msgstr "评价只能是有帮助或没有帮助。"
+
+#: includes/class-ai-chat-bedrock-feedback.php:92
+msgid "That answer is no longer available for feedback."
+msgstr "这条回答已无法再评价。"
+
+#: includes/class-ai-chat-bedrock-stream.php:76
+#: public/class-ai-chat-bedrock-public.php:305
+msgid "Please sign in to use the chat."
+msgstr "请登录后使用对话。"
+
+#: includes/class-ai-chat-bedrock-stream.php:79
+msgid "Streaming is disabled on this site."
+msgstr "本站未启用流式回答。"
+
+#: includes/class-ai-chat-bedrock-stream.php:87
+#: public/class-ai-chat-bedrock-public.php:276
+#: public/class-ai-chat-bedrock-public.php:313
+msgid "Too many requests. Please wait a minute and try again."
+msgstr "请求过于频繁，请一分钟后再试。"
+
+#: includes/class-ai-chat-bedrock-stream.php:141
+msgid "Streaming is unavailable; retrying without streaming."
+msgstr "流式回答不可用，正在以普通方式重试。"
+
+#: public/class-ai-chat-bedrock-public.php:42
+#: public/partials/ai-chat-bedrock-public-display.php:15
+msgid "Hello! How can I help you today?"
+msgstr "你好！今天有什么可以帮你？"
+
+#: public/class-ai-chat-bedrock-public.php:47
+msgid "The request could not be completed. Please try again."
+msgstr "无法完成请求，请重试。"
+
+#: public/class-ai-chat-bedrock-public.php:48
+msgid "Answer stopped."
+msgstr "已停止回答。"
+
+#: public/class-ai-chat-bedrock-public.php:49
+msgid "Clear this conversation?"
+msgstr "要清空这次对话吗？"
+
+#: public/class-ai-chat-bedrock-public.php:50
+msgid "Copy"
+msgstr "复制"
+
+#: public/class-ai-chat-bedrock-public.php:51
+msgid "Copied"
+msgstr "已复制"
+
+#: public/class-ai-chat-bedrock-public.php:52
+msgid "Try again"
+msgstr "重试"
+
+#: public/class-ai-chat-bedrock-public.php:53
+msgid "Was this helpful?"
+msgstr "这条回答有帮助吗？"
+
+#: public/class-ai-chat-bedrock-public.php:56
+msgid "Thanks for the feedback."
+msgstr "感谢你的反馈。"
+
+#: public/class-ai-chat-bedrock-public.php:57
+msgid "Your message is too long."
+msgstr "你的消息太长了。"
+
+#. translators: %d: number of tools being used.
+#: public/class-ai-chat-bedrock-public.php:59
+#, php-format
+msgid "Using %d tool(s) to gather information…"
+msgstr "正在使用 %d 个工具收集信息…"
+
+#. translators: %s: comma separated list of tool names.
+#: public/class-ai-chat-bedrock-public.php:61
+#, php-format
+msgid "Using %s…"
+msgstr "正在使用 %s…"
+
+#. translators: %d: number of tool calls the agent made.
+#: public/class-ai-chat-bedrock-public.php:63
+#, php-format
+msgid "Agent steps (%d)"
+msgstr "智能体步骤（%d）"
+
+#: public/class-ai-chat-bedrock-public.php:64
+msgid "succeeded"
+msgstr "成功"
+
+#: public/class-ai-chat-bedrock-public.php:65
+msgid "failed"
+msgstr "失败"
+
+#. translators: %d: tool round number.
+#: public/class-ai-chat-bedrock-public.php:67
+#, php-format
+msgid "round %d"
+msgstr "第 %d 轮"
+
+#: public/class-ai-chat-bedrock-public.php:68
+msgid "The round limit was reached, so the answer was written with the information gathered so far."
+msgstr "已达到轮次上限，回答基于目前收集到的信息。"
+
+#. translators: %s: model identifier that answered instead of the main model.
+#: public/class-ai-chat-bedrock-public.php:70
+#, php-format
+msgid "The main model was unavailable, so %s answered."
+msgstr "主模型暂不可用，由 %s 作答。"
+
+#: public/class-ai-chat-bedrock-public.php:73
+msgctxt "chat avatar for the visitor"
+msgid "You"
+msgstr "你"
+
+#: public/class-ai-chat-bedrock-public.php:74
+msgctxt "chat avatar for the assistant"
+msgid "AI"
+msgstr "AI"
+
+#: public/class-ai-chat-bedrock-public.php:75
+msgid "Sources"
+msgstr "来源"
+
+#: public/class-ai-chat-bedrock-public.php:76
+msgid "(opens in a new tab)"
+msgstr "（在新标签页中打开）"
+
+#: public/class-ai-chat-bedrock-public.php:216
+msgid "Type your message here…"
+msgstr "在这里输入消息…"
+
+#: public/class-ai-chat-bedrock-public.php:217
+msgid "Send"
+msgstr "发送"
+
+#: public/class-ai-chat-bedrock-public.php:218
+msgid "Clear chat"
+msgstr "清空对话"
+
+#: public/class-ai-chat-bedrock-public.php:273
+#: public/class-ai-chat-bedrock-public.php:288
+msgid "Method not allowed."
+msgstr "不允许的请求方法。"
+
+#: public/partials/ai-chat-bedrock-public-display.php:54
+msgid "Sign in to chat with the assistant."
+msgstr "登录后即可与助手对话。"
+
+#: public/partials/ai-chat-bedrock-public-display.php:55
+msgid "Sign in"
+msgstr "登录"
+
+#: public/partials/ai-chat-bedrock-public-display.php:67
+msgid "Chat message"
+msgstr "对话消息"
+
+#: public/partials/ai-chat-bedrock-public-display.php:72
+msgid "Stop"
+msgstr "停止"
+
+#: public/partials/ai-chat-bedrock-public-display.php:78
+msgid "Powered by Amazon Bedrock"
+msgstr "由 Amazon Bedrock 提供支持"
