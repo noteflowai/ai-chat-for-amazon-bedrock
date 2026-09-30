@@ -93,8 +93,16 @@ class AI_Chat_Bedrock_Translation {
 	private static function add( $name, $text, $multiline ) {
 		if ( function_exists( 'pll_register_string' ) ) {
 			pll_register_string( $name, $text, self::CONTEXT, $multiline );
-		}
-		if ( self::has_wpml() ) {
+
+			/*
+			 * Polylang answers WPML's API too, and keeps what is registered through it in an
+			 * option of its own. 1.51.0 registered through both, so every string was listed
+			 * twice. Its copy is removed; this does nothing once it is gone.
+			 */
+			if ( function_exists( 'icl_unregister_string' ) ) {
+				icl_unregister_string( self::CONTEXT, $name );
+			}
+		} elseif ( self::has_wpml() ) {
 			do_action( 'wpml_register_single_string', self::CONTEXT, $name, $text ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WPML's documented API.
 		}
 	}
@@ -128,11 +136,12 @@ class AI_Chat_Bedrock_Translation {
 	}
 
 	/**
-	 * Whether WPML's string translation is available.
+	 * Whether WPML's string translation is available. Polylang also answers WPML's API, so
+	 * it is used directly where it is active.
 	 *
 	 * @return bool
 	 */
 	private static function has_wpml() {
-		return function_exists( 'has_action' ) && has_action( 'wpml_register_single_string' );
+		return ! function_exists( 'pll_register_string' ) && function_exists( 'has_action' ) && has_action( 'wpml_register_single_string' );
 	}
 }
