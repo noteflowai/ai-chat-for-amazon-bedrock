@@ -113,7 +113,8 @@ class AI_Chat_Bedrock_Retrieval {
 			if ( '' === $url || isset( $sources[ $url ] ) ) {
 				continue;
 			}
-			$title           = isset( $passage['title'] ) ? trim( wp_strip_all_tags( (string) $passage['title'] ) ) : '';
+			// The browser shows the title as text, so an entity such as &#038; would appear as written.
+			$title           = isset( $passage['title'] ) ? trim( html_entity_decode( wp_strip_all_tags( (string) $passage['title'] ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ) : '';
 			$sources[ $url ] = array(
 				'title' => AI_Chat_Bedrock_Security::string_substr( '' !== $title ? $title : $url, 0, 200 ),
 				'url'   => $url,
@@ -369,7 +370,7 @@ class AI_Chat_Bedrock_Retrieval {
 
 			$passages[] = array(
 				'source'  => 'wordpress',
-				'title'   => get_the_title( $post ),
+				'title'   => AI_Chat_Bedrock_Content::title( $post ),
 				'url'     => get_permalink( $post ),
 				'excerpt' => AI_Chat_Bedrock_Security::string_substr( $content, 0, self::MAX_PASSAGE_CHARS ),
 			);

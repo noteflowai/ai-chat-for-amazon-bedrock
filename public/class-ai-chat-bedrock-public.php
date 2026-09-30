@@ -28,6 +28,7 @@ class AI_Chat_Bedrock_Public {
 	public function enqueue_scripts() {
 		wp_register_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-public.js', array( 'jquery' ), $this->version, true );
 		$options = get_option( 'ai_chat_bedrock_settings', array() );
+		$text    = AI_Chat_Bedrock_Translation::presentation( $options );
 		wp_localize_script(
 			$this->plugin_name,
 			'ai_chat_bedrock_params',
@@ -38,7 +39,7 @@ class AI_Chat_Bedrock_Public {
 				'nonce'             => wp_create_nonce( 'ai_chat_bedrock_nonce' ),
 				'rest_nonce'        => wp_create_nonce( 'wp_rest' ),
 				'feedback_url'      => AI_Chat_Bedrock_Conversations::enabled() ? rest_url( AI_Chat_Bedrock_WP_MCP_Server::NAMESPACE_V1 . AI_Chat_Bedrock_Feedback::REST_ROUTE ) : '',
-				'welcome_message'   => isset( $options['welcome_message'] ) ? $options['welcome_message'] : __( 'Hello! How can I help you today?', 'ai-chat-for-amazon-bedrock' ),
+				'welcome_message'   => isset( $text['welcome_message'] ) ? $text['welcome_message'] : __( 'Hello! How can I help you today?', 'ai-chat-for-amazon-bedrock' ),
 				'max_message_chars' => 4000,
 				// The language of the page, so answers are drawn from content in the same language first.
 				'language'          => AI_Chat_Bedrock_Content::current_language(),
@@ -204,7 +205,7 @@ class AI_Chat_Bedrock_Public {
 		wp_enqueue_script( $this->plugin_name );
 
 		$requested       = isset( $atts['profile'] ) ? AI_Chat_Bedrock_Profiles::sanitize_key( $atts['profile'] ) : '';
-		$options         = AI_Chat_Bedrock_Profiles::resolve( $requested );
+		$options         = AI_Chat_Bedrock_Translation::presentation( AI_Chat_Bedrock_Profiles::resolve( $requested ) );
 		$profile         = isset( $options['profile'] ) ? $options['profile'] : '';
 		$atts            = shortcode_atts(
 			array(

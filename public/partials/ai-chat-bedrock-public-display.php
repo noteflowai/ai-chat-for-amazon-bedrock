@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 $profile         = isset( $atts['profile'] ) ? AI_Chat_Bedrock_Profiles::sanitize_key( $atts['profile'] ) : '';
-$options         = AI_Chat_Bedrock_Profiles::resolve( $profile );
+$options         = AI_Chat_Bedrock_Translation::presentation( AI_Chat_Bedrock_Profiles::resolve( $profile ) );
 $welcome_message = isset( $options['welcome_message'] ) ? $options['welcome_message'] : __( 'Hello! How can I help you today?', 'ai-chat-for-amazon-bedrock' );
 $suggestions     = AI_Chat_Bedrock_Chat_Request::suggestions( $options );
 $message_id      = wp_unique_id( 'aicfab-message-' );

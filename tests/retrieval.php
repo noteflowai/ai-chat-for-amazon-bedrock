@@ -321,7 +321,7 @@ check_ret( 0.42 === $aicfab_score, 'The highest passage score is reported, got '
 
 $aicfab_sources = AI_Chat_Bedrock_Retrieval::sources(
 	array(
-		array( 'title' => '<b>Refunds</b>', 'url' => 'https://example.test/refunds/' ),
+		array( 'title' => '<b>Refunds</b> &#038; returns', 'url' => 'https://example.test/refunds/' ),
 		array( 'title' => 'Refunds again', 'url' => 'https://example.test/refunds/' ),
 		array( 'title' => 'Script', 'url' => 'javascript:alert(1)' ),
 		array( 'title' => 'Bucket', 'url' => 's3://bucket/doc.pdf' ),
@@ -333,14 +333,16 @@ $aicfab_sources = AI_Chat_Bedrock_Retrieval::sources(
 	)
 );
 check_ret( 3 === count( $aicfab_sources ), 'At most three sources are listed: ' . count( $aicfab_sources ) );
-check_ret( array( 'title' => 'Refunds', 'url' => 'https://example.test/refunds/' ) === $aicfab_sources[0], 'A source has a plain title and its link.' );
+check_ret( array( 'title' => 'Refunds & returns', 'url' => 'https://example.test/refunds/' ) === $aicfab_sources[0], 'A source has a plain title, entities decoded, and its link.' );
 check_ret( 'https://example.test/untitled/' === $aicfab_sources[1]['title'], 'An untitled source is named by its link.' );
 check_ret( 'https://example.test/third/' === $aicfab_sources[2]['url'], 'Duplicates, other schemes, weak matches and missing links are skipped.' );
 
 $aicfab_sources          = null;
-$GLOBALS['aicfab_posts'] = array( new WP_Post( array( 'ID' => 15, 'post_title' => 'Hours', 'post_content' => 'Nine to five.' ) ) );
+$GLOBALS['aicfab_posts'] = array( new WP_Post( array( 'ID' => 15, 'post_title' => 'Hours &#038; days', 'post_content' => 'Nine to five.' ) ) );
 AI_Chat_Bedrock_Retrieval::context( 'hours', $aicfab_options, $aicfab_score, $aicfab_weak, $aicfab_sources );
-check_ret( array( array( 'title' => 'Hours', 'url' => 'https://example.com/?p=15' ) ) === $aicfab_sources, 'The context reports the page it used as a source.' );
+check_ret( array( array( 'title' => 'Hours & days', 'url' => 'https://example.com/?p=15' ) ) === $aicfab_sources, 'The context reports the page it used as a source, titled in plain text.' );
+$aicfab_passages = AI_Chat_Bedrock_Retrieval::site_passages( 'hours', $aicfab_options );
+check_ret( isset( $aicfab_passages[0]['title'] ) && 'Hours & days' === $aicfab_passages[0]['title'], 'The passage handed to the model is titled in plain text.' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

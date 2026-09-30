@@ -48,6 +48,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-embeddings.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-s3-vectors.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-integrations.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-translation.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-cli.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-retrieval.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-abilities.php';
@@ -110,6 +111,7 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'save_post', 'AI_Chat_Bedrock_Embeddings', 'invalidate' );
 		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_CLI', 'register' );
 		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_Integrations', 'init' );
+		$this->loader->add_action( 'admin_init', 'AI_Chat_Bedrock_Translation', 'register' );
 		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_Embeddings', 'schedule' );
 		$this->loader->add_action( 'update_option_ai_chat_bedrock_settings', 'AI_Chat_Bedrock_Embeddings', 'schedule' );
 		$this->loader->add_action( AI_Chat_Bedrock_Embeddings::CRON_HOOK, 'AI_Chat_Bedrock_Embeddings', 'run_scheduled_index' );

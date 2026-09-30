@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.50.0
+Stable tag: 1.51.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -173,6 +173,10 @@ Yes, on Claude 3.5 Haiku, Claude 3.7 Sonnet and newer Claude models, which Bedro
 
 Confirm that the model is available and enabled in the configured AWS Region, the model ID is correct, and the IAM identity can call `bedrock:InvokeModel` for the required resource. Some models use inference profiles with different IDs and IAM resources.
 
+= Does the chat work on a multilingual site? =
+
+Yes, with Polylang or WPML. The chat title, welcome message and suggested questions are listed for translation under "AI Chat for Amazon Bedrock" in Languages > Translations (Polylang) or String Translation (WPML), including those of each profile, and each edition of the site shows its own. Answers are asked for in the language of the page, and with Polylang are drawn from pages in that language first. Keep the system prompt in one language; it is not translated.
+
 = Why can guests not use the chat? =
 
 The chat defaults to signed-in users to reduce the risk of anonymous scripts generating unbounded AWS charges. Guests see a sign-in link that brings them back to the same page; the `ai_chat_bedrock_sign_in_url` filter can point it at a custom sign-in page, or hide the chat from guests by returning an empty string. An administrator can explicitly enable guest access and configure a request limit.
@@ -246,7 +250,7 @@ Keyword search only finds passages sharing words with the question, so "when wil
 
 By default one vector per post is kept in the WordPress database and a question is compared with the 500 most recent items. For a larger site, choose Amazon S3 Vectors under Answer grounding: every post is split into overlapping passages, each passage gets its own vector in a vector bucket in your AWS account, and every one of them is searched. Create the bucket in the Amazon S3 console, then check or create the index from the settings screen or with `wp ai-chat-bedrock index --create-index`. S3 Vectors needs an IAM role or access keys, not a Bedrock API key; Diagnostics lists the `s3vectors` actions to allow. Several sites can share one index, and each only reads and deletes its own vectors.
 
-Only published, public content is indexed, as a signed-out visitor sees it: sections that a membership or visibility plugin hides from guests are left out, and every result is checked against the live post again before it is quoted. Blocks with Block Visibility rules are left out whoever they are shown to, since that plugin applies its rules only on front-end pages; to leave out blocks that another plugin restricts, return true from the `ai_chat_bedrock_block_is_restricted` filter. With Polylang, a question is answered from pages in the visitor's language first.
+Only published, public content is indexed, as a signed-out visitor sees it: sections that a membership or visibility plugin hides from guests are left out, and every result is checked against the live post again before it is quoted. Blocks with Block Visibility rules are left out whoever they are shown to, since that plugin applies its rules only on front-end pages; to leave out blocks that another plugin restricts, return true from the `ai_chat_bedrock_block_is_restricted` filter. With Polylang, a question is answered from pages in the visitor's language first. With Polylang or WPML, the model is also asked to reply in the language of the page; change or remove that instruction with the `ai_chat_bedrock_language_instruction` filter.
 
 = Can the chat show where an answer came from? =
 
@@ -390,30 +394,22 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.51.0 =
+* Multilingual sites: the chat tells the model which language the visitor is reading the site in, from Polylang or WPML, and asks it to reply in that language unless the question is clearly written in another. A short Japanese question written mostly in kanji was answered in Chinese. The new `ai_chat_bedrock_language_instruction` filter changes the instruction, or removes it when it returns an empty string.
+* Multilingual sites: the chat title, welcome message and suggested questions, of the main settings and of every profile, are registered with Polylang or WPML under "AI Chat for Amazon Bedrock", and shown translated in each language. Translate them in Languages > Translations (Polylang) or String Translation (WPML). Before, they appeared in the language they were typed in on every edition of the site.
+* Source links and site abilities show post titles as plain text. A title with an ampersand or curly quotes showed its HTML entity, such as `&#038;`, under the answer.
+
 = 1.50.0 =
 * Security: members-only blocks are left out of the index and of answers wherever the text is read. Block Visibility hides blocks only on front-end requests, so text indexed with the Index content now button, or retrieved for a chat sent from wp-admin, could include blocks it shows only to signed-in visitors. Any block with Block Visibility rules is now removed before the post is rendered, and the new `ai_chat_bedrock_block_is_restricted` filter lets a site name blocks another plugin restricts. After the update every post counts as not yet indexed, and until it is indexed again an answer quotes its text as read now rather than the stored passage. Run Index content now, or let background indexing catch up.
 * Chat: a visitor the chat is not open to sees a sign-in link instead of a message box, and returns to the same page after signing in. Before, a guest could type a question and only then learn that the chat was for members. The new `ai_chat_bedrock_sign_in_url` filter points the link at a custom sign-in page, or leaves the chat out for guests when it returns an empty string.
 * With Polylang, the settings screen counts indexed posts and clears the index in every language, not only the admin's own, so indexing no longer looks unfinished.
 
-= 1.49.0 =
-* Amazon S3 Vectors: keep semantic search vectors in a vector bucket in your AWS account instead of the WordPress database. Every post is split into overlapping passages with a vector each, and all of them are searched rather than the 500 most recent posts. Check or create the index from the settings screen, or with `wp ai-chat-bedrock index --create-index`; `--force` re-embeds everything while the current vectors keep answering. Diagnostics reports whether the index matches the embedding model, and the generated IAM policy includes the `s3vectors` actions the site needs.
-* Members-only text is no longer indexed or quoted. Content is read as a signed-out visitor sees it, so sections a membership or visibility plugin hides from guests stay out of answers, site abilities and generated excerpts. Every search result is checked against the live post before it is used.
-* With Polylang, answers come from pages in the visitor's language first. Chinese and Japanese questions find pages by keyword too. Cohere embeddings are told which text is a question, which retrieves better.
-* Show sources: optionally list up to three links under each answer to the pages it was drawn from.
-* New Fixes for other plugins tab, every switch off by default: read-only GitHub sign-in for FluentAuth, social-only registration, an hreflang x-default for Polylang, and crediting articles to the organization in Yoast SEO.
-* Security: an MCP OAuth token now signs in to the MCP endpoint only, as the consent screen says, and the consent screen cannot be framed by another site. WordPress abilities are offered to the chat as read-only only when they declare it, and tool names are split into words, so "display" no longer reads as "pay". wp-admin requests use a nonce of their own, separate from the public chat.
-* Rate limits count in fixed one-minute windows; before, a steady client kept extending its window and never got a fresh count. Each request in an MCP batch counts. A new `ai_chat_bedrock_client_ip` filter lets a site behind a proxy it controls give each guest a limit of their own.
-* Chat: the Stop button works again. A page served from a cache fetches fresh security tokens and retries, instead of failing a day after it was cached. Streamed answers parse any line ending, and the "You" and "AI" labels are translated.
-* Saving one settings tab no longer resets values kept on another, such as the conversation log switch or site abilities, and the retention period, popup profile and prompt version are saved with their fields. The WordPress abilities switch on the settings screen is honoured. An import says how many groups it skipped.
-* Indexing says why a post failed. Long tool results and previews are cut without breaking a multibyte character.
-* Uninstall removes every post meta key, transient, scheduled event and user meta the plugin writes, on every site of a network. Vectors in Amazon S3 Vectors stay in your AWS account; delete the index there.
-
-= 1.48.0 =
-* Conversations: the Content gaps panel has a Period control: the last 7, 30 or 90 days. The summary, the table and the content gaps CSV all cover the chosen period. A 7-day or 90-day file says so in its name (`-7d-`, `-90d-`); a 30-day download keeps its old name. The period stays selected while you search, filter, page through or reset the conversation log. Thirty days is still the default.
-
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.51.0 =
+Multilingual chats reply in the language of the page, their title, greeting and suggested questions can be translated with Polylang or WPML, and source links show titles without HTML entities.
 
 = 1.50.0 =
 Security fix: blocks Block Visibility shows only to signed-in visitors could be indexed from the settings screen. Rebuild the index after updating. Guests now see a sign-in link in a members-only chat.
