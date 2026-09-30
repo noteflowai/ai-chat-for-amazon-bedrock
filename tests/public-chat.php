@@ -337,6 +337,7 @@ function _n( $single, $plural, $number, $domain = null ) {
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-content.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-profiles.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-translation.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-rate-limits.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-request.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wp-mcp-server.php';
@@ -723,6 +724,61 @@ check_pub( $aicfab_refreshed && $aicfab_refreshed->ok && 2 === count( $aicfab_re
 check_pub( $aicfab_refreshed && array( 'value' => 'jp.anthropic.claude-haiku-4-5', 'label' => 'Claude Haiku 4.5' ) === $aicfab_refreshed->payload['models'][0], 'The list is in order, as value and label.' );
 check_pub( $aicfab_refreshed && false === stripos( $aicfab_refreshed->payload['message'], 'reload' ), 'Refreshing no longer asks for a reload.' );
 check_pub( false !== strpos( $aicfab_admin_js, 'refillModelMenus(response.data.models)' ), 'The admin script refills the model menus.' );
+
+// --- The chat's own text in the visitor's language -------------------------------
+
+/*
+ * The title, greeting and suggested questions are typed once, so a multilingual site showed
+ * them in that language on every edition. They are registered with Polylang and shown as it
+ * translates them. Declared here, after every other check has run without Polylang.
+ */
+$aicfab_plain = array( 'chat_title' => 'Ask us', 'welcome_message' => 'Hello there.' );
+check_pub( $aicfab_plain === AI_Chat_Bedrock_Translation::presentation( $aicfab_plain ), 'Without a multilingual plugin the text is unchanged.' );
+
+if ( ! function_exists( 'pll__' ) ) {
+	function pll__( $text ) {
+		$ja = array(
+			'Ask us'             => '質問する',
+			'Hello there.'       => 'こんにちは。',
+			'What is new?'       => '新着は？',
+			'Support desk here.' => 'サポートです。',
+		);
+		return isset( $ja[ $text ] ) ? $ja[ $text ] : $text;
+	}
+	function pll_register_string( $name, $text, $context = 'Polylang', $multiline = false ) {
+		$GLOBALS['aicfab_registered'][ $name ] = array( $text, $context, $multiline );
+	}
+}
+
+aicfab_reset_pub(
+	array(
+		'allow_public_chat'   => true,
+		'chat_title'          => 'Ask us',
+		'suggested_questions' => "What is new?\nHow do I start?",
+	)
+);
+$aicfab_stored = $GLOBALS['aicfab_opts']['ai_chat_bedrock_settings'];
+$aicfab_ja     = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array() );
+check_pub( false !== strpos( $aicfab_ja, '質問する' ) && false === strpos( $aicfab_ja, 'Ask us' ), 'The title is shown translated.' );
+check_pub( false !== strpos( $aicfab_ja, 'data-welcome="こんにちは。"' ) && false === strpos( $aicfab_ja, 'Hello there.' ), 'The greeting is shown translated, also for when the chat is cleared.' );
+check_pub( false !== strpos( $aicfab_ja, '>新着は？</button>' ) && false !== strpos( $aicfab_ja, '>How do I start?</button>' ), 'Each suggested question is translated, and one without a translation is shown as written.' );
+check_pub( $aicfab_stored === $GLOBALS['aicfab_opts']['ai_chat_bedrock_settings'], 'The saved settings keep the original text.' );
+
+$GLOBALS['aicfab_localized'] = array();
+( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->enqueue_scripts();
+check_pub( 'こんにちは。' === $GLOBALS['aicfab_localized']['ai_chat_bedrock_params']['welcome_message'], 'The script is given the translated greeting.' );
+
+$GLOBALS['aicfab_opts'][ AI_Chat_Bedrock_Profiles::OPTION ] = array( 'support' => array( 'welcome_message' => 'Support desk here.' ) );
+$aicfab_ja_profile = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array( 'profile' => 'support' ) );
+check_pub( false !== strpos( $aicfab_ja_profile, 'data-welcome="サポートです。"' ), 'A profile\'s greeting is translated too.' );
+
+$GLOBALS['aicfab_registered'] = array();
+AI_Chat_Bedrock_Translation::register();
+$aicfab_registered = $GLOBALS['aicfab_registered'];
+check_pub( isset( $aicfab_registered['chat_title'] ) && array( 'Ask us', 'AI Chat for Amazon Bedrock', false ) === $aicfab_registered['chat_title'], 'The title is registered for translation under the plugin\'s name.' );
+check_pub( isset( $aicfab_registered['welcome_message'] ) && true === $aicfab_registered['welcome_message'][2], 'The greeting is registered as multiline text.' );
+check_pub( 2 === count( preg_grep( '/^suggested_question [0-9a-f]{8}$/', array_keys( $aicfab_registered ) ) ), 'Each suggested question is registered on its own.' );
+check_pub( isset( $aicfab_registered['support: welcome_message'] ) && 'Support desk here.' === $aicfab_registered['support: welcome_message'][0], 'A profile\'s text is registered under the profile\'s name.' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
