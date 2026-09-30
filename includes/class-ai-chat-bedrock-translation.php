@@ -7,6 +7,8 @@
  * as strings with the multilingual plugin, translated in its string translation screen, and
  * shown translated. Without a translation, or without either plugin, the text is unchanged.
  *
+ * The plugin's own strings come from language packs, or from the few locales bundled here.
+ *
  * @package AI_Chat_Bedrock
  */
 
@@ -20,6 +22,32 @@ class AI_Chat_Bedrock_Translation {
 	 * The group the strings are listed under in the multilingual plugin.
 	 */
 	const CONTEXT = 'AI Chat for Amazon Bedrock';
+
+	/**
+	 * Point WordPress at the translations bundled in languages/ when there is no language pack.
+	 *
+	 * The plugin has no translations on translate.wordpress.org yet, so the chat's buttons and notices
+	 * read in English on a Chinese or Japanese page. WordPress 6.8 and later look in the plugin's
+	 * Domain Path on their own; this does the same on 6.6 and 6.7. A language pack, once there is
+	 * one, still wins: WordPress only reaches this with no path when it found nothing in wp-content.
+	 *
+	 * @param string|false $path   Languages directory WordPress found, or false.
+	 * @param string       $domain Text domain.
+	 * @param string       $locale Locale.
+	 * @return string|false
+	 */
+	public static function bundled_languages( $path, $domain, $locale ) {
+		if ( false !== $path || 'ai-chat-for-amazon-bedrock' !== $domain || ! preg_match( '/^[A-Za-z]{2,3}(_[A-Za-z0-9]+)*$/', (string) $locale ) ) {
+			return $path;
+		}
+		$dir = AI_CHAT_BEDROCK_PLUGIN_DIR . 'languages/';
+		foreach ( array( '.l10n.php', '.mo' ) as $suffix ) {
+			if ( is_readable( $dir . $domain . '-' . $locale . $suffix ) ) {
+				return $dir;
+			}
+		}
+		return $path;
+	}
 
 	/**
 	 * Register the settings' and every profile's chat text for translation.

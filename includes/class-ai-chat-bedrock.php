@@ -77,6 +77,7 @@ class AI_Chat_Bedrock {
 	}
 
 	private function set_locale() {
+		$this->loader->add_filter( 'lang_dir_for_domain', 'AI_Chat_Bedrock_Translation', 'bundled_languages', 10, 3 );
 	}
 
 	private function define_admin_hooks() {
