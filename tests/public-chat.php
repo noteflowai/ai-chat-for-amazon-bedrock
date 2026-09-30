@@ -748,6 +748,16 @@ if ( ! function_exists( 'pll__' ) ) {
 	function pll_register_string( $name, $text, $context = 'Polylang', $multiline = false ) {
 		$GLOBALS['aicfab_registered'][ $name ] = array( $text, $context, $multiline );
 	}
+	// Polylang answers WPML's API as well, and lists what is registered through it again.
+	function has_action( $hook ) {
+		return 'wpml_register_single_string' === $hook;
+	}
+	function do_action( $hook, ...$args ) {
+		$GLOBALS['aicfab_actions'][] = array( $hook, $args );
+	}
+	function icl_unregister_string( $context, $name ) {
+		$GLOBALS['aicfab_unregistered'][] = array( $context, $name );
+	}
 }
 
 aicfab_reset_pub(
@@ -779,6 +789,8 @@ check_pub( isset( $aicfab_registered['chat_title'] ) && array( 'Ask us', 'AI Cha
 check_pub( isset( $aicfab_registered['welcome_message'] ) && true === $aicfab_registered['welcome_message'][2], 'The greeting is registered as multiline text.' );
 check_pub( 2 === count( preg_grep( '/^suggested_question [0-9a-f]{8}$/', array_keys( $aicfab_registered ) ) ), 'Each suggested question is registered on its own.' );
 check_pub( isset( $aicfab_registered['support: welcome_message'] ) && 'Support desk here.' === $aicfab_registered['support: welcome_message'][0], 'A profile\'s text is registered under the profile\'s name.' );
+check_pub( ! in_array( 'wpml_register_single_string', array_column( isset( $GLOBALS['aicfab_actions'] ) ? $GLOBALS['aicfab_actions'] : array(), 0 ), true ), 'With Polylang, strings are not registered again through its WPML layer.' );
+check_pub( in_array( array( 'AI Chat for Amazon Bedrock', 'chat_title' ), isset( $GLOBALS['aicfab_unregistered'] ) ? $GLOBALS['aicfab_unregistered'] : array(), true ), 'The copy an earlier version registered through that layer is removed.' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

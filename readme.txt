@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.51.0
+Stable tag: 1.51.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -394,6 +394,9 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.51.1 =
+* With Polylang, the chat's title, welcome message and suggested questions are listed once in Languages > Translations. 1.51.0 also registered them through Polylang's WPML compatibility layer, which listed each one twice; that copy is removed the next time an administrator opens wp-admin.
+
 = 1.51.0 =
 * Multilingual sites: the chat tells the model which language the visitor is reading the site in, from Polylang or WPML, and asks it to reply in that language unless the question is clearly written in another. A short Japanese question written mostly in kanji was answered in Chinese. The new `ai_chat_bedrock_language_instruction` filter changes the instruction, or removes it when it returns an empty string.
 * Multilingual sites: the chat title, welcome message and suggested questions, of the main settings and of every profile, are registered with Polylang or WPML under "AI Chat for Amazon Bedrock", and shown translated in each language. Translate them in Languages > Translations (Polylang) or String Translation (WPML). Before, they appeared in the language they were typed in on every edition of the site.
@@ -407,6 +410,9 @@ what a good answer says.
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.51.1 =
+With Polylang, the chat's strings are listed once for translation instead of twice.
 
 = 1.51.0 =
 Multilingual chats reply in the language of the page, their title, greeting and suggested questions can be translated with Polylang or WPML, and source links show titles without HTML entities.
