@@ -168,6 +168,23 @@ AI_Chat_Bedrock_Usage::record( array( 'input_tokens' => 3, 'output_tokens' => 1 
 $stored = get_option( AI_Chat_Bedrock_Usage::OPTION, array() );
 check_usage( ! isset( $stored[ $today ]['cache_read_tokens'] ) && 0 === AI_Chat_Bedrock_Usage::today_totals()['cache_read_tokens'], 'A day without caching stores no cache counters but reports zero.' );
 
+// --- Embeddings -------------------------------------------------------------
+
+// Indexing a site's pages once embedded every chunk, and those calls filled the daily cap.
+AI_Chat_Bedrock_Usage::reset();
+AI_Chat_Bedrock_Usage::record( array( 'input_tokens' => 400, 'output_tokens' => 0 ), 'amazon.titan-embed-text-v2:0', 'embedding' );
+AI_Chat_Bedrock_Usage::record( array( 'input_tokens' => 300, 'output_tokens' => 0 ), 'amazon.titan-embed-text-v2:0', 'embedding' );
+AI_Chat_Bedrock_Usage::record( array( 'input_tokens' => 10, 'output_tokens' => 4 ), 'amazon.nova-lite-v1:0' );
+$embed_today = AI_Chat_Bedrock_Usage::today_totals();
+check_usage( 1 === $embed_today['requests'] && 10 === $embed_today['input_tokens'], 'Embeddings are not counted as chat requests.' );
+check_usage( 2 === $embed_today['embedding_requests'] && 700 === $embed_today['embedding_tokens'], 'Embeddings have counters of their own.' );
+check_usage( 2 === AI_Chat_Bedrock_Usage::totals( 7 )['embedding_requests'], 'The weekly totals carry the embedding counters.' );
+$GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] = array( 'daily_request_limit' => 2 );
+check_usage( false === AI_Chat_Bedrock_Usage::daily_limit_reached(), 'Embeddings do not use up the daily cap.' );
+$GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] = array( 'daily_request_limit' => 0 );
+$embed_models = wp_list_pluck_compat( AI_Chat_Bedrock_Usage::by_model( 7 ), 'model' );
+check_usage( in_array( 'amazon.titan-embed-text-v2:0', $embed_models, true ), 'The embedding model still has its own row.' );
+
 function wp_list_pluck_compat( $rows, $field ) {
 	return array_map(
 		static function ( $row ) use ( $field ) {

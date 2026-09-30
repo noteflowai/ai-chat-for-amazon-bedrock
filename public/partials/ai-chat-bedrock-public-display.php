@@ -19,7 +19,8 @@ $aicfab_mode     = isset( $atts['mode'] ) && 'popup' === $atts['mode'] ? 'popup'
 $panel_id        = wp_unique_id( 'aicfab-panel-' );
 $launcher        = isset( $atts['launcher'] ) ? $atts['launcher'] : __( 'Chat', 'ai-chat-for-amazon-bedrock' );
 // A visitor the chat would refuse is asked to sign in, rather than typing a question first.
-$sign_in_url = isset( $atts['sign_in_url'] ) ? (string) $atts['sign_in_url'] : '';
+$sign_in_url  = isset( $atts['sign_in_url'] ) ? (string) $atts['sign_in_url'] : '';
+$color_scheme = AI_Chat_Bedrock_Chat_Request::color_scheme( isset( $options['chat_color_scheme'] ) ? $options['chat_color_scheme'] : '' );
 ?>
 <?php if ( 'popup' === $aicfab_mode ) : ?>
 <div class="ai-chat-bedrock-popup" data-state="closed">
@@ -27,9 +28,9 @@ $sign_in_url = isset( $atts['sign_in_url'] ) ? (string) $atts['sign_in_url'] : '
 		<span class="ai-chat-bedrock-launcher-icon" aria-hidden="true"></span>
 		<span class="ai-chat-bedrock-launcher-label"><?php echo esc_html( $launcher ); ?></span>
 	</button>
-	<div class="ai-chat-bedrock-popup-panel" id="<?php echo esc_attr( $panel_id ); ?>" hidden>
+	<div class="ai-chat-bedrock-popup-panel" id="<?php echo esc_attr( $panel_id ); ?>" tabindex="-1" hidden>
 <?php endif; ?>
-<div class="ai-chat-bedrock-container<?php echo 'popup' === $aicfab_mode ? ' is-popup' : ''; ?><?php echo '' !== $sign_in_url ? ' is-signed-out' : ''; ?>" data-profile="<?php echo esc_attr( $profile ); ?>" data-welcome="<?php echo esc_attr( $welcome_message ); ?>" style="width: <?php echo esc_attr( $atts['width'] ); ?>;">
+<div class="ai-chat-bedrock-container<?php echo 'popup' === $aicfab_mode ? ' is-popup' : ''; ?><?php echo '' !== $sign_in_url ? ' is-signed-out' : ''; ?>" data-profile="<?php echo esc_attr( $profile ); ?>" data-scheme="<?php echo esc_attr( $color_scheme ); ?>" data-welcome="<?php echo esc_attr( $welcome_message ); ?>" style="width: <?php echo esc_attr( $atts['width'] ); ?>;">
 	<?php
 	// A page title is h1, so the chat title is h2. It used to be h3, which skipped a
 	// level both here and on the Test Chat screen.

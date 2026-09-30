@@ -105,7 +105,14 @@
             $launcher.attr('aria-expanded', open ? 'true' : 'false');
             $panel.prop('hidden', !open);
             if (open && false !== focus) {
-                $panel.find('.ai-chat-bedrock-textarea, .ai-chat-bedrock-sign-in-link').first().trigger('focus');
+                /*
+                 * Focus goes into the panel either way. On a touch screen it goes to the panel
+                 * itself rather than the message box, whose keyboard would cover the welcome
+                 * and the suggested questions the moment the chat opened.
+                 */
+                const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+                const $target = $panel.find(touch ? '.ai-chat-bedrock-sign-in-link' : '.ai-chat-bedrock-textarea, .ai-chat-bedrock-sign-in-link').first();
+                ($target.length ? $target : $panel).trigger('focus');
             }
         }
 

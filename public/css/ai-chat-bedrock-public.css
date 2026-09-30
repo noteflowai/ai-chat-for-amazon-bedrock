@@ -16,6 +16,19 @@
 	--aicfab-danger: #b32d2e;
 	--aicfab-radius: 14px;
 	--aicfab-shadow: 0 1px 2px rgba(20, 33, 61, .06), 0 8px 24px rgba(20, 33, 61, .07);
+	--aicfab-meta: #6b7280;
+	--aicfab-link: #2563eb;
+	--aicfab-detail: #4b5563;
+	--aicfab-chip: #f3f4f6;
+	--aicfab-chip-border: #d1d5db;
+	--aicfab-chip-text: #1f2937;
+	--aicfab-chip-hover: #e5edff;
+	--aicfab-chip-hover-border: #2563eb;
+	--aicfab-code: #f3f4f6;
+	--aicfab-code-text: currentColor;
+	--aicfab-note: #92400e;
+	--aicfab-note-bg: #fffbeb;
+	--aicfab-note-border: #f59e0b;
 
 	box-sizing: border-box;
 	display: flex;
@@ -249,10 +262,17 @@
 	margin: 0;
 }
 
-.ai-chat-bedrock-textarea {
+/*
+ * Scoped to the container and given a height, because themes size every textarea in a form for
+ * their own comment forms. Blocksy makes it 170px, which pushed the Send button out of the popup.
+ * It starts at two lines and grows as the visitor types.
+ */
+.ai-chat-bedrock-container .ai-chat-bedrock-textarea {
 	width: 100%;
+	height: 58px;
 	min-height: 58px;
 	max-height: 220px;
+	margin: 0;
 	padding: 11px 13px;
 	font: inherit;
 	color: var(--aicfab-text);
@@ -268,13 +288,13 @@
 	opacity: .85;
 }
 
-.ai-chat-bedrock-textarea:focus {
+.ai-chat-bedrock-container .ai-chat-bedrock-textarea:focus {
 	outline: none;
 	border-color: var(--aicfab-accent);
 	box-shadow: 0 0 0 3px rgba(29, 78, 216, .16);
 }
 
-.ai-chat-bedrock-textarea:disabled {
+.ai-chat-bedrock-container .ai-chat-bedrock-textarea:disabled {
 	opacity: .7;
 	cursor: not-allowed;
 }
@@ -306,27 +326,28 @@
 	transition: background-color .15s ease, border-color .15s ease, transform .1s ease;
 }
 
-.ai-chat-bedrock-container .ai-chat-bedrock-submit,
-.ai-chat-bedrock-container .ai-chat-bedrock-submit.button {
+/* Specific enough to beat the rule above, whose transparent border hid the Clear button's. */
+.ai-chat-bedrock-container .ai-chat-bedrock-buttons .ai-chat-bedrock-submit,
+.ai-chat-bedrock-container .ai-chat-bedrock-buttons .ai-chat-bedrock-submit.button {
 	color: var(--aicfab-accent-contrast);
 	background: var(--aicfab-accent);
 	border-color: var(--aicfab-accent);
 }
 
-.ai-chat-bedrock-container .ai-chat-bedrock-submit:hover:not(:disabled) {
+.ai-chat-bedrock-container .ai-chat-bedrock-buttons .ai-chat-bedrock-submit:hover:not(:disabled) {
 	background: #1740b4;
 	border-color: #1740b4;
 }
 
-.ai-chat-bedrock-container .ai-chat-bedrock-clear,
-.ai-chat-bedrock-container .ai-chat-bedrock-clear.button {
+.ai-chat-bedrock-container .ai-chat-bedrock-buttons .ai-chat-bedrock-clear,
+.ai-chat-bedrock-container .ai-chat-bedrock-buttons .ai-chat-bedrock-clear.button {
 	color: var(--aicfab-muted);
 	background: var(--aicfab-surface);
 	border-color: var(--aicfab-border);
 	margin-right: auto;
 }
 
-.ai-chat-bedrock-container .ai-chat-bedrock-clear:hover:not(:disabled) {
+.ai-chat-bedrock-container .ai-chat-bedrock-buttons .ai-chat-bedrock-clear:hover:not(:disabled) {
 	color: var(--aicfab-text);
 	background: var(--aicfab-surface);
 }
@@ -446,17 +467,59 @@
 		padding: 12px 14px 14px;
 	}
 
+	/* Below 16px, Safari on iPhone zooms the page when the field is focused. */
+	.ai-chat-bedrock-container .ai-chat-bedrock-textarea {
+		font-size: 16px;
+	}
+
 	.ai-chat-bedrock-container .ai-chat-bedrock-buttons button {
 		flex: 1 1 auto;
 	}
 
-	.ai-chat-bedrock-container .ai-chat-bedrock-clear {
+	.ai-chat-bedrock-container .ai-chat-bedrock-buttons .ai-chat-bedrock-clear {
 		flex: 0 0 auto;
 	}
 }
 
+/*
+ * Dark, when chosen in the settings or, with "auto", when the visitor's device is dark. It used
+ * to follow the device only, so a dark panel opened on a light theme. The data-scheme attribute
+ * is set from the setting; markup cached from before it existed has none and stays light.
+ */
+.ai-chat-bedrock-container[data-scheme="dark"] {
+	--aicfab-surface: #131a2a;
+	--aicfab-surface-alt: #0f1522;
+	--aicfab-border: #2a3550;
+	--aicfab-text: #e7ecf6;
+	--aicfab-muted: #9fb0cc;
+	--aicfab-accent: #5b8cff;
+	--aicfab-accent-contrast: #0b101c;
+	--aicfab-ai-bubble: #1b2438;
+	--aicfab-user-bubble: #3f6fe0;
+	--aicfab-danger: #ff8b8b;
+	--aicfab-shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px rgba(0, 0, 0, .35);
+	--aicfab-meta: #9ca3af;
+	--aicfab-link: #93c5fd;
+	--aicfab-detail: #d1d5db;
+	--aicfab-chip: #1f2937;
+	--aicfab-chip-border: #374151;
+	--aicfab-chip-text: #e5e7eb;
+	--aicfab-chip-hover: #243b6b;
+	--aicfab-chip-hover-border: #60a5fa;
+	--aicfab-code: #1f2937;
+	--aicfab-code-text: #e5e7eb;
+	--aicfab-note: #fde68a;
+	--aicfab-note-bg: #37301c;
+	--aicfab-note-border: #d97706;
+}
+
+.ai-chat-bedrock-container[data-scheme="dark"] .ai-chat-bedrock-message-content pre,
+.ai-chat-bedrock-container[data-scheme="dark"] .ai-chat-bedrock-message-content code {
+	background: rgba(255, 255, 255, .08);
+}
+
 @media (prefers-color-scheme: dark) {
-	.ai-chat-bedrock-container:not([data-scheme="light"]) {
+	.ai-chat-bedrock-container[data-scheme="auto"] {
 		--aicfab-surface: #131a2a;
 		--aicfab-surface-alt: #0f1522;
 		--aicfab-border: #2a3550;
@@ -468,10 +531,23 @@
 		--aicfab-user-bubble: #3f6fe0;
 		--aicfab-danger: #ff8b8b;
 		--aicfab-shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px rgba(0, 0, 0, .35);
+		--aicfab-meta: #9ca3af;
+		--aicfab-link: #93c5fd;
+		--aicfab-detail: #d1d5db;
+		--aicfab-chip: #1f2937;
+		--aicfab-chip-border: #374151;
+		--aicfab-chip-text: #e5e7eb;
+		--aicfab-chip-hover: #243b6b;
+		--aicfab-chip-hover-border: #60a5fa;
+		--aicfab-code: #1f2937;
+		--aicfab-code-text: #e5e7eb;
+		--aicfab-note: #fde68a;
+		--aicfab-note-bg: #37301c;
+		--aicfab-note-border: #d97706;
 	}
 
-	.ai-chat-bedrock-container:not([data-scheme="light"]) .ai-chat-bedrock-message-content pre,
-	.ai-chat-bedrock-container:not([data-scheme="light"]) .ai-chat-bedrock-message-content code {
+	.ai-chat-bedrock-container[data-scheme="auto"] .ai-chat-bedrock-message-content pre,
+	.ai-chat-bedrock-container[data-scheme="auto"] .ai-chat-bedrock-message-content code {
 		background: rgba(255, 255, 255, .08);
 	}
 }
@@ -564,11 +640,53 @@
 	display: none;
 }
 
+/* Focused only so a touch screen does not open the keyboard; the panel is not a control. */
+.ai-chat-bedrock-popup-panel:focus {
+	outline: none;
+}
+
 .ai-chat-bedrock-container.is-popup {
 	width: 100% !important;
-	max-height: min(70vh, 560px);
+	max-height: min(560px, calc(100vh - 110px));
+	max-height: min(560px, calc(100dvh - 110px));
 	margin: 0;
 	box-shadow: 0 18px 44px rgba(20, 33, 61, .22);
+}
+
+/*
+ * The panel has a fixed ceiling and hides what overflows it, so when space runs short the
+ * conversation scrolls and the box to type in stays whole. It used to be the other way round.
+ */
+.ai-chat-bedrock-container.is-popup .ai-chat-bedrock-header,
+.ai-chat-bedrock-container.is-popup .ai-chat-bedrock-input,
+.ai-chat-bedrock-container.is-popup .ai-chat-bedrock-footer {
+	flex-shrink: 0;
+}
+
+.ai-chat-bedrock-container.is-popup .ai-chat-bedrock-messages {
+	flex-shrink: 100;
+	min-height: 96px;
+}
+
+/*
+ * Suggestions give way only once the conversation is down to its minimum, and then scroll:
+ * the conversation's shrink factor above is a hundred times theirs.
+ */
+.ai-chat-bedrock-container.is-popup .ai-chat-bedrock-suggestions {
+	flex-shrink: 1;
+	min-height: 0;
+	overflow-y: auto;
+}
+
+@media (max-height: 520px) {
+	.ai-chat-bedrock-container.is-popup .ai-chat-bedrock-messages {
+		min-height: 64px;
+	}
+
+	.ai-chat-bedrock-container.is-popup .ai-chat-bedrock-footer,
+	.ai-chat-bedrock-container.is-popup .ai-chat-bedrock-suggestions {
+		display: none;
+	}
 }
 
 @media (max-width: 600px) {
@@ -609,7 +727,7 @@
     gap: 10px;
     font-size: 11px;
     line-height: 1.4;
-    color: #6b7280;
+    color: var(--aicfab-meta);
     opacity: 0;
     transition: opacity 120ms ease-in-out;
 }
@@ -630,7 +748,7 @@
     padding: 0;
     margin: 0;
     font: inherit;
-    color: #2563eb;
+    color: var(--aicfab-link);
     cursor: pointer;
     text-decoration: underline;
     box-shadow: none;
@@ -652,15 +770,6 @@
     outline-offset: 2px;
 }
 
-@media (prefers-color-scheme: dark) {
-    .ai-chat-bedrock-message-meta {
-        color: #9ca3af;
-    }
-
-    .ai-chat-bedrock-container .ai-chat-bedrock-copy {
-        color: #93c5fd;
-    }
-}
 
 @media (prefers-reduced-motion: reduce) {
     .ai-chat-bedrock-message-meta {
@@ -687,10 +796,10 @@
 }
 
 .ai-chat-bedrock-container .ai-chat-bedrock-suggestion {
-    background: #f3f4f6;
-    border: 1px solid #d1d5db;
+    background: var(--aicfab-chip);
+    border: 1px solid var(--aicfab-chip-border);
     border-radius: 999px;
-    color: #1f2937;
+    color: var(--aicfab-chip-text);
     cursor: pointer;
     font-size: 13px;
     line-height: 1.4;
@@ -705,8 +814,8 @@
 
 .ai-chat-bedrock-container .ai-chat-bedrock-suggestion:hover,
 .ai-chat-bedrock-container .ai-chat-bedrock-suggestion:focus-visible {
-    background: #e5edff;
-    border-color: #2563eb;
+    background: var(--aicfab-chip-hover);
+    border-color: var(--aicfab-chip-hover-border);
 }
 
 /* Answer feedback */
@@ -737,19 +846,6 @@
     outline-offset: 2px;
 }
 
-@media (prefers-color-scheme: dark) {
-    .ai-chat-bedrock-container .ai-chat-bedrock-suggestion {
-        background: #1f2937;
-        border-color: #374151;
-        color: #e5e7eb;
-    }
-
-    .ai-chat-bedrock-container .ai-chat-bedrock-suggestion:hover,
-    .ai-chat-bedrock-container .ai-chat-bedrock-suggestion:focus-visible {
-        background: #243b6b;
-        border-color: #60a5fa;
-    }
-}
 
 @media (prefers-reduced-motion: reduce) {
     .ai-chat-bedrock-container .ai-chat-bedrock-suggestion {
@@ -761,12 +857,12 @@
 .ai-chat-bedrock-steps {
     margin: 6px 0 0;
     font-size: 12px;
-    color: #4b5563;
+    color: var(--aicfab-detail);
 }
 
 .ai-chat-bedrock-steps > summary {
     cursor: pointer;
-    color: #2563eb;
+    color: var(--aicfab-link);
     list-style: none;
 }
 
@@ -798,7 +894,8 @@
 }
 
 .ai-chat-bedrock-steps-list code {
-    background: #f3f4f6;
+    color: var(--aicfab-code-text);
+    background: var(--aicfab-code);
     border-radius: 3px;
     font-size: 11px;
     padding: 1px 5px;
@@ -813,20 +910,20 @@
 }
 
 .ai-chat-bedrock-step-round {
-    color: #6b7280;
+    color: var(--aicfab-meta);
     margin-left: 8px;
 }
 
 .ai-chat-bedrock-steps-note {
     margin: 6px 0 0;
-    color: #6b7280;
+    color: var(--aicfab-meta);
 }
 
 /* Sources an answer was drawn from */
 .ai-chat-bedrock-sources {
     margin: 8px 0 0;
     font-size: 12px;
-    color: #4b5563;
+    color: var(--aicfab-detail);
 }
 
 .ai-chat-bedrock-sources-label {
@@ -845,51 +942,22 @@
 }
 
 .ai-chat-bedrock-sources-list a {
-    color: #2563eb;
+    color: var(--aicfab-link);
 }
 
-@media (prefers-color-scheme: dark) {
-    .ai-chat-bedrock-steps {
-        color: #d1d5db;
-    }
-
-    .ai-chat-bedrock-sources {
-        color: #d1d5db;
-    }
-
-    .ai-chat-bedrock-sources-list a {
-        color: #93c5fd;
-    }
-
-    .ai-chat-bedrock-steps > summary {
-        color: #93c5fd;
-    }
-
-    .ai-chat-bedrock-steps-list code {
-        background: #1f2937;
-        color: #e5e7eb;
-    }
-}
 
 /* Fallback model disclosure */
 .ai-chat-bedrock-fallback-note {
     margin: 6px 0 0;
     font-size: 12px;
     line-height: 1.5;
-    color: #92400e;
-    background: #fffbeb;
-    border-left: 3px solid #f59e0b;
+    color: var(--aicfab-note);
+    background: var(--aicfab-note-bg);
+    border-left: 3px solid var(--aicfab-note-border);
     padding: 6px 10px;
     border-radius: 0 4px 4px 0;
 }
 
-@media (prefers-color-scheme: dark) {
-    .ai-chat-bedrock-fallback-note {
-        color: #fde68a;
-        background: #37301c;
-        border-left-color: #d97706;
-    }
-}
 
 /* Stop button, shown only while an answer is arriving */
 .ai-chat-bedrock-stop[hidden] {

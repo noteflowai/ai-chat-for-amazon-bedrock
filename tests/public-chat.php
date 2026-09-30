@@ -658,6 +658,21 @@ check_pub( false !== strpos( $aicfab_profiled, 'data-welcome="Support desk here.
 $aicfab_default = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array() );
 check_pub( false !== strpos( $aicfab_default, 'data-welcome="Hello there."' ), 'Without a profile it carries the site greeting.' );
 $aicfab_script = file_get_contents( dirname( __DIR__ ) . '/public/js/ai-chat-bedrock-public.js' );
+
+// The chat followed the visitor's device, so a phone in dark mode got a dark panel on a light theme.
+check_pub( false !== strpos( $aicfab_default, 'data-scheme="light"' ), 'The chat is light unless chosen otherwise.' );
+aicfab_reset_pub( array( 'chat_color_scheme' => 'auto' ) );
+$aicfab_auto = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array() );
+check_pub( false !== strpos( $aicfab_auto, 'data-scheme="auto"' ), 'The chat can follow the visitor\'s device.' );
+aicfab_reset_pub( array( 'chat_color_scheme' => '" onmouseover="x' ) );
+$aicfab_bad = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array() );
+check_pub( false !== strpos( $aicfab_bad, 'data-scheme="light"' ), 'An unknown color scheme falls back to light.' );
+$aicfab_css = file_get_contents( dirname( __DIR__ ) . '/public/css/ai-chat-bedrock-public.css' );
+check_pub( 1 === preg_match( '/@media \(prefers-color-scheme: dark\) \{\s*\.ai-chat-bedrock-container\[data-scheme="auto"\]/', $aicfab_css ), 'Only a chat set to follow the device turns dark with it.' );
+// A theme's textarea height pushed the send button out of the popup, which hides overflow.
+check_pub( 1 === preg_match( '/\.ai-chat-bedrock-container \.ai-chat-bedrock-textarea \{[^}]*\bheight: 58px/', $aicfab_css ), 'The chat sets its own textarea height over the theme\'s.' );
+// Focusing the text box on a phone opened the keyboard over the greeting and suggestions.
+check_pub( false !== strpos( $aicfab_script, "matchMedia('(pointer: coarse)')" ), 'Opening the popup on a touch screen does not focus the text box.' );
 check_pub( false !== strpos( $aicfab_script, "attr('data-welcome')" ) && false === strpos( $aicfab_script, '.text(params.welcome_message)' ), 'Clearing the chat restores the greeting from the markup.' );
 check_pub( 1 === preg_match( '/JSON\.stringify\(\{ entry: entryId, rating: value, profile: profile \}\)/', $aicfab_script ), 'A rating names the chat\'s profile, which decides whether guests may rate.' );
 

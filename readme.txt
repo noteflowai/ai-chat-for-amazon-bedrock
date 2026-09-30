@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.52.1
+Stable tag: 1.53.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -394,18 +394,26 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.53.0 =
+* The popup chat's Send button and footer are always on screen. Themes that give every form's text box a tall fixed height, Blocksy among them, pushed them below the popup's edge, where signed-in visitors could not reach them. The chat now sets its own text box height, and on a short window the conversation and then the suggestions shrink first.
+* New Color scheme setting under Chat: Light, Dark, or follow the visitor's device. Light is the default. Until now the chat always followed the device, so a visitor in dark mode saw a dark panel on a light theme; choose "Follow the visitor's device" to keep that.
+* On iPhone, tapping the chat's text box no longer zooms the page in.
+* On touch screens, opening the popup no longer brings up the keyboard over the greeting and suggested questions.
+* The Clear chat button shows its border again.
+* Embeddings made for search and site indexing are counted separately in the usage summary and no longer count against the daily request limit, which indexing a site could use up before anyone chatted.
+
 = 1.52.1 =
 * The token count under each answer reads in Chinese and Japanese too. 1.52.0 left it in English.
 
 = 1.52.0 =
 * The chat's buttons, sign-in prompt, placeholder and notices read in Simplified Chinese (zh_CN) and Japanese (ja) on sites or pages in those languages. translate.wordpress.org has no translation for this plugin yet, so they showed in English on every Chinese and Japanese page, next to a title and greeting already translated. The translations ship in the plugin's languages folder and are used only when WordPress has no language pack for the locale, so a language pack from translate.wordpress.org takes over once there is one. Needs WordPress 6.6 or later; on older versions the chat stays in English as before.
 
-= 1.51.1 =
-* With Polylang, the chat's title, welcome message and suggested questions are listed once in Languages > Translations. 1.51.0 also registered them through Polylang's WPML compatibility layer, which listed each one twice; that copy is removed the next time an administrator opens wp-admin.
-
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.53.0 =
+The popup's Send button is no longer hidden by themes like Blocksy. New Color scheme setting; the chat is now light unless set to follow the device. Indexing no longer uses up the daily request limit.
 
 = 1.52.1 =
 The token count under each answer in Chinese and Japanese.

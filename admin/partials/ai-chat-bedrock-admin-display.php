@@ -114,6 +114,20 @@ $aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 				);
 				?>
 			</p>
+			<?php if ( ! empty( $week['embedding_requests'] ) ) : ?>
+				<p class="aicfab-card-detail">
+					<?php
+					echo esc_html(
+						sprintf(
+							/* translators: 1: embedding requests in the last seven days, 2: tokens they read. */
+							_n( 'Search and indexing, last 7 days: %1$s embedding request, %2$s tokens. They are not counted above or against the daily limit.', 'Search and indexing, last 7 days: %1$s embedding requests, %2$s tokens. They are not counted above or against the daily limit.', (int) $week['embedding_requests'], 'ai-chat-for-amazon-bedrock' ),
+							number_format_i18n( (int) $week['embedding_requests'] ),
+							number_format_i18n( (int) $week['embedding_tokens'] )
+						)
+					);
+					?>
+				</p>
+			<?php endif; ?>
 			<?php if ( ! empty( $week['cache_read_tokens'] ) ) : ?>
 				<p class="aicfab-card-detail">
 					<?php
@@ -133,7 +147,7 @@ $aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 	<div class="aicfab-panel aicfab-usage-panel">
 		<h2><?php esc_html_e( 'Usage over the last seven days', 'ai-chat-for-amazon-bedrock' ); ?></h2>
 
-		<?php if ( $week['requests'] < 1 ) : ?>
+		<?php if ( $week['requests'] + $week['embedding_requests'] < 1 ) : ?>
 			<p class="aicfab-card-detail"><?php esc_html_e( 'No Bedrock requests recorded yet.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 		<?php else : ?>
 			<ul class="aicfab-usage-series">
