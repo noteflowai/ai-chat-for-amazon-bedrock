@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.49.0
+Stable tag: 1.50.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -175,7 +175,7 @@ Confirm that the model is available and enabled in the configured AWS Region, th
 
 = Why can guests not use the chat? =
 
-The chat defaults to signed-in users to reduce the risk of anonymous scripts generating unbounded AWS charges. An administrator can explicitly enable guest access and configure a request limit.
+The chat defaults to signed-in users to reduce the risk of anonymous scripts generating unbounded AWS charges. Guests see a sign-in link that brings them back to the same page; the `ai_chat_bedrock_sign_in_url` filter can point it at a custom sign-in page, or hide the chat from guests by returning an empty string. An administrator can explicitly enable guest access and configure a request limit.
 
 = Are AWS credentials stored in plaintext? =
 
@@ -246,7 +246,7 @@ Keyword search only finds passages sharing words with the question, so "when wil
 
 By default one vector per post is kept in the WordPress database and a question is compared with the 500 most recent items. For a larger site, choose Amazon S3 Vectors under Answer grounding: every post is split into overlapping passages, each passage gets its own vector in a vector bucket in your AWS account, and every one of them is searched. Create the bucket in the Amazon S3 console, then check or create the index from the settings screen or with `wp ai-chat-bedrock index --create-index`. S3 Vectors needs an IAM role or access keys, not a Bedrock API key; Diagnostics lists the `s3vectors` actions to allow. Several sites can share one index, and each only reads and deletes its own vectors.
 
-Only published, public content is indexed, as a signed-out visitor sees it: sections that a membership or visibility plugin hides from guests are left out, and every result is checked against the live post again before it is quoted. With Polylang, a question is answered from pages in the visitor's language first.
+Only published, public content is indexed, as a signed-out visitor sees it: sections that a membership or visibility plugin hides from guests are left out, and every result is checked against the live post again before it is quoted. Blocks with Block Visibility rules are left out whoever they are shown to, since that plugin applies its rules only on front-end pages; to leave out blocks that another plugin restricts, return true from the `ai_chat_bedrock_block_is_restricted` filter. With Polylang, a question is answered from pages in the visitor's language first.
 
 = Can the chat show where an answer came from? =
 
@@ -390,6 +390,11 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.50.0 =
+* Security: members-only blocks are left out of the index and of answers wherever the text is read. Block Visibility hides blocks only on front-end requests, so text indexed with the Index content now button, or retrieved for a chat sent from wp-admin, could include blocks it shows only to signed-in visitors. Any block with Block Visibility rules is now removed before the post is rendered, and the new `ai_chat_bedrock_block_is_restricted` filter lets a site name blocks another plugin restricts. After the update every post counts as not yet indexed, and until it is indexed again an answer quotes its text as read now rather than the stored passage. Run Index content now, or let background indexing catch up.
+* Chat: a visitor the chat is not open to sees a sign-in link instead of a message box, and returns to the same page after signing in. Before, a guest could type a question and only then learn that the chat was for members. The new `ai_chat_bedrock_sign_in_url` filter points the link at a custom sign-in page, or leaves the chat out for guests when it returns an empty string.
+* With Polylang, the settings screen counts indexed posts and clears the index in every language, not only the admin's own, so indexing no longer looks unfinished.
+
 = 1.49.0 =
 * Amazon S3 Vectors: keep semantic search vectors in a vector bucket in your AWS account instead of the WordPress database. Every post is split into overlapping passages with a vector each, and all of them are searched rather than the 500 most recent posts. Check or create the index from the settings screen, or with `wp ai-chat-bedrock index --create-index`; `--force` re-embeds everything while the current vectors keep answering. Diagnostics reports whether the index matches the embedding model, and the generated IAM policy includes the `s3vectors` actions the site needs.
 * Members-only text is no longer indexed or quoted. Content is read as a signed-out visitor sees it, so sections a membership or visibility plugin hides from guests stay out of answers, site abilities and generated excerpts. Every search result is checked against the live post before it is used.
@@ -409,6 +414,9 @@ what a good answer says.
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.50.0 =
+Security fix: blocks Block Visibility shows only to signed-in visitors could be indexed from the settings screen. Rebuild the index after updating. Guests now see a sign-in link in a members-only chat.
 
 = 1.49.0 =
 Optional Amazon S3 Vectors search over every passage, members-only text kept out of answers, OAuth tokens limited to MCP, a working Stop button, and settings tabs that no longer reset each other.

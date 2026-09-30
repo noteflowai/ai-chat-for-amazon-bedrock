@@ -576,6 +576,7 @@ class AI_Chat_Bedrock_S3_Vectors {
 				'fields'                 => 'ids',
 				'update_post_term_cache' => false,
 				'update_post_meta_cache' => false,
+				'lang'                   => '',
 				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- the index is recorded in post meta; only the count is read.
 				'meta_query'             => array(
 					array(

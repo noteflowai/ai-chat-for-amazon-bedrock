@@ -123,6 +123,7 @@ class WP_Query {
 	public $posts       = array();
 	public $found_posts = 0;
 	public function __construct( $args = array() ) {
+		$GLOBALS['aicfab_queries'][] = $args;
 		$key = isset( $args['meta_query'][0]['key'] ) ? $args['meta_query'][0]['key'] : '';
 		foreach ( $GLOBALS['aicfab_meta'] as $id => $meta ) {
 			if ( '' !== $key && isset( $meta[ $key ] ) ) {
@@ -407,6 +408,17 @@ check_s3v( 2 === count( $lists ) && 'page2' === $lists[1]['payload']['nextToken'
 $deletes = s3v_calls( 'DeleteVectors' );
 check_s3v( 1 === count( $deletes ) && array( $site . ':10#0', $site . ':99#0', 'legacy' ) === $deletes[0]['payload']['keys'], 'Only this site\'s vectors are deleted, including orphans.' );
 check_s3v( 1 === $cleared && '' === get_post_meta( 10, AI_Chat_Bedrock_S3_Vectors::META_REF, true ), 'Index records are removed.' );
+
+// --- Every language ------------------------------------------------------------
+// Polylang limits a query to the request's language unless told otherwise, so the settings
+// screen counted and cleared only the posts of the admin's language.
+$aicfab_scoped = array_filter(
+	$GLOBALS['aicfab_queries'],
+	function ( $args ) {
+		return ! array_key_exists( 'lang', $args ) || '' !== $args['lang'];
+	}
+);
+check_s3v( count( $GLOBALS['aicfab_queries'] ) > 0 && array() === $aicfab_scoped, 'Every query covers all languages: ' . count( $aicfab_scoped ) . ' of ' . count( $GLOBALS['aicfab_queries'] ) . ' do not.' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

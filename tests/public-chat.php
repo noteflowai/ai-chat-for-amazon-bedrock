@@ -114,7 +114,13 @@ function esc_url( $url ) {
 	return $url;
 }
 function apply_filters( $hook, $value ) {
-	return $value;
+	return isset( $GLOBALS['aicfab_filtered'][ $hook ] ) ? $GLOBALS['aicfab_filtered'][ $hook ] : $value;
+}
+function home_url( $path = '' ) {
+	return 'https://example.com' . $path;
+}
+function wp_login_url( $redirect = '' ) {
+	return 'https://example.com/wp-login.php' . ( '' !== $redirect ? '?redirect_to=' . rawurlencode( $redirect ) : '' );
 }
 function add_action( $hook, $callback, $priority = 10, $args = 1 ) {
 	return true;
@@ -564,6 +570,35 @@ check_pub( false !== strpos( $aicfab_good, 'height: 42rem' ), 'A valid height is
 
 $aicfab_hostile_title = $aicfab_public->display_chat_interface( array( 'title' => '<script>alert(1)</script>Hi' ) );
 check_pub( false === strpos( $aicfab_hostile_title, '<script>alert(1)</script>' ), 'A script tag in the title is not rendered.' );
+
+// --- A visitor the chat is closed to is asked to sign in --------------------------
+// Otherwise a guest typed a question and only then learned that the chat was for members.
+
+aicfab_reset_pub( array( 'allow_public_chat' => false ) );
+$_SERVER['REQUEST_URI'] = '/en/course/?ref=1';
+$aicfab_guest_view      = $aicfab_public->display_chat_interface( array( 'mode' => 'popup' ) );
+check_pub( false !== strpos( $aicfab_guest_view, 'is-signed-out' ) && false !== strpos( $aicfab_guest_view, 'Sign in to chat with the assistant.' ), 'A guest sees a sign-in prompt: ' . $aicfab_guest_view );
+check_pub( false !== strpos( $aicfab_guest_view, 'href="https://example.com/wp-login.php?redirect_to=' . rawurlencode( 'https://example.com/en/course/?ref=1' ) . '"' ), 'Signing in returns to the page the guest was on.' );
+check_pub( false === strpos( $aicfab_guest_view, '<textarea' ) && false === strpos( $aicfab_guest_view, 'ai-chat-bedrock-suggestion' ), 'A guest gets no message box or suggested questions.' );
+check_pub( false !== strpos( $aicfab_guest_view, 'ai-chat-bedrock-launcher' ), 'The launcher is still there, so the assistant can be found.' );
+
+$GLOBALS['aicfab_logged_in'] = true;
+$aicfab_member_view          = $aicfab_public->display_chat_interface( array( 'mode' => 'popup' ) );
+check_pub( false === strpos( $aicfab_member_view, 'is-signed-out' ) && false !== strpos( $aicfab_member_view, '<textarea' ), 'A signed-in visitor gets the message box.' );
+
+aicfab_reset_pub( array( 'allow_public_chat' => true ) );
+check_pub( false === strpos( $aicfab_public->display_chat_interface( array() ), 'is-signed-out' ), 'Guests chat right away where guest chat is on.' );
+
+aicfab_reset_pub( array( 'allow_public_chat' => false ) );
+$GLOBALS['aicfab_filtered']['ai_chat_bedrock_sign_in_url'] = '';
+check_pub( '' === $aicfab_public->display_chat_interface( array( 'mode' => 'popup' ) ), 'A site can leave the chat out for guests.' );
+$GLOBALS['aicfab_filtered']['ai_chat_bedrock_sign_in_url'] = 'https://example.com/members/';
+check_pub( false !== strpos( $aicfab_public->display_chat_interface( array() ), 'href="https://example.com/members/"' ), 'A site can send guests to its own sign-in page.' );
+unset( $GLOBALS['aicfab_filtered'] );
+unset( $_SERVER['REQUEST_URI'] );
+
+$aicfab_public_js = file_get_contents( dirname( __DIR__ ) . '/public/js/ai-chat-bedrock-public.js' );
+check_pub( false !== strpos( $aicfab_public_js, "hasClass('is-signed-out')" ), 'The script leaves a sign-in prompt alone.' );
 
 // --- The Test Chat screen in wp-admin ------------------------------------------
 

@@ -233,6 +233,26 @@ class AI_Chat_Bedrock_Public {
 		}
 		$atts['launcher'] = sanitize_text_field( isset( $atts['launcher'] ) ? $atts['launcher'] : __( 'Chat', 'ai-chat-for-amazon-bedrock' ) );
 
+		$atts['sign_in_url'] = '';
+		if ( ! AI_Chat_Bedrock_Security::can_use_chat( $options ) ) {
+			$path = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '/'; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- passed through wp_login_url, which encodes it.
+
+			/**
+			 * Where a visitor who may not use the chat is sent to sign in.
+			 *
+			 * The chat shows a sign-in link instead of the message box to such a visitor. Return
+			 * a different URL for a custom sign-in page, or an empty string to leave the chat out
+			 * for them altogether.
+			 *
+			 * @param string $url     The WordPress login URL, returning to the current page.
+			 * @param array  $options Chat settings of the profile shown.
+			 */
+			$atts['sign_in_url'] = (string) apply_filters( 'ai_chat_bedrock_sign_in_url', wp_login_url( home_url( $path ) ), $options );
+			if ( '' === $atts['sign_in_url'] ) {
+				return '';
+			}
+		}
+
 		ob_start();
 		include plugin_dir_path( __FILE__ ) . 'partials/ai-chat-bedrock-public-display.php';
 		return ob_get_clean();

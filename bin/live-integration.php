@@ -152,6 +152,22 @@ if ( false === $aicfab_had_abilities ) {
 	update_option( 'ai_chat_bedrock_site_abilities', $aicfab_had_abilities );
 }
 
+// --- Members-only blocks, through WordPress's own block parser -----------------
+// The suite stubs the parser, so whether the rebuilt markup is what WordPress renders is asked here.
+
+$aicfab_markup = '<!-- wp:paragraph --><p>Public intro.</p><!-- /wp:paragraph -->'
+	. '<!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group">'
+	. '<!-- wp:paragraph --><p>Public note.</p><!-- /wp:paragraph -->'
+	. '<!-- wp:group {"blockVisibility":{"controlSets":[{"id":1,"enable":true,"controls":{"userRole":{"visibilityByRole":"logged-in"}}}]},"className":"members"} --><div class="wp-block-group members">'
+	. '<!-- wp:paragraph --><p>Members only.</p><!-- /wp:paragraph --></div><!-- /wp:group -->'
+	. '<!-- wp:paragraph --><p>Public outro.</p><!-- /wp:paragraph --></div><!-- /wp:group -->';
+$aicfab_rendered = do_blocks( AI_Chat_Bedrock_Content::without_restricted_blocks( $aicfab_markup ) );
+aicfab_live(
+	false === strpos( $aicfab_rendered, 'Members only' ) && false !== strpos( $aicfab_rendered, 'Public note' ) && false !== strpos( $aicfab_rendered, 'Public outro' ) && false === strpos( $aicfab_rendered, 'members' ),
+	'a members-only block is removed and the rest renders',
+	AI_Chat_Bedrock_Content::flatten( wp_strip_all_tags( $aicfab_rendered ) )
+);
+
 // --- The rest of what the plugin attaches to something it does not own ----------
 
 if ( class_exists( 'WP_Block_Type_Registry' ) ) {
