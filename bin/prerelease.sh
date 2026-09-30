@@ -139,6 +139,14 @@ if ( strlen( $short ) > 150 ) {
 	exit( 1 );
 }
 
+// The directory truncates a longer changelog; the full history lives in changelog.txt.
+$changelog = aicfab_section( $readme, "== Changelog ==", "== Upgrade Notice ==" );
+printf( "  changelog chars=%d limit=5000\n", strlen( $changelog ) );
+if ( strlen( $changelog ) > 5000 ) {
+	fwrite( STDERR, "  changelog is too long; move older entries to changelog.txt\n" );
+	exit( 1 );
+}
+
 $notice_section = aicfab_section( $readme, "== Upgrade Notice ==", "== Privacy Policy ==" );
 preg_match_all( "/= ([0-9.]+) =\n(.*?)(?=\n= |\z)/s", $notice_section, $notices, PREG_SET_ORDER );
 $over = array();
@@ -169,6 +177,27 @@ for suite in tests/*.php; do
 	fi
 done
 printf '  %d suites run\n' "$SUITES"
+
+step "Scripts"
+NODE_BIN="${AICFAB_NODE:-node}"
+if ! "$NODE_BIN" --version >/dev/null 2>&1; then
+	skip 'Node.js is not installed, so the scripts were not checked'
+else
+	JS_ERRORS=0
+	while IFS= read -r -d '' script; do
+		"$NODE_BIN" --check "$script" >/dev/null 2>&1 || { printf '  %s does not parse\n' "$script"; JS_ERRORS=1; }
+	done < <(find admin public blocks -name '*.js' -not -path '*/vendor/*' -print0 2>/dev/null)
+	[ "$JS_ERRORS" -eq 0 ] && ok 'every script parses' || bad 'a script does not parse'
+	for suite in tests/js/*.test.mjs; do
+		[ -f "$suite" ] || continue
+		if OUTPUT="$( "$NODE_BIN" "$suite" 2>&1 )"; then
+			ok "$(basename "$suite")"
+		else
+			printf '%s\n' "$OUTPUT" | head -8
+			bad "$(basename "$suite")"
+		fi
+	done
+fi
 
 step "Coding standards"
 PHPCS_BIN="${AICFAB_PHPCS:-}"

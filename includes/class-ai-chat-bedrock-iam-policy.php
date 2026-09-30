@@ -137,7 +137,7 @@ class AI_Chat_Bedrock_Iam_Policy {
 	 * Build the policy document for a configuration.
 	 *
 	 * Recognised keys: region, account, models, streaming, guardrail_id, prompt_id,
-	 * knowledge_base and agentcore. Everything except region and models is optional, and
+	 * knowledge_base, s3_vectors (bucket, index, region) and agentcore. Everything except region and models is optional, and
 	 * an unset feature produces no statement for it.
 	 *
 	 * @param array $config Configuration to build from.
@@ -232,6 +232,27 @@ class AI_Chat_Bedrock_Iam_Policy {
 			);
 		}
 
+		$bucket = isset( $config['s3_vectors']['bucket'] ) ? strtolower( (string) $config['s3_vectors']['bucket'] ) : '';
+		$index  = isset( $config['s3_vectors']['index'] ) ? strtolower( (string) $config['s3_vectors']['index'] ) : '';
+		if ( preg_match( '/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/', $bucket ) && preg_match( '/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/', $index ) ) {
+			$vector_region = self::clean_region( ! empty( $config['s3_vectors']['region'] ) ? $config['s3_vectors']['region'] : $region );
+			$bucket_arn    = sprintf( 'arn:aws:s3vectors:%s:%s:bucket/%s', $vector_region, $account, $bucket );
+			// QueryVectors with a metadata filter also needs GetVectors, and the search always filters by site.
+			$statements[] = array(
+				'Sid'      => 'AICFABUseS3VectorsIndex',
+				'Effect'   => 'Allow',
+				'Action'   => array( 's3vectors:PutVectors', 's3vectors:GetVectors', 's3vectors:QueryVectors', 's3vectors:DeleteVectors', 's3vectors:ListVectors', 's3vectors:GetIndex' ),
+				'Resource' => array( $bucket_arn . '/index/' . $index ),
+			);
+			// Only for the Create the index button; remove it once the index exists.
+			$statements[] = array(
+				'Sid'      => 'AICFABCreateS3VectorsIndex',
+				'Effect'   => 'Allow',
+				'Action'   => array( 's3vectors:CreateIndex' ),
+				'Resource' => array( $bucket_arn, $bucket_arn . '/index/' . $index ),
+			);
+		}
+
 		$gateways = array();
 		foreach ( (array) ( isset( $config['agentcore'] ) ? $config['agentcore'] : array() ) as $gateway_region ) {
 			$gateway_region = self::clean_region( $gateway_region );
@@ -297,6 +318,11 @@ class AI_Chat_Bedrock_Iam_Policy {
 				'guardrail_id'   => isset( $options['guardrail_id'] ) ? $options['guardrail_id'] : '',
 				'prompt_id'      => isset( $options['prompt_id'] ) ? $options['prompt_id'] : '',
 				'knowledge_base' => isset( $options['knowledge_base_id'] ) ? $options['knowledge_base_id'] : '',
+				's3_vectors'     => isset( $options['vector_store'] ) && 's3_vectors' === $options['vector_store'] ? array(
+					'bucket' => isset( $options['s3_vectors_bucket'] ) ? $options['s3_vectors_bucket'] : '',
+					'index'  => isset( $options['s3_vectors_index'] ) ? $options['s3_vectors_index'] : '',
+					'region' => isset( $options['s3_vectors_region'] ) ? $options['s3_vectors_region'] : '',
+				) : array(),
 				'agentcore'      => $agentcore,
 				'api_key'        => class_exists( 'AI_Chat_Bedrock_AWS_Credentials' ) && null !== AI_Chat_Bedrock_AWS_Credentials::api_key( $options ),
 			)

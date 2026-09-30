@@ -354,6 +354,44 @@ $aicfab_off_json = AI_Chat_Bedrock_Iam_Policy::to_json(
 );
 check_policy( false !== strpos( $aicfab_off_json, 'bedrock:InvokeModel' ), 'InvokeModel is granted regardless of streaming.' );
 
+// --- S3 Vectors ----------------------------------------------------------------
+
+$aicfab_s3v = AI_Chat_Bedrock_Iam_Policy::for_site(
+	array(
+		'aws_region'         => 'us-east-1',
+		'model_id'           => 'amazon.nova-lite-v1:0',
+		'vector_store'       => 's3_vectors',
+		's3_vectors_bucket'  => 'site-vectors',
+		's3_vectors_index'   => 'posts.v1',
+		's3_vectors_region'  => 'ap-northeast-1',
+	),
+	'111122223333'
+);
+$aicfab_use = statement( $aicfab_s3v, 'AICFABUseS3VectorsIndex' );
+check_policy( null !== $aicfab_use, 'Choosing S3 Vectors grants use of the index.' );
+check_policy( null !== $aicfab_use && array( 'arn:aws:s3vectors:ap-northeast-1:111122223333:bucket/site-vectors/index/posts.v1' ) === $aicfab_use['Resource'], 'The index ARN uses the vector Region, not the Bedrock Region.' );
+check_policy( null !== $aicfab_use && in_array( 's3vectors:GetVectors', $aicfab_use['Action'], true ), 'GetVectors is granted, because a filtered query needs it.' );
+check_policy( null !== $aicfab_use && ! in_array( 's3vectors:CreateIndex', $aicfab_use['Action'], true ), 'Creating an index is a separate statement.' );
+$aicfab_create = statement( $aicfab_s3v, 'AICFABCreateS3VectorsIndex' );
+check_policy( null !== $aicfab_create && in_array( 'arn:aws:s3vectors:ap-northeast-1:111122223333:bucket/site-vectors', $aicfab_create['Resource'], true ), 'CreateIndex is scoped to the configured bucket.' );
+check_policy( false === strpos( AI_Chat_Bedrock_Iam_Policy::to_json( $aicfab_s3v ), 's3vectors:*' ), 'No S3 Vectors wildcard action is granted.' );
+
+$aicfab_same = AI_Chat_Bedrock_Iam_Policy::for_site(
+	array( 'aws_region' => 'eu-west-1', 'model_id' => 'amazon.nova-lite-v1:0', 'vector_store' => 's3_vectors', 's3_vectors_bucket' => 'site-vectors', 's3_vectors_index' => 'posts' ),
+	'111122223333'
+);
+$aicfab_use = statement( $aicfab_same, 'AICFABUseS3VectorsIndex' );
+check_policy( null !== $aicfab_use && 0 === strpos( $aicfab_use['Resource'][0], 'arn:aws:s3vectors:eu-west-1:' ), 'Without a vector Region the Bedrock Region is used.' );
+
+foreach ( array(
+	'post meta store' => array( 'vector_store' => 'post_meta', 's3_vectors_bucket' => 'site-vectors', 's3_vectors_index' => 'posts' ),
+	'no index'        => array( 'vector_store' => 's3_vectors', 's3_vectors_bucket' => 'site-vectors', 's3_vectors_index' => '' ),
+	'invalid bucket'  => array( 'vector_store' => 's3_vectors', 's3_vectors_bucket' => 'Bad_Bucket*', 's3_vectors_index' => 'posts' ),
+) as $aicfab_case => $aicfab_extra ) {
+	$aicfab_json = AI_Chat_Bedrock_Iam_Policy::to_json( AI_Chat_Bedrock_Iam_Policy::for_site( array_merge( array( 'aws_region' => 'us-east-1', 'model_id' => 'amazon.nova-lite-v1:0' ), $aicfab_extra ), '111122223333' ) );
+	check_policy( false === strpos( $aicfab_json, 's3vectors' ), 'No S3 Vectors permission for ' . $aicfab_case . '.' );
+}
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

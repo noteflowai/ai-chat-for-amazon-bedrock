@@ -18,11 +18,61 @@
     }
 
     function avatar(isUser) {
+        const i18n = params.i18n || {};
         return $('<div>', {
             'class': 'ai-chat-bedrock-avatar',
             'aria-hidden': 'true',
-            text: isUser ? 'You' : 'AI'
+            text: isUser ? (i18n.you || 'You') : (i18n.assistant || 'AI')
         });
+    }
+
+    /**
+     * Whether a refused request was refused only for a stale nonce.
+     *
+     * A cached page carries the nonces it was rendered with, which stop verifying after a
+     * day. The chat endpoints say so with a code; the REST API refuses a stale X-WP-Nonce
+     * before the route is reached.
+     */
+    function isNonceError(status, data) {
+        const code = data && data.code ? String(data.code) : '';
+        return 403 === status && ('aicfab_bad_nonce' === code || 'rest_cookie_invalid_nonce' === code);
+    }
+
+    let nonceRequest = null;
+
+    /**
+     * Fetch fresh nonces, sharing one request between chats on the same page.
+     */
+    function refreshNonce() {
+        if (!nonceRequest) {
+            nonceRequest = Promise.resolve($.ajax({
+                url: params.ajax_url,
+                method: 'POST',
+                dataType: 'json',
+                data: { action: 'ai_chat_bedrock_refresh_nonce' }
+            })).then(function (response) {
+                if (!response || !response.success || !response.data || !response.data.nonce) {
+                    throw new Error(params.i18n.generic_error);
+                }
+                params.nonce = String(response.data.nonce);
+                params.rest_nonce = String(response.data.rest_nonce || '');
+            }).finally(function () {
+                nonceRequest = null;
+            });
+        }
+        return nonceRequest;
+    }
+
+    /**
+     * Only web links are rendered, whatever a filter put in the list.
+     */
+    function safeUrl(value) {
+        try {
+            const url = new URL(String(value || ''), window.location.href);
+            return 'https:' === url.protocol || 'http:' === url.protocol ? url.href : '';
+        } catch (error) {
+            return '';
+        }
     }
 
     function streamingAvailable() {
@@ -228,6 +278,40 @@
             }
         }
 
+        function attachSources(bubble, sources) {
+            if (!bubble || !bubble.message || !Array.isArray(sources) || !sources.length) {
+                return;
+            }
+            const $list = $('<ol>', { 'class': 'ai-chat-bedrock-sources-list' });
+            sources.slice(0, 5).forEach(function (source) {
+                const href = safeUrl(source && source.url);
+                if (!href) {
+                    return;
+                }
+                const title = String((source && source.title) || href);
+                const external = new URL(href).host !== window.location.host;
+                const $link = $('<a>', { href: href, rel: external ? 'noopener noreferrer' : 'noopener' }).text(title);
+                if (external) {
+                    $link.attr('target', '_blank');
+                    if (params.i18n.opens_new_tab) {
+                        $link.append($('<span>', { 'class': 'screen-reader-text' }).text(' ' + params.i18n.opens_new_tab));
+                    }
+                }
+                $list.append($('<li>').append($link));
+            });
+            if (!$list.children().length) {
+                return;
+            }
+            const $body = bubble.message.find('.ai-chat-bedrock-message-body').first();
+            if (!$body.length) {
+                return;
+            }
+            $body.find('.ai-chat-bedrock-sources').remove();
+            const $sources = $('<nav>', { 'class': 'ai-chat-bedrock-sources', 'aria-label': params.i18n.sources || '' });
+            $sources.append($('<span>', { 'class': 'ai-chat-bedrock-sources-label' }).text(params.i18n.sources || ''), $list);
+            $sources.insertAfter($body.find('.ai-chat-bedrock-message-content').first());
+        }
+
         function feedbackControls(entryId) {
             if (!params.feedback_url || !entryId) {
                 return null;
@@ -410,8 +494,6 @@
             if (!controller) {
                 return;
             }
-
-        $stop.on('click', stopAnswering);
             stopped = true;
             try {
                 controller.abort();
@@ -419,6 +501,8 @@
                 // An already-finished request cannot be aborted, which is fine.
             }
         }
+
+        $stop.on('click', stopAnswering);
 
         function finish() {
             controller = null;
@@ -448,10 +532,15 @@
             $region.text($.trim($region.text()) === value ? value + '\u00a0' : value);
         }
 
-        function sendBuffered(message, requestHistory) {
+        /**
+         * Send without streaming. The returned promise always resolves: every failure is
+         * shown in the conversation here, so a caller only has to wait for it.
+         */
+        function sendBuffered(message, requestHistory, retried) {
             const $typing = typingIndicator();
+            const settled = $.Deferred();
 
-            return $.ajax({
+            $.ajax({
                 url: params.ajax_url,
                 method: 'POST',
                 dataType: 'json',
@@ -460,7 +549,8 @@
                     nonce: params.nonce,
                     message: message,
                     history: JSON.stringify(requestHistory),
-                    profile: profile
+                    profile: profile,
+                    lang: params.language || ''
                 }
             }).done(function (response) {
                 $typing.remove();
@@ -472,6 +562,7 @@
                     announce(bubble && bubble.content ? bubble.content.text() : response.data.message);
                     attachNote(bubble, fallbackNote(response.data.fallback_model));
                     attachSteps(bubble, response.data.steps, response.data.steps_truncated);
+                    attachSources(bubble, response.data.sources);
                     attachFeedback(bubble, response.data.entry);
                     showUsage(response.usage);
                 } else {
@@ -480,15 +571,28 @@
                         retryWith(message, requestHistory)
                     );
                 }
+                settled.resolve();
             }).fail(function (xhr) {
                 $typing.remove();
                 $messages.find('.ai-chat-bedrock-status').remove();
                 const response = xhr.responseJSON;
-                showError(
-                    response && response.data && response.data.message ? response.data.message : params.i18n.generic_error,
-                    retryWith(message, requestHistory)
-                );
+                const error = function () {
+                    showError(
+                        response && response.data && response.data.message ? response.data.message : params.i18n.generic_error,
+                        retryWith(message, requestHistory)
+                    );
+                    settled.resolve();
+                };
+                if (!retried && isNonceError(xhr.status, response && response.data)) {
+                    refreshNonce().then(function () {
+                        sendBuffered(message, requestHistory, true).always(settled.resolve);
+                    }, error);
+                    return;
+                }
+                error();
             });
+
+            return settled.promise();
         }
 
         function handleEvent(event, state) {
@@ -560,6 +664,7 @@
                     state.bubble.content.removeClass('is-streaming');
                     attachNote(state.bubble, fallbackNote(payload.fallback_model));
                     attachSteps(state.bubble, payload.steps, payload.steps_truncated);
+                    attachSources(state.bubble, payload.sources);
                     attachFeedback(state.bubble, payload.entry);
                 }
                 showUsage(payload.usage);
@@ -569,34 +674,58 @@
             }
         }
 
+        /**
+         * Dispatch every complete event in the buffer and return what is left over.
+         *
+         * Follows the event stream format: lines end in LF, CRLF or CR, an event ends at a
+         * blank line, a single space after the colon is dropped, and several data lines are
+         * joined with a line break. A proxy is free to rewrite line endings or split data.
+         */
         function parseChunk(buffer, state) {
+            buffer = buffer.replace(/\r\n?/g, '\n');
             let index = buffer.indexOf('\n\n');
             while (index !== -1) {
                 const raw = buffer.slice(0, index);
                 buffer = buffer.slice(index + 2);
 
                 const event = { name: 'message', data: '' };
+                const data = [];
                 raw.split('\n').forEach(function (line) {
-                    if (line.indexOf('event:') === 0) {
-                        event.name = line.slice(6).trim();
-                    } else if (line.indexOf('data:') === 0) {
-                        event.data += line.slice(5).trim();
+                    const colon = line.indexOf(':');
+                    if (0 === colon || !line) {
+                        return;
+                    }
+                    const field = -1 === colon ? line : line.slice(0, colon);
+                    let value = -1 === colon ? '' : line.slice(colon + 1);
+                    if (' ' === value.charAt(0)) {
+                        value = value.slice(1);
+                    }
+                    if ('event' === field) {
+                        event.name = value;
+                    } else if ('data' === field) {
+                        data.push(value);
                     }
                 });
-                handleEvent(event, state);
+                if (data.length) {
+                    event.data = data.join('\n');
+                    handleEvent(event, state);
+                }
                 index = buffer.indexOf('\n\n');
             }
             return buffer;
         }
 
-        function sendStreaming(message, requestHistory) {
-            const state = { text: '', bubble: null, error: '', done: false, fallback: false, typing: typingIndicator() };
+        function sendStreaming(message, requestHistory, retried) {
+            const state = { text: '', bubble: null, error: '', done: false, fallback: false, renew: false, typing: typingIndicator() };
             const body = new URLSearchParams();
             body.set('message', message);
             body.set('history', JSON.stringify(requestHistory));
             body.set('nonce', params.nonce);
             if (profile) {
                 body.set('profile', profile);
+            }
+            if (params.language) {
+                body.set('lang', params.language);
             }
 
             controller = window.AbortController ? new window.AbortController() : null;
@@ -618,6 +747,10 @@
             }).then(function (response) {
                 if (!response.ok || !response.body) {
                     return response.json().then(function (data) {
+                        if (!retried && isNonceError(response.status, data)) {
+                            state.renew = true;
+                            return null;
+                        }
                         throw new Error(data && data.message ? data.message : params.i18n.generic_error);
                     }, function () {
                         throw new Error(params.i18n.generic_error);
@@ -631,6 +764,10 @@
                 function read() {
                     return reader.read().then(function (chunk) {
                         if (chunk.done) {
+                            // Flush a character split across the last chunk, and an event
+                            // the server closed without the final blank line.
+                            buffer += decoder.decode();
+                            parseChunk(buffer + '\n\n', state);
                             return null;
                         }
                         buffer += decoder.decode(chunk.value, { stream: true });
@@ -645,6 +782,11 @@
                     state.typing = null;
                 }
                 $messages.find('.ai-chat-bedrock-status').remove();
+                if (state.renew) {
+                    return refreshNonce().then(function () {
+                        return sendStreaming(message, requestHistory, true);
+                    });
+                }
                 if (state.bubble) {
                     state.bubble.content.removeClass('is-streaming');
                 }

@@ -304,6 +304,12 @@ class AI_Chat_Bedrock_Conversations {
 		return '';
 	}
 }
+class AI_Chat_Bedrock_Retrieval {
+	public static function context( $query, $options = null, &$score = null, &$weak = null, &$sources = null ) {
+		$sources = isset( $GLOBALS['aicfab_sources'] ) ? $GLOBALS['aicfab_sources'] : array();
+		return $sources ? 'Reference material' : '';
+	}
+}
 class AI_Chat_Bedrock_Feedback {
 	const REST_ROUTE = '/feedback';
 }
@@ -315,11 +321,15 @@ class AI_Chat_Bedrock_Models {
 		return array( 'jp.anthropic.claude-haiku-4-5' => 'Claude Haiku 4.5', 'global.openai.gpt-6-luna' => 'GPT-6 Luna' );
 	}
 }
+function _x( $text, $context, $domain = null ) {
+	return $text;
+}
 function _n( $single, $plural, $number, $domain = null ) {
 	return 1 === (int) $number ? $single : $plural;
 }
 
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-content.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-profiles.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-rate-limits.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-request.php';
@@ -378,6 +388,43 @@ $aicfab_nonce               = aicfab_ajax();
 check_pub( null !== $aicfab_nonce && 403 === $aicfab_nonce->status, 'A bad nonce is refused with 403.' );
 check_pub( array() === $GLOBALS['aicfab_model_calls'], 'A bad nonce never reaches the model.' );
 check_pub( array() === $GLOBALS['aicfab_transients'], 'A bad nonce consumes no rate limit.' );
+check_pub( isset( $aicfab_nonce->payload['code'] ) && 'aicfab_bad_nonce' === $aicfab_nonce->payload['code'], 'A bad nonce says so, so the script can refresh it and retry.' );
+
+// --- A cached page can get fresh nonces ----------------------------------------
+
+function aicfab_refresh() {
+	try {
+		( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->handle_refresh_nonce();
+	} catch ( Aicfab_Sent $sent ) {
+		return $sent;
+	}
+	return null;
+}
+aicfab_reset_pub();
+$_SERVER['REQUEST_METHOD'] = 'GET';
+$aicfab_refreshed          = aicfab_refresh();
+check_pub( null !== $aicfab_refreshed && 405 === $aicfab_refreshed->status, 'Nonces are only handed out to a POST, which no cache stores.' );
+aicfab_reset_pub();
+$aicfab_refreshed = aicfab_refresh();
+check_pub( null !== $aicfab_refreshed && $aicfab_refreshed->ok && 'nonce-for-ai_chat_bedrock_nonce' === $aicfab_refreshed->payload['nonce'] && 'nonce-for-wp_rest' === $aicfab_refreshed->payload['rest_nonce'], 'A refresh returns the chat and REST nonces.' );
+for ( $aicfab_i = 0; $aicfab_i < 30; $aicfab_i++ ) {
+	$aicfab_refreshed = aicfab_refresh();
+}
+check_pub( null !== $aicfab_refreshed && 429 === $aicfab_refreshed->status, 'Refreshing is rate limited.' );
+check_pub( false !== strpos( file_get_contents( dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock.php' ), "'wp_ajax_nopriv_ai_chat_bedrock_refresh_nonce', \$public, 'handle_refresh_nonce'" ), 'Guests can refresh their nonces.' );
+
+// --- Sources are sent only when the site shows them ----------------------------
+
+aicfab_reset_pub();
+$GLOBALS['aicfab_logged_in'] = true;
+$GLOBALS['aicfab_sources']   = array( array( 'title' => 'Refunds', 'url' => 'https://example.test/refunds/' ) );
+$aicfab_hidden               = aicfab_ajax();
+check_pub( null !== $aicfab_hidden && $aicfab_hidden->ok && ! isset( $aicfab_hidden->payload['data']['sources'] ), 'Sources are not sent while the setting is off.' );
+aicfab_reset_pub( array( 'show_sources' => true ) );
+$GLOBALS['aicfab_logged_in'] = true;
+$aicfab_shown                = aicfab_ajax();
+check_pub( null !== $aicfab_shown && $GLOBALS['aicfab_sources'] === $aicfab_shown->payload['data']['sources'], 'Sources are sent with the answer once the site shows them.' );
+$GLOBALS['aicfab_sources'] = array();
 
 aicfab_reset_pub();
 $aicfab_guest = aicfab_ajax();

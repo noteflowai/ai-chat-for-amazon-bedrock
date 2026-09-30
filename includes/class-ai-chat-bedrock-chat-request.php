@@ -88,6 +88,15 @@ class AI_Chat_Bedrock_Chat_Request {
 			return new WP_Error( 'aicfab_message_too_long', __( 'Message exceeds the 4,000 character limit.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 413 ) );
 		}
 
+		/*
+		 * Retrieval below makes paid calls of its own (an embedding, a knowledge base query)
+		 * before the model is invoked, so a site over its daily cap stops here rather than
+		 * paying for context the model will never be asked about.
+		 */
+		if ( class_exists( 'AI_Chat_Bedrock_Usage' ) && AI_Chat_Bedrock_Usage::daily_limit_reached( $options ) ) {
+			return new WP_Error( 'aicfab_daily_limit', __( 'The daily Amazon Bedrock request limit for this site has been reached.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 429 ) );
+		}
+
 		// A JSON API caller may send history as an array; accept it instead of casting it to "Array".
 		if ( is_array( $history_json ) ) {
 			$encoded      = wp_json_encode( $history_json );
@@ -120,10 +129,13 @@ class AI_Chat_Bedrock_Chat_Request {
 		// it is the signal that the site is missing a page on the subject.
 		$grounded  = false;
 		$relevance = 0.0;
+		$weak      = false;
+		$sources   = array();
 		if ( class_exists( 'AI_Chat_Bedrock_Retrieval' ) ) {
-			$context = AI_Chat_Bedrock_Retrieval::context( $message, $options, $relevance );
+			$context = AI_Chat_Bedrock_Retrieval::context( $message, $options, $relevance, $weak, $sources );
 			if ( '' !== $context ) {
-				$grounded   = true;
+				// A page that only shares one word with the question does not answer it.
+				$grounded   = ! $weak;
 				$messages[] = array(
 					'role'    => 'system',
 					'content' => $context,
@@ -150,6 +162,8 @@ class AI_Chat_Bedrock_Chat_Request {
 			// that barely cleared the floor. Zero when keyword search supplied the passages,
 			// which return no score.
 			'relevance' => (float) $relevance,
+			// Links shown under the answer, only when the site has chosen to show them.
+			'sources'   => ! empty( $options['show_sources'] ) ? $sources : array(),
 		);
 	}
 
@@ -183,7 +197,7 @@ class AI_Chat_Bedrock_Chat_Request {
 			$encoded = '[]';
 		}
 		if ( strlen( $encoded ) > self::MAX_TOOL_BYTES ) {
-			$encoded = substr( $encoded, 0, self::MAX_TOOL_BYTES );
+			$encoded = AI_Chat_Bedrock_Security::truncate_bytes( $encoded, self::MAX_TOOL_BYTES );
 		}
 
 		$messages   = is_array( $messages ) ? $messages : array();

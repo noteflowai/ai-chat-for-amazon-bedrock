@@ -63,7 +63,6 @@ class AI_Chat_Bedrock_Transfer {
 			'ai_chat_bedrock_site_abilities'     => 'flag',
 			'ai_chat_bedrock_log_conversations'  => 'flag',
 			'ai_chat_bedrock_log_retention_days' => 'number',
-			'ai_chat_bedrock_index_embeddings'   => 'flag',
 			'ai_chat_bedrock_oauth_enabled'      => 'flag',
 		);
 	}

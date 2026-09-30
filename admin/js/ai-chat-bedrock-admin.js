@@ -385,16 +385,16 @@
             }
         }
 
-        function finish() {
+        function finish( message ) {
             $button.prop( 'disabled', false ).text( labels.index_button || '' );
-            if ( labels.index_done ) {
-                $progress.text(
-                    labels.index_done
-                        .replace( '%1$d', totals.indexed )
-                        .replace( '%2$d', totals.skipped )
-                        .replace( '%3$d', totals.failed )
-                );
-            }
+            var text = labels.index_done
+                ? labels.index_done
+                    .replace( '%1$d', totals.indexed )
+                    .replace( '%2$d', totals.skipped )
+                    .replace( '%3$d', totals.failed )
+                : '';
+            // Say why posts failed, instead of replacing the reason with the totals.
+            $progress.text( message ? ( text + ' ' + message ).trim() : text );
         }
 
         function runBatch() {
@@ -403,8 +403,7 @@
                 nonce: settings.nonce
             } ).done( function ( response ) {
                 if ( ! response || ! response.success || ! response.data ) {
-                    $progress.text( ( response && response.data && response.data.message ) || labels.ajax_error || '' );
-                    finish();
+                    finish( ( response && response.data && response.data.message ) || labels.ajax_error || '' );
                     return;
                 }
 
@@ -419,10 +418,9 @@
                     runBatch();
                     return;
                 }
-                finish();
+                finish( data.message || '' );
             } ).fail( function () {
-                $progress.text( labels.ajax_error || '' );
-                finish();
+                finish( labels.ajax_error || '' );
             } );
         }
 
@@ -431,6 +429,42 @@
             $button.prop( 'disabled', true ).text( labels.indexing || '' );
             $progress.text( labels.indexing || '' );
             runBatch();
+        } );
+    } );
+} )( jQuery );
+
+/**
+ * Check or create the Amazon S3 Vectors index.
+ */
+( function ( $ ) {
+    'use strict';
+
+    $( function () {
+        var settings = window.ai_chat_bedrock_admin || {};
+        var labels = settings.i18n || {};
+        var $buttons = $( '#aicfab-s3v-check, #aicfab-s3v-create' );
+        var $status = $( '#aicfab-s3v-status' );
+
+        if ( ! $buttons.length ) {
+            return;
+        }
+
+        $buttons.on( 'click', function () {
+            $buttons.prop( 'disabled', true );
+            $status.text( labels.testing || '' );
+            $.post( settings.ajax_url, {
+                action: 'ai_chat_bedrock_s3_vectors',
+                op: $( this ).data( 'op' ),
+                nonce: settings.s3v_nonce
+            } ).done( function ( response ) {
+                var message = response && response.data && response.data.message;
+                $status.text( message || labels.ajax_error || '' );
+            } ).fail( function ( xhr ) {
+                var message = xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message;
+                $status.text( message || labels.ajax_error || '' );
+            } ).always( function () {
+                $buttons.prop( 'disabled', false );
+            } );
         } );
     } );
 } )( jQuery );

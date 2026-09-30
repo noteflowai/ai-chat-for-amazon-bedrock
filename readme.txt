@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.48.0
+Stable tag: 1.49.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -62,9 +62,11 @@ the command line too and exits nonzero, which is what lets it gate a deployment.
 
 Point the chat at your published pages and it answers from them, citing what it used. Choose an
 embedding model and it matches by meaning rather than by shared words, so "when will my parcel
-arrive" can find a page titled "Getting parcels to you". Questions the site does not cover return no
-context, and the Conversations screen lists them as content gaps with a shortcut to draft the page
-that is missing.
+arrive" can find a page titled "Getting parcels to you". Keep the vectors in Amazon S3 Vectors and
+every passage of every page is searched, in the visitor's language first. Only what a signed-out
+visitor can read is ever indexed or quoted, so members-only sections stay out of answers. Questions
+the site does not cover return no context, and the Conversations screen lists them as content gaps
+with a shortcut to draft the page that is missing.
 
 = An MCP server, and an MCP client =
 
@@ -242,6 +244,22 @@ Point the chat at a prompt in Bedrock Prompt Management and its text replaces th
 
 Keyword search only finds passages sharing words with the question, so "when will my parcel arrive" misses "Getting parcels to you". Choose an embedding model and the plugin indexes published content, then matches questions by meaning. Indexing runs in small batches from the settings screen, unattended through WP-Cron, or with `wp ai-chat-bedrock index`. Editing a post marks it for re-indexing, and keyword search runs when nothing relevant is found. Questions the site does not cover return no context.
 
+By default one vector per post is kept in the WordPress database and a question is compared with the 500 most recent items. For a larger site, choose Amazon S3 Vectors under Answer grounding: every post is split into overlapping passages, each passage gets its own vector in a vector bucket in your AWS account, and every one of them is searched. Create the bucket in the Amazon S3 console, then check or create the index from the settings screen or with `wp ai-chat-bedrock index --create-index`. S3 Vectors needs an IAM role or access keys, not a Bedrock API key; Diagnostics lists the `s3vectors` actions to allow. Several sites can share one index, and each only reads and deletes its own vectors.
+
+Only published, public content is indexed, as a signed-out visitor sees it: sections that a membership or visibility plugin hides from guests are left out, and every result is checked against the live post again before it is quoted. With Polylang, a question is answered from pages in the visitor's language first.
+
+= Can the chat show where an answer came from? =
+
+Turn on Show sources under Answer grounding and up to three links are listed under each answer, to the published pages and knowledge base documents it was given. Pages that only share a single word with the question are not listed.
+
+= What are the fixes for other plugins? =
+
+The Fixes for other plugins tab has small, optional adjustments for FluentAuth, Polylang and Yoast SEO. Each is off until you turn it on, and does nothing while the plugin it adjusts is inactive: read-only GitHub sign-in, social-only registration, an hreflang x-default for search engines, and crediting articles to the organization in Yoast's structured data.
+
+= Why do all guests share one rate limit behind a CDN? =
+
+Behind a load balancer or CDN every guest arrives from the proxy's address. If you control the proxy, return the address it reports from the `ai_chat_bedrock_client_ip` filter, for example CloudFront's `CloudFront-Viewer-Address` header. Never use a header a visitor can set directly, such as an unverified `X-Forwarded-For`, or anyone can escape the limit by sending a new value each time.
+
 = What happens when a model is throttled or unavailable? =
 
 Model access is the most common reason a Bedrock chat stops answering: a model is not enabled, throttled, or briefly unreachable. Choose a fallback model and those requests are retried once on it, and the reply states which model answered. An unrecognized identifier is treated the same way; requests rejected for any other reason are never retried. A stream is retried only before anything reaches the browser.
@@ -372,416 +390,28 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.49.0 =
+* Amazon S3 Vectors: keep semantic search vectors in a vector bucket in your AWS account instead of the WordPress database. Every post is split into overlapping passages with a vector each, and all of them are searched rather than the 500 most recent posts. Check or create the index from the settings screen, or with `wp ai-chat-bedrock index --create-index`; `--force` re-embeds everything while the current vectors keep answering. Diagnostics reports whether the index matches the embedding model, and the generated IAM policy includes the `s3vectors` actions the site needs.
+* Members-only text is no longer indexed or quoted. Content is read as a signed-out visitor sees it, so sections a membership or visibility plugin hides from guests stay out of answers, site abilities and generated excerpts. Every search result is checked against the live post before it is used.
+* With Polylang, answers come from pages in the visitor's language first. Chinese and Japanese questions find pages by keyword too. Cohere embeddings are told which text is a question, which retrieves better.
+* Show sources: optionally list up to three links under each answer to the pages it was drawn from.
+* New Fixes for other plugins tab, every switch off by default: read-only GitHub sign-in for FluentAuth, social-only registration, an hreflang x-default for Polylang, and crediting articles to the organization in Yoast SEO.
+* Security: an MCP OAuth token now signs in to the MCP endpoint only, as the consent screen says, and the consent screen cannot be framed by another site. WordPress abilities are offered to the chat as read-only only when they declare it, and tool names are split into words, so "display" no longer reads as "pay". wp-admin requests use a nonce of their own, separate from the public chat.
+* Rate limits count in fixed one-minute windows; before, a steady client kept extending its window and never got a fresh count. Each request in an MCP batch counts. A new `ai_chat_bedrock_client_ip` filter lets a site behind a proxy it controls give each guest a limit of their own.
+* Chat: the Stop button works again. A page served from a cache fetches fresh security tokens and retries, instead of failing a day after it was cached. Streamed answers parse any line ending, and the "You" and "AI" labels are translated.
+* Saving one settings tab no longer resets values kept on another, such as the conversation log switch or site abilities, and the retention period, popup profile and prompt version are saved with their fields. The WordPress abilities switch on the settings screen is honoured. An import says how many groups it skipped.
+* Indexing says why a post failed. Long tool results and previews are cut without breaking a multibyte character.
+* Uninstall removes every post meta key, transient, scheduled event and user meta the plugin writes, on every site of a network. Vectors in Amazon S3 Vectors stay in your AWS account; delete the index there.
+
 = 1.48.0 =
 * Conversations: the Content gaps panel has a Period control: the last 7, 30 or 90 days. The summary, the table and the content gaps CSV all cover the chosen period. A 7-day or 90-day file says so in its name (`-7d-`, `-90d-`); a 30-day download keeps its old name. The period stays selected while you search, filter, page through or reset the conversation log. Thirty days is still the default.
 
-= 1.47.6 =
-* Counts are translated with proper plural forms everywhere in wp-admin ("1 request", "3 requests"), so languages with other plural rules read correctly too. Dates in the conversation log and the MCP connections follow the date and time format set under Settings > General.
-* Conversation log: sources are shown by name ("Chat, streamed", "Editor tools") instead of their internal keys, the token column says it is input / output, and the table scrolls sideways on a phone instead of widening the page.
-* Chat profiles: limits use WordPress's standard narrow number field, suggested questions are no longer in a code font, and screen readers hear which profile each Edit and Delete button belongs to.
-* MCP: the SigV4 region has a visible label and its hint stays under the field. Server buttons name their server for screen readers, and Remove comes back after a failed request instead of staying on "Removing…". The tools dialog takes focus when it opens, closes with Escape or a click outside, returns focus to the button that opened it, sits above the admin menu and fits a phone screen.
-* Site builder: the example description stays under the field instead of disappearing as you type. Once a plan is shown, creating the drafts is the one primary button, and neither button can be pressed while the other is working. The summary at the end says how many drafts were created, skipped and failed; it used to say "finished" whatever happened.
-* Messages that appear after an action replace each other instead of piling up, have WordPress's own translated dismiss button and are announced to screen readers.
-* The streamed content generator shows "Open in editor" as a link, like the page does without JavaScript.
-
-= 1.47.5 =
-* The "no usable AWS credentials" notice shown across wp-admin can now be dismissed, and stays dismissed for you. It was meant to be dismissible, but nothing recorded the dismissal, so it came back on every screen.
-* Answer checks: running the checks saves the table first, so an edit you had not saved yet is what runs. The button now says "Save and run the checks", it is the only primary button, and the buttons wait while a request is out, so a double click no longer sends each case to Amazon Bedrock twice.
-* Content generator: tone and length each have a row of their own. The hints for the language and source notes stay under the fields instead of disappearing as you type. "Open in editor" is a plain link in the notice, and the notices can be dismissed.
-* Settings: number fields use WordPress's standard narrow width. The managed prompt's version has its own labelled line, and a prompt that cannot be read is reported in a standard notice. Suggested questions are no longer shown in a code font.
-* Diagnostics: the common fixes are a bulleted list, and the IAM policy keeps one statement per line and scrolls sideways instead of wrapping.
-* Test Chat links to the model settings it shows, and screen readers hear each value with its name. In the chat, the suggested questions are announced as a group.
-* The translation template is up to date again; it had stopped at 1.46.0.
-
-= 1.47.4 =
-* Settings: moving a configuration to another site has a tab of its own, Import and export, instead of repeating under every group of options. After an import the page returns to that tab with the result.
-* Settings: the welcome message field is as wide as the other long text, so a sentence is no longer cut off while you type it. The Conversation log and Floating chat rows put their second control (days to keep, profile) on a line of its own, like WordPress's own Discussion settings.
-* Chat profiles: the four limits are laid out one per row with their own labels. An empty field means the main setting, which is shown in grey, instead of a 0 that looked like a real value. Editing a profile has a Cancel button.
-* Diagnostics: each check's status is shown as a coloured badge, the same as on the overview.
-* Conversations: the content gaps CSV button appears once there is something to download, below the report, and the stored exchanges are set apart from it.
-* MCP: the section links are announced as navigation, the address follows the section you pick so it can be bookmarked, and links to another section of the same page work. The two settings that save as soon as you change them have a label next to the checkbox and say so.
-
-= 1.47.3 =
-* Guests could not rate answers when guest access came from the chat's profile rather than the main setting, which is how the floating chat's settings suggest allowing guests: the thumbs did nothing. Feedback now follows the same rule as the chat, profile included; a signed-in-only profile also refuses guest ratings when the main setting allows guests.
-* Clearing a chat that uses a profile put back the site-wide welcome message instead of the profile's.
-* The chat block's preview in the editor had no styles, and its Send and Clear buttons looked usable but did nothing. The preview is now styled like the page and marked as a preview that cannot be used.
-* The chat block can be a floating button, as the shortcode's `mode="popup"` can: Display and Button label settings in the block sidebar.
-* Semantic search: the index can be deleted from the Grounding settings (Delete the index). The action existed, but no screen offered it.
-* Refresh model list updates the model menus in place, keeping unsaved choices, instead of asking for a reload.
-* Deleting a profile, deleting all stored conversations, deleting the index and revoking every AI client connection now ask for confirmation first. Deleting all conversations now confirms it has done so.
-* Notices shown after an action no longer come back when the page is reloaded; like WordPress's own, their flags are removed from the address bar.
-* The editor assistant sidebar loads in the post editor only. The widgets and site editors fired the same hook, and there its `wp-editor` dependency made WordPress warn.
-
-= 1.47.2 =
-* The Test Chat screen in wp-admin showed the chat box, but it did nothing: sending a message had no effect and the box had no styles. The screen loads both the admin script and the chat's own, and both were registered under the same handle, so WordPress kept the admin one, registered first, and never loaded the chat script or its stylesheet. The admin script and stylesheet now have a handle of their own (`ai-chat-for-amazon-bedrock-admin`); the chat's handle is unchanged, so a theme that dequeues it by name is not affected. Front-end pages were never affected.
-
-= 1.47.1 =
-* Sites in a VPC with an interface endpoint for Bedrock (or STS) could not reach Bedrock except by streaming. With private DNS on, `bedrock-runtime.<region>.amazonaws.com` resolves to an address inside the VPC, and WordPress's `wp_safe_remote_*()` refuses private addresses, so the Diagnostics model test, buffered answers, knowledge base retrieval and the credential check all failed within a millisecond with "Amazon Bedrock could not be reached". Found on ECS Fargate in a VPC with a `bedrock-runtime` endpoint. For the AWS host of each request, and only while it runs, the plugin now lets that address through; the rest of WordPress's URL check still applies, and any host outside `amazonaws.com`, `amazonaws.com.cn` and `api.aws` is still refused, look-alikes such as `bedrock-runtime.<region>.amazonaws.com.example.net` included.
-
-= 1.47.0 =
-* Export the Content gaps panel as CSV for editorial planning. Administrators can download the same ranked gaps from the last 30 days, with occurrence counts, the latest question time in UTC, and grounding counts for the exchanges contributing to each gap. Downloads require a nonce, preserve CSV quoting and backslashes, and neutralize spreadsheet formulas. No new data is collected or sent to Bedrock.
-
-= 1.46.0 =
-* Connect with an Amazon Bedrock API key. Until now a first answer needed an IAM user, an access key pair and a policy, which is where most new sites stopped. Paste one key from the Bedrock console into the settings, define `AI_CHAT_BEDROCK_API_KEY` in `wp-config.php`, or set `AWS_BEARER_TOKEN_BEDROCK`. The key is stored encrypted and withheld from settings exports. It covers chat, streaming, the model list and embeddings; Knowledge Bases, Prompt Management and AgentCore Gateway do not accept API keys, so they keep using a role or access keys and say so instead of failing unsigned. The generated IAM policy adds `bedrock:CallWithBearerToken` when a key is configured, and Diagnostics warns about short-term keys that expire within 12 hours.
-* OpenAI gpt-oss, Qwen3, DeepSeek R1, Llama 4, Mistral Large, Kimi and the other chat models in the model list now answer properly. They were sent a plain "User: ... Assistant:" prompt, which gpt-oss and Qwen3 rejected outright and DeepSeek R1 answered by writing both sides of the conversation. They now go through the Bedrock Converse API, which applies each model's own chat format; checked by invoking each one, buffered and streamed. A configured guardrail is sent in the Converse request body, because Converse ignores the headers used before. When a model refuses temperature or a system prompt, the request is retried once without it and the model is remembered.
-* Claude requests now use Bedrock prompt caching for the system prompt and tool definitions every visitor shares, so repeated questions read that prefix from the cache at a fraction of the input price. Checked on Claude Sonnet 4.5, which wrote 2,431 tokens to the cache on the first question and read them on the second. The dashboard shows the week's cache reads, `wp ai-chat-bedrock usage` prints reads and writes, and the `ai_chat_bedrock_prompt_caching` filter turns caching off.
-* Model discovery also checks the `global.`, `jp.`, `au.`, `ca.` and `us-gov.` inference profiles, so models offered only through them appear in the list, and the generated IAM policy covers them and allows `ListInferenceProfiles`.
-
-= 1.45.0 =
-* Claude Sonnet 5, Opus 5.5, Opus 5, Fable 5.1 and Opus 4.7 could not answer at all. The plugin sent the temperature setting with every Claude request, and Amazon Bedrock rejects it for these models with "`temperature` is deprecated for this model", so every chat, and the Diagnostics model test, failed on them. Found by invoking each current Claude model on Bedrock. Temperature is now left out for them and for any Claude model newer than the plugin knows, and still sent to older Claude models and the other families; Claude Opus 4.6, Sonnet 4.6, Sonnet 4.5, Opus 4.5, Haiku 4.5 and Nova Lite were invoked to confirm they accept it. The field on the settings screen says so.
-* 1.44.0 moved new installations to Amazon Nova Lite, but left the plugin's internal default on Claude 3 Haiku, so a settings form saved without a model, or a request on a site whose settings were never written, still fell back to the retired model. Both now use Nova Lite, and a test fails if shipped code names a retired model again.
-* Removed Claude 3.7 Sonnet and Amazon Titan Text Express from the list shown when model discovery fails; Bedrock now answers both with "This model version has reached the end of its life". Claude Sonnet 5 and Claude Opus 5.5 take their places. That end-of-life reply used to be explained as an IAM problem; it now says the model is no longer served and to choose a current one.
-
-= 1.44.0 =
-* A new installation could not answer its first question. Activation chose Claude 3 Haiku, and its provider has since withdrawn that model from accounts that were not already using it, so the first request came back saying the model was retired. Found by installing the package from the plugin directory onto a clean WordPress and asking it something, which is the one check that reflects what a new user actually gets. Activation now chooses Amazon Nova Lite, verified by invoking it: a fresh install answers in about 700 milliseconds with nothing configured beyond an IAM role.
-* Reordered the model list the plugin falls back to when discovery fails. It began with the same retired model, so the first suggestion was the one least likely to work. Amazon Bedrock still lists retired models, so no amount of discovery can detect this; only invoking the model can, which is what the Diagnostics screen already does.
-* The default model and that list are now checked against each other, so a model that stops working cannot be removed from the list while remaining the default.
-
-= 1.43.0 =
-* Fixed a fault that could take a site down. Offering Bedrock to WordPress's own AI API loads provider classes that implement interfaces from the AI client library core bundles, and the check beforehand only confirmed that library's main class existed. Those are not the same thing: a class implementing a missing interface is a fatal error raised by the include itself, which no caller can catch. A continuous integration run on WordPress 7.1.1 reached that state and the request died. The check now tests each interface the provider implements, the includes sit inside the error handler rather than before it, and the handler catches Throwable rather than Exception, which never saw this kind of failure at all. A missing piece of that library now costs the AI API integration and nothing else.
-* Added a release step that asks a real WordPress whether the plugin attaches where it says it does, and fails the build when it does not. Fourteen points: the abilities and their category and declared behaviour, the block, the shortcode, the Site Health check, the privacy exporter and eraser, the REST routes, the connector, and the AI client provider. The test suites call this plugin's own methods, so they cannot see whether a hook name is one WordPress actually fires, which is how the abilities integration was inert for so long. This step found the fault above on its first run.
-
-= 1.42.0 =
-* The abilities this plugin defines were never registered with WordPress. The wiring hooked `abilities_api_init`, which is not a hook WordPress has ever fired; the real one is `wp_abilities_api_init`, and `wp_register_ability()` refuses anything registered outside it. Nothing was registered either, because no category was passed and WordPress returns nothing for an ability without one. So on every version with the Abilities API, the registry held none of this plugin's abilities, and anything reading the registry, including the official MCP adapter that bridges it to MCP clients, saw nothing here at all. Confirmed against a live WordPress 7.1 site before and after: six abilities now register, where there were none.
-* Each ability now declares its behaviour where a client can read it, rather than only in this readme. The four read-only abilities are marked read-only, and WordPress then permits them over GET only; draft creation is marked as updating but not destructive, and WordPress requires POST. Verified both ways against the live site, including that a read-only ability is refused over POST and the writing one over GET.
-* Text generation is deliberately not marked read-only even though it changes nothing on the site, because it spends money on a Bedrock request, and a client that treats read-only as safe to call unattended would be billing the account to find out.
-* Added a check that fails the build if the unprefixed hook name returns, if the init fallback that WordPress refuses comes back, or if any ability is registered without a category or without declaring its behaviour.
-
-= 1.41.0 =
-* `wp ai-chat-bedrock eval --json` now works. It never had. WP-CLI translates --json into --format json before a command sees it, and this command declared a bare --json flag with no format parameter, so every documented use of it failed with "unknown --format parameter" and wrote nothing. The command now declares --format with table and json, so both --json and --format=json produce the report and a bare run still prints the readable form.
-* Covered the command line contract, which is the part of this plugin other people's pipelines depend on: a failing case exits nonzero, a passing run exits zero, a run that could not happen at all is an error rather than a pass, JSON mode writes exactly one document and nothing else, an inapplicable check stays null instead of counting as a pass, and --record stores a failing run as it was.
-* `--compare` reports and always exits zero, even when it shows a regression. That was already true and is now said in the help text, so nobody wires it into a pipeline expecting it to fail a build.
-
-= 1.40.0 =
-* Deactivating the plugin now removes its scheduled event. The embeddings index schedules an hourly job and nothing cleared it, so switching the plugin off left a recurring event in the site's cron array that fired every hour with nothing loaded to answer it. Settings still survive deactivation, which is deliberate; permanent cleanup still belongs to uninstall.
-* Covered the Server-Sent Events framing, which every streamed answer passes through. The text inside those frames is model output, retrieved page content and tool results, and in the SSE format a blank line ends an event while a line starting "event:" begins one. JSON encoding is what stops that text forging frames, ending the stream early, or injecting an event the browser would act on, and nothing asserted it: emitting the text raw instead produces two events where there should be one.
-* Also covered there: a hostile event name is reduced to a key, a type supplied in the payload cannot override the real event name, a payload that cannot be encoded sends nothing rather than a broken frame, and text in other languages and URLs are sent unescaped so answers stay readable.
-* Verified against a real streamed Bedrock answer rather than only constructed payloads: 35 deltas produced 35 well-formed frames with no malformed output, from a reply containing ten newlines.
-
-= 1.39.0 =
-* Streaming is on after a fresh install. The settings field has always labelled it the default, and every part of the plugin that reads an absent value agrees, but activation wrote 'off', so a new site had it disabled with the box unticked until someone noticed and ticked it.
-* The generated IAM policy no longer grants bedrock:InvokeModelWithResponseStream to sites that have turned streaming off. The setting is stored as the strings 'on' and 'off', and four places read it by comparing against 'off' while the policy generator used a truthiness test, which treats the string 'off' as true. A least-privilege policy that grants an action the site will never call is not least privilege.
-* Covered the gate on the streaming endpoint, which is the path most visitors actually use. Its four steps are a nonce, the guest gate, whether streaming is enabled, and a rate limit; each helper was tested alone and the composition was not. Includes the order: a request refused at the nonce must not consume the rate limit, or anyone can exhaust a visitor's allowance without holding a valid nonce.
-* Covered the state a new installation starts in, including that guests cannot chat, MCP is off and not publicly readable, no credential fields are stored, a rate limit applies from the first request, and reactivating does not overwrite a configured site.
-* The rate limit identifies a guest by an HMAC of their address rather than the address, so the limit works without the site accumulating visitor IPs. Now asserted, along with two visitors not sharing one allowance.
-
-= 1.38.0 =
-* Two more defences turned out to be untested for the same reason as the one fixed in 1.37.0, and both are now covered. Retrieval kept drafts, pending posts and password-protected pages out of an answer through two independent layers, and both could be deleted with every suite passing. Abilities checked a capability before letting a model generate text or invoke a site ability, and that check could be deleted too. The cause in all three cases was a suite defining its own stand-in for the class, so the real implementation was never loaded.
-* Added a check that fails the build when a class is shadowed by a stand-in in the suites without any suite loading the real one. One class is exempt and the exemption states its reason. This is the third time this pattern hid something, so it is now caught structurally rather than by noticing.
-* Keyword retrieval now stops at its own result limit instead of trusting the query to honour posts_per_page, which a pre_get_posts filter can change. The knowledge base path already did this.
-* New suites for retrieval and abilities, 24 fault injections between them confirming the assertions fail when each behaviour is removed.
-* A chat request sent with message as an array, which any caller can do with message[]=x, logged a PHP warning and then sent the literal string "Array" to the model as the question. It is now refused as an empty message. The history parameter beside it had already been hardened against exactly this, so the fix follows what the surrounding code had decided.
-
-= 1.37.0 =
-* The defence that stops a remote MCP server from injecting instructions is now covered by tests. Tool output is returned to the model wrapped in a frame that labels it as data and tells the model not to act on anything inside it. That frame could be deleted outright and all twenty-six suites stayed green, because the suite exercising tool rounds substitutes a stand-in for the class that builds it. It is now asserted against the real class, using hostile content, and five fault injections confirm the assertions fail when the frame is removed, weakened, or moved after the payload.
-* The same method's two limits, at most five tool results per round and a byte ceiling on the payload, were also unasserted and now are.
-* Added the GPL text as a licence file in the source repository. The licence was declared in three places and the file itself was missing, which only became visible when the repository became readable.
-
-= 1.36.0 =
-* The source is public again, and the plugin now points at it. The repository this plugin advertised carried version 1.0.7 and had not been touched since May 2025, so anyone checking the code behind a plugin that asks for AWS credentials found something 34 versions behind and missing 46 of its files. Plugin URI, Author URI and the Composer name now resolve to the repository the released code actually comes from.
-* Uninstall removes the two options the answer checks added in 1.32.0. They were missed, and a guard already existed for exactly this mistake: it compared the meta keys the source writes against the keys uninstall removes, because one had been missed before. It was scoped to meta keys, so the next miss landed in options and nothing failed. The comparison is now made for option names and for scheduled hooks as well.
-* The masking test no longer uses this machine's real account number, IAM role name and EC2 instance id as its input. Those were harmless in a private repository and a disclosure in a public one; AWS documentation examples exercise the same assertions.
-
-= 1.35.0 =
-* Re-shot every catalogue screenshot. Adding the Answer checks menu entry in 1.33.0 left all of them one item short of the plugin they show, and the screen carrying the newest feature was not in the set at all, which for a directory listing means most visitors never learn it exists. Answer checks is now slots 5 and 6.
-* Merged the two Conversations screenshots into one. That page is shorter than the viewport, so the content gaps and the log are always on screen together and no framing could separate them; two captions over one picture would have padded the set.
-* Captions and file names now come from a single ordered manifest, so a renumber cannot leave a caption pointing at the wrong picture, and each capture asserts its expected content is on screen before saving.
-* No functional change.
-
-= 1.34.0 =
-* Rewrote the directory listing. The description had grown to 2308 words across twenty subsections, which is a catalogue rather than a case for installing anything, and it sat one word under the 2500-word budget, so recent releases spent effort shaving sentences instead of writing them. It now leads with what the plugin does, then the three things it does differently, in 811 words.
-* Moved fifteen sections of detail into the FAQ tab, which the directory does not count against that budget and renders separately. Nothing was deleted: a check compares the old description against the new file statement by statement and fails on anything absent that is not listed with the wording that replaced it. It caught one dropped billing disclaimer, which is back.
-* No functional change.
-
-= 1.33.0 =
-* Added the Answer checks screen, so the golden set is not command-line only. Edit cases, run them, and read the result by category with each check named. The command line still runs the same set and still exits nonzero for CI.
-* The screen proposes cases from questions this site was actually asked: the ones no content answered, and the ones a visitor marked unhelpful. A proposal carries the question and the expectation that follows from the record, and leaves required and forbidden text empty. Filling those in would be inventing the ground truth the set exists to hold.
-* Requires the administrator capability: a run spends money and the cases decide what a good answer means for the whole site.
-
-= 1.32.0 =
-* Added a golden set and `wp ai-chat-bedrock eval`. The plugin could stop a bad request and could not say whether an answer that got through was any good, which leaves the most common failure unattended: a prompt edit or a model swap changes behaviour with no diff to review. Cases run through the same pipeline the chat uses and are reported by category, with a nonzero exit so the run can gate a deployment.
-* No judge model. On a deployed multi-turn agent, a built-in LLM judge surfaced 2 of 9 human-confirmed problem patterns and its gate flagged zero of 100 rounds in a batch with 23 confirmed defects (arXiv:2606.10315); in 113 of 114 rounds its own note described the defect while the score read something else. So every check here is a program, every check names its category, and the verdict is derived from the check records alone, which is what stops a detected problem from failing to reach the gate.
-* Retrieval now reports how well the best passage matched, not only that one was found. Running the new evaluation against a real site found the reason it matters: an unrelated question retrieved a passage at 0.1223 against a floor of 0.12, while genuinely answered questions scored 0.153 to 0.408. A single flag cannot tell those apart, and the content gap report is built on that flag. The threshold is unchanged, since one site's corpus is not enough to set it; a case can now require a real match instead.
-* `--compare` reports the per-category difference between two runs and refuses to read a changed number of checks as progress.
-
-= 1.31.0 =
-* Diagnostics no longer prints the whole caller ARN. It kept the full AWS account number and, for an assumed role on EC2, the session name, which is the instance id. Admins share that screen in support threads and screenshots, and neither identifier is needed to answer which role is in use. The account is now masked to its last four digits and the session name is dropped; the role or user name, which is the useful part, is unchanged.
-* The generated IAM policy is untouched: it has to stay pasteable, so it keeps the real account wherever an ARN needs one.
-* Refreshed nine catalogue screenshots. They predated the Site Pages menu item added in 1.18.0, so every one showed a sidebar the plugin no longer has, and the Diagnostics shot predated the guardrail and knowledge base checks added in 1.27.0.
-
-= 1.30.1 =
-* Corrected a claim in 1.30.0. Amazon Bedrock is registered with the WordPress 7.1 connector registry, and any plugin reading `wp_get_connectors()` sees it, but it does not appear on the Settings > Connectors screen: that screen renders only connectors with a credential to manage, and Bedrock has none to store. Confirmed by registering two connectors of the same shape, one declaring an API key and one declaring none; only the first was shown. Making the card appear would mean claiming a credential method Bedrock does not use.
-* No functional change. The AI Client integration, the governance checks and the usage accounting are unaffected.
-
-= 1.30.0 =
-* Registered Amazon Bedrock with the AI Client that WordPress 7.0 added, so `wp_ai_client_prompt()` reaches it from any plugin. Those calls go through this plugin's request path, so the guardrail, model, region, token ceiling, daily limit and usage accounting a site has already configured apply to them as well.
-* Registered Bedrock with the WordPress 7.1 connector registry, declared as storing no credential. Bedrock signs with IAM, and the alternative would have put a field in front of site owners inviting them to paste a long-lived key into the database.
-* The pre-flight check spends nothing, because WordPress runs it for support probes as well as generations; a plugin asking whether a feature exists cannot consume a visitor's budget. Tokens are still counted where they are spent.
-* The provider declares only the options it honours, with their real limits, so WordPress reports no matching model rather than handing over a request that is then quietly ignored.
-* Nothing loads on WordPress without the AI Client, so 6.x installations are unaffected.
-
-= 1.29.0 =
-* Updated the MCP server and client to protocol revision 2026-07-28, which removes the initialize handshake and protocol-level sessions and carries the version, capabilities and identity on each request. WordPress is stateless anyway, so this fits it better than what came before.
-* Added server/discover, which the revision requires, plus deterministic tool ordering and cache hints on list results.
-* Clients on 2025-11-25 and 2025-06-18 keep working and receive exactly what they received before. A revision this site does not speak is refused with the error code the specification reserves for it.
-* The client declares its revision on every request and retries once on an older one if a server refuses.
-
-= 1.28.0 =
-* Added configuration transfer: download everything except credentials as a file, and apply it on another site. Useful for moving a staging setup into production without retyping thirty five fields.
-* AWS keys and MCP tokens are never written to the file. They are encrypted for one site, so they would be useless elsewhere, and a configuration file is not a safe place for them. Credentials already present on the receiving site are left untouched.
-* Imported values go through the same validation the settings screens use, and only known options are written.
-* Fixed the settings validator depending on a function that only exists inside the admin area, which would have broken any non-admin caller.
-
-= 1.27.0 =
-* Diagnostics now checks a configured guardrail and reports its name, version and readiness. Amazon Bedrock refuses every request when the guardrail identifier is wrong, so this used to be discovered by a visitor rather than on the settings screen.
-* Diagnostics also checks a configured knowledge base. An identifier of the wrong shape is caught without calling AWS, and anything plausible is tried for real.
-* A rejected guardrail now produces a message naming the guardrail instead of pointing at the IAM policy.
-
-= 1.26.0 =
-* An MCP server that does not answer now says why. The status column said only "Unavailable" while the reason, whether the host was unreachable, the credentials were rejected or the endpoint returned an HTTP error, was being discarded.
-* The reason is length limited and inserted as text, since a remote server controls part of it.
-
-= 1.25.1 =
-* Saving settings now confirms it. The page displayed notices for its own slug while WordPress registers the built-in confirmation under another, so a save came back silently with no way to tell whether it had worked.
-
-= 1.25.0 =
-* The chat title is now a second level heading instead of a third, which skipped a level under the page title on the front end and on the Test Chat screen.
-* The editor assistant sidebar no longer uses WordPress APIs deprecated in 6.6, so it will not quietly disappear when they are removed. Older versions still work through a fallback.
-
-= 1.24.0 =
-* Fixed the Amazon Bedrock Chat block, which could not be inserted in the block editor at all. Its editor script was registered without dependencies, so it ran before the editor libraries existed and failed silently.
-* The block now offers a menu of the chat profiles that exist, instead of asking for a profile key typed from memory.
-* Uninstall now removes the marker left on scaffolded pages, which was being left behind.
-
-= 1.23.0 =
-* The chat no longer renders for visitors when it cannot answer. Until now a fresh install showed a working-looking chat that failed on the first message.
-* Administrators see a short message in its place saying what is still missing, with a link to finish the setup. Visitors see nothing at all.
-* The floating widget stays silent in that state rather than putting a notice in the footer.
-
-= 1.22.0 =
-* Added a Stop button while an answer is streaming. Whatever has arrived is kept, and stopping is not reported as an error.
-* Stopping now stops the Amazon Bedrock request too. Measured on a 3,939 character answer: stopping after 222 characters took 1.3 seconds instead of 8.9, so the rest was never generated or billed.
-* A visitor closing the tab has the same effect. Until now the server carried on consuming the answer nobody was reading.
-
-= 1.21.0 =
-* Fixed the chat being close to unusable with a screen reader. Streaming rewrote the whole answer into a live region on every chunk, so one short answer was read out fifteen times over. Answers are announced once now, when complete, from a dedicated region.
-* Announcements use the rendered text rather than the raw reply, so a screen reader no longer reads markdown asterisks aloud.
-* When Amazon Bedrock refuses a request the message now names the credential source that was used, and warns when temporary credentials are in use that nothing will renew.
-* Checked the visitor chat at phone width: no horizontal overflow and no tap target under 24 pixels.
-
-= 1.20.0 =
-* Fixed the dashboard checklist. The last step was written as permanently incomplete, so the list could never be finished however the site was configured. It now detects the chat block, the shortcode and the floating button, and says which one it found.
-* The checklist shows progress, and once setup is done it lists what is still worth configuring: grounding, conversation recording, a fallback model, and a guest limit when guest chat is on.
-* Each suggestion disappears once it no longer applies.
-* Fixed the seven-day usage chart drawing a small bar for days with no requests, which made idle days look busy.
-
-= 1.19.0 =
-* Added a content gap report to the Conversations screen: the questions visitors asked that no site content answered, or that they marked unhelpful, grouped by subject and counted.
-* Each gap links to the content generator with the subject filled in, so the loop from question to draft is one click.
-* Each stored exchange now records whether site content was found for the question, and the CSV export carries that column.
-* Similar wordings are grouped without stemming, so two subjects are never merged into one; the same subject may appear twice if worded very differently.
-
-= 1.18.1 =
-* Fixed accessibility on the Site Pages screen: every row of the proposed page list exposed the same name, so a screen reader could not tell the title fields apart. Names now carry the page title and follow it as you edit.
-* Removed stray hidden labels from that list which were read out as loose text.
-* Shortened the description, which repeated what the Privacy Policy section already states.
-
-= 1.18.0 =
-* Added Site Pages: describe the business, review the proposed page list, and get each page as a draft. Output is always a draft, an existing title is skipped rather than overwritten, and the theme, menus and options are untouched.
-* Bedrock failures now say what to do. A model that cannot be called on demand, a model ID the region does not offer, a model the provider retired, a missing model grant and an IAM denial were all reported with one generic message before, and each has a different fix.
-* An IAM denial now names the action that was refused.
-* Replaced a call to get_page_by_title(), which WordPress deprecated in 6.2.
-
-= 1.17.0 =
-* Diagnostics now generates the IAM policy this site actually needs, scoped to the configured models, region and optional features, with a copy button.
-* The policy covers what is easy to get wrong by hand: InvokeModelWithResponseStream is a separate action from InvokeModel, a cross-region inference profile also needs its underlying foundation model, a guardrail needs ApplyGuardrail, and an AgentCore gateway uses its own service prefix.
-* Diagnostics reports which AWS identity the credentials belong to, so a site pointing at the wrong account is obvious.
-* Added the matching entries to Common fixes, including why chat can work while streaming fails.
-
-= 1.16.0 =
-* Added per-role request limits on the Chat tab, so editors or administrators can be given more requests per minute than anonymous visitors.
-* A visitor holding several roles receives the most permissive of them, matching how WordPress capabilities accumulate.
-* Leaving a role empty keeps the site-wide limit and setting it to zero removes the override. Existing sites are unchanged until an override is added.
-
-= 1.15.2 =
-* Restored the Privacy Policy section, which 1.15.1 removed by accident while shortening an upgrade notice. The plugin behaved the same, but the data flow disclosure was missing from the readme.
-* Added a pre-release script that checks version consistency, readme limits, every test suite and the package contents, so a missing section cannot slip through again. It caught this very regression.
-* Added a WordPress coding standards ruleset and worked the code to a clean run: 623 errors and 230 warnings down to none.
-* Replaced dirname( __FILE__ ) with __DIR__, renamed view variables that shadowed WordPress globals such as $paged and $post_id, and renamed parameters that used reserved words.
-* Fixed a latent bug in the event stream parser found while tidying: the frame loop cached the buffer length without shrinking it, so a read containing several frames could stall. Added assertions for multi-frame reads and trailing partial frames.
-
-= 1.15.1 =
-* Ran the official Plugin Check against the plugin and worked through every finding: shipped errors went from ten to none, and warnings from 160 to one documented case.
-* Added the missing translator comments so strings with placeholders can be translated correctly.
-* AWS endpoints are now built in one place and can be redirected with a filter, which suits FIPS endpoints and VPC interface endpoints.
-* Global functions and uninstall variables now carry the plugin prefix, avoiding collisions with other code.
-* Environment variable reads are unslashed and sanitized, and one option write is sanitized explicitly rather than by usage.
-* Removed the manual text domain loading, which WordPress.org has handled automatically since WordPress 4.6, and the now unused class behind it.
-* Shortened two overlong upgrade notices to the 300 character limit.
-
-= 1.15.0 =
-* Added WP-CLI commands: index, index-status, diagnose and usage, so indexing and checks can run in a deploy step or from cron instead of a browser tab.
-* Added optional background indexing through WP-Cron, scheduled only while semantic search is on and removed again when it is switched off or the plugin is deactivated.
-* Indexing a large site no longer requires the settings page to stay open; a full rebuild of ten items took eight seconds from the command line in testing.
-* Tightened the legacy text domain regression check to look at translation calls rather than any occurrence of the string, so a legitimately named CLI command no longer trips it.
-
-= 1.14.1 =
-* Every settings control is now programmatically associated with its row label, so screen readers announce a name instead of an unlabelled field. Checkbox rows keep their single inline label rather than being announced twice.
-* Gave the MCP signing region input an accessible name.
-* Refreshed all catalog screenshots for the current interface and added two, covering the usage breakdown, semantic search, the streaming generator, the conversation log and managed prompts.
-* Audited all twelve plugin screens for overflow, duplicate headings, console errors and unlabelled controls; no layout or script problems remained.
-
-= 1.14.0 =
-* Added Amazon Bedrock Prompt Management support: the system prompt can come from a versioned prompt in AWS, with a settings preview of the exact text that will be sent.
-* Pinning a version keeps the prompt stable while following the draft picks up edits, both verified against a real prompt.
-* A prompt that cannot be read falls back to the local system prompt instead of sending nothing, and the reason is shown in the settings.
-* Fixed request signing for AWS paths that end in a slash. The canonical path dropped the trailing slash, so every Bedrock control plane call of that shape, including GetPrompt, failed with a signature mismatch.
-* Site variables in a prompt template are substituted, and any variable this plugin cannot resolve is listed in the settings instead of being guessed.
-
-= 1.13.0 =
-* Added semantic search: published content can be indexed with an Amazon Titan or Cohere embedding model, and questions are then matched by meaning rather than by shared words. Verified against a question keyword search could not answer at all.
-* Vectors are stored in post meta, indexing runs in batches from the settings screen, and editing a post marks it for re-indexing.
-* Relevance filtering uses a measured floor plus a relative cut instead of one fixed threshold, so an off-topic question returns no context rather than an unrelated passage.
-* Embedding requests appear in the per-model usage panel like any other Bedrock call.
-* Only published, publicly readable content is indexed or returned; drafts and password protected posts are never embedded.
-* The chat request builder now accepts conversation history as an array as well as a JSON string.
-
-= 1.12.0 =
-* Added a seven-day usage panel to the dashboard with a per-day trend and a per-model breakdown of requests and tokens.
-* Usage is now attributed to the model that actually answered, so a fallback or a profile on another model shows up separately. Failed requests are still not counted.
-* The fallback model now also covers a model identifier Bedrock does not recognize, which it reports as HTTP 400. Payload errors are still never retried.
-* Fixed usage pruning, which rebuilt each day's record and would have discarded the new per-model counters.
-* Streaming now keeps a small copy of the first response bytes, because the event-stream parser consumed the body and an HTTP error message was gone before it could be classified.
-
-= 1.11.0 =
-* The content generator now streams the draft as it is written instead of leaving the screen blank until the model finishes. In testing the first text appeared after about 1.5 seconds of a 4.5 second generation.
-* The draft post is only created after the model completes, so an interrupted or failed generation leaves no orphan post.
-* The generator form still works without JavaScript, falling back to the previous synchronous submission.
-* Moved Server-Sent Events framing into one shared class used by both the chat stream and the generator, so the two cannot drift apart.
-* Split the generator into request preparation and draft creation, which is what let the streaming route reuse the same permission checks, limits and prompt.
-
-= 1.10.0 =
-* Added an optional fallback model. When the main model is denied, throttled or unreachable, the request is retried once on the fallback and the reply says which model answered.
-* Streams are only retried before any text has been sent, so a fallback can never duplicate output.
-* Requests refused for other reasons, such as an invalid payload, missing credentials or the daily limit, are never retried.
-* When the fallback also fails, the primary error is still reported but now carries the fallback outcome so the cause is diagnosable.
-* Registered the conversation log with WordPress' personal data export and erase tools, so privacy requests cover stored chat content.
-* Bedrock HTTP failures now carry the status code internally, which is what makes retry decisions possible.
-
-= 1.9.1 =
-* Renamed the plugin to AI Agents & Chat for Amazon Bedrock, which describes the governed tool-using agent it has become. The plugin slug, text domain and settings are unchanged, so nothing needs to be reconfigured.
-* Tool rounds now report which tools ran, instead of only how many, while the agent is working.
-* Answers that used tools gain a collapsible step trace listing each tool, its round and whether it succeeded. Parameter values and tool output are never included, matching the audit log.
-* Reaching the tool round limit is now stated in the answer instead of silently truncating the agent loop.
-* Tool names in the trace and status line are shown in a readable form, such as core/get-site-info, with the internal identifier available on hover.
-* Fixed WordPress Abilities used as chat tools, which could never run: the MCP handler claimed every ability call because it shares the owner___tool shape, and failed it as an invalid server.
-
-= 1.9.0 =
-* Added suggested questions that appear as buttons above the chat input, with a per-profile list and a global default.
-* Added answer feedback: visitors can mark an answer helpful or not, and only the rating is stored.
-* Added search, source and rating filters, pagination and CSV export to the conversation log, with spreadsheet formula characters neutralized in the export.
-* Added a media library bulk action that generates alt text for up to 20 selected images at once, skipping images that already have alt text.
-* Added result notices after alt text generation, reporting how many images were described, skipped or failed.
-* The floating chat now stays open while a visitor browses other pages in the same tab.
-* Fixed conversation log pruning, which dropped the entry identifier and rating so feedback could not be stored after a prune.
-
-= 1.8.0 =
-* Added optional media helpers: a Generate alt text action in the media library that describes images with a Bedrock vision model, and a Generate excerpt button in the block editor sidebar.
-* Existing alt text is preserved unless overwriting is requested, unsupported file types are refused, and images are downscaled before being sent.
-* Split the settings screen into five tabs, which reduced its height from about 3090 to about 970 pixels, and made each tab save only its own fields so other tabs keep their values.
-* Split the MCP screen into Servers, AI clients, Tool policy and Activity sections, which reduced its height from about 2070 to about 1225 pixels; the page stays fully readable without JavaScript.
-* Added Settings and Diagnostics links to the plugin row on the Plugins screen.
-* Added a copy button, a timestamp and a retry action to chat messages.
-* Added an administrator notice when no usable AWS credentials are found, linking to the settings screen.
-* Fixed the floating chat, whose styles and script were queued too late in the footer, leaving the launcher invisible and unable to open.
-* Hardened settings saving so a submission without the tab field list, such as a cached form, no longer resets unrelated settings to their defaults.
-
-= 1.7.0 =
-* Added a floating chat mode for the shortcode and block, plus an optional site-wide floating chat that skips pages already containing a chat.
-* Added a content generator that turns a topic into a draft post with a chosen tone, length, language and optional source notes.
-* Converted generated markdown into paragraph, heading and list blocks, with headings escaped and bodies capped.
-* Rebuilt the translation template, which had been left at the 1.1.0 string set; it now covers all 514 translatable strings with file references and translator comments.
-
-= 1.6.0 =
-* Added named chat profiles so one site can run several chats with their own model, prompt, presentation, guest access, grounding and limits.
-* Added a Chat Profiles admin screen with per-profile shortcodes, and a profile attribute for the chat block and shortcode.
-* Validated profile keys from untrusted input against the stored profiles, so an unknown key falls back to the main settings and cannot unlock guest access.
-* Applied rate limiting per profile instead of one shared bucket.
-* Allowed the Bedrock client to receive per-request model, token and temperature overrides while access flags stay server-side.
-
-= 1.5.0 =
-* Added an optional block editor assistant with improve, shorten, expand, summarize, title suggestion and translate actions; suggestions are never saved automatically.
-* Added an optional conversation log with a 200-entry cap, configurable retention from 1 to 90 days, per-user deletion and one-click clearing.
-* Added a Conversations admin screen showing stored exchanges, token totals and the oldest entry.
-* Recorded editor assistant requests under their own source so they can be reviewed separately.
-* Extended uninstall cleanup to conversation, OAuth and site ability options.
-
-= 1.4.0 =
-* Added an OAuth 2.1 authorization server so MCP clients can connect by signing in to WordPress and approving, with no token copying.
-* Added authorization server and protected resource discovery documents at the standard well-known paths.
-* Added dynamic client registration, mandatory PKCE S256, single-use authorization codes, and HTTPS or loopback redirect validation.
-* Added bearer token authentication for the MCP endpoint, with hashed token storage, one-hour access tokens and rotating refresh tokens.
-* Revoked a connection automatically when a rotated refresh token is reused.
-* Added a connected clients list in the MCP settings with individual and bulk revocation.
-
-= 1.3.0 =
-* Rebuilt the built-in WordPress MCP server on JSON-RPC 2.0 over Streamable HTTP, so standard MCP clients can now connect; the previous custom routes could not be used by any MCP client.
-* Added `initialize` with protocol-version negotiation, `tools/list`, `tools/call`, `ping`, batch requests and notification handling.
-* Exposed the controlled site abilities through the MCP server: SEO suggestions, WooCommerce product lookup and draft-only post creation, each capability-checked.
-* Recorded every MCP server tool call in the audit log with metadata only.
-* Kept the legacy discovery and tool routes for existing integrations.
-
-= 1.2.0 =
-* Added streaming Bedrock responses over an authenticated POST request with Server-Sent Events, enabled by default.
-* Added automatic fallback to a buffered request when streaming is unavailable, disabled, or interrupted.
-* Added an AWS credential provider chain covering environment variables, ECS and EKS task roles, and EC2 instance roles (IMDSv2).
-* Cached temporary role credentials encrypted, with refresh before expiry and invalidation when settings change.
-* Fixed SigV4 canonicalization so model identifiers containing colons or slashes are signed correctly; affected requests previously failed with a signature mismatch.
-* Replaced the fixed model list with live discovery of Bedrock models and cross-region inference profiles, and expanded the region list.
-* Added a diagnostics screen and Site Health check covering credentials, region, model, streaming, encryption, guest access and MCP, with an optional live connectivity test.
-* Added an Amazon Bedrock Chat block with server-side rendering alongside the existing shortcode.
-* Added optional Amazon Bedrock Guardrails support and a site-wide daily request limit.
-* Added request and token usage counters with 30-day retention; counters never include prompts or responses.
-* Added MCP tool governance: a required capability, per-tool allow list, administrator-only handling of tools that change data, configurable multi-round tool loops, and a metadata-only audit log.
-* Replaced the custom MCP request format with JSON-RPC over Streamable HTTP, so standard MCP servers and Amazon Bedrock AgentCore Gateway endpoints work; the previous format is still accepted as a fallback.
-* Added MCP authentication choices: none, an encrypted bearer token, or AWS SigV4 for AgentCore Gateway.
-* Added WordPress Abilities API support: this plugin registers text generation and status abilities, and abilities registered by other plugins can be offered to the chat model under the tool policy.
-* Added answer grounding from published site content and from an Amazon Bedrock knowledge base, inserted as clearly labelled reference data.
-* Added optional narrow site abilities: published content search and read, SEO suggestions, WooCommerce product lookup, and draft-only post creation.
-* Redesigned the chat interface with message bubbles, a typing indicator, a streaming caret, tool status, token counts, dark-mode and reduced-motion support.
-* Redesigned the admin experience with a status dashboard, quick-start checklist and usage overview.
-* Shared one validated request builder between the streaming and buffered endpoints.
-* Extended uninstall cleanup to usage counters, model caches, credential caches, tool policy and the audit log.
-
-= 1.1.0 =
-* Added encrypted AWS credential storage and `wp-config.php` credential constants.
-* Added AWS session-token support for temporary credentials.
-* Disabled guest chat by default and added configurable per-visitor rate limits.
-* Removed duplicate and arbitrary-option AJAX handlers.
-* Removed the duplicate-request EventSource implementation and conversation data in URLs.
-* Moved MCP tool-result processing entirely to the server.
-* Added HTTPS-only, SSRF-resistant MCP requests with response-size and redirect limits.
-* Made WordPress MCP routes authenticated by default and restricted them to published, non-sensitive content.
-* Removed unconditional prompt/tool logging and ensured debug logs contain metadata only.
-* Fixed AI-response and admin-notice XSS paths.
-* Removed PHP sessions and the unused chat-history table.
-* Added strict settings, message, history, model, and REST input limits.
-* Unified the `ai-chat-for-amazon-bedrock` text domain.
-* Completed uninstall cleanup and added automated security regression checks.
-
-= 1.0.7 =
-* Added Model Context Protocol client, server, management, and tool integration.
-
-= 1.0.6 =
-* Improved escaping, internationalization, and direct-file-access protection.
-
-= 1.0.5 =
-* Added additional Bedrock models and chat customization.
-
-= 1.0.0 =
-* Initial release.
+Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.49.0 =
+Optional Amazon S3 Vectors search over every passage, members-only text kept out of answers, OAuth tokens limited to MCP, a working Stop button, and settings tabs that no longer reset each other.
 
 = 1.48.0 =
 Choose a 7, 30 or 90-day period for the content gaps panel and its CSV. The default 30-day view and download are unchanged.
@@ -969,6 +599,8 @@ Security and reliability release. Review the AWS credential settings after upgra
 == Privacy Policy ==
 
 Chat messages and the configured system prompt are sent to Amazon Bedrock. When MCP tools are enabled for authenticated users, relevant tool parameters are sent to the selected external MCP server and tool output is sent to Amazon Bedrock to complete the answer. Review AWS and each MCP provider's privacy terms before use.
+
+When semantic search is on, the text a signed-out visitor can read on each published post is sent to Amazon Bedrock to create embeddings, and each question is embedded the same way. With Amazon S3 Vectors chosen, those passages and their vectors are stored in the vector bucket of your own AWS account, labelled with the site and post they came from. Uninstalling the plugin does not delete them; delete the index in AWS. The optional fixes for other plugins send nothing anywhere.
 
 Conversation logging is disabled by default, and with it off no chat content is written to the database. When an administrator enables it, questions and answers are stored for the configured retention window, capped at the 200 most recent exchanges, and can be deleted per user or in full from the Conversations screen. Administrators are responsible for disclosing this recording to visitors.
 

@@ -124,7 +124,7 @@ check_ux( 1 === $xpath->query( '//nav/a[@aria-current="page" and contains(@href,
 // An import, successful or not, returns to the tab it was started from.
 $admin  = ( new ReflectionClass( 'AI_Chat_Bedrock_Admin' ) )->newInstanceWithoutConstructor();
 $_FILES = array();
-foreach ( array( array( 'applied' => array( 'ai_chat_bedrock_settings' ) ), new WP_Error( 'bad', 'Not a configuration file.' ) ) as $result ) {
+foreach ( array( array( 'applied' => array( 'ai_chat_bedrock_settings' ), 'skipped' => array( 'ai_chat_bedrock_future' ) ), new WP_Error( 'bad', 'Not a configuration file.' ) ) as $result ) {
 	AI_Chat_Bedrock_Transfer::$result = $result;
 	$_POST                            = array( 'aicfab_import_json' => '{}' );
 	try {
@@ -135,6 +135,7 @@ foreach ( array( array( 'applied' => array( 'ai_chat_bedrock_settings' ) ), new 
 		parse_str( (string) parse_url( $redirect->getMessage(), PHP_URL_QUERY ), $query );
 		check_ux( isset( $query['tab'] ) && 'transfer' === $query['tab'], 'the import returns to the import and export tab' );
 		check_ux( isset( $query['aicfab-transfer'] ) && ( is_wp_error( $result ) ? 'error' : 'imported' ) === $query['aicfab-transfer'], 'the import reports its outcome' );
+		check_ux( is_wp_error( $result ) || ( isset( $query['aicfab-skipped'] ) && '1' === $query['aicfab-skipped'] ), 'the import reports how many groups it skipped' );
 	}
 }
 

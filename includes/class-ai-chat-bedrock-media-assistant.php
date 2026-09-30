@@ -224,8 +224,8 @@ class AI_Chat_Bedrock_Media_Assistant {
 			return new WP_Error( 'aicfab_forbidden', __( 'You are not allowed to edit this post.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 403 ) );
 		}
 
-		$content = wp_strip_all_tags( strip_shortcodes( (string) $post->post_content ) );
-		$content = trim( preg_replace( '/\s+/', ' ', (string) $content ) );
+		// An excerpt is shown to everyone, so it summarizes what a signed-out visitor can read.
+		$content = AI_Chat_Bedrock_Content::flatten( AI_Chat_Bedrock_Content::to_text( AI_Chat_Bedrock_Content::render_as_guest( $post ) ) );
 		if ( '' === $content ) {
 			return new WP_Error( 'aicfab_empty_post', __( 'This post has no content to summarize.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 400 ) );
 		}

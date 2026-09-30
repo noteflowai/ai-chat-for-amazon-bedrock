@@ -44,7 +44,10 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-prompts.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-chat-request.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-profiles.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-content.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-embeddings.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-s3-vectors.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-integrations.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-cli.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-retrieval.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-abilities.php';
@@ -103,12 +106,15 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_import_settings', $admin, 'handle_import_settings' );
 		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_index_embeddings', $admin, 'ajax_index_embeddings' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_clear_embeddings', $admin, 'handle_clear_embeddings' );
+		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_s3_vectors', $admin, 'ajax_s3_vectors' );
 		$this->loader->add_action( 'save_post', 'AI_Chat_Bedrock_Embeddings', 'invalidate' );
 		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_CLI', 'register' );
+		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_Integrations', 'init' );
 		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_Embeddings', 'schedule' );
 		$this->loader->add_action( 'update_option_ai_chat_bedrock_settings', 'AI_Chat_Bedrock_Embeddings', 'schedule' );
 		$this->loader->add_action( AI_Chat_Bedrock_Embeddings::CRON_HOOK, 'AI_Chat_Bedrock_Embeddings', 'run_scheduled_index' );
-		$this->loader->add_action( 'deleted_post', 'AI_Chat_Bedrock_Embeddings', 'invalidate' );
+		// Before, not after: once a post is deleted its meta is gone and so is the record of its S3 vectors.
+		$this->loader->add_action( 'before_delete_post', 'AI_Chat_Bedrock_Embeddings', 'forget' );
 
 		$diagnostics = new AI_Chat_Bedrock_Diagnostics();
 		$this->loader->add_filter( 'site_status_tests', $diagnostics, 'register_site_health_tests' );
@@ -123,6 +129,8 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'wp_footer', $public, 'render_site_wide_popup', 5 );
 		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_message', $public, 'handle_chat_message' );
 		$this->loader->add_action( 'wp_ajax_nopriv_ai_chat_bedrock_message', $public, 'handle_chat_message' );
+		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_refresh_nonce', $public, 'handle_refresh_nonce' );
+		$this->loader->add_action( 'wp_ajax_nopriv_ai_chat_bedrock_refresh_nonce', $public, 'handle_refresh_nonce' );
 
 		$stream = new AI_Chat_Bedrock_Stream();
 		$this->loader->add_action( 'rest_api_init', $stream, 'register_routes' );

@@ -282,9 +282,12 @@ foreach ( array( 'admin class' => $admin, 'partial' => $partial ) as $label => $
 $main   = (string) file_get_contents( dirname( __DIR__ ) . '/ai-chat-for-amazon-bedrock.php' );
 $readme = (string) file_get_contents( dirname( __DIR__ ) . '/readme.txt' );
 $docs   = (string) file_get_contents( dirname( __DIR__ ) . '/docs/content-gap-export.md' );
-check_period( 1 === preg_match( '/^ \* Version: 1\.48\.0$/m', $main ), 'the plugin header is 1.48.0' );
-check_period( false !== strpos( $main, "define( 'AI_CHAT_BEDROCK_VERSION', '1.48.0' );" ), 'the version constant is 1.48.0' );
-check_period( 1 === preg_match( '/^Stable tag: 1\.48\.0$/m', $readme ), 'the readme stable tag is 1.48.0' );
+// The feature shipped in 1.48.0; later releases keep it, so the version only has to be at least that.
+$header_version = preg_match( '/^ \* Version: ([0-9.]+)$/m', $main, $found ) ? $found[1] : '';
+$stable_tag     = preg_match( '/^Stable tag: ([0-9.]+)$/m', $readme, $found ) ? $found[1] : '';
+check_period( '' !== $header_version && version_compare( $header_version, '1.48.0', '>=' ), 'the plugin header is 1.48.0 or later' );
+check_period( false !== strpos( $main, "define( 'AI_CHAT_BEDROCK_VERSION', '" . $header_version . "' );" ), 'the version constant matches the header' );
+check_period( $header_version === $stable_tag, 'the readme stable tag matches the header' );
 $changelog = strpos( $readme, '== Changelog ==' );
 check_period( false !== $changelog && false !== strpos( $readme, '= 1.48.0 =', $changelog ), 'the changelog has 1.48.0' );
 $notice = strpos( $readme, '== Upgrade Notice ==' );

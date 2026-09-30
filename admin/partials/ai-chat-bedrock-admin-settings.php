@@ -32,14 +32,24 @@ $base        = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings' )
 	if ( 'imported' === $aicfab_transfer ) :
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$aicfab_applied = isset( $_GET['aicfab-applied'] ) ? absint( $_GET['aicfab-applied'] ) : 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$aicfab_skipped = isset( $_GET['aicfab-skipped'] ) ? absint( $_GET['aicfab-skipped'] ) : 0;
 		?>
-		<div class="notice notice-success is-dismissible"><p>
+		<div class="notice <?php echo esc_attr( $aicfab_skipped > 0 ? 'notice-warning' : 'notice-success' ); ?> is-dismissible"><p>
 			<?php
 			printf(
 				/* translators: %s: number of settings groups applied. */
 				esc_html__( 'Configuration imported. %s settings groups were applied. Credentials were not in the file and are unchanged.', 'ai-chat-for-amazon-bedrock' ),
 				esc_html( number_format_i18n( $aicfab_applied ) )
 			);
+			if ( $aicfab_skipped > 0 ) {
+				echo ' ';
+				printf(
+					/* translators: %s: number of settings groups skipped. */
+					esc_html( _n( '%s group in the file was skipped, because this version does not recognize it or its value was not valid.', '%s groups in the file were skipped, because this version does not recognize them or their values were not valid.', $aicfab_skipped, 'ai-chat-for-amazon-bedrock' ) ),
+					esc_html( number_format_i18n( $aicfab_skipped ) )
+				);
+			}
 			?>
 		</p></div>
 	<?php elseif ( 'error' === $aicfab_transfer ) : ?>

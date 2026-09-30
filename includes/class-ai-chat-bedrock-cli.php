@@ -37,13 +37,18 @@ class AI_Chat_Bedrock_CLI {
 	 * : Stop after this many batches. Defaults to no limit.
 	 *
 	 * [--force]
-	 * : Re-embed every item, even when its stored vector is current.
+	 * : Re-embed every item, even when its stored vector is current. The current vectors
+	 * keep answering questions until each item is replaced.
+	 *
+	 * [--create-index]
+	 * : With Amazon S3 Vectors, create the configured index first if it does not exist.
 	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp ai-chat-bedrock index
 	 *     wp ai-chat-bedrock index --batch=20
 	 *     wp ai-chat-bedrock index --force
+	 *     wp ai-chat-bedrock index --create-index
 	 *
 	 * @param array $args       Positional arguments.
 	 * @param array $assoc_args Options.
@@ -57,13 +62,34 @@ class AI_Chat_Bedrock_CLI {
 		$max   = isset( $assoc_args['max'] ) ? max( 1, (int) $assoc_args['max'] ) : 0;
 		$force = ! empty( $assoc_args['force'] );
 
+		$options = get_option( 'ai_chat_bedrock_settings', array() );
+		$options = is_array( $options ) ? $options : array();
+		if ( 's3_vectors' === AI_Chat_Bedrock_Embeddings::store( $options ) ) {
+			$model = isset( $options['embedding_model_id'] ) ? (string) $options['embedding_model_id'] : '';
+			if ( ! empty( $assoc_args['create-index'] ) ) {
+				$created = AI_Chat_Bedrock_S3_Vectors::create_index( $model, $options );
+				if ( is_wp_error( $created ) && 'aicfab_s3v_ConflictException' !== $created->get_error_code() ) {
+					WP_CLI::error( $created->get_error_message() );
+				}
+			}
+			$index = AI_Chat_Bedrock_S3_Vectors::describe_index( $model, $options );
+			if ( is_wp_error( $index ) ) {
+				WP_CLI::error( $index->get_error_message() );
+			}
+			if ( ! empty( $index['problems'] ) ) {
+				WP_CLI::error( implode( ' ', $index['problems'] ) );
+			}
+		}
+
 		if ( $force ) {
-			$reset = AI_Chat_Bedrock_Embeddings::clear();
-			WP_CLI::log( sprintf( 'Cleared %d stored vectors.', (int) $reset ) );
+			// Forget what was indexed, not the vectors: answers keep working while they are replaced.
+			AI_Chat_Bedrock_Embeddings::reset();
+			WP_CLI::log( 'Every item will be embedded again.' );
 		}
 
 		$status = AI_Chat_Bedrock_Embeddings::status();
 		WP_CLI::log( sprintf( 'Model: %s', $status['model'] ) );
+		WP_CLI::log( sprintf( 'Store: %s', 's3_vectors' === $status['store'] ? 'Amazon S3 Vectors' : 'WordPress database' ) );
 		WP_CLI::log( sprintf( 'Pending: %d of %d published items.', (int) $status['pending'], (int) $status['total'] ) );
 
 		if ( $status['pending'] < 1 ) {
@@ -110,6 +136,9 @@ class AI_Chat_Bedrock_CLI {
 		WP_CLI::log( sprintf( 'Indexed %d, already current %d, failed %d.', $totals['indexed'], $totals['skipped'], $totals['failed'] ) );
 
 		if ( $totals['failed'] > 0 ) {
+			if ( ! empty( $counts['message'] ) ) {
+				WP_CLI::warning( $counts['message'] );
+			}
 			WP_CLI::warning( sprintf( 'Still pending: %d. Check the model access and IAM permissions.', (int) $final['pending'] ) );
 			return;
 		}
@@ -136,12 +165,13 @@ class AI_Chat_Bedrock_CLI {
 			array(
 				array(
 					'model'   => '' !== $status['model'] ? $status['model'] : 'off',
+					'store'   => $status['store'],
 					'total'   => (int) $status['total'],
 					'indexed' => (int) $status['indexed'],
 					'pending' => (int) $status['pending'],
 				),
 			),
-			array( 'model', 'total', 'indexed', 'pending' )
+			array( 'model', 'store', 'total', 'indexed', 'pending' )
 		);
 	}
 

@@ -101,6 +101,7 @@ function wp_delete_file( $path ) {
 
 class WP_Post {
 	public $ID           = 0;
+	public $post_modified_gmt = '';
 	public $post_content = '';
 	public $post_excerpt = '';
 }
@@ -155,6 +156,7 @@ class AI_Chat_Bedrock_AWS {
 	}
 }
 
+require_once __DIR__ . '/../includes/class-ai-chat-bedrock-content.php';
 require_once __DIR__ . '/../includes/class-ai-chat-bedrock-media-assistant.php';
 
 function assert_true( $condition, $label ) {

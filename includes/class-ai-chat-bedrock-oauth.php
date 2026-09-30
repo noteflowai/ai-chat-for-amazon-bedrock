@@ -301,13 +301,17 @@ class AI_Chat_Bedrock_OAuth {
 			$this->redirect_error( $redirect_uri, 'access_denied', $state );
 		}
 
-		$this->render_consent_form( $client, $state );
+		$this->render_consent_form( $client, $state, $redirect_uri );
 	}
 
-	private function render_consent_form( $client, $state ) {
+	private function render_consent_form( $client, $state, $redirect_uri = '' ) {
 		$user = wp_get_current_user();
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=utf-8' );
+		// Approving is one click, so the page must not be loadable inside another site's frame.
+		header( 'X-Frame-Options: DENY' );
+		header( "Content-Security-Policy: frame-ancestors 'none'" );
+		$redirect_host = (string) wp_parse_url( (string) $redirect_uri, PHP_URL_HOST );
 		?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -335,6 +339,17 @@ class AI_Chat_Bedrock_OAuth {
 		<h1><?php esc_html_e( 'Authorize AI client', 'ai-chat-for-amazon-bedrock' ); ?></h1>
 		<p><?php esc_html_e( 'An AI client is requesting access to this site through the Model Context Protocol.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 		<div class="client"><?php echo esc_html( $client['client_name'] ); ?></div>
+		<?php if ( '' !== $redirect_host ) : ?>
+		<p>
+			<?php
+			printf(
+				/* translators: %s: host name the authorization is sent to. */
+				esc_html__( 'The client named itself; its name is not verified. Approving sends access to %s. Continue only if you started this connection and recognize that address.', 'ai-chat-for-amazon-bedrock' ),
+				'<strong>' . esc_html( $redirect_host ) . '</strong>'
+			);
+			?>
+		</p>
+		<?php endif; ?>
 		<p>
 			<?php
 			printf(
@@ -504,6 +519,16 @@ class AI_Chat_Bedrock_OAuth {
 			return $user_id;
 		}
 
+		/*
+		 * The token was granted to an MCP client, so it signs in to the MCP endpoint and
+		 * nothing else. Honoured everywhere, it would let the client call any REST route as
+		 * the user who approved it, including creating users or deleting posts, which the
+		 * consent screen promises it cannot do.
+		 */
+		if ( ! self::is_mcp_request() ) {
+			return $user_id;
+		}
+
 		$header = '';
 		if ( isset( $_SERVER['HTTP_AUTHORIZATION'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$header = trim( (string) wp_unslash( $_SERVER['HTTP_AUTHORIZATION'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -530,6 +555,30 @@ class AI_Chat_Bedrock_OAuth {
 			return (int) $grant['user'];
 		}
 		return $user_id;
+	}
+
+	/**
+	 * Whether the current request is for this plugin's MCP endpoint, judged from the URL
+	 * because determine_current_user runs before the REST route is parsed.
+	 *
+	 * @return bool
+	 */
+	public static function is_mcp_request() {
+		$route = '';
+		if ( isset( $_GET['rest_route'] ) && is_string( $_GET['rest_route'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- routing, not processing input.
+			$route = sanitize_text_field( wp_unslash( $_GET['rest_route'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		} elseif ( isset( $_SERVER['REQUEST_URI'] ) ) {
+			$path   = (string) wp_parse_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), PHP_URL_PATH );
+			$prefix = '/' . trim( function_exists( 'rest_get_url_prefix' ) ? rest_get_url_prefix() : 'wp-json', '/' ) . '/';
+			$at     = strpos( $path, $prefix );
+			if ( false === $at ) {
+				return false;
+			}
+			$route = substr( $path, $at + strlen( $prefix ) - 1 );
+		}
+		$route = '/' . trim( rawurldecode( $route ), '/' );
+		$mcp   = '/' . AI_Chat_Bedrock_WP_MCP_Server::NAMESPACE_V1 . '/mcp';
+		return $route === $mcp || 0 === strpos( $route, $mcp . '/' );
 	}
 
 	/**

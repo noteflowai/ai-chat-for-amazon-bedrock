@@ -30,7 +30,7 @@ class AI_Chat_Bedrock_MCP_Integration {
 	}
 
 	public function ajax_save_boolean_option() {
-		$this->authorize_admin_request( 'ai_chat_bedrock_nonce' );
+		$this->authorize_admin_request( 'ai_chat_bedrock_admin' );
 		$name    = isset( $_POST['option_name'] ) ? sanitize_key( wp_unslash( $_POST['option_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified in authorize_admin_request().
 		$allowed = array( 'ai_chat_bedrock_enable_mcp', 'ai_chat_bedrock_mcp_public_access' );
 		if ( ! in_array( $name, $allowed, true ) ) {

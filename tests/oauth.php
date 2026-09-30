@@ -136,12 +136,28 @@ check_oauth( false === strpos( $stored, $tokens['access_token'] ), 'Access token
 check_oauth( false === strpos( $stored, $tokens['refresh_token'] ), 'Refresh tokens must never be stored in clear text.' );
 
 // Bearer authentication resolves the granted user and rejects unknown tokens.
+$_SERVER['REQUEST_URI']        = '/wp-json/ai-chat-bedrock/v1/mcp';
 $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $tokens['access_token'];
 check_oauth( 1 === $oauth->authenticate_bearer( false ), 'A valid bearer token must resolve the granted user.' );
 $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer wrong-token';
 check_oauth( false === $oauth->authenticate_bearer( false ), 'Unknown bearer tokens must not authenticate.' );
 $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $tokens['access_token'];
 check_oauth( 7 === $oauth->authenticate_bearer( 7 ), 'An already authenticated user must be preserved.' );
+
+// The token signs in to the MCP endpoint only, never to the rest of the REST API or the site.
+foreach ( array( '/wp-json/wp/v2/users', '/wp-json/wp/v2/posts/1', '/wp-admin/', '/wp-json/ai-chat-bedrock/v1/mcpx', '/' ) as $aicfab_uri ) {
+	$_SERVER['REQUEST_URI'] = $aicfab_uri;
+	check_oauth( false === $oauth->authenticate_bearer( false ), 'A bearer token must not authenticate ' . $aicfab_uri );
+}
+$_SERVER['REQUEST_URI'] = '/index.php';
+$_GET['rest_route']     = '/wp/v2/users';
+check_oauth( false === $oauth->authenticate_bearer( false ), 'A bearer token must not authenticate ?rest_route=/wp/v2/users.' );
+$_GET['rest_route'] = '/ai-chat-bedrock/v1/mcp';
+check_oauth( 1 === $oauth->authenticate_bearer( false ), 'The MCP route is recognized through ?rest_route= as well.' );
+unset( $_GET['rest_route'] );
+$_SERVER['REQUEST_URI'] = '/blog/wp-json/ai-chat-bedrock/v1/mcp/discover';
+check_oauth( 1 === $oauth->authenticate_bearer( false ), 'The MCP routes are recognized under a subdirectory install.' );
+$_SERVER['REQUEST_URI'] = '/wp-json/ai-chat-bedrock/v1/mcp';
 
 // Refresh rotation issues new tokens and reuse revokes the grant.
 $rotated = $oauth->handle_token( new WP_REST_Request( array(

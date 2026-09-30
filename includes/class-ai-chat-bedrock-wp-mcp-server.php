@@ -262,8 +262,15 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 		// Batched requests are answered in order.
 		if ( isset( $payload[0] ) && is_array( $payload[0] ) ) {
 			$responses = array();
-			foreach ( array_slice( $payload, 0, 20 ) as $single ) {
-				$response = $this->dispatch( is_array( $single ) ? $single : array(), $header );
+			$anonymous = ! current_user_can( 'read' );
+			foreach ( array_slice( $payload, 0, 20 ) as $number => $single ) {
+				$single = is_array( $single ) ? $single : array();
+				// The permission check counted the request once; each further call in a batch counts too.
+				if ( $anonymous && $number > 0 && ! AI_Chat_Bedrock_Security::check_rate_limit( 'mcp-rest', 30 ) ) {
+					$responses[] = $this->rpc_error_body( isset( $single['id'] ) && ( is_string( $single['id'] ) || is_int( $single['id'] ) ) ? $single['id'] : null, -32000, __( 'MCP request limit exceeded.', 'ai-chat-for-amazon-bedrock' ) );
+					continue;
+				}
+				$response = $this->dispatch( $single, $header );
 				if ( null !== $response ) {
 					$responses[] = $response;
 				}
@@ -415,7 +422,7 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 			$encoded = '{}';
 		}
 		if ( strlen( $encoded ) > 200000 ) {
-			$encoded = substr( $encoded, 0, 200000 );
+			$encoded = AI_Chat_Bedrock_Security::truncate_bytes( $encoded, 200000 );
 		}
 
 		return $this->rpc_result(

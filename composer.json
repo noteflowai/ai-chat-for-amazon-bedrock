@@ -29,6 +29,12 @@
       "@php tests/oauth.php",
       "@php tests/conversations.php",
       "@php tests/profiles.php",
+      "@php tests/content.php",
+      "@php tests/s3-vectors.php",
+      "@php tests/integrations.php",
+      "@php tests/settings.php",
+      "@php tests/iam-policy.php",
+      "@php tests/rate-limit.php",
       "@php tests/content-generator.php && php tests/media-assistant.php && php tests/tool-runner.php && php tests/tool-ownership.php && php tests/usage.php && php tests/embeddings.php && php tests/prompts.php"
     ],
     "lint": "@php .tools/PHP_CodeSniffer-3.13.6/bin/phpcs --standard=phpcs.xml.dist",

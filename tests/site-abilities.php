@@ -15,7 +15,7 @@ class WP_Error {
 	public function get_error_message() { return $this->message; }
 }
 class WP_Post {
-	public $ID; public $post_title; public $post_content; public $post_status; public $post_password; public $post_type;
+	public $ID; public $post_title; public $post_content; public $post_status; public $post_password; public $post_type; public $post_modified_gmt = '';
 	public function __construct( $id, $title, $content, $status = 'publish', $password = '', $type = 'post' ) {
 		$this->ID = $id; $this->post_title = $title; $this->post_content = $content;
 		$this->post_status = $status; $this->post_password = $password; $this->post_type = $type;
@@ -73,6 +73,7 @@ function wp_insert_post( $args, $wp_error = false ) {
 function wp_salt() { return 'site-abilities-salt'; }
 
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-content.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-tool-policy.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-site-abilities.php';
 
