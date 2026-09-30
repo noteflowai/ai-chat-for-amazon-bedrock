@@ -25,6 +25,13 @@ class AI_Chat_Bedrock_AWS {
 	private $debug;
 
 	/**
+	 * What the invocation in progress is counted as: answer, or embedding.
+	 *
+	 * @var string
+	 */
+	private $usage_kind = 'answer';
+
+	/**
 	 * Amazon Bedrock API key, sent as a bearer token to Bedrock and Bedrock Runtime.
 	 *
 	 * @var string
@@ -394,7 +401,9 @@ class AI_Chat_Bedrock_AWS {
 			)
 			: array( 'inputText' => $text );
 
-		$response = $this->invoke_model( $payload, $model_id );
+		$this->usage_kind = 'embedding';
+		$response         = $this->invoke_model( $payload, $model_id );
+		$this->usage_kind = 'answer';
 		if ( empty( $response['success'] ) ) {
 			$code = isset( $response['data']['code'] ) ? (string) $response['data']['code'] : 'aicfab_error';
 			return new WP_Error( $code, isset( $response['data']['message'] ) ? (string) $response['data']['message'] : __( 'The embedding request failed.', 'ai-chat-for-amazon-bedrock' ) );
@@ -1385,7 +1394,7 @@ class AI_Chat_Bedrock_AWS {
 
 	private function record_usage( $usage, $model_id = '' ) {
 		if ( class_exists( 'AI_Chat_Bedrock_Usage' ) ) {
-			AI_Chat_Bedrock_Usage::record( is_array( $usage ) ? $usage : array(), (string) $model_id );
+			AI_Chat_Bedrock_Usage::record( is_array( $usage ) ? $usage : array(), (string) $model_id, $this->usage_kind );
 		}
 	}
 

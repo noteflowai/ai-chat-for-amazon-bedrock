@@ -76,6 +76,9 @@ class AI_Chat_Bedrock_Chat_Request {
 	public static function sanitize_suggestions( $value ) {
 		return (string) $value;
 	}
+	public static function color_scheme( $value ) {
+		return in_array( $value, array( 'light', 'dark', 'auto' ), true ) ? $value : 'light';
+	}
 }
 class AI_Chat_Bedrock_Profiles {
 	public static function sanitize_key( $value ) {
@@ -203,6 +206,9 @@ $saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' )
 check_set( true === $saved['show_sources'], 'Another tab keeps sources shown.' );
 $saved = save_tab( $admin, array( 'show_sources' ), array() );
 check_set( false === $saved['show_sources'], 'An unticked sources switch is saved as off.' );
+
+$saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'auto' ) );
+check_set( 'auto' === $saved['chat_color_scheme'], 'The color scheme is saved.' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

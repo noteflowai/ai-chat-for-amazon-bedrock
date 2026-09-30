@@ -52,6 +52,19 @@ class AI_Chat_Bedrock_Chat_Request {
 		return array_slice( array_values( array_filter( $list ) ), 0, self::MAX_SUGGESTIONS );
 	}
 
+	/**
+	 * The chat's color scheme: light, dark, or auto to follow the visitor's device.
+	 *
+	 * Light unless chosen otherwise. Until 1.54.0 the chat followed the device, so a visitor
+	 * in dark mode saw a dark panel on a light theme, which is what most themes are.
+	 *
+	 * @param mixed $value Saved or submitted value.
+	 * @return string
+	 */
+	public static function color_scheme( $value ) {
+		return in_array( $value, array( 'light', 'dark', 'auto' ), true ) ? $value : 'light';
+	}
+
 
 	const MAX_MESSAGE_CHARS = 4000;
 	const MAX_HISTORY_BYTES = 50000;

@@ -829,6 +829,7 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'rate_limit_per_minute', __( 'Requests per visitor per minute', 'ai-chat-for-amazon-bedrock' ), 'rate_limit_render', 'aicfab_chat' );
 		$this->field( 'role_limits', __( 'Per-role limits', 'ai-chat-for-amazon-bedrock' ), 'role_limits_render', 'aicfab_chat' );
 		$this->field( 'popup_site_wide', __( 'Floating chat', 'ai-chat-for-amazon-bedrock' ), 'popup_site_wide_render', 'aicfab_chat' );
+		$this->field( 'chat_color_scheme', __( 'Color scheme', 'ai-chat-for-amazon-bedrock' ), 'chat_color_scheme_render', 'aicfab_chat' );
 		$this->field( 'debug_mode', __( 'Debug logging', 'ai-chat-for-amazon-bedrock' ), 'debug_mode_render', 'aicfab_chat' );
 
 		add_settings_section( 'aicfab_integrations', __( 'Fixes for other plugins', 'ai-chat-for-amazon-bedrock' ), array( $this, 'integrations_section_callback' ), 'aicfab_tab_integrations' );
@@ -936,7 +937,7 @@ class AI_Chat_Bedrock_Admin {
 	public function daily_request_limit_render() {
 		$value = absint( $this->option( 'daily_request_limit', 0 ) );
 		echo '<input type="number" id="aicfab_field_daily_request_limit" name="ai_chat_bedrock_settings[daily_request_limit]" value="' . esc_attr( $value ) . '" min="0" max="100000" step="10">';
-		echo '<p class="description">' . esc_html__( 'Maximum Bedrock requests per day for the whole site. Use 0 for no plugin-side limit. This is not a billing guarantee; configure AWS Budgets as well.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Maximum Bedrock requests per day for the whole site. Use 0 for no plugin-side limit. Embeddings for search and indexing are not counted. This is not a billing guarantee; configure AWS Budgets as well.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function knowledge_section_callback() {
 		echo '<p>' . esc_html__( 'Ground answers in your own content. Retrieved passages are passed to the model as reference data, never as instructions, and only published content is used.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
@@ -1268,6 +1269,20 @@ class AI_Chat_Bedrock_Admin {
 		echo '</fieldset>';
 		echo '<p class="description">' . esc_html__( 'Pages that already contain the chat block or shortcode are left unchanged. Use a profile with guest access if visitors should be able to chat.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
+	public function chat_color_scheme_render() {
+		$current = AI_Chat_Bedrock_Chat_Request::color_scheme( $this->option( 'chat_color_scheme', 'light' ) );
+		$choices = array(
+			'light' => __( 'Light (default)', 'ai-chat-for-amazon-bedrock' ),
+			'dark'  => __( 'Dark', 'ai-chat-for-amazon-bedrock' ),
+			'auto'  => __( 'Follow the visitor\'s device', 'ai-chat-for-amazon-bedrock' ),
+		);
+		echo '<select id="aicfab_field_chat_color_scheme" name="ai_chat_bedrock_settings[chat_color_scheme]">';
+		foreach ( $choices as $key => $label ) {
+			echo '<option value="' . esc_attr( $key ) . '" ' . selected( $current, $key, false ) . '>' . esc_html( $label ) . '</option>';
+		}
+		echo '</select>';
+		echo '<p class="description">' . esc_html__( 'Choose what matches your theme. Following the device turns the chat dark for visitors in dark mode, even on a light theme.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
 	public function debug_mode_render() {
 		$checked = 'on' === $this->option( 'debug_mode', 'off' );
 		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[debug_mode]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Log redacted request metadata', 'ai-chat-for-amazon-bedrock' ) . '</label>';
@@ -1375,6 +1390,7 @@ class AI_Chat_Bedrock_Admin {
 		$output['debug_mode']               = ! empty( $input['debug_mode'] ) ? 'on' : 'off';
 		$output['popup_site_wide']          = ! empty( $input['popup_site_wide'] );
 		$output['popup_profile']            = isset( $input['popup_profile'] ) ? AI_Chat_Bedrock_Profiles::sanitize_key( $input['popup_profile'] ) : '';
+		$output['chat_color_scheme']        = AI_Chat_Bedrock_Chat_Request::color_scheme( isset( $input['chat_color_scheme'] ) ? $input['chat_color_scheme'] : '' );
 
 		$guardrail_id           = isset( $input['guardrail_id'] ) ? trim( sanitize_text_field( $input['guardrail_id'] ) ) : '';
 		$output['guardrail_id'] = preg_match( '#^[A-Za-z0-9._:/-]{0,200}$#', $guardrail_id ) ? $guardrail_id : '';
