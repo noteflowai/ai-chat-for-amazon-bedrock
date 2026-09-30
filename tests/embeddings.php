@@ -124,6 +124,7 @@ class WP_Query {
 	public $posts = array();
 	public $found_posts = 0;
 	public function __construct( $args = array() ) {
+		$GLOBALS['aicfab_queries'][] = $args;
 		$ids = array_keys( $GLOBALS['aicfab_posts'] );
 		$matched = array();
 		foreach ( $ids as $id ) {
@@ -357,6 +358,18 @@ function wp_json_encode_compat( $value ) {
 function wp_json_encode( $value ) {
 	return json_encode( $value );
 }
+
+// --- Every language ------------------------------------------------------------
+// Polylang limits a query to the request's language unless told otherwise, so the settings
+// screen counted and cleared only the posts of the admin's language.
+AI_Chat_Bedrock_Embeddings::status( 'amazon.titan-embed-text-v2:0' );
+$aicfab_scoped = array_filter(
+	$GLOBALS['aicfab_queries'],
+	function ( $args ) {
+		return ! array_key_exists( 'lang', $args ) || '' !== $args['lang'];
+	}
+);
+check_emb( count( $GLOBALS['aicfab_queries'] ) > 0 && array() === $aicfab_scoped, 'Every query covers all languages: ' . count( $aicfab_scoped ) . ' of ' . count( $GLOBALS['aicfab_queries'] ) . ' do not.' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

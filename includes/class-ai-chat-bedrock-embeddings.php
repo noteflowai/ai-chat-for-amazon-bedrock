@@ -317,6 +317,7 @@ class AI_Chat_Bedrock_Embeddings {
 				'ignore_sticky_posts'    => true,
 				'update_post_term_cache' => false,
 				'update_post_meta_cache' => false,
+				'lang'                   => '',
 				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- index state is recorded in post meta; only the count is read.
 				'meta_query'             => array(
 					array(
@@ -622,6 +623,7 @@ class AI_Chat_Bedrock_Embeddings {
 				'no_found_rows'          => true,
 				'update_post_term_cache' => false,
 				'update_post_meta_cache' => false,
+				'lang'                   => '',
 				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- a vector index has to be selected by meta; the result set is capped.
 				'meta_query'             => array(
 					array(

@@ -28,7 +28,7 @@ class AI_Chat_Bedrock_Content {
 	/**
 	 * Bump when the extraction changes, so cached text and stored hashes are rebuilt.
 	 */
-	const VERSION = 1;
+	const VERSION = 2;
 
 	/**
 	 * Whether a post is being rendered, so a filter that asks for text again does not recurse.
@@ -126,7 +126,7 @@ class AI_Chat_Bedrock_Content {
 			if ( function_exists( 'setup_postdata' ) ) {
 				setup_postdata( $post );
 			}
-			$html = (string) apply_filters( 'the_content', (string) $post->post_content ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- applying a core filter, not declaring a hook.
+			$html = (string) apply_filters( 'the_content', self::without_restricted_blocks( (string) $post->post_content ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- applying a core filter, not declaring a hook.
 		} finally {
 			// A filter that echoes instead of returning must not reach the response.
 			ob_end_clean();
@@ -140,6 +140,135 @@ class AI_Chat_Bedrock_Content {
 			self::$rendering = false;
 		}
 		return $html;
+	}
+
+	/**
+	 * Post content without the blocks that are shown to a restricted audience.
+	 *
+	 * Rendering as a guest is not enough on its own. Block Visibility, for one, only loads its
+	 * filter on front-end requests, so in admin-ajax, where the settings screen indexes and the
+	 * chat answers, a members-only block rendered for everyone and was indexed. A block that
+	 * carries visibility rules is therefore left out whatever the request, including one shown
+	 * only to guests: losing a sign-in prompt costs nothing, while a guess about which rules
+	 * would hide a block could leak it.
+	 *
+	 * @param string $content Post content.
+	 * @return string
+	 */
+	public static function without_restricted_blocks( $content ) {
+		$content = (string) $content;
+		if ( false === strpos( $content, '<!-- wp:' ) || ! function_exists( 'parse_blocks' ) || ! function_exists( 'serialize_blocks' ) ) {
+			return $content;
+		}
+
+		$removed = false;
+		$blocks  = self::keep_unrestricted( parse_blocks( $content ), $removed );
+		return $removed ? serialize_blocks( $blocks ) : $content;
+	}
+
+	/**
+	 * Whether a block carries rules that hide it from some visitors.
+	 *
+	 * @param array $block Parsed block.
+	 * @return bool
+	 */
+	public static function is_restricted_block( $block ) {
+		$attrs      = isset( $block['attrs'] ) && is_array( $block['attrs'] ) ? $block['attrs'] : array();
+		$restricted = isset( $attrs['blockVisibility'] ) && self::has_visibility_rules( $attrs['blockVisibility'] );
+
+		/**
+		 * Whether a block is shown to a restricted audience, and so is never used to answer.
+		 *
+		 * Block Visibility rules are recognised. Return true for blocks another plugin restricts.
+		 *
+		 * @param bool  $restricted Whether the block is left out.
+		 * @param array $block      Parsed block.
+		 */
+		return (bool) apply_filters( 'ai_chat_bedrock_block_is_restricted', $restricted, $block );
+	}
+
+	/**
+	 * Whether Block Visibility settings do anything, in the current or the 1.x layout.
+	 *
+	 * @param mixed $settings The blockVisibility attribute.
+	 * @return bool
+	 */
+	private static function has_visibility_rules( $settings ) {
+		if ( ! is_array( $settings ) ) {
+			return ! empty( $settings );
+		}
+		foreach ( $settings as $key => $value ) {
+			if ( 'controlSets' === $key ) {
+				foreach ( (array) $value as $set ) {
+					if ( is_array( $set ) && ( ! isset( $set['enable'] ) || $set['enable'] ) && ! empty( $set['controls'] ) ) {
+						return true;
+					}
+				}
+			} elseif ( 'visibilityByRole' === $key ) {
+				if ( '' !== (string) $value && 'all' !== $value ) {
+					return true;
+				}
+			} elseif ( 'restrictedRoles' === $key ) {
+				// Only read when visibilityByRole names a role, which is checked above.
+				continue;
+			} elseif ( is_array( $value ) && array_key_exists( 'enable', $value ) ) {
+				if ( $value['enable'] ) {
+					return true;
+				}
+			} elseif ( ! empty( $value ) ) {
+				// hideBlock, scheduling and any setting added later: present means restricted.
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Drop restricted blocks, and their placeholders in the parent's inner content.
+	 *
+	 * @param array $blocks  Parsed blocks.
+	 * @param bool  $removed Set to true when a block was dropped.
+	 * @return array
+	 */
+	private static function keep_unrestricted( $blocks, &$removed ) {
+		$kept = array();
+		foreach ( (array) $blocks as $block ) {
+			if ( ! is_array( $block ) ) {
+				continue;
+			}
+			if ( self::is_restricted_block( $block ) ) {
+				$removed = true;
+				continue;
+			}
+			if ( ! empty( $block['innerBlocks'] ) ) {
+				$inner_removed = false;
+				$inner         = array();
+				foreach ( $block['innerBlocks'] as $child ) {
+					$filtered = self::keep_unrestricted( array( $child ), $inner_removed );
+					$inner[]  = $filtered ? $filtered[0] : null;
+				}
+				if ( $inner_removed ) {
+					$removed = true;
+					// innerContent holds a null where each inner block goes, in order.
+					$position = 0;
+					$content  = array();
+					foreach ( (array) $block['innerContent'] as $piece ) {
+						if ( null === $piece ) {
+							if ( null !== $inner[ $position ] ) {
+								$content[] = null;
+							}
+							++$position;
+							continue;
+						}
+						$content[] = $piece;
+					}
+					$block['innerContent'] = $content;
+				}
+				$block['innerBlocks'] = array_values( array_filter( $inner ) );
+			}
+			$kept[] = $block;
+		}
+		return $kept;
 	}
 
 	/**

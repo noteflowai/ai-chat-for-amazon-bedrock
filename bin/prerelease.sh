@@ -63,7 +63,8 @@ fi
 ok "$("$PHP_BIN" -v | head -1)"
 
 step "Syntax"
-LINT_ERRORS="$(find . -name '*.php' -print0 | xargs -0 -n1 "$PHP_BIN" -l 2>&1 | grep -v 'No syntax errors' || true)"
+# The coding-standards tools fetched into .tools are not ours to lint, and are a thousand files.
+LINT_ERRORS="$(find . \( -path ./.tools -o -path ./node_modules -o -path ./.git \) -prune -o -name '*.php' -print0 | xargs -0 -n1 "$PHP_BIN" -l 2>&1 | grep -v 'No syntax errors' || true)"
 if [ -n "$LINT_ERRORS" ]; then
 	printf '%s\n' "$LINT_ERRORS"
 	bad 'php -l reported errors'

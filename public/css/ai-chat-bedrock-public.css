@@ -345,6 +345,37 @@
 	cursor: not-allowed;
 }
 
+/* Sign-in prompt, for a visitor the chat is not open to */
+.ai-chat-bedrock-sign-in {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.ai-chat-bedrock-sign-in p {
+	margin: 0;
+	color: var(--aicfab-text);
+}
+
+.ai-chat-bedrock-container .ai-chat-bedrock-sign-in-link {
+	display: inline-block;
+	padding: 8px 16px;
+	font-weight: 600;
+	line-height: 1.4;
+	color: var(--aicfab-accent-contrast);
+	text-decoration: none;
+	background: var(--aicfab-accent);
+	border-radius: 9px;
+}
+
+.ai-chat-bedrock-container .ai-chat-bedrock-sign-in-link:hover,
+.ai-chat-bedrock-container .ai-chat-bedrock-sign-in-link:focus {
+	color: var(--aicfab-accent-contrast);
+	background: #1740b4;
+}
+
 /* Footer */
 .ai-chat-bedrock-footer {
 	display: flex;

@@ -18,6 +18,8 @@ $message_id      = wp_unique_id( 'aicfab-message-' );
 $aicfab_mode     = isset( $atts['mode'] ) && 'popup' === $atts['mode'] ? 'popup' : 'inline';
 $panel_id        = wp_unique_id( 'aicfab-panel-' );
 $launcher        = isset( $atts['launcher'] ) ? $atts['launcher'] : __( 'Chat', 'ai-chat-for-amazon-bedrock' );
+// A visitor the chat would refuse is asked to sign in, rather than typing a question first.
+$sign_in_url = isset( $atts['sign_in_url'] ) ? (string) $atts['sign_in_url'] : '';
 ?>
 <?php if ( 'popup' === $aicfab_mode ) : ?>
 <div class="ai-chat-bedrock-popup" data-state="closed">
@@ -27,7 +29,7 @@ $launcher        = isset( $atts['launcher'] ) ? $atts['launcher'] : __( 'Chat', 
 	</button>
 	<div class="ai-chat-bedrock-popup-panel" id="<?php echo esc_attr( $panel_id ); ?>" hidden>
 <?php endif; ?>
-<div class="ai-chat-bedrock-container<?php echo 'popup' === $aicfab_mode ? ' is-popup' : ''; ?>" data-profile="<?php echo esc_attr( $profile ); ?>" data-welcome="<?php echo esc_attr( $welcome_message ); ?>" style="width: <?php echo esc_attr( $atts['width'] ); ?>;">
+<div class="ai-chat-bedrock-container<?php echo 'popup' === $aicfab_mode ? ' is-popup' : ''; ?><?php echo '' !== $sign_in_url ? ' is-signed-out' : ''; ?>" data-profile="<?php echo esc_attr( $profile ); ?>" data-welcome="<?php echo esc_attr( $welcome_message ); ?>" style="width: <?php echo esc_attr( $atts['width'] ); ?>;">
 	<?php
 	// A page title is h1, so the chat title is h2. It used to be h3, which skipped a
 	// level both here and on the Test Chat screen.
@@ -47,24 +49,31 @@ $launcher        = isset( $atts['launcher'] ) ? $atts['launcher'] : __( 'Chat', 
 			</div>
 		</div>
 	</div>
-	<?php if ( ! empty( $suggestions ) ) : ?>
-		<div class="ai-chat-bedrock-suggestions" role="group" aria-label="<?php esc_attr_e( 'Suggested questions', 'ai-chat-for-amazon-bedrock' ); ?>">
-			<?php foreach ( $suggestions as $suggestion ) : ?>
-				<button type="button" class="ai-chat-bedrock-suggestion"><?php echo esc_html( $suggestion ); ?></button>
-			<?php endforeach; ?>
+	<?php if ( '' !== $sign_in_url ) : ?>
+		<div class="ai-chat-bedrock-input ai-chat-bedrock-sign-in">
+			<p><?php esc_html_e( 'Sign in to chat with the assistant.', 'ai-chat-for-amazon-bedrock' ); ?></p>
+			<a class="ai-chat-bedrock-sign-in-link" href="<?php echo esc_url( $sign_in_url ); ?>"><?php esc_html_e( 'Sign in', 'ai-chat-for-amazon-bedrock' ); ?></a>
+		</div>
+	<?php else : ?>
+		<?php if ( ! empty( $suggestions ) ) : ?>
+			<div class="ai-chat-bedrock-suggestions" role="group" aria-label="<?php esc_attr_e( 'Suggested questions', 'ai-chat-for-amazon-bedrock' ); ?>">
+				<?php foreach ( $suggestions as $suggestion ) : ?>
+					<button type="button" class="ai-chat-bedrock-suggestion"><?php echo esc_html( $suggestion ); ?></button>
+				<?php endforeach; ?>
+			</div>
+		<?php endif; ?>
+		<div class="ai-chat-bedrock-input">
+			<form class="ai-chat-bedrock-form">
+				<label class="screen-reader-text" for="<?php echo esc_attr( $message_id ); ?>"><?php esc_html_e( 'Chat message', 'ai-chat-for-amazon-bedrock' ); ?></label>
+				<textarea id="<?php echo esc_attr( $message_id ); ?>" class="ai-chat-bedrock-textarea" placeholder="<?php echo esc_attr( $atts['placeholder'] ); ?>" rows="2" maxlength="4000"></textarea>
+				<div class="ai-chat-bedrock-buttons">
+					<button type="button" class="ai-chat-bedrock-clear button button-secondary"><?php echo esc_html( $atts['clear_text'] ); ?></button>
+					<button type="submit" class="ai-chat-bedrock-submit button button-primary"><?php echo esc_html( $atts['button_text'] ); ?></button>
+					<button type="button" class="ai-chat-bedrock-stop button button-secondary" hidden><?php esc_html_e( 'Stop', 'ai-chat-for-amazon-bedrock' ); ?></button>
+				</div>
+			</form>
 		</div>
 	<?php endif; ?>
-	<div class="ai-chat-bedrock-input">
-		<form class="ai-chat-bedrock-form">
-			<label class="screen-reader-text" for="<?php echo esc_attr( $message_id ); ?>"><?php esc_html_e( 'Chat message', 'ai-chat-for-amazon-bedrock' ); ?></label>
-			<textarea id="<?php echo esc_attr( $message_id ); ?>" class="ai-chat-bedrock-textarea" placeholder="<?php echo esc_attr( $atts['placeholder'] ); ?>" rows="2" maxlength="4000"></textarea>
-			<div class="ai-chat-bedrock-buttons">
-				<button type="button" class="ai-chat-bedrock-clear button button-secondary"><?php echo esc_html( $atts['clear_text'] ); ?></button>
-				<button type="submit" class="ai-chat-bedrock-submit button button-primary"><?php echo esc_html( $atts['button_text'] ); ?></button>
-				<button type="button" class="ai-chat-bedrock-stop button button-secondary" hidden><?php esc_html_e( 'Stop', 'ai-chat-for-amazon-bedrock' ); ?></button>
-			</div>
-		</form>
-	</div>
 	<div class="ai-chat-bedrock-footer">
 		<small><?php esc_html_e( 'Powered by Amazon Bedrock', 'ai-chat-for-amazon-bedrock' ); ?></small>
 		<small class="ai-chat-bedrock-usage" aria-live="polite"></small>

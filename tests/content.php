@@ -64,6 +64,37 @@ function wp_cache_set( $key, $value, $group, $ttl = 0 ) {
 function wp_cache_delete( $key, $group ) {
 	unset( $GLOBALS['aicfab_cache'][ $group ][ $key ] );
 }
+// The block parser is WordPress's; here a post's blocks are registered with its markup.
+function serialize_blocks( $blocks ) {
+	$html = '';
+	foreach ( $blocks as $block ) {
+		$inner = '';
+		$index = 0;
+		foreach ( $block['innerContent'] as $piece ) {
+			$inner .= null === $piece ? serialize_blocks( array( $block['innerBlocks'][ $index++ ] ) ) : $piece;
+		}
+		$attrs = $block['attrs'] ? ' ' . json_encode( $block['attrs'] ) : '';
+		$html .= null === $block['blockName'] ? $inner : '<!-- wp:' . $block['blockName'] . $attrs . ' -->' . $inner . '<!-- /wp:' . $block['blockName'] . ' -->';
+	}
+	return $html;
+}
+function parse_blocks( $content ) {
+	return isset( $GLOBALS['aicfab_parsed'][ $content ] ) ? $GLOBALS['aicfab_parsed'][ $content ] : array( content_block( null, array(), array( $content ) ) );
+}
+function content_block( $name, $attrs, $inner_content, $inner_blocks = array() ) {
+	return array(
+		'blockName'    => $name,
+		'attrs'        => $attrs,
+		'innerBlocks'  => $inner_blocks,
+		'innerHTML'    => implode( '', array_filter( $inner_content, 'is_string' ) ),
+		'innerContent' => $inner_content,
+	);
+}
+function content_markup( $blocks ) {
+	$content                              = serialize_blocks( $blocks );
+	$GLOBALS['aicfab_parsed'][ $content ] = $blocks;
+	return $content;
+}
 
 class WP_Post {
 	public $ID                = 0;
@@ -154,6 +185,79 @@ add_filter(
 );
 AI_Chat_Bedrock_Content::flush( 1 );
 check_content( false !== strpos( AI_Chat_Bedrock_Content::public_text( $post ), '[removed]' ), 'The indexable text filter applies.' );
+
+// --- Blocks with visibility rules are left out wherever the post is rendered ----
+// Block Visibility filters only front-end requests, so in admin-ajax, where the settings screen
+// indexes and the chat answers, its members block rendered for everyone. Nothing here hides the
+// blocks while rendering, which is that request.
+
+$aicfab_members = array(
+	'blockVisibility' => array(
+		'controlSets' => array(
+			array(
+				'id'       => 1,
+				'enable'   => true,
+				'controls' => array( 'userRole' => array( 'visibilityByRole' => 'logged-in' ) ),
+			),
+		),
+	),
+	'className'       => 'oneai-members',
+);
+$aicfab_paragraph = function ( $text, $attrs = array() ) {
+	return content_block( 'core/paragraph', $attrs, array( '<p>' . $text . '</p>' ) );
+};
+$aicfab_blocks    = array(
+	$aicfab_paragraph( 'The course has ten episodes.' ),
+	content_block(
+		'core/group',
+		$aicfab_members,
+		array( '<div class="oneai-members">', null, '</div>' ),
+		array( $aicfab_paragraph( 'Episode 8 covers evaluation.' ) )
+	),
+	content_block(
+		'core/group',
+		array(),
+		array( '<div>', null, null, null, '</div>' ),
+		array(
+			$aicfab_paragraph( 'Each episode has notes.' ),
+			$aicfab_paragraph( 'The answer is 1.8.', array( 'blockVisibility' => $aicfab_members['blockVisibility'] ) ),
+			$aicfab_paragraph( 'Sign in to read more.', array( 'blockVisibility' => array( 'controlSets' => array( array( 'id' => 1, 'enable' => true, 'controls' => array( 'userRole' => array( 'visibilityByRole' => 'logged-out' ) ) ) ) ) ) ),
+		)
+	),
+	$aicfab_paragraph( 'Rules that do nothing.', array( 'blockVisibility' => array( 'controlSets' => array( array( 'id' => 1, 'enable' => false, 'controls' => array( 'userRole' => array( 'visibilityByRole' => 'logged-in' ) ) ), array( 'id' => 2, 'enable' => true, 'controls' => array() ) ), 'hideBlock' => false, 'visibilityByRole' => 'all', 'restrictedRoles' => array( 'editor' ), 'scheduling' => array( 'enable' => false ) ) ) ),
+	$aicfab_paragraph( 'Hidden outright.', array( 'blockVisibility' => array( 'hideBlock' => true ) ) ),
+	$aicfab_paragraph( 'For editors, in the 1.x layout.', array( 'blockVisibility' => array( 'visibilityByRole' => 'user-role', 'restrictedRoles' => array( 'editor' ) ) ) ),
+	$aicfab_paragraph( 'Only in October.', array( 'blockVisibility' => array( 'scheduling' => array( 'enable' => true, 'start' => '2026-10-01' ) ) ) ),
+	$aicfab_paragraph( 'Some future rule.', array( 'blockVisibility' => array( 'somethingNew' => array( 'x' => 1 ) ) ) ),
+);
+$aicfab_course = content_post( 20, 'Course', content_markup( $aicfab_blocks ) );
+$text          = AI_Chat_Bedrock_Content::public_text( $aicfab_course );
+check_content( false === strpos( $text, 'Episode 8' ), 'A members-only block is left out: ' . $text );
+check_content( false === strpos( $text, '1.8' ), 'A members-only block nested in a public group is left out: ' . $text );
+check_content( false === strpos( $text, 'Sign in' ), 'A block for guests only is left out too, since its rules are not evaluated: ' . $text );
+check_content( false === strpos( $text, 'Hidden outright' ), 'A hidden block is left out.' );
+check_content( false === strpos( $text, 'For editors' ), 'A role rule in the 1.x layout is left out.' );
+check_content( false === strpos( $text, 'October' ), 'A scheduled block is left out.' );
+check_content( false === strpos( $text, 'future rule' ), 'A visibility setting this plugin does not know is treated as a rule.' );
+check_content( false !== strpos( $text, 'ten episodes' ) && false !== strpos( $text, 'Each episode has notes' ), 'Public blocks, including those beside a removed one, are kept: ' . $text );
+check_content( false !== strpos( $text, 'Rules that do nothing' ), 'Visibility settings that restrict nothing keep the block: ' . $text );
+
+$aicfab_stripped = AI_Chat_Bedrock_Content::without_restricted_blocks( $aicfab_course->post_content );
+check_content( false !== strpos( $aicfab_stripped, '<div>' ) && false !== strpos( $aicfab_stripped, '</div>' ) && false === strpos( $aicfab_stripped, 'oneai-members' ), 'The parent keeps its own markup when an inner block is removed: ' . $aicfab_stripped );
+check_content( '<p>Plain</p>' === AI_Chat_Bedrock_Content::without_restricted_blocks( '<p>Plain</p>' ), 'Content without blocks is returned unchanged.' );
+$aicfab_public = content_markup( array( $aicfab_paragraph( 'All public.' ) ) );
+check_content( $aicfab_public === AI_Chat_Bedrock_Content::without_restricted_blocks( $aicfab_public ), 'Content with nothing to remove is returned as it was.' );
+
+// Another plugin's restricted blocks can be named.
+add_filter(
+	'ai_chat_bedrock_block_is_restricted',
+	function ( $restricted, $block ) {
+		return $restricted || ( isset( $block['attrs']['className'] ) && 'paywall' === $block['attrs']['className'] );
+	}
+);
+$aicfab_paywalled = content_post( 21, 'Paywalled', content_markup( array( $aicfab_paragraph( 'Free intro.' ), $aicfab_paragraph( 'Paid chapter.', array( 'className' => 'paywall' ) ) ) ) );
+$text             = AI_Chat_Bedrock_Content::public_text( $aicfab_paywalled );
+check_content( false === strpos( $text, 'Paid chapter' ) && false !== strpos( $text, 'Free intro' ), 'The restricted block filter applies: ' . $text );
 
 // --- Only public posts ---------------------------------------------------------
 

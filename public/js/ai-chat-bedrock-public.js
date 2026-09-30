@@ -105,7 +105,7 @@
             $launcher.attr('aria-expanded', open ? 'true' : 'false');
             $panel.prop('hidden', !open);
             if (open && false !== focus) {
-                $panel.find('.ai-chat-bedrock-textarea').trigger('focus');
+                $panel.find('.ai-chat-bedrock-textarea, .ai-chat-bedrock-sign-in-link').first().trigger('focus');
             }
         }
 
@@ -135,6 +135,10 @@
 
     $('.ai-chat-bedrock-container').each(function () {
         const $container = $(this);
+        // A visitor who has to sign in first sees a link, not a message box.
+        if ($container.hasClass('is-signed-out')) {
+            return;
+        }
         const $messages = $container.find('.ai-chat-bedrock-messages');
         const $textarea = $container.find('.ai-chat-bedrock-textarea');
         const $submit = $container.find('.ai-chat-bedrock-submit');
