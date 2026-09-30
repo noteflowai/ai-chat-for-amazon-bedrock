@@ -3,7 +3,7 @@
 # Covers what a visitor reads in the chat. Everything else falls back to English.
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.52.0\n"
+"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.52.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "Language-Team: Chinese (China)\n"
 "Language: zh_CN\n"
@@ -99,6 +99,13 @@ msgstr "对话记录过长。"
 #: includes/class-ai-chat-bedrock-chat-request.php:230
 msgid "I used the available tools to gather information."
 msgstr "我已使用可用工具收集信息。"
+
+#. translators: 1: input tokens, 2: output tokens.
+#: includes/class-ai-chat-bedrock-editor-assistant.php:248
+#: public/class-ai-chat-bedrock-public.php:72
+#, php-format
+msgid "Tokens: %1$d in / %2$d out"
+msgstr "Token：输入 %1$d / 输出 %2$d"
 
 #: includes/class-ai-chat-bedrock-feedback.php:61
 msgid "Feedback is not collected on this site."
