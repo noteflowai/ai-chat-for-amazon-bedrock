@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.52.0
+Stable tag: 1.52.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -394,20 +394,21 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.52.1 =
+* The token count under each answer reads in Chinese and Japanese too. 1.52.0 left it in English.
+
 = 1.52.0 =
 * The chat's buttons, sign-in prompt, placeholder and notices read in Simplified Chinese (zh_CN) and Japanese (ja) on sites or pages in those languages. translate.wordpress.org has no translation for this plugin yet, so they showed in English on every Chinese and Japanese page, next to a title and greeting already translated. The translations ship in the plugin's languages folder and are used only when WordPress has no language pack for the locale, so a language pack from translate.wordpress.org takes over once there is one. Needs WordPress 6.6 or later; on older versions the chat stays in English as before.
 
 = 1.51.1 =
 * With Polylang, the chat's title, welcome message and suggested questions are listed once in Languages > Translations. 1.51.0 also registered them through Polylang's WPML compatibility layer, which listed each one twice; that copy is removed the next time an administrator opens wp-admin.
 
-= 1.51.0 =
-* Multilingual sites: the chat tells the model which language the visitor is reading the site in, from Polylang or WPML, and asks it to reply in that language unless the question is clearly written in another. A short Japanese question written mostly in kanji was answered in Chinese. The new `ai_chat_bedrock_language_instruction` filter changes the instruction, or removes it when it returns an empty string.
-* Multilingual sites: the chat title, welcome message and suggested questions, of the main settings and of every profile, are registered with Polylang or WPML under "AI Chat for Amazon Bedrock", and shown translated in each language. Translate them in Languages > Translations (Polylang) or String Translation (WPML). Before, they appeared in the language they were typed in on every edition of the site.
-* Source links and site abilities show post titles as plain text. A title with an ampersand or curly quotes showed its HTML entity, such as `&#038;`, under the answer.
-
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.52.1 =
+The token count under each answer in Chinese and Japanese.
 
 = 1.52.0 =
 The chat's buttons and notices in Chinese and Japanese.

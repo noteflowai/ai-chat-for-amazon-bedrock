@@ -80,7 +80,7 @@ foreach ( array( 'zh_CN', 'ja' ) as $locale ) {
 	$po = aicfab_po_entries( $languages . "$domain-$locale.po" );
 	check_l10n( count( $po ) >= 40, "$locale: the .po file holds the chat's strings." );
 
-	foreach ( array( 'Chat', 'Sign in', 'Sign in to chat with the assistant.', 'Send', 'Type your message here…', "chat avatar for the visitor\4You" ) as $needed ) {
+	foreach ( array( 'Chat', 'Sign in', 'Sign in to chat with the assistant.', 'Send', 'Type your message here…', 'Tokens: %1$d in / %2$d out', "chat avatar for the visitor\4You" ) as $needed ) {
 		check_l10n( isset( $po[ $needed ] ) && '' !== $po[ $needed ], "$locale: \"$needed\" is translated." );
 	}
 
