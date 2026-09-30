@@ -83,7 +83,7 @@ class AI_Chat_Bedrock_Content {
 		}
 
 		$body = self::to_text( self::render_as_guest( $post ) );
-		$text = trim( get_the_title( $post ) . "\n\n" . $body );
+		$text = trim( self::title( $post ) . "\n\n" . $body );
 
 		/**
 		 * The text used for a post in semantic search, keyword passages and site abilities.
@@ -481,6 +481,47 @@ class AI_Chat_Bedrock_Content {
 			$languages = is_array( $active ) ? array_keys( $active ) : array();
 		}
 		return in_array( $value, array_map( 'sanitize_key', array_map( 'strval', $languages ) ), true ) ? $value : '';
+	}
+
+	/**
+	 * The name of a language the site serves, as the multilingual plugin records it.
+	 *
+	 * @param string $slug Language slug such as ja.
+	 * @return string Name such as 日本語, or an empty string for a language the site does not serve.
+	 */
+	public static function language_name( $slug ) {
+		$slug = sanitize_key( (string) $slug );
+		if ( '' === $slug ) {
+			return '';
+		}
+		if ( function_exists( 'pll_languages_list' ) ) {
+			$slugs = (array) pll_languages_list( array( 'fields' => 'slug' ) );
+			$names = (array) pll_languages_list( array( 'fields' => 'name' ) );
+			$index = array_search( $slug, array_map( 'strval', $slugs ), true );
+			return false !== $index && isset( $names[ $index ] ) ? wp_strip_all_tags( (string) $names[ $index ] ) : '';
+		}
+		if ( function_exists( 'has_filter' ) && has_filter( 'wpml_active_languages' ) ) {
+			$active = apply_filters( 'wpml_active_languages', null, array( 'skip_missing' => 0 ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WPML's documented API.
+			if ( is_array( $active ) && isset( $active[ $slug ] ) && is_array( $active[ $slug ] ) ) {
+				$language = $active[ $slug ];
+				$name     = ! empty( $language['native_name'] ) ? $language['native_name'] : ( isset( $language['translated_name'] ) ? $language['translated_name'] : '' );
+				return wp_strip_all_tags( (string) $name );
+			}
+		}
+		return '';
+	}
+
+	/**
+	 * A post's title as plain text.
+	 *
+	 * The title WordPress returns is HTML, with & as &#038; and quotes as entities. Source links and
+	 * tool results put the title into text, where the entities showed as written.
+	 *
+	 * @param WP_Post|int $post Post.
+	 * @return string
+	 */
+	public static function title( $post ) {
+		return trim( html_entity_decode( wp_strip_all_tags( (string) get_the_title( $post ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
 	}
 
 	/**

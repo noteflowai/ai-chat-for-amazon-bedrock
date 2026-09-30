@@ -31,7 +31,12 @@ class WP_REST_Response {
 function get_option( $name, $default = false ) { return isset( $GLOBALS['aicfab_options'][ $name ] ) ? $GLOBALS['aicfab_options'][ $name ] : $default; }
 function update_option( $name, $value, $autoload = null ) { $GLOBALS['aicfab_options'][ $name ] = $value; return true; }
 function delete_option( $name ) { unset( $GLOBALS['aicfab_options'][ $name ] ); return true; }
-function apply_filters( $hook, $value ) { return $value; }
+function apply_filters( $hook, $value, ...$args ) {
+	return isset( $GLOBALS['aicfab_filtered'][ $hook ] ) ? call_user_func_array( $GLOBALS['aicfab_filtered'][ $hook ], array_merge( array( $value ), $args ) ) : $value;
+}
+function pll_languages_list( $args = array() ) {
+	return isset( $args['fields'] ) && 'name' === $args['fields'] ? array( 'English', '日本語' ) : array( 'en', 'ja' );
+}
 function sanitize_key( $value ) { return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $value ) ); }
 function sanitize_text_field( $value ) { return trim( strip_tags( (string) $value ) ); }
 function sanitize_textarea_field( $value ) { return trim( (string) $value ); }
@@ -132,6 +137,7 @@ check_conv( 0 === AI_Chat_Bedrock_Conversations::summary()['count'], 'Clearing m
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wp-mcp-server.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-editor-assistant.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-feedback.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-content.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-request.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-profiles.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-media-assistant.php';
@@ -361,6 +367,26 @@ check_conv(
 	is_array( $aicfab_good_message ) && 'What are your hours?' === $aicfab_good_message['message'],
 	'A normal message is still accepted.'
 );
+
+// --- The reply language follows the page ----------------------------------------
+
+/*
+ * A short question in kanji reads as Chinese to a model, and a site's Japanese visitors were
+ * answered in Chinese. The language of the page the question was asked on is stated.
+ */
+$aicfab_system = static function ( $built ) {
+	return is_array( $built ) ? $built['messages'][0]['content'] : '';
+};
+$aicfab_ja = $aicfab_system( AI_Chat_Bedrock_Chat_Request::build( '物理AIとは？', '[]', array( 'system_prompt' => 'Be brief.', '_retrieval_language' => 'ja' ) ) );
+check_conv( 0 === strpos( $aicfab_ja, 'Be brief.' ), 'The site owner\'s system prompt comes first.' );
+check_conv( false !== strpos( $aicfab_ja, 'reading this site in 日本語' ), 'The page language is named to the model.' );
+check_conv( false === strpos( $aicfab_system( AI_Chat_Bedrock_Chat_Request::build( 'Hi', '[]', array( 'system_prompt' => 'Be brief.' ) ) ), 'reading this site' ), 'No language is claimed when the page did not say.' );
+check_conv( false === strpos( $aicfab_system( AI_Chat_Bedrock_Chat_Request::build( 'Hi', '[]', array( 'system_prompt' => 'Be brief.', '_retrieval_language' => 'fr' ) ) ), 'reading this site' ), 'A language the site does not serve is not claimed.' );
+$GLOBALS['aicfab_filtered']['ai_chat_bedrock_language_instruction'] = static function () {
+	return '';
+};
+check_conv( 'Be brief.' === $aicfab_system( AI_Chat_Bedrock_Chat_Request::build( 'Hi', '[]', array( 'system_prompt' => 'Be brief.', '_retrieval_language' => 'ja' ) ) ), 'A site can leave the language to its own prompt.' );
+unset( $GLOBALS['aicfab_filtered'] );
 
 // --- Tool output is returned to the model as data, not as instructions ---------
 

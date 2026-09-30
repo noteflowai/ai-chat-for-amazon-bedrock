@@ -481,7 +481,7 @@ class AI_Chat_Bedrock_Embeddings {
 
 			$passages[] = array(
 				'source'  => 'semantic',
-				'title'   => get_the_title( $hit['post'] ),
+				'title'   => AI_Chat_Bedrock_Content::title( $hit['post'] ),
 				'url'     => get_permalink( $hit['post'] ),
 				'excerpt' => AI_Chat_Bedrock_Security::string_substr( $content, 0, AI_Chat_Bedrock_Retrieval::MAX_PASSAGE_CHARS ),
 				'score'   => round( $hit['score'], 4 ),

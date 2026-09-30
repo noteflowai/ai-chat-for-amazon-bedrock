@@ -160,7 +160,7 @@ class AI_Chat_Bedrock_S3_Vectors {
 
 		$max    = max( 1, (int) apply_filters( 'ai_chat_bedrock_s3_vectors_max_chunks', self::MAX_CHUNKS, $post ) );
 		$chunks = array_slice( AI_Chat_Bedrock_Content::chunks( $text, self::CHUNK_CHARS, self::CHUNK_OVERLAP ), 0, $max );
-		$title  = wp_strip_all_tags( (string) get_the_title( $post ) );
+		$title  = AI_Chat_Bedrock_Content::title( $post );
 		$lang   = AI_Chat_Bedrock_Content::language( $post );
 		$aws    = new AI_Chat_Bedrock_AWS();
 
@@ -363,7 +363,7 @@ class AI_Chat_Bedrock_S3_Vectors {
 			$seen[ $post->ID ] = true;
 			$passages[]        = array(
 				'source'  => 'semantic',
-				'title'   => get_the_title( $post ),
+				'title'   => AI_Chat_Bedrock_Content::title( $post ),
 				'url'     => get_permalink( $post ),
 				'excerpt' => AI_Chat_Bedrock_Security::string_substr( $text, 0, AI_Chat_Bedrock_Retrieval::MAX_PASSAGE_CHARS ),
 				'score'   => round( (float) $hit['score'], 4 ),

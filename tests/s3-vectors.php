@@ -248,7 +248,7 @@ $long = '';
 for ( $i = 1; $i <= 6; $i++ ) {
 	$long .= '<p>Section ' . $i . ' ' . str_repeat( 'Shipping takes three days. ', 20 ) . '</p>';
 }
-$post = s3v_post( 1, 'Shipping', $long, 'en' );
+$post = s3v_post( 1, 'Shipping &#038; returns', $long, 'en' );
 check_s3v( 'indexed' === AI_Chat_Bedrock_S3_Vectors::index_post( $post, $model, false, $options ), 'A public post is indexed.' );
 $puts = s3v_calls( 'PutVectors' );
 check_s3v( 1 === count( $puts ), 'One PutVectors request per batch.' );
@@ -259,7 +259,7 @@ check_s3v( 'site-vectors' === $puts[0]['payload']['vectorBucketName'] && 'posts'
 check_s3v( $site . ':1#0' === $vectors[0]['key'] && $site . ':1#1' === $vectors[1]['key'], 'Passages are keyed in order.' );
 $meta = $vectors[1]['metadata'];
 check_s3v( $site === $meta['site'] && 1 === $meta['post_id'] && 'en' === $meta['lang'] && 1 === $meta['chunk'], 'Metadata carries site, post, language and passage.' );
-check_s3v( 'Shipping' === $meta['title'] && '' !== $meta['text'], 'The title and passage text are stored for quoting.' );
+check_s3v( 'Shipping & returns' === $meta['title'] && '' !== $meta['text'], 'The title and passage text are stored for quoting.' );
 check_s3v( array( 0.1, 0.2, 0.3 ) === $vectors[0]['data']['float32'], 'The vector is sent as float32.' );
 check_s3v( count( $vectors ) === (int) get_post_meta( 1, AI_Chat_Bedrock_S3_Vectors::META_CHUNKS, true ), 'The passage count is recorded.' );
 check_s3v( AI_Chat_Bedrock_S3_Vectors::reference( $model, $options ) === get_post_meta( 1, AI_Chat_Bedrock_Embeddings::META_STATE, true ), 'The post is marked done for this index and model.' );
@@ -314,7 +314,7 @@ check_s3v( array() === get_option( AI_Chat_Bedrock_S3_Vectors::QUEUE_OPTION, arr
 $GLOBALS['aicfab_meta']  = array();
 $GLOBALS['aicfab_calls'] = array();
 $reference               = AI_Chat_Bedrock_S3_Vectors::reference( $model, $options );
-s3v_post( 10, 'Refunds', '<p>Refunds within 30 days.</p>', 'en' );
+s3v_post( 10, 'Refunds &#038; returns', '<p>Refunds within 30 days.</p>', 'en' );
 s3v_post( 11, 'Members', '<p>Secret.</p>', 'en', 'private' );
 s3v_post( 12, 'Returns', '<p>Returns policy.</p>', 'en' );
 update_post_meta( 10, AI_Chat_Bedrock_Embeddings::META_STATE, $reference );
@@ -341,7 +341,7 @@ $json = json_encode( $hits );
 check_s3v( false === strpos( $json, 'Secret' ), 'A hit on a post that is no longer public is dropped.' );
 check_s3v( false === strpos( $json, 'Another site' ), 'A hit belonging to another site is dropped.' );
 check_s3v( 2 === count( $hits ), 'One passage per post: ' . count( $hits ) );
-check_s3v( 'Refunds' === $hits[0]['title'] && 'Refunds within 30 days.' === $hits[0]['excerpt'], 'The best passage of the best post is quoted.' );
+check_s3v( 'Refunds & returns' === $hits[0]['title'] && 'Refunds within 30 days.' === $hits[0]['excerpt'], 'The best passage of the best post is quoted.' );
 check_s3v( abs( 0.8 - $hits[0]['score'] ) < 0.0001, 'The score is one minus the cosine distance.' );
 check_s3v( 'semantic' === $hits[0]['source'] && 'https://example.test/?p=10' === $hits[0]['url'], 'Hits carry source and link.' );
 check_s3v( false === strpos( $json, 'Weak match' ), 'A weak runner-up is dropped.' );

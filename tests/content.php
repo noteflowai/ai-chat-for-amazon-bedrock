@@ -53,6 +53,15 @@ function is_post_type_viewable( $type ) {
 	return 'private_notes' !== $type;
 }
 function pll_languages_list( $args = array() ) {
+	$names = array( 'zh' => '中文 (中国)', 'en' => 'English', 'ja' => '日本語' );
+	if ( isset( $args['fields'] ) && 'name' === $args['fields'] ) {
+		return array_map(
+			function ( $slug ) use ( $names ) {
+				return $names[ $slug ];
+			},
+			$GLOBALS['aicfab_languages']
+		);
+	}
 	return $GLOBALS['aicfab_languages'];
 }
 function wp_cache_get( $key, $group ) {
@@ -331,6 +340,17 @@ check_content( '' === AI_Chat_Bedrock_Content::request_language( 'fr' ), 'A lang
 check_content( '' === AI_Chat_Bedrock_Content::request_language( array( 'en' ) ), 'A non-string value is ignored.' );
 check_content( '' === AI_Chat_Bedrock_Content::request_language( '' ), 'No language means any.' );
 check_content( '' === AI_Chat_Bedrock_Content::request_language( "en' OR 1=1" ), 'An injected value is not a language.' );
+
+check_content( '日本語' === AI_Chat_Bedrock_Content::language_name( 'ja' ), 'A served language is named as the site names it.' );
+check_content( 'English' === AI_Chat_Bedrock_Content::language_name( 'EN' ), 'The slug is matched whatever its case.' );
+check_content( '' === AI_Chat_Bedrock_Content::language_name( 'fr' ), 'A language the site does not serve has no name.' );
+check_content( '' === AI_Chat_Bedrock_Content::language_name( '' ), 'No language has no name.' );
+
+// --- Titles are text, not HTML -----------------------------------------------------
+
+$titled = content_post( 90, 'Video &#038; transcript: &#8220;L1&#8221; <em>now</em>', '<p>Body.</p>' );
+check_content( 'Video & transcript: “L1” now' === AI_Chat_Bedrock_Content::title( $titled ), 'A title comes back as plain text, with its entities decoded.' );
+check_content( 0 === strpos( AI_Chat_Bedrock_Content::public_text( $titled ), "Video & transcript: “L1” now\n\n" ), 'The indexed text leads with the plain title.' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

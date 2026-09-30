@@ -3,6 +3,10 @@ Full changelog. The readme lists the latest releases only.
 
 == Changelog ==
 
+= 1.51.0 =
+* Multilingual sites: the chat tells the model which language the visitor is reading the site in, from Polylang or WPML, and asks it to reply in that language unless the question is clearly written in another. A short Japanese question written mostly in kanji was answered in Chinese. The new `ai_chat_bedrock_language_instruction` filter changes the instruction, or removes it when it returns an empty string.
+* Source links and site abilities show post titles as plain text. A title with an ampersand or curly quotes showed its HTML entity, such as `&#038;`, under the answer.
+
 = 1.50.0 =
 * Security: members-only blocks are left out of the index and of answers wherever the text is read. Block Visibility hides blocks only on front-end requests, so text indexed with the Index content now button, or retrieved for a chat sent from wp-admin, could include blocks it shows only to signed-in visitors. Any block with Block Visibility rules is now removed before the post is rendered, and the new `ai_chat_bedrock_block_is_restricted` filter lets a site name blocks another plugin restricts. After the update every post counts as not yet indexed, and until it is indexed again an answer quotes its text as read now rather than the stored passage. Run Index content now, or let background indexing catch up.
 * Chat: a visitor the chat is not open to sees a sign-in link instead of a message box, and returns to the same page after signing in. Before, a guest could type a question and only then learn that the chat was for members. The new `ai_chat_bedrock_sign_in_url` filter points the link at a custom sign-in page, or leaves the chat out for guests when it returns an empty string.

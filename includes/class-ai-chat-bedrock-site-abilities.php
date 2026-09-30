@@ -275,7 +275,7 @@ class AI_Chat_Bedrock_Site_Abilities {
 			}
 			$results[] = array(
 				'id'      => (int) $post->ID,
-				'title'   => get_the_title( $post ),
+				'title'   => AI_Chat_Bedrock_Content::title( $post ),
 				'url'     => get_permalink( $post ),
 				'type'    => $post->post_type,
 				'excerpt' => $this->plain_text( $post, 400 ),
@@ -303,7 +303,7 @@ class AI_Chat_Bedrock_Site_Abilities {
 
 		return array(
 			'id'      => (int) $post->ID,
-			'title'   => get_the_title( $post ),
+			'title'   => AI_Chat_Bedrock_Content::title( $post ),
 			'url'     => get_permalink( $post ),
 			'type'    => $post->post_type,
 			'content' => $this->plain_text( $post, self::MAX_EXCERPT ),
@@ -366,7 +366,7 @@ class AI_Chat_Bedrock_Site_Abilities {
 			return $post;
 		}
 
-		$title   = get_the_title( $post );
+		$title   = AI_Chat_Bedrock_Content::title( $post );
 		$content = $this->plain_text( $post, 2000 );
 		$words   = preg_split( '/\s+/', $content, -1, PREG_SPLIT_NO_EMPTY );
 		$words   = is_array( $words ) ? $words : array();
@@ -426,7 +426,7 @@ class AI_Chat_Bedrock_Site_Abilities {
 			}
 			$entry = array(
 				'id'   => (int) $post->ID,
-				'name' => get_the_title( $post ),
+				'name' => AI_Chat_Bedrock_Content::title( $post ),
 				'url'  => get_permalink( $post ),
 			);
 
@@ -480,7 +480,7 @@ class AI_Chat_Bedrock_Site_Abilities {
 	 */
 	private function plain_text( $post, $limit ) {
 		$text  = AI_Chat_Bedrock_Content::public_text( $post );
-		$title = trim( (string) get_the_title( $post ) );
+		$title = AI_Chat_Bedrock_Content::title( $post );
 		if ( '' !== $title && 0 === strpos( $text, $title ) ) {
 			$text = substr( $text, strlen( $title ) );
 		}

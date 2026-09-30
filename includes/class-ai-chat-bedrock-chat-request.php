@@ -118,6 +118,30 @@ class AI_Chat_Bedrock_Chat_Request {
 		}
 		$system = AI_Chat_Bedrock_Security::string_substr( $system, 0, 8000 );
 
+		// A short question in kanji reads as Chinese to a model, and one site answered Japanese
+		// visitors in Chinese. The page's language settles it.
+		$language      = isset( $options['_retrieval_language'] ) && class_exists( 'AI_Chat_Bedrock_Content' )
+			? AI_Chat_Bedrock_Content::language_name( $options['_retrieval_language'] )
+			: '';
+		$language_note = '' !== $language
+			/* translators: %s: language name, such as 日本語 or English. */
+			? sprintf( __( 'The visitor is reading this site in %s. Reply in that language unless their latest message is clearly written in another one.', 'ai-chat-for-amazon-bedrock' ), $language )
+			: '';
+
+		/**
+		 * The instruction that tells the model which language the visitor reads the site in.
+		 *
+		 * Return an empty string to leave the reply language to the system prompt.
+		 *
+		 * @param string $language_note Instruction, or an empty string when the language is unknown.
+		 * @param string $language      Language name.
+		 * @param array  $options       Chat settings.
+		 */
+		$language_note = (string) apply_filters( 'ai_chat_bedrock_language_instruction', $language_note, $language, $options );
+		if ( '' !== trim( $language_note ) ) {
+			$system = trim( $system . "\n\n" . sanitize_textarea_field( $language_note ) );
+		}
+
 		$messages = array(
 			array(
 				'role'    => 'system',
