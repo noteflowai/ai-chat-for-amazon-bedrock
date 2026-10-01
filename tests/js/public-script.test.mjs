@@ -89,6 +89,7 @@ check('https://site.test/about/' === context.safeUrl('/about/'), 'A relative lin
 check('' === context.safeUrl('javascript:alert(1)'), 'A script link is dropped.');
 check('' === context.safeUrl('data:text/html,<b>x</b>'), 'A data link is dropped.');
 check('' === context.safeUrl('http://['), 'A malformed link is dropped.');
+check('' === context.safeUrl('') && '' === context.safeUrl(undefined) && '' === context.safeUrl('  '), 'A missing link is not turned into the page address.');
 
 // --- Wiring ------------------------------------------------------------------------------
 
@@ -96,6 +97,12 @@ check(-1 === extract('stopAnswering').indexOf('$stop.on('), 'The Stop button is 
 check(/\n\s*\$stop\.on\('click', stopAnswering\);/.test(source), 'The Stop button is bound when the chat starts.');
 check(-1 === source.indexOf("isUser ? 'You' : 'AI'"), 'Avatar labels come from the translations.');
 check(/sources\.slice\(0, 5\)/.test(extract('attachSources')) && -1 !== extract('attachSources').indexOf('.text(title)'), 'Source titles are inserted as text.');
+
+const products = extract('attachProducts');
+check(-1 === products.indexOf('.html(') && -1 !== products.indexOf('.text(name)'), 'Product names are inserted as text.');
+check(-1 !== products.indexOf('safeUrl(product && product.url)') && -1 !== products.indexOf('safeUrl(product.image)') && -1 !== products.indexOf('safeUrl(product.add_to_cart)'), 'Product, image and cart links pass the link check.');
+check(/rel: 'nofollow'/.test(products), 'Add-to-cart links are not followed by crawlers.');
+check(2 === (source.match(/attachProducts\((?:state\.)?bubble, (?:response\.data|payload)\.products\)/g) || []).length, 'Products are shown for both buffered and streamed answers.');
 
 if (failures.length) {
     process.stderr.write('FAILED\n- ' + failures.join('\n- ') + '\n');

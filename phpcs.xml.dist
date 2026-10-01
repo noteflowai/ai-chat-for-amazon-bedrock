@@ -42,6 +42,15 @@
 		</properties>
 	</rule>
 
+	<!-- WooCommerce registers this capability for shop managers and administrators. -->
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="edit_products"/>
+			</property>
+		</properties>
+	</rule>
+
 	<!-- Globals declared by this plugin must carry a recognizable prefix. -->
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>

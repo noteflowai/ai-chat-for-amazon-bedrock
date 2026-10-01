@@ -3,9 +3,11 @@
  * Plugin Name: AI Agents & Chat for Amazon Bedrock
  * Plugin URI: https://github.com/noteflowai/ai-chat-for-amazon-bedrock
  * Description: Streaming chat and governed tool-using agents on Amazon Bedrock, with IAM role credentials, a standards-compliant MCP server and client, and security-first defaults.
- * Version: 1.55.1
+ * Version: 1.56.0
  * Requires at least: 6.4
  * Requires PHP: 7.4
+ * WC requires at least: 8.0
+ * WC tested up to: 11.1
  * Author: Glay
  * Author URI: https://github.com/noteflowai
  * License: GPL-2.0-or-later
@@ -20,9 +22,10 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-define( 'AI_CHAT_BEDROCK_VERSION', '1.55.1' );
+define( 'AI_CHAT_BEDROCK_VERSION', '1.56.0' );
 define( 'AI_CHAT_BEDROCK_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AI_CHAT_BEDROCK_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'AI_CHAT_BEDROCK_PLUGIN_FILE', __FILE__ );
 
 function ai_chat_bedrock_activate_plugin() {
 	require_once AI_CHAT_BEDROCK_PLUGIN_DIR . 'includes/class-ai-chat-bedrock-activator.php';
@@ -56,6 +59,17 @@ function ai_chat_bedrock_action_links( $links ) {
 	return array_merge( $own, (array) $links );
 }
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'ai_chat_bedrock_action_links' );
+
+/**
+ * Declare WooCommerce feature compatibility. WooCommerce asks before it loads, so this cannot
+ * wait for the plugin's own hooks.
+ */
+function ai_chat_bedrock_declare_woocommerce_compatibility() {
+	if ( class_exists( 'AI_Chat_Bedrock_WooCommerce' ) ) {
+		AI_Chat_Bedrock_WooCommerce::declare_compatibility( __FILE__ );
+	}
+}
+add_action( 'before_woocommerce_init', 'ai_chat_bedrock_declare_woocommerce_compatibility' );
 
 require AI_CHAT_BEDROCK_PLUGIN_DIR . 'includes/class-ai-chat-bedrock.php';
 

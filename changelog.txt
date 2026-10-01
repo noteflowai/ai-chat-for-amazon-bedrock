@@ -3,6 +3,13 @@ Full changelog. The readme lists the latest releases only.
 
 == Changelog ==
 
+= 1.56.0 =
+* WooCommerce: a new WooCommerce tab, shown when WooCommerce is active, with three features that are all off by default. Product answers draws on the live catalog for product questions, quoting the price, sale price, stock and options the shop shows, and lists the products under the answer with View product and Add to cart; on a product page, the product being viewed comes first. Order questions lets a signed-in customer ask about their own recent orders, sending the order number, dates, status, items, total, shipping method and tracking number but never an address, email, phone or payment detail. The product assistant on the product edit screen drafts the short and full description from the product's own attributes and summarizes approved reviews without reviewer names.
+* Products that are drafts, private, password-protected, hidden from the catalog, or out of stock on a store that hides those are never described or linked.
+* Declares compatibility with WooCommerce High-Performance Order Storage and the Cart and Checkout blocks.
+* Suggested privacy policy text under Settings > Privacy covers the chat, the conversation log and, on a WooCommerce store, product and order data.
+* A source or product without a link no longer gets a link to the page the chat is on.
+
 = 1.55.1 =
 * Lists in the admin, such as the per-role rate limits, the unresolved prompt variables and the answer check's results, are separated with 、 in Chinese and Japanese instead of an English comma, and a legacy model's label is translated as a whole.
 * The release gate regenerates the translation template from the code and fails when it differs, so a new string cannot ship untranslated while the bundled translations say they cover everything.

@@ -43,6 +43,7 @@ class AI_Chat_Bedrock_Public {
 				'max_message_chars' => 4000,
 				// The language of the page, so answers are drawn from content in the same language first.
 				'language'          => AI_Chat_Bedrock_Content::current_language(),
+				'product_id'        => AI_Chat_Bedrock_WooCommerce::current_product_id(),
 				'i18n'              => array(
 					'generic_error'     => __( 'The request could not be completed. Please try again.', 'ai-chat-for-amazon-bedrock' ),
 					'stopped'           => __( 'Answer stopped.', 'ai-chat-for-amazon-bedrock' ),
@@ -74,6 +75,13 @@ class AI_Chat_Bedrock_Public {
 					'assistant'         => _x( 'AI', 'chat avatar for the assistant', 'ai-chat-for-amazon-bedrock' ),
 					'sources'           => __( 'Sources', 'ai-chat-for-amazon-bedrock' ),
 					'opens_new_tab'     => __( '(opens in a new tab)', 'ai-chat-for-amazon-bedrock' ),
+					'products'          => __( 'Products', 'ai-chat-for-amazon-bedrock' ),
+					'view_product'      => __( 'View product', 'ai-chat-for-amazon-bedrock' ),
+					'add_to_cart'       => __( 'Add to cart', 'ai-chat-for-amazon-bedrock' ),
+					'original_price'    => __( 'Original price:', 'ai-chat-for-amazon-bedrock' ),
+					'current_price'     => __( 'Current price:', 'ai-chat-for-amazon-bedrock' ),
+					/* translators: %s: average rating, such as 4.5. */
+					'rating'            => __( 'Rated %s out of 5', 'ai-chat-for-amazon-bedrock' ),
 				),
 			)
 		);
@@ -300,6 +308,8 @@ class AI_Chat_Bedrock_Public {
 		$options = AI_Chat_Bedrock_Profiles::resolve( $profile );
 		// Checked against the languages the site serves, so any other value means every language.
 		$options['_retrieval_language'] = AI_Chat_Bedrock_Content::request_language( isset( $_POST['lang'] ) ? sanitize_key( wp_unslash( $_POST['lang'] ) ) : '' );
+		// The product page the chat is on, so "is this in stock?" has an answer.
+		$options['_product_id'] = isset( $_POST['product'] ) ? absint( $_POST['product'] ) : 0;
 
 		if ( ! AI_Chat_Bedrock_Security::can_use_chat( $options ) ) {
 			wp_send_json_error( array( 'message' => __( 'Please sign in to use the chat.', 'ai-chat-for-amazon-bedrock' ) ), 401 );
@@ -349,6 +359,9 @@ class AI_Chat_Bedrock_Public {
 			}
 			if ( ! empty( $built['sources'] ) ) {
 				$response['data']['sources'] = $built['sources'];
+			}
+			if ( ! empty( $built['products'] ) ) {
+				$response['data']['products'] = $built['products'];
 			}
 		}
 

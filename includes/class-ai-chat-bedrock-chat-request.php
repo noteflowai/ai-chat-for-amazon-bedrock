@@ -180,6 +180,20 @@ class AI_Chat_Bedrock_Chat_Request {
 			}
 		}
 
+		// Live prices, stock and the customer's own orders, when the store has turned them on.
+		$products = array();
+		if ( class_exists( 'AI_Chat_Bedrock_WooCommerce' ) ) {
+			$store = AI_Chat_Bedrock_WooCommerce::for_chat( $message, $options, $history );
+			foreach ( $store['messages'] as $content ) {
+				$messages[] = array(
+					'role'    => 'system',
+					'content' => $content,
+				);
+			}
+			$products = $store['products'];
+			$grounded = $grounded || $store['grounded'];
+		}
+
 		$messages = array_merge(
 			$messages,
 			$history,
@@ -201,6 +215,8 @@ class AI_Chat_Bedrock_Chat_Request {
 			'relevance' => (float) $relevance,
 			// Links shown under the answer, only when the site has chosen to show them.
 			'sources'   => ! empty( $options['show_sources'] ) ? $sources : array(),
+			// Product cards shown under the answer.
+			'products'  => $products,
 		);
 	}
 

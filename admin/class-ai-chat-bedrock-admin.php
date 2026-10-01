@@ -837,6 +837,14 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'social_only_registration', __( 'Registration', 'ai-chat-for-amazon-bedrock' ), 'social_only_registration_render', 'aicfab_integrations' );
 		$this->field( 'hreflang_x_default', __( 'Default language for search engines', 'ai-chat-for-amazon-bedrock' ), 'hreflang_x_default_render', 'aicfab_integrations' );
 		$this->field( 'organization_author', __( 'Article author', 'ai-chat-for-amazon-bedrock' ), 'organization_author_render', 'aicfab_integrations' );
+
+		if ( AI_Chat_Bedrock_WooCommerce::active() ) {
+			add_settings_section( 'aicfab_woocommerce', __( 'WooCommerce', 'ai-chat-for-amazon-bedrock' ), array( $this, 'woocommerce_section_callback' ), 'aicfab_tab_woocommerce' );
+			$this->field( 'woo_catalog', __( 'Product answers', 'ai-chat-for-amazon-bedrock' ), 'woo_catalog_render', 'aicfab_woocommerce' );
+			$this->field( 'woo_catalog_limit', __( 'Products per answer', 'ai-chat-for-amazon-bedrock' ), 'woo_catalog_limit_render', 'aicfab_woocommerce' );
+			$this->field( 'woo_orders', __( 'Order questions', 'ai-chat-for-amazon-bedrock' ), 'woo_orders_render', 'aicfab_woocommerce' );
+			$this->field( 'woo_product_assistant', __( 'Product assistant', 'ai-chat-for-amazon-bedrock' ), 'woo_product_assistant_render', 'aicfab_woocommerce' );
+		}
 	}
 
 	public function display_plugin_admin_page() {
@@ -1201,6 +1209,30 @@ class AI_Chat_Bedrock_Admin {
 		);
 	}
 
+	public function woocommerce_section_callback() {
+		echo '<p>' . esc_html__( 'Answers about products and orders from the store itself, and help writing product pages. Each is off until you turn it on.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+	public function woo_catalog_render() {
+		$checked = ! empty( $this->option( 'woo_catalog', false ) );
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[woo_catalog]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Answer product questions from the live catalog', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Matching products are looked up for each question, by name, description, SKU or category, and their current price, stock, rating and attributes are given to the model, so it does not quote an old price. The products are shown as cards under the answer, with a link to add simple products to the cart. On a product page, that product comes first. Products that are not published, are hidden from the shop or search, or are out of stock on a store that hides those, are never used.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+	public function woo_catalog_limit_render() {
+		$value = AI_Chat_Bedrock_WooCommerce::limit( array( 'woo_catalog_limit' => $this->option( 'woo_catalog_limit', AI_Chat_Bedrock_WooCommerce::DEFAULT_PRODUCTS ) ) );
+		echo '<input type="number" id="aicfab_field_woo_catalog_limit" class="small-text" name="ai_chat_bedrock_settings[woo_catalog_limit]" value="' . esc_attr( (string) $value ) . '" min="1" max="' . esc_attr( (string) AI_Chat_Bedrock_WooCommerce::MAX_PRODUCTS ) . '">';
+		echo '<p class="description">' . esc_html__( 'More products give the model more to compare but increase input tokens and cost.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+	public function woo_orders_render() {
+		$checked = ! empty( $this->option( 'woo_orders', false ) );
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[woo_orders]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Let signed-in customers ask about their own orders', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Only when a question is about orders, shipping or returns, the customer\'s five latest orders are given to the model: number, dates, status, items, total, shipping method and tracking number. Addresses, email, phone and payment details are never sent, and nobody can see another customer\'s orders. This sends customer data to Amazon Bedrock, so add the suggested text under Settings, Privacy, Policy Guide to your privacy policy first.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+	public function woo_product_assistant_render() {
+		$checked = ! empty( $this->option( 'woo_product_assistant', false ) );
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[woo_product_assistant]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Draft product descriptions and summarize reviews', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Adds a box to the product edit screen that writes the short and the full description from the product\'s own attributes, categories and text, without inventing specifications, and sums up what reviews praise and criticize, without reviewer names. Drafts go into the editor for you to review and are saved only when you update the product.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+
 	private function integration_checkbox( $key, $plugin, $label, $description, $missing ) {
 		$detected = AI_Chat_Bedrock_Integrations::detected();
 		$active   = ! empty( $detected[ $plugin ] );
@@ -1439,6 +1471,10 @@ class AI_Chat_Bedrock_Admin {
 		$output['github_read_scope']        = ! empty( $input['github_read_scope'] );
 		$output['social_only_registration'] = ! empty( $input['social_only_registration'] );
 		$output['organization_author']      = ! empty( $input['organization_author'] );
+		$output['woo_catalog']              = ! empty( $input['woo_catalog'] );
+		$output['woo_catalog_limit']        = AI_Chat_Bedrock_WooCommerce::limit( $input );
+		$output['woo_orders']               = ! empty( $input['woo_orders'] );
+		$output['woo_product_assistant']    = ! empty( $input['woo_product_assistant'] );
 		$x_default                          = isset( $input['hreflang_x_default'] ) ? sanitize_key( $input['hreflang_x_default'] ) : '';
 		$languages                          = AI_Chat_Bedrock_Integrations::languages();
 		$output['hreflang_x_default']       = '' === $x_default || empty( $languages ) || isset( $languages[ $x_default ] ) ? $x_default : '';
@@ -1575,6 +1611,9 @@ class AI_Chat_Bedrock_Admin {
 		'github_read_scope',
 		'social_only_registration',
 		'organization_author',
+		'woo_catalog',
+		'woo_orders',
+		'woo_product_assistant',
 	);
 
 	/**
@@ -1595,6 +1634,7 @@ class AI_Chat_Bedrock_Admin {
 			'aicfab_knowledge'    => 'aicfab_tab_knowledge',
 			'aicfab_chat'         => 'aicfab_tab_chat',
 			'aicfab_integrations' => 'aicfab_tab_integrations',
+			'aicfab_woocommerce'  => 'aicfab_tab_woocommerce',
 		);
 		$page  = isset( $pages[ $section ] ) ? $pages[ $section ] : 'aicfab_tab_chat';
 
@@ -1638,7 +1678,14 @@ class AI_Chat_Bedrock_Admin {
 				'page'  => 'aicfab_tab_integrations',
 				'label' => __( 'Integrations', 'ai-chat-for-amazon-bedrock' ),
 			),
-		);
+		) + ( class_exists( 'AI_Chat_Bedrock_WooCommerce' ) && AI_Chat_Bedrock_WooCommerce::active()
+			? array(
+				'woocommerce' => array(
+					'page'  => 'aicfab_tab_woocommerce',
+					'label' => __( 'WooCommerce', 'ai-chat-for-amazon-bedrock' ),
+				),
+			)
+			: array() );
 	}
 
 	/**

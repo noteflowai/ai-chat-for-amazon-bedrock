@@ -967,3 +967,102 @@
 .ai-chat-bedrock-stop {
     margin-left: 6px;
 }
+
+/* Products an answer drew on */
+.ai-chat-bedrock-products {
+    margin: 8px 0 0;
+}
+
+.ai-chat-bedrock-products-list {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ai-chat-bedrock-product {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin: 0;
+    padding: 8px;
+    background: var(--aicfab-surface);
+    border: 1px solid var(--aicfab-border);
+    border-radius: 8px;
+}
+
+.ai-chat-bedrock-product-image {
+    flex: 0 0 auto;
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.ai-chat-bedrock-product-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.ai-chat-bedrock-product-name {
+    font-weight: 600;
+    color: var(--aicfab-text);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.ai-chat-bedrock-product-name:hover,
+.ai-chat-bedrock-product-name:focus {
+    text-decoration: underline;
+}
+
+.ai-chat-bedrock-product-price del {
+    color: var(--aicfab-meta);
+    margin-right: 4px;
+}
+
+.ai-chat-bedrock-product-price ins {
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.ai-chat-bedrock-product-meta {
+    font-size: 12px;
+    color: var(--aicfab-detail);
+}
+
+.ai-chat-bedrock-product-meta.is-out-of-stock {
+    color: var(--aicfab-danger);
+}
+
+.ai-chat-bedrock-product-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.ai-chat-bedrock-product-actions a {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 12px;
+    border-radius: 999px;
+    text-decoration: none;
+    border: 1px solid var(--aicfab-accent);
+    color: var(--aicfab-accent);
+}
+
+.ai-chat-bedrock-product-actions a.ai-chat-bedrock-product-cart {
+    background: var(--aicfab-accent);
+    color: var(--aicfab-accent-contrast);
+}
+
+.ai-chat-bedrock-product-actions a:focus-visible {
+    outline: 2px solid var(--aicfab-accent);
+    outline-offset: 2px;
+}

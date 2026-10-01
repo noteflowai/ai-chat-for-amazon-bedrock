@@ -67,6 +67,10 @@
      * Only web links are rendered, whatever a filter put in the list.
      */
     function safeUrl(value) {
+        // An empty value would resolve to the page itself.
+        if (!value || !String(value).trim()) {
+            return '';
+        }
         try {
             const url = new URL(String(value || ''), window.location.href);
             return 'https:' === url.protocol || 'http:' === url.protocol ? url.href : '';
@@ -323,6 +327,75 @@
             $sources.insertAfter($body.find('.ai-chat-bedrock-message-content').first());
         }
 
+        /**
+         * Products the answer drew on, as cards under it. Every value is inserted as text and
+         * every link must be a web link, whatever a filter put in the list.
+         */
+        function attachProducts(bubble, products) {
+            if (!bubble || !bubble.message || !Array.isArray(products) || !products.length) {
+                return;
+            }
+            const i18n = params.i18n || {};
+            const $list = $('<ul>', { 'class': 'ai-chat-bedrock-products-list' });
+            products.slice(0, 8).forEach(function (product) {
+                const href = safeUrl(product && product.url);
+                if (!href) {
+                    return;
+                }
+                const name = String(product.name || href);
+                const $card = $('<li>', { 'class': 'ai-chat-bedrock-product' });
+                const image = safeUrl(product.image);
+                if (image) {
+                    $card.append($('<img>', { 'class': 'ai-chat-bedrock-product-image', src: image, alt: '', loading: 'lazy', width: 64, height: 64 }));
+                }
+                const $info = $('<div>', { 'class': 'ai-chat-bedrock-product-info' });
+                $info.append($('<a>', { 'class': 'ai-chat-bedrock-product-name', href: href }).text(name));
+                if (product.price) {
+                    const $price = $('<span>', { 'class': 'ai-chat-bedrock-product-price' });
+                    if (product.regular) {
+                        $price.append(
+                            $('<del>').append($('<span>', { 'class': 'screen-reader-text' }).text((i18n.original_price || '') + ' '), document.createTextNode(String(product.regular))),
+                            ' ',
+                            $('<ins>').append($('<span>', { 'class': 'screen-reader-text' }).text((i18n.current_price || '') + ' '), document.createTextNode(String(product.price)))
+                        );
+                    } else {
+                        $price.text(String(product.price));
+                    }
+                    $info.append($price);
+                }
+                const details = [];
+                if (product.stock) {
+                    details.push(String(product.stock));
+                }
+                if (Number(product.rating) > 0 && i18n.rating) {
+                    details.push('★ ' + String(i18n.rating).replace('%s', Number(product.rating).toFixed(1)));
+                }
+                if (details.length) {
+                    $info.append($('<span>', { 'class': 'ai-chat-bedrock-product-meta' + (false === product.in_stock ? ' is-out-of-stock' : '') }).text(details.join(' · ')));
+                }
+                const $actions = $('<span>', { 'class': 'ai-chat-bedrock-product-actions' });
+                $actions.append($('<a>', { 'class': 'ai-chat-bedrock-product-view', href: href }).text(i18n.view_product || name));
+                const cart = safeUrl(product.add_to_cart);
+                if (cart) {
+                    $actions.append($('<a>', { 'class': 'ai-chat-bedrock-product-cart', href: cart, rel: 'nofollow' }).text(i18n.add_to_cart || ''));
+                }
+                $info.append($actions);
+                $list.append($card.append($info));
+            });
+            if (!$list.children().length) {
+                return;
+            }
+            const $body = bubble.message.find('.ai-chat-bedrock-message-body').first();
+            if (!$body.length) {
+                return;
+            }
+            $body.find('.ai-chat-bedrock-products').remove();
+            const $products = $('<nav>', { 'class': 'ai-chat-bedrock-products', 'aria-label': i18n.products || '' });
+            $products.append($list);
+            const $anchor = $body.find('.ai-chat-bedrock-sources').first();
+            $products.insertAfter($anchor.length ? $anchor : $body.find('.ai-chat-bedrock-message-content').first());
+        }
+
         function feedbackControls(entryId) {
             if (!params.feedback_url || !entryId) {
                 return null;
@@ -561,7 +634,8 @@
                     message: message,
                     history: JSON.stringify(requestHistory),
                     profile: profile,
-                    lang: params.language || ''
+                    lang: params.language || '',
+                    product: params.product_id || 0
                 }
             }).done(function (response) {
                 $typing.remove();
@@ -574,6 +648,7 @@
                     attachNote(bubble, fallbackNote(response.data.fallback_model));
                     attachSteps(bubble, response.data.steps, response.data.steps_truncated);
                     attachSources(bubble, response.data.sources);
+                    attachProducts(bubble, response.data.products);
                     attachFeedback(bubble, response.data.entry);
                     showUsage(response.usage);
                 } else {
@@ -676,6 +751,7 @@
                     attachNote(state.bubble, fallbackNote(payload.fallback_model));
                     attachSteps(state.bubble, payload.steps, payload.steps_truncated);
                     attachSources(state.bubble, payload.sources);
+                    attachProducts(state.bubble, payload.products);
                     attachFeedback(state.bubble, payload.entry);
                 }
                 showUsage(payload.usage);
@@ -737,6 +813,9 @@
             }
             if (params.language) {
                 body.set('lang', params.language);
+            }
+            if (params.product_id) {
+                body.set('product', String(params.product_id));
             }
 
             controller = window.AbortController ? new window.AbortController() : null;
