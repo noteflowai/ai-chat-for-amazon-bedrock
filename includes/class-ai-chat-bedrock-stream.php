@@ -52,6 +52,10 @@ class AI_Chat_Bedrock_Stream {
 						'required' => false,
 						'type'     => 'string',
 					),
+					'product' => array(
+						'required' => false,
+						'type'     => 'integer',
+					),
 				),
 			)
 		);
@@ -100,6 +104,7 @@ class AI_Chat_Bedrock_Stream {
 		$options = AI_Chat_Bedrock_Profiles::resolve( $profile );
 
 		$options['_retrieval_language'] = AI_Chat_Bedrock_Content::request_language( (string) $request->get_param( 'lang' ) );
+		$options['_product_id']         = absint( $request->get_param( 'product' ) );
 
 		$built = AI_Chat_Bedrock_Chat_Request::build( $request->get_param( 'message' ), (string) $request->get_param( 'history' ), $options );
 
@@ -175,6 +180,9 @@ class AI_Chat_Bedrock_Stream {
 		}
 		if ( ! empty( $built['sources'] ) ) {
 			$done['sources'] = $built['sources'];
+		}
+		if ( ! empty( $built['products'] ) ) {
+			$done['products'] = $built['products'];
 		}
 		$this->send_event( 'done', $done );
 		$this->finish();

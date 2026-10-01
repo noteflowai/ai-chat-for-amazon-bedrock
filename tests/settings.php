@@ -100,6 +100,7 @@ class AI_Chat_Bedrock_Conversations {
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-s3-vectors.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-integrations.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-woocommerce.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 
 $failures = array();
@@ -167,6 +168,21 @@ check_set( true === get_option( 'ai_chat_bedrock_site_abilities' ), 'Another tab
 $saved = save_tab( $admin, array( 'log_conversations' ), array( 'log_retention_days' => '7' ) );
 check_set( false === $saved['log_conversations'] && 7 === $saved['log_retention_days'], 'An unticked log switch is saved as off with its retention.' );
 check_set( false === get_option( 'ai_chat_bedrock_log_conversations' ), 'The log option follows the switch.' );
+
+// --- WooCommerce ---------------------------------------------------------------
+
+$saved = save_tab(
+	$admin,
+	array( 'woo_catalog', 'woo_catalog_limit', 'woo_orders', 'woo_product_assistant' ),
+	array(
+		'woo_catalog'       => '1',
+		'woo_catalog_limit' => '50',
+	)
+);
+check_set( true === $saved['woo_catalog'] && false === $saved['woo_orders'] && false === $saved['woo_product_assistant'], 'WooCommerce switches are saved as booleans.' );
+check_set( 8 === $saved['woo_catalog_limit'], 'Products per answer is kept to the maximum.' );
+$saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask the shop' ) );
+check_set( true === $saved['woo_catalog'] && 8 === $saved['woo_catalog_limit'], 'Another tab does not reset the WooCommerce settings.' );
 
 // --- Validation ----------------------------------------------------------------
 

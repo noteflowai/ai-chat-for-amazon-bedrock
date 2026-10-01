@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.55.1
+Stable tag: 1.56.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -67,6 +67,27 @@ every passage of every page is searched, in the visitor's language first. Only w
 visitor can read is ever indexed or quoted, so members-only sections stay out of answers. Questions
 the site does not cover return no context, and the Conversations screen lists them as content gaps
 with a shortcut to draft the page that is missing.
+
+= For WooCommerce stores =
+
+With WooCommerce active, a WooCommerce tab adds three features, each off until you turn it on:
+
+* **Product answers.** A question about products is answered from the live catalog, with the
+  price, sale price, stock and options the shop shows right now, and the products appear as cards
+  under the answer with View product and, where nothing has to be chosen, Add to cart. On a
+  product page, "is this in stock?" is about that product. Drafts, private and password-protected
+  products, products hidden from the catalog, and out-of-stock products on a store that hides them
+  are never described.
+* **Order questions.** A signed-in customer can ask where their order is. Only their own recent
+  orders are read, and only the order number, dates, status, items, total, shipping method and
+  tracking number are sent to the model; addresses, email, phone and payment details never are.
+  Naming another customer's order number reveals nothing.
+* **Product assistant.** On the product edit screen, draft the short and the full description from
+  the product's real name, attributes and categories, or summarize its approved reviews without
+  reviewer names. The draft is shown for review, and nothing is saved until you update the product.
+
+The plugin declares compatibility with High-Performance Order Storage and the Cart and Checkout
+blocks, and adds suggested text for the site's privacy policy under Settings > Privacy.
 
 = An MCP server, and an MCP client =
 
@@ -344,11 +365,19 @@ External servers are called with JSON-RPC over Streamable HTTP with a declared p
 
 Endpoints must be public HTTPS URLs. Private, loopback, link-local and credential-bearing URLs are rejected, redirects are disabled and response size is capped. Discovered tools remain subject to the tool policy above.
 
+= What does the WooCommerce integration send to Amazon Bedrock? =
+
+With Product answers on, the facts of up to four matching products (eight at most, set under WooCommerce) are sent with the question: name, link, SKU, price, stock, rating, categories, visible attributes, options and a short description, exactly as the shop shows them to any visitor. With Order questions on, a signed-in customer's question about orders or delivery adds their five most recent orders, plus any they name by number that are theirs: order number, dates, status, items, total, shipping method, tracking number and the link to the order page. Billing and shipping addresses, email, phone, payment details and customer notes are never read into the prompt. A question that is not about orders sends no order data, and a visitor who is not signed in is asked to sign in. Add the suggested text from Settings > Privacy to your privacy policy before turning Order questions on. The `ai_chat_bedrock_woocommerce_products`, `ai_chat_bedrock_woocommerce_product_facts`, `ai_chat_bedrock_woocommerce_orders` and `ai_chat_bedrock_woocommerce_order_lines` filters adjust what is sent.
+
+= Why does the chat not show a product I know is in the shop? =
+
+Only products any visitor can see are described: published, without a password, visible in the catalog or in search, and in stock when WooCommerce is set to hide out-of-stock items. A SKU in the question, such as "is ARM-6 in stock?", finds that product directly. Otherwise products are found by name and description, then by category, and a follow-up such as "how much is it?" searches with the previous question. The `ai_chat_bedrock_woocommerce_listable` filter can leave out more products.
+
 = What can an agent read from and write to my site? =
 
 Narrow abilities can be registered for agents and other plugins: search published posts and pages, read one published post or page, suggest an SEO title and meta description without saving, look up published WooCommerce products, and create a draft post.
 
-Reads never return draft, private or password-protected content. The only write operation creates a new draft: nothing is published, updated or deleted, and WooCommerce orders and customers are never exposed. Draft creation requires `edit_posts`, reads require the capability configured for MCP tools, and the feature is disabled by default.
+Reads never return draft, private or password-protected content. The only write operation creates a new draft: nothing is published, updated or deleted, and these abilities never expose WooCommerce orders or customers. Draft creation requires `edit_posts`, reads require the capability configured for MCP tools, and the feature is disabled by default.
 
 These register into WordPress's own Abilities registry, so anything that reads it sees them,
 including the core REST routes under `/wp-abilities/v1/` and the official WordPress MCP adapter.
@@ -403,6 +432,13 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.56.0 =
+* WooCommerce: a new WooCommerce tab, shown when WooCommerce is active, with three features that are all off by default. Product answers draws on the live catalog for product questions, quoting the price, sale price, stock and options the shop shows, and lists the products under the answer with View product and Add to cart; on a product page, the product being viewed comes first. Order questions lets a signed-in customer ask about their own recent orders, sending the order number, dates, status, items, total, shipping method and tracking number but never an address, email, phone or payment detail. The product assistant on the product edit screen drafts the short and full description from the product's own attributes and summarizes approved reviews without reviewer names.
+* Products that are drafts, private, password-protected, hidden from the catalog, or out of stock on a store that hides those are never described or linked.
+* Declares compatibility with WooCommerce High-Performance Order Storage and the Cart and Checkout blocks.
+* Suggested privacy policy text under Settings > Privacy covers the chat, the conversation log and, on a WooCommerce store, product and order data.
+* A source or product without a link no longer gets a link to the page the chat is on.
+
 = 1.55.1 =
 * Lists in the admin, such as the per-role rate limits, the unresolved prompt variables and the answer check's results, are separated with 、 in Chinese and Japanese instead of an English comma, and a legacy model's label is translated as a whole.
 * The release gate regenerates the translation template from the code and fails when it differs, so a new string cannot ship untranslated while the bundled translations say they cover everything.
@@ -411,17 +447,12 @@ what a good answer says.
 * The settings screens, dashboard, diagnostics, conversation log, MCP pages and block editor read in Simplified Chinese (zh_CN) and Japanese (ja). 1.52.0 translated only what visitors read in the chat, so a Chinese or Japanese admin saw these screens in English, with a few translated words among them. As before, a language pack from translate.wordpress.org replaces the bundled translation once there is one.
 * Where a message puts two sentences together, Chinese and Japanese no longer get a space after the full stop between them.
 
-= 1.54.0 =
-* The popup chat's Send button and footer are always on screen. Themes that give every form's text box a tall fixed height, Blocksy among them, pushed them below the popup's edge, where signed-in visitors could not reach them. The chat now sets its own text box height, and on a short window the conversation and then the suggestions shrink first.
-* New Color scheme setting under Chat: Light, Dark, or follow the visitor's device. Light is the default. Until now the chat always followed the device, so a visitor in dark mode saw a dark panel on a light theme; choose "Follow the visitor's device" to keep that.
-* On iPhone, tapping the chat's text box no longer zooms the page in.
-* On touch screens, opening the popup no longer brings up the keyboard over the greeting and suggested questions.
-* The Clear chat button shows its border again.
-* Embeddings made for search and site indexing are counted separately in the usage summary and no longer count against the daily request limit, which indexing a site could use up before anyone chatted.
-
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.56.0 =
+WooCommerce: product answers with live prices and stock, order questions for signed-in customers, and a product description assistant. All off until enabled.
 
 = 1.55.1 =
 Chinese and Japanese list separators in the admin.
@@ -645,3 +676,5 @@ When semantic search is on, the text a signed-out visitor can read on each publi
 Conversation logging is disabled by default, and with it off no chat content is written to the database. When an administrator enables it, questions and answers are stored for the configured retention window, capped at the 200 most recent exchanges, and can be deleted per user or in full from the Conversations screen. Administrators are responsible for disclosing this recording to visitors.
 
 The plugin creates no custom database tables; the optional log is kept in a WordPress option and is reachable through Tools > Export Personal Data and Erase Personal Data. Request limiting stores a salted hash-derived transient counter for each visitor for up to one minute. Debug logging is optional and records only redacted operational metadata. Administrators are responsible for disclosing these data flows and obtaining any consent required in their jurisdiction.
+
+On a WooCommerce store with Product answers on, the public details of matching products are sent to Amazon Bedrock with each question. With Order questions on, a signed-in customer's question about orders sends their recent orders' number, dates, status, items, total, shipping method and tracking number to Amazon Bedrock; addresses, email, phone and payment details are not sent. The product assistant sends the product's own details, or its approved review texts without reviewer names, when an editor asks for a draft.

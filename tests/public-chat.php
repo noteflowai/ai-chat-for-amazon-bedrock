@@ -342,6 +342,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-rate-limits.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-request.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wp-mcp-server.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-stream.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-woocommerce.php';
 require dirname( __DIR__ ) . '/public/class-ai-chat-bedrock-public.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 

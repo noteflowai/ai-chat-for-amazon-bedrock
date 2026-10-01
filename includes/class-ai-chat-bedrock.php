@@ -51,6 +51,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-translation.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-cli.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-retrieval.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-woocommerce.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-abilities.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-site-abilities.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-tool-policy.php';
@@ -143,6 +144,12 @@ class AI_Chat_Bedrock {
 
 		$media = new AI_Chat_Bedrock_Media_Assistant();
 		$this->loader->add_action( 'rest_api_init', $media, 'register_routes' );
+
+		$woocommerce = new AI_Chat_Bedrock_WooCommerce();
+		$this->loader->add_action( 'rest_api_init', $woocommerce, 'register_routes' );
+		$this->loader->add_action( 'add_meta_boxes_product', $woocommerce, 'add_meta_box' );
+		$this->loader->add_action( 'admin_enqueue_scripts', $woocommerce, 'enqueue_assets' );
+		$this->loader->add_action( 'admin_init', 'AI_Chat_Bedrock_WooCommerce', 'privacy_policy_content' );
 
 		// The dashboard checklist looks at published content and at the floating button, so
 		// both have to invalidate the cached answer.
