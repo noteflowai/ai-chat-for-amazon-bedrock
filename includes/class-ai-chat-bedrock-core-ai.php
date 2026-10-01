@@ -167,6 +167,18 @@ class AI_Chat_Bedrock_Core_AI {
 			) {
 				require_once AI_CHAT_BEDROCK_PLUGIN_DIR . 'includes/core-ai/' . $file;
 			}
+			// Each optional model type loads only where core has its interface. Image generation
+			// is in every AI Client release; embedding generation arrived in 1.4 (WordPress 7.2).
+			foreach (
+				array(
+					'class-ai-chat-bedrock-ai-image-model.php'     => '\WordPress\AiClient\Providers\Models\ImageGeneration\Contracts\ImageGenerationModelInterface',
+					'class-ai-chat-bedrock-ai-embedding-model.php' => AI_Chat_Bedrock_AI_Model_Directory::EMBEDDING_INTERFACE,
+				) as $file => $interface
+			) {
+				if ( interface_exists( $interface ) ) {
+					require_once AI_CHAT_BEDROCK_PLUGIN_DIR . 'includes/core-ai/' . $file;
+				}
+			}
 
 			$registry = \WordPress\AiClient\AiClient::defaultRegistry();
 			if ( $registry->hasProvider( self::PROVIDER_ID ) ) {

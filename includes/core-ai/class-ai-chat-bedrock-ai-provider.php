@@ -34,6 +34,15 @@ class AI_Chat_Bedrock_AI_Provider extends AbstractProvider {
 	 * @return ModelInterface
 	 */
 	protected static function createModel( ModelMetadata $modelMetadata, ProviderMetadata $providerMetadata ): ModelInterface {
+		// The directory lists image and embedding models only where their classes loaded.
+		foreach ( $modelMetadata->getSupportedCapabilities() as $capability ) {
+			if ( $capability->isImageGeneration() && class_exists( 'AI_Chat_Bedrock_AI_Image_Model', false ) ) {
+				return new AI_Chat_Bedrock_AI_Image_Model( $modelMetadata, $providerMetadata );
+			}
+			if ( $capability->isEmbeddingGeneration() && class_exists( 'AI_Chat_Bedrock_AI_Embedding_Model', false ) ) {
+				return new AI_Chat_Bedrock_AI_Embedding_Model( $modelMetadata, $providerMetadata );
+			}
+		}
 		return new AI_Chat_Bedrock_AI_Model( $modelMetadata, $providerMetadata );
 	}
 

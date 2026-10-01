@@ -235,7 +235,108 @@ class AI_Chat_Bedrock_Admin {
 			'ai_chat_bedrock_alt_text_' . $post->ID
 		);
 		$actions['aicfab_alt_text'] = '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Generate alt text', 'ai-chat-for-amazon-bedrock' ) . '</a>';
+		return $this->add_image_edit_actions( $actions, $post );
+	}
+
+	/**
+	 * Offer background removal and upscaling for an image.
+	 *
+	 * Upscaling is offered only for images the upscaler takes, at most about one megapixel.
+	 *
+	 * @param array   $actions Existing actions.
+	 * @param WP_Post $post    Attachment.
+	 * @return array
+	 */
+	private function add_image_edit_actions( $actions, $post ) {
+		if ( ! AI_Chat_Bedrock_Images::editing_enabled() || ! current_user_can( 'upload_files' ) ) {
+			return $actions;
+		}
+		if ( ! in_array( (string) get_post_mime_type( $post ), AI_Chat_Bedrock_Images::editable_types(), true ) ) {
+			return $actions;
+		}
+
+		$edits = array(
+			'remove_background' => __( 'Remove background', 'ai-chat-for-amazon-bedrock' ),
+		);
+		$meta  = wp_get_attachment_metadata( $post->ID );
+		if ( is_array( $meta ) && ! empty( $meta['width'] ) && ! empty( $meta['height'] ) && (int) $meta['width'] * (int) $meta['height'] <= AI_Chat_Bedrock_Images::UPSCALE_MAX_PIXELS ) {
+			$edits['upscale'] = __( 'Upscale 4×', 'ai-chat-for-amazon-bedrock' );
+		}
+		foreach ( $edits as $edit => $label ) {
+			$url                          = wp_nonce_url(
+				add_query_arg(
+					array(
+						'action'     => 'ai_chat_bedrock_edit_image',
+						'edit'       => $edit,
+						'attachment' => $post->ID,
+					),
+					admin_url( 'admin-post.php' )
+				),
+				'ai_chat_bedrock_edit_image_' . $edit . '_' . $post->ID
+			);
+			$actions[ 'aicfab_' . $edit ] = '<a href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
+		}
 		return $actions;
+	}
+
+	/**
+	 * Remove the background of an image, or upscale it, into a new attachment.
+	 *
+	 * The outcome is kept for the current user for a minute and shown on the Media Library,
+	 * so an error message never travels in the URL.
+	 */
+	public function handle_edit_image_action() {
+		$attachment = isset( $_GET['attachment'] ) ? absint( wp_unslash( $_GET['attachment'] ) ) : 0;
+		$edit       = isset( $_GET['edit'] ) ? sanitize_key( wp_unslash( $_GET['edit'] ) ) : '';
+		if ( ! in_array( $edit, array( 'remove_background', 'upscale' ), true ) ) {
+			wp_die( esc_html__( 'Unknown image edit.', 'ai-chat-for-amazon-bedrock' ), '', array( 'response' => 400 ) );
+		}
+		check_admin_referer( 'ai_chat_bedrock_edit_image_' . $edit . '_' . $attachment );
+
+		if ( ! current_user_can( 'edit_post', $attachment ) || ! current_user_can( 'upload_files' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'ai-chat-for-amazon-bedrock' ), '', array( 'response' => 403 ) );
+		}
+		if ( ! AI_Chat_Bedrock_Images::editing_enabled() ) {
+			wp_die( esc_html__( 'Image editing is off. Turn on the media helpers and choose an image model first.', 'ai-chat-for-amazon-bedrock' ), '', array( 'response' => 400 ) );
+		}
+
+		$result = 'upscale' === $edit ? AI_Chat_Bedrock_Images::upscale( $attachment ) : AI_Chat_Bedrock_Images::remove_background( $attachment );
+		set_transient(
+			'aicfab_image_edit_' . get_current_user_id(),
+			is_wp_error( $result ) ? array( 'error' => $result->get_error_message() ) : array( 'attachment' => (int) $result ),
+			MINUTE_IN_SECONDS
+		);
+
+		wp_safe_redirect( add_query_arg( 'aicfab-image', '1', admin_url( 'upload.php' ) ) );
+		exit;
+	}
+
+	/**
+	 * Report the outcome of an image edit on the media screen.
+	 */
+	private function render_image_edit_notice() {
+		if ( ! isset( $_GET['aicfab-image'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
+		$key     = 'aicfab_image_edit_' . get_current_user_id();
+		$outcome = get_transient( $key );
+		delete_transient( $key );
+		if ( ! is_array( $outcome ) ) {
+			return;
+		}
+		if ( ! empty( $outcome['attachment'] ) ) {
+			printf(
+				'<div class="notice notice-success is-dismissible"><p>%1$s <a href="%2$s">%3$s</a></p></div>',
+				esc_html__( 'The edited image was saved as a new item in the Media Library. The original is unchanged.', 'ai-chat-for-amazon-bedrock' ),
+				esc_url( (string) get_edit_post_link( (int) $outcome['attachment'] ) ),
+				esc_html__( 'Open it', 'ai-chat-for-amazon-bedrock' )
+			);
+			return;
+		}
+		printf(
+			'<div class="notice notice-error is-dismissible"><p>%s</p></div>',
+			esc_html( isset( $outcome['error'] ) ? (string) $outcome['error'] : __( 'The image could not be edited.', 'ai-chat-for-amazon-bedrock' ) )
+		);
 	}
 
 	/**
@@ -468,13 +569,15 @@ class AI_Chat_Bedrock_Admin {
 	}
 
 	/**
-	 * Report the outcome of alt text generation on the media screen.
+	 * Report the outcome of alt text generation and image edits on the media screen.
 	 */
 	public function render_media_notice() {
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 		if ( ! $screen || 'upload' !== $screen->id ) {
 			return;
 		}
+
+		$this->render_image_edit_notice();
 
 		$single = isset( $_GET['aicfab-alt'] ) ? sanitize_key( wp_unslash( $_GET['aicfab-alt'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( '' !== $single ) {
@@ -799,6 +902,7 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'fallback_model_id', __( 'Fallback model', 'ai-chat-for-amazon-bedrock' ), 'fallback_model_render', 'aicfab_model' );
 		$this->field( 'max_tokens', __( 'Maximum output tokens', 'ai-chat-for-amazon-bedrock' ), 'max_tokens_render', 'aicfab_model' );
 		$this->field( 'temperature', __( 'Temperature', 'ai-chat-for-amazon-bedrock' ), 'temperature_render', 'aicfab_model' );
+		$this->field( 'image_model_id', __( 'Image model', 'ai-chat-for-amazon-bedrock' ), 'image_model_render', 'aicfab_model' );
 
 		add_settings_section( 'aicfab_governance', __( 'Safety and spend controls', 'ai-chat-for-amazon-bedrock' ), array( $this, 'governance_section_callback' ), 'aicfab_tab_governance' );
 		$this->field( 'guardrail_id', __( 'Guardrail identifier', 'ai-chat-for-amazon-bedrock' ), 'guardrail_id_render', 'aicfab_governance' );
@@ -1261,6 +1365,18 @@ class AI_Chat_Bedrock_Admin {
 		$this->select( 'fallback_model_id', $options, '' );
 		echo '<p class="description">' . esc_html__( 'Used only when the main model cannot answer because access was denied, the request was throttled, or Amazon Bedrock was unreachable. The reply states which model answered. Requests rejected for other reasons are never retried.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
+	public function image_model_render() {
+		$choices = array( '' => __( 'Off', 'ai-chat-for-amazon-bedrock' ) ) + AI_Chat_Bedrock_Images::models();
+		$this->select( 'image_model_id', $choices, '' );
+		echo '<p class="description">' . esc_html__( 'Lets plugins that use the WordPress AI Client generate images with Stability AI, and adds Remove background and Upscale to images in the Media Library when the media helpers are on. Results are saved as new images; originals are never changed. Each image is one paid request and counts toward the daily limit.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<p class="description">' . esc_html(
+			sprintf(
+				/* translators: %s: AWS region code, such as us-west-2. */
+				__( 'The Stability models run in %s, whatever region the chat uses, so prompts and images are processed there. The guardrail, if set, checks each prompt first in your own region.', 'ai-chat-for-amazon-bedrock' ),
+				AI_Chat_Bedrock_Images::region()
+			)
+		) . '</p>';
+	}
 	public function max_tokens_render() {
 		$value = $this->option( 'max_tokens', 1000 );
 		echo '<input type="number" id="aicfab_field_max_tokens" class="small-text" name="ai_chat_bedrock_settings[max_tokens]" value="' . esc_attr( $value ) . '" min="100" max="4000" step="100">';
@@ -1360,6 +1476,13 @@ class AI_Chat_Bedrock_Admin {
 			$fallback = '';
 		}
 		$output['fallback_model_id'] = $fallback;
+
+		$image = isset( $input['image_model_id'] ) ? sanitize_text_field( $input['image_model_id'] ) : '';
+		if ( '' !== $image && ! isset( AI_Chat_Bedrock_Images::models()[ $image ] ) ) {
+			$this->notice( 'image_model_id', __( 'That image model is not supported; image generation was left off.', 'ai-chat-for-amazon-bedrock' ) );
+			$image = '';
+		}
+		$output['image_model_id'] = $image;
 
 		if ( ! AI_Chat_Bedrock_Models::is_valid_id( $model ) ) {
 			$this->notice( 'model_id', __( 'The submitted model ID was not valid; the default model was kept.', 'ai-chat-for-amazon-bedrock' ) );
@@ -1568,7 +1691,7 @@ class AI_Chat_Bedrock_Admin {
 	 */
 	public function removable_query_args( $args ) {
 		$args = is_array( $args ) ? $args : array();
-		return array_merge( $args, array( 'aicfab-alt', 'aicfab-alt-done', 'aicfab-alt-skipped', 'aicfab-alt-failed', 'aicfab-applied', 'aicfab-cleared', 'aicfab-generated', 'aicfab-log', 'aicfab-message', 'aicfab-profile', 'aicfab-skipped', 'aicfab-transfer' ) );
+		return array_merge( $args, array( 'aicfab-alt', 'aicfab-alt-done', 'aicfab-alt-skipped', 'aicfab-alt-failed', 'aicfab-applied', 'aicfab-cleared', 'aicfab-generated', 'aicfab-image', 'aicfab-log', 'aicfab-message', 'aicfab-profile', 'aicfab-skipped', 'aicfab-transfer' ) );
 	}
 
 	/**

@@ -161,23 +161,33 @@ if ( preg_match_all( '/new SupportedOption\(\s*OptionEnum::([a-zA-Z]+)\(\)/', $p
 }
 check_core_ai( ! empty( $declared ), 'The model must declare the options it supports.' );
 $honoured = array(
-	'inputModalities'   => 'flatten',           // Text parts only; anything else is refused.
-	'outputModalities'  => 'MessagePart',       // The result is a text part.
-	'systemInstruction' => 'getSystemInstruction',
-	'maxTokens'         => 'getMaxTokens',
-	'temperature'       => 'getTemperature',
-	'candidateCount'    => 'array( 1 )',        // Constrained to one, which is what Bedrock returns.
+	'inputModalities'        => 'flatten',           // Text, and images for vision models; anything else is refused.
+	'outputModalities'       => 'MessagePart',       // The result is a text or image part.
+	'systemInstruction'      => 'getSystemInstruction',
+	'maxTokens'              => 'getMaxTokens',
+	'temperature'            => 'getTemperature',
+	'candidateCount'         => 'getCandidateCount', // Text models ask once per candidate.
+	'stopSequences'          => 'getStopSequences',
+	'outputMimeType'         => 'getOutputMimeType',
+	'outputSchema'           => 'getOutputSchema',
+	'topP'                   => 'getTopP',
+	'outputFileType'         => 'new File(',         // Images always come back inline.
+	'outputMediaOrientation' => 'getOutputMediaOrientation',
+	'outputMediaAspectRatio' => 'getOutputMediaAspectRatio',
+	'customOptions'          => 'getCustomOptions',
+	'dimensions'             => 'getDimensions',
 );
-foreach ( $declared as $option ) {
+foreach ( array_unique( $declared ) as $option ) {
 	check_core_ai(
 		isset( $honoured[ $option ] ) && false !== strpos( $provider, $honoured[ $option ] ),
 		sprintf( 'Declared option %s must be honoured by the adapter.', $option )
 	);
 }
-// Asking for more than one candidate must fail rather than quietly return one.
+// Asking for more candidates than are generated must fail rather than quietly return fewer.
 check_core_ai(
-	1 === preg_match( '/candidateCount\(\)\s*,\s*array\(\s*1\s*\)/', $provider ),
-	'Candidate count must be constrained to the single candidate Bedrock returns.'
+	1 === preg_match( '/candidateCount\(\),\s*range\(\s*1,\s*AI_Chat_Bedrock_AI_Model::MAX_CANDIDATES\s*\)/', $provider )
+		&& 1 === preg_match( '/candidateCount\(\)\s*,\s*array\(\s*1\s*\)/', $provider ),
+	'Candidate counts must be bounded: text models by MAX_CANDIDATES, image models to one.'
 );
 
 // A prompt part that cannot be represented must be refused, not reduced to its text.

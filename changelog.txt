@@ -3,6 +3,14 @@ Full changelog. The readme lists the latest releases only.
 
 == Changelog ==
 
+= 1.57.0 =
+* WordPress AI Client: Bedrock is now a full provider. Text models take images in the prompt where the model reads them, return JSON on request (checked, and constrained by the schema where the model takes one), give several candidates, and honour top P and stop sequences. Core is told exactly which models can do what, so it no longer picks a model that fails.
+* Image generation through the AI Client with Stability AI Stable Image Core, Stable Diffusion 3.5 Large and Stable Image Ultra, chosen on the Model tab and off by default. Stable Diffusion 3.5 also edits a supplied image. Prompts are checked with the site's guardrail first.
+* Media Library: Remove background and Upscale 4× on JPEG, PNG and WebP images, when an image model is chosen and the media helpers are on. Results are saved as new images and the original is unchanged.
+* Embeddings through the AI Client on WordPress 7.2 and later, with Amazon Titan and Cohere models. Titan Text Embeddings V2 takes a vector size of 256, 512 or 1024.
+* The IAM policy in Diagnostics includes the image models when image generation is on.
+* When a Converse model refuses top P, stop sequences or a schema, the request is retried once without it and that is remembered for the model, as for temperature. Claude models that refuse a schema are retried without it too.
+
 = 1.56.1 =
 * WooCommerce order questions: a customer's orders are sent only when the question points at an order, such as "my order", an order number, a tracking number, "has it shipped" or a refund. A shared word is no longer enough, so questions about Python packages, returns in reinforcement learning, logistics robots or robots shipped this year no longer send them.
 * An answer to an order question no longer lists the nearest articles as its sources, and is not counted as a content gap. The passages are still offered to the model, for a shipping or returns page.

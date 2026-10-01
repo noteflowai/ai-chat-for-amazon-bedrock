@@ -3,12 +3,12 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.56.1
+Stable tag: 1.57.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI chatbot and agents on Amazon Bedrock with Claude, Nova, Llama, gpt-oss and more. Connect with an API key or IAM role. Includes an MCP server.
+AI chat, agents, an MCP server and the WordPress AI Client provider for Amazon Bedrock, with Claude, Nova and Stability AI images.
 
 == Description ==
 
@@ -21,6 +21,32 @@ Model requests go from your WordPress server to the Amazon Bedrock endpoint you 
 plugin author does not operate an AI relay service, and no request passes through anyone else. It is
 built for site owners, developers and teams already on AWS who want predictable requests and
 security-focused defaults.
+
+= The Amazon Bedrock provider for WordPress AI =
+
+On WordPress 7.0 and later, every plugin that calls the WordPress AI Client, including the
+official AI plugin, can use Amazon Bedrock without knowing anything about AWS. The plugin offers
+core what Bedrock can actually do, model by model:
+
+* **Text** from Claude, Nova and the other chat models, with system instructions, several
+  candidates, top P and stop sequences where the model accepts them
+* **Images in the prompt** for the models that read them, such as Claude, Nova Lite and Pro,
+  Llama 4 and Qwen3 VL, so alt text and image descriptions work
+* **JSON answers**, checked before they are returned and constrained by the schema on the models
+  that take one
+* **Image generation** with Stability AI Stable Image Core, Stable Diffusion 3.5 Large and Stable
+  Image Ultra, including editing an image with Stable Diffusion 3.5
+* **Embeddings** with Amazon Titan and Cohere on WordPress 7.2, where core adds them
+
+Each request takes the same path as the chat, so the guardrail, daily limit, token ceiling and
+usage dashboard apply to all of them. A capability a model lacks is not offered, so core picks a
+model that has it rather than one that fails.
+
+= Images in the Media Library =
+
+Choose an image model and turn on the media helpers, and every JPEG, PNG or WebP image gets
+**Remove background** and, up to about one megapixel, **Upscale 4×**. The result is saved as a new
+image next to the original, which is never changed.
 
 = What you can build =
 
@@ -191,6 +217,8 @@ No. Model requests use Amazon Bedrock and your AWS credentials. Availability, mo
 
 Text models in the Anthropic Claude, Amazon Nova, Amazon Titan, Meta Llama, Mistral and DeepSeek families that your Region offers, including Claude Sonnet 5, Claude Opus 5.5 and Claude Haiku 4.5, and the other chat models Bedrock serves, such as OpenAI gpt-oss, Qwen3, Llama 4, Mistral Large, DeepSeek R1 and Kimi. Models other than Claude, Nova and Titan are called through the Bedrock Converse API, which applies each model's own chat format; when a model refuses a setting such as temperature or a system prompt, the plugin retries once without it and remembers that for the model. The settings screen lists the models your account offers in that Region, and "Refresh model list" updates it. A new installation starts on Amazon Nova Lite because it answers with nothing enabled beyond an IAM role. Newer Claude models such as Sonnet 5 and Opus 5.5 are called through a cross-region inference profile, an ID beginning with `us.`, `eu.` or `global.`, and they reject the temperature setting, so the plugin does not send it to them. A specific model may still need a supported Region and suitable IAM permissions.
 
+For images: Stability AI Stable Image Core, Stable Diffusion 3.5 Large and Stable Image Ultra, plus Stable Image Remove Background and Stable Fast Upscale for the Media Library. Image models run in US West (Oregon) whatever region the chat uses; the `ai_chat_bedrock_image_region` filter moves them to another region that offers them.
+
 = What is an Amazon Bedrock API key, and should I use one? =
 
 It is a single credential created in the Amazon Bedrock console and sent as a bearer token, so there is no IAM user or access key pair to manage. It is the quickest way to get a first answer, especially on hosting outside AWS. On an EC2 instance, ECS or EKS an IAM role is still the better choice, because nothing long-lived is stored at all. If a key stops working, check that it has not expired or been revoked and that its identity is allowed `bedrock:CallWithBearerToken`; the IAM policy that Diagnostics generates includes it when a key is configured.
@@ -342,6 +370,22 @@ On 7.1 it also joins the connector registry, declared as storing no credential: 
 with IAM, not a key this site must keep. The Settings > Connectors screen lists only
 connectors with a credential to manage, so Bedrock is absent there.
 
+Core asks for a model by what it must do, and the plugin describes each Bedrock model truthfully:
+image input only on models that read images, top P only where the model accepts it, image
+generation only on the Stability models and only once an image model is chosen, and embeddings
+only on WordPress 7.2 and later. JSON answers are checked and, when a model returns something
+else, asked for once more before an error is returned.
+
+= Can it generate or edit images? =
+
+Yes, once you choose an image model on the Model tab. Plugins that use the WordPress AI Client can
+then generate images, and with the media helpers on, the Media Library offers Remove background and
+Upscale 4× on each image. Edits are saved as new images. A prompt is checked with your guardrail
+first, because Bedrock Guardrails headers do not apply to image models, and an image the model
+filtered is reported rather than saved. Each image is a billed request to Stability AI on Amazon
+Bedrock, counted against the daily limit. The IAM policy in Diagnostics includes the image models
+you turned on.
+
 = How do I connect Claude Code, Cursor or another AI client to this site? =
 
 The plugin exposes this WordPress site as an MCP server, so clients such as Claude Code, Cursor, VS Code or an agent framework can read it.
@@ -432,6 +476,14 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.57.0 =
+* WordPress AI Client: Bedrock is now a full provider. Text models take images in the prompt where the model reads them, return JSON on request (checked, and constrained by the schema where the model takes one), give several candidates, and honour top P and stop sequences. Core is told exactly which models can do what, so it no longer picks a model that fails.
+* Image generation through the AI Client with Stability AI Stable Image Core, Stable Diffusion 3.5 Large and Stable Image Ultra, chosen on the Model tab and off by default. Stable Diffusion 3.5 also edits a supplied image. Prompts are checked with the site's guardrail first.
+* Media Library: Remove background and Upscale 4× on JPEG, PNG and WebP images, when an image model is chosen and the media helpers are on. Results are saved as new images and the original is unchanged.
+* Embeddings through the AI Client on WordPress 7.2 and later, with Amazon Titan and Cohere models. Titan Text Embeddings V2 takes a vector size of 256, 512 or 1024.
+* The IAM policy in Diagnostics includes the image models when image generation is on.
+* When a Converse model refuses top P, stop sequences or a schema, the request is retried once without it and that is remembered for the model, as for temperature. Claude models that refuse a schema are retried without it too.
+
 = 1.56.1 =
 * WooCommerce order questions: a customer's orders are sent only when the question points at an order, such as "my order", an order number, a tracking number, "has it shipped" or a refund. A shared word is no longer enough, so questions about Python packages, returns in reinforcement learning, logistics robots or robots shipped this year no longer send them.
 * An answer to an order question no longer lists the nearest articles as its sources, and is not counted as a content gap. The passages are still offered to the model, for a shipping or returns page.
@@ -454,6 +506,9 @@ what a good answer says.
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.57.0 =
+A full WordPress AI Client provider: image input, JSON, Stability image generation and embeddings. Media Library background removal and upscaling. All new features are off until enabled.
 
 = 1.56.1 =
 WooCommerce order questions send a customer's orders only when the question is clearly about an order.
@@ -685,3 +740,5 @@ Conversation logging is disabled by default, and with it off no chat content is 
 The plugin creates no custom database tables; the optional log is kept in a WordPress option and is reachable through Tools > Export Personal Data and Erase Personal Data. Request limiting stores a salted hash-derived transient counter for each visitor for up to one minute. Debug logging is optional and records only redacted operational metadata. Administrators are responsible for disclosing these data flows and obtaining any consent required in their jurisdiction.
 
 On a WooCommerce store with Product answers on, the public details of matching products are sent to Amazon Bedrock with each question. With Order questions on, a signed-in customer's question about orders sends their recent orders' number, dates, status, items, total, shipping method and tracking number to Amazon Bedrock; addresses, email, phone and payment details are not sent. The product assistant sends the product's own details, or its approved review texts without reviewer names, when an editor asks for a draft.
+
+When an image model is chosen, image prompts, and any image supplied for editing, are sent to Stability AI models on Amazon Bedrock in US West (Oregon) unless the site moves them to another region. The prompt is first checked with the site's guardrail in its own region. With the media helpers on, Remove background and Upscale send the selected image when an editor asks. Results are saved as new Media Library items. Requests from other plugins through the WordPress AI Client send what those plugins put in the prompt, including any images.
