@@ -280,7 +280,7 @@ $mcp_client = class_exists( 'AI_Chat_Bedrock_MCP_Client' ) ? new AI_Chat_Bedrock
 								echo esc_html( $entry['duration'] > 0 ? sprintf( __( '%s ms', 'ai-chat-for-amazon-bedrock' ), number_format_i18n( (int) $entry['duration'] ) ) : '—' );
 								?>
 							</td>
-							<td><?php echo esc_html( ! empty( $entry['keys'] ) ? implode( ', ', $entry['keys'] ) : '—' ); ?></td>
+							<td><?php echo esc_html( ! empty( $entry['keys'] ) ? AI_Chat_Bedrock_Translation::items( $entry['keys'] ) : '—' ); ?></td>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>

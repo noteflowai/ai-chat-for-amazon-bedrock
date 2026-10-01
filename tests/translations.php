@@ -130,6 +130,25 @@ foreach ( array( 'zh_CN', 'ja' ) as $locale ) {
 	}
 }
 
+// --- Joining sentences and lists ----------------------------------------------
+
+// Translated through the bundled .po, so this is what an admin in that language reads.
+$aicfab_locale_po = array();
+function _x( $text, $context, $domain = null ) {
+	global $aicfab_locale_po;
+	$key = $context . "\4" . $text;
+	return isset( $aicfab_locale_po[ $key ] ) && '' !== $aicfab_locale_po[ $key ] ? $aicfab_locale_po[ $key ] : $text;
+}
+
+check_l10n( 'One. Two.' === AI_Chat_Bedrock_Translation::sentences( 'One.', '', 'Two.' ), 'In English, sentences are separated by a space and empty ones are skipped.' );
+check_l10n( 'a, b, c' === AI_Chat_Bedrock_Translation::items( array( 'a', 'b', 'c' ) ), 'In English, list items are separated by a comma.' );
+foreach ( array( 'zh_CN', 'ja' ) as $locale ) {
+	$aicfab_locale_po = aicfab_po_entries( $languages . "$domain-$locale.po" );
+	// Until 1.55.0 a space followed the full stop: "插件未设置每日上限。 最近 7 天：0 次请求。"
+	check_l10n( '一。二。三。' === AI_Chat_Bedrock_Translation::sentences( '一。', '二。', '三。' ), "$locale: no space follows a full stop between sentences." );
+	check_l10n( 'a、b' === AI_Chat_Bedrock_Translation::items( array( 'a', 'b' ) ), "$locale: list items are separated by 、." );
+}
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

@@ -167,13 +167,18 @@ class AI_Chat_Bedrock_Rate_Limits {
 		$parts = array();
 		foreach ( $limits as $role => $limit ) {
 			$label   = isset( $names[ $role ] ) ? $names[ $role ] : $role;
-			$parts[] = sprintf( '%s: %d', $label, (int) $limit );
+			$parts[] = sprintf(
+				/* translators: 1: user role, 2: requests per minute for that role. */
+				_x( '%1$s: %2$d', 'user role and its requests per minute', 'ai-chat-for-amazon-bedrock' ),
+				$label,
+				(int) $limit
+			);
 		}
 
 		return sprintf(
 			/* translators: 1: comma separated role limits, 2: fallback requests per minute. */
 			__( 'Overrides in effect (%1$s). Everyone else gets %2$d per minute.', 'ai-chat-for-amazon-bedrock' ),
-			implode( ', ', $parts ),
+			AI_Chat_Bedrock_Translation::items( $parts ),
 			max( 1, (int) $fallback )
 		);
 	}

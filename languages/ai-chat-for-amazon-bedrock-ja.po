@@ -3676,11 +3676,14 @@ msgstr "選択したリージョンで、この AWS アイデンティティが�
 msgid "inference profile"
 msgstr "推論プロファイル"
 
-#: includes/class-ai-chat-bedrock-models.php:212
-msgid "legacy"
-msgstr "レガシー"
+#. translators: %s: model name. AWS marks the model as legacy.
+#: includes/class-ai-chat-bedrock-models.php:213
+#, php-format
+msgctxt "model name, then that AWS marks it legacy"
+msgid "%s (legacy)"
+msgstr "%s（レガシー）"
 
-#: includes/class-ai-chat-bedrock-models.php:243
+#: includes/class-ai-chat-bedrock-models.php:244
 msgid "configured"
 msgstr "設定済み"
 
@@ -3842,8 +3845,15 @@ msgid "Every visitor gets %s request per minute."
 msgid_plural "Every visitor gets %s requests per minute."
 msgstr[0] "各訪問者は 1 分あたり %s 回までリクエストできます。"
 
+#. translators: 1: user role, 2: requests per minute for that role.
+#: includes/class-ai-chat-bedrock-rate-limits.php:172
+#, php-format
+msgctxt "user role and its requests per minute"
+msgid "%1$s: %2$d"
+msgstr "%1$s：%2$d"
+
 #. translators: 1: comma separated role limits, 2: fallback requests per minute.
-#: includes/class-ai-chat-bedrock-rate-limits.php:175
+#: includes/class-ai-chat-bedrock-rate-limits.php:180
 #, php-format
 msgid "Overrides in effect (%1$s). Everyone else gets %2$d per minute."
 msgstr "個別設定が適用されています（%1$s）。その他のユーザーは 1 分あたり %2$d 回です。"
@@ -4123,6 +4133,12 @@ msgstr "このファイルには適用する設定がありません。"
 msgctxt "two sentences in a row"
 msgid "%1$s %2$s"
 msgstr "%1$s%2$s"
+
+#. translators: Separator between the items of a list. Chinese and Japanese use 、.
+#: includes/class-ai-chat-bedrock-translation.php:58
+msgctxt "between the items of a list"
+msgid ", "
+msgstr "、"
 
 #: includes/class-ai-chat-bedrock-wp-mcp-server.php:220
 msgid "Authentication is required for the MCP endpoint."

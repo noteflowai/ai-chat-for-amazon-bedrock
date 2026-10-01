@@ -1059,7 +1059,7 @@ class AI_Chat_Bedrock_Admin {
 			printf(
 				/* translators: %s: comma separated list of variable names. */
 				esc_html__( 'These variables are sent literally because this plugin cannot resolve them: %s', 'ai-chat-for-amazon-bedrock' ),
-				esc_html( implode( ', ', $unresolved ) )
+				esc_html( AI_Chat_Bedrock_Translation::items( $unresolved ) )
 			);
 			echo '</p>';
 		}

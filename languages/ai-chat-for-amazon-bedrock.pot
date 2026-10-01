@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-09-30T23:22:56+00:00\n"
+"POT-Creation-Date: 2026-10-01T00:36:49+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -3696,11 +3696,14 @@ msgstr ""
 msgid "inference profile"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-models.php:212
-msgid "legacy"
+#. translators: %s: model name. AWS marks the model as legacy.
+#: includes/class-ai-chat-bedrock-models.php:213
+#, php-format
+msgctxt "model name, then that AWS marks it legacy"
+msgid "%s (legacy)"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-models.php:243
+#: includes/class-ai-chat-bedrock-models.php:244
 msgid "configured"
 msgstr ""
 
@@ -3863,8 +3866,15 @@ msgid_plural "Every visitor gets %s requests per minute."
 msgstr[0] ""
 msgstr[1] ""
 
+#. translators: 1: user role, 2: requests per minute for that role.
+#: includes/class-ai-chat-bedrock-rate-limits.php:172
+#, php-format
+msgctxt "user role and its requests per minute"
+msgid "%1$s: %2$d"
+msgstr ""
+
 #. translators: 1: comma separated role limits, 2: fallback requests per minute.
-#: includes/class-ai-chat-bedrock-rate-limits.php:175
+#: includes/class-ai-chat-bedrock-rate-limits.php:180
 #, php-format
 msgid "Overrides in effect (%1$s). Everyone else gets %2$d per minute."
 msgstr ""
@@ -4144,6 +4154,12 @@ msgstr ""
 #, php-format
 msgctxt "two sentences in a row"
 msgid "%1$s %2$s"
+msgstr ""
+
+#. translators: Separator between the items of a list. Chinese and Japanese use 、.
+#: includes/class-ai-chat-bedrock-translation.php:58
+msgctxt "between the items of a list"
+msgid ", "
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-wp-mcp-server.php:220
