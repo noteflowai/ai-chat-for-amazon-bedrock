@@ -340,6 +340,65 @@ else
 	fi
 fi
 
+step "Translation template"
+# tests/translations.php holds every string of languages/*.pot to a Chinese and a Japanese
+# translation, but it cannot tell whether that template is the code's. A string added without
+# regenerating it would pass, and ship in English to admins who read the rest in their
+# language. So the template is generated again from the code and compared.
+if [ -z "$WP_CLI" ]; then
+	skip 'no --wp-cli given, so the translation template was not compared with the code'
+else
+	# Generated where the WP-CLI process sees the plugin, which need not be this path, and read
+	# back through it for the same reason.
+	WP_PLUGIN_DIR="$($WP_CLI plugin path ai-chat-for-amazon-bedrock --dir 2>/dev/null)"
+	FRESH_POT=''
+	if [ -n "$WP_PLUGIN_DIR" ] && $WP_CLI i18n make-pot "$WP_PLUGIN_DIR" "$WP_PLUGIN_DIR/.gate-template.pot" \
+		--slug=ai-chat-for-amazon-bedrock --exclude=.tools,node_modules,tests,bin,vendor,dist >/dev/null 2>&1; then
+		FRESH_POT="$($WP_CLI eval "readfile( '$WP_PLUGIN_DIR/.gate-template.pot' ); unlink( '$WP_PLUGIN_DIR/.gate-template.pot' );" 2>/dev/null)"
+	fi
+	if [ -z "$FRESH_POT" ]; then
+		bad 'could not generate a translation template from the code'
+	elif printf '%s' "$FRESH_POT" | "$PHP_BIN" -r '
+function aicfab_ids( $pot ) {
+	$ids = array();
+	foreach ( preg_split( "/\n\s*\n/", $pot ) as $block ) {
+		$fields = array();
+		$key    = "";
+		foreach ( explode( "\n", $block ) as $line ) {
+			if ( preg_match( "/^(msgctxt|msgid|msgid_plural|msgstr)(?:\[\d\])?\s+\"(.*)\"$/", $line, $m ) ) {
+				$key            = $m[1];
+				$fields[ $key ] = stripcslashes( $m[2] );
+			} elseif ( "" !== $key && preg_match( "/^\"(.*)\"$/", $line, $m ) ) {
+				$fields[ $key ] .= stripcslashes( $m[1] );
+			}
+		}
+		if ( isset( $fields["msgid"] ) && "" !== $fields["msgid"] ) {
+			$ids[] = ( isset( $fields["msgctxt"] ) ? $fields["msgctxt"] . " | " : "" ) . $fields["msgid"];
+		}
+	}
+	return $ids;
+}
+$code    = aicfab_ids( stream_get_contents( STDIN ) );
+$shipped = aicfab_ids( (string) file_get_contents( "languages/ai-chat-for-amazon-bedrock.pot" ) );
+$added   = array_values( array_diff( $code, $shipped ) );
+$gone    = array_values( array_diff( $shipped, $code ) );
+foreach ( array_slice( $added, 0, 5 ) as $id ) {
+	echo "  not in languages/*.pot: " . $id . "\n";
+}
+foreach ( array_slice( $gone, 0, 5 ) as $id ) {
+	echo "  no longer in the code: " . $id . "\n";
+}
+if ( $added || $gone ) {
+	printf( "  %d new, %d removed. Regenerate the template with wp i18n make-pot, then translate it into zh_CN and ja.\n", count( $added ), count( $gone ) );
+	exit( 1 );
+}
+'; then
+		ok 'languages/*.pot matches the strings in the code'
+	else
+		bad 'the translation template is out of date'
+	fi
+fi
+
 step "Package contents"
 if command -v python3 >/dev/null 2>&1; then
 	if PACKAGE_OUTPUT="$(python3 "$PLUGIN_DIR/bin/build-package.py" --list 2>&1 >/dev/null)"; then

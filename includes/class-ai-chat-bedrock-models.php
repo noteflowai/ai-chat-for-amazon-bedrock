@@ -209,7 +209,8 @@ class AI_Chat_Bedrock_Models {
 		$label    = '' !== $provider ? $provider . ' ' . $name : $name;
 
 		if ( isset( $model['lifecycle'] ) && 'LEGACY' === $model['lifecycle'] ) {
-			$label .= ' (' . __( 'legacy', 'ai-chat-for-amazon-bedrock' ) . ')';
+			/* translators: %s: model name. AWS marks the model as legacy. */
+			$label = sprintf( _x( '%s (legacy)', 'model name, then that AWS marks it legacy', 'ai-chat-for-amazon-bedrock' ), $label );
 		}
 		return $label;
 	}

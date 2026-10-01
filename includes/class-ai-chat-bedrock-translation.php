@@ -45,6 +45,22 @@ class AI_Chat_Bedrock_Translation {
 	}
 
 	/**
+	 * A list of items separated the way the admin's language does.
+	 *
+	 * Chinese and Japanese separate list items with an ideographic comma, not ", ".
+	 *
+	 * @param array $items Items in order.
+	 * @return string
+	 */
+	public static function items( $items ) {
+		return implode(
+			/* translators: Separator between the items of a list. Chinese and Japanese use 、. */
+			_x( ', ', 'between the items of a list', 'ai-chat-for-amazon-bedrock' ),
+			array_map( 'strval', (array) $items )
+		);
+	}
+
+	/**
 	 * The group the strings are listed under in the multilingual plugin.
 	 */
 	const CONTEXT = 'AI Chat for Amazon Bedrock';

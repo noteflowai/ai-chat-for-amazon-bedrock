@@ -507,12 +507,12 @@ class AI_Chat_Bedrock_Eval {
 					$missing ? sprintf(
 						/* translators: %s: comma separated required strings. */
 						__( 'Missing: %s.', 'ai-chat-for-amazon-bedrock' ),
-						implode( ', ', $missing )
+						AI_Chat_Bedrock_Translation::items( $missing )
 					) : '',
 					$invented ? sprintf(
 						/* translators: %s: comma separated forbidden strings. */
 						__( 'Stated: %s.', 'ai-chat-for-amazon-bedrock' ),
-						implode( ', ', $invented )
+						AI_Chat_Bedrock_Translation::items( $invented )
 					) : ''
 				)
 		);
@@ -532,7 +532,7 @@ class AI_Chat_Bedrock_Eval {
 				? sprintf(
 					/* translators: %s: comma separated tool names. */
 					__( 'Requested: %s.', 'ai-chat-for-amazon-bedrock' ),
-					implode( ', ', $requested )
+					AI_Chat_Bedrock_Translation::items( $requested )
 				)
 				: __( 'No tool was requested.', 'ai-chat-for-amazon-bedrock' )
 		);

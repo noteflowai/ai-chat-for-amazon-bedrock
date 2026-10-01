@@ -34,6 +34,9 @@ function apply_filters( $hook, $value ) {
 function __( $text, $domain = null ) {
 	return $text;
 }
+function _x( $text, $context, $domain = null ) {
+	return $text;
+}
 function _n( $single, $plural, $number, $domain = null ) {
 	return 1 === (int) $number ? $single : $plural;
 }
@@ -61,6 +64,7 @@ function wp_roles() {
 }
 
 require_once __DIR__ . '/../includes/class-ai-chat-bedrock-rate-limits.php';
+require_once __DIR__ . '/../includes/class-ai-chat-bedrock-translation.php';
 
 $failures = array();
 function check_limit( $condition, $message ) {

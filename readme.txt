@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.55.0
+Stable tag: 1.55.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -403,6 +403,10 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.55.1 =
+* Lists in the admin, such as the per-role rate limits, the unresolved prompt variables and the answer check's results, are separated with 、 in Chinese and Japanese instead of an English comma, and a legacy model's label is translated as a whole.
+* The release gate regenerates the translation template from the code and fails when it differs, so a new string cannot ship untranslated while the bundled translations say they cover everything.
+
 = 1.55.0 =
 * The settings screens, dashboard, diagnostics, conversation log, MCP pages and block editor read in Simplified Chinese (zh_CN) and Japanese (ja). 1.52.0 translated only what visitors read in the chat, so a Chinese or Japanese admin saw these screens in English, with a few translated words among them. As before, a language pack from translate.wordpress.org replaces the bundled translation once there is one.
 * Where a message puts two sentences together, Chinese and Japanese no longer get a space after the full stop between them.
@@ -415,12 +419,12 @@ what a good answer says.
 * The Clear chat button shows its border again.
 * Embeddings made for search and site indexing are counted separately in the usage summary and no longer count against the daily request limit, which indexing a site could use up before anyone chatted.
 
-= 1.53.0 =
-* The dashboard now counts chat requests that reached Amazon Bedrock and still failed, today and over the last seven days, by cause: throttled, access denied, rejected request, service unavailable, network or other. Setup errors that send no request are not counted, and no message or error text is stored.
-
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.55.1 =
+Chinese and Japanese list separators in the admin.
 
 = 1.55.0 =
 The whole admin, not only the chat, in Chinese and Japanese.
