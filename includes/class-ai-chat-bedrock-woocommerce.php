@@ -811,16 +811,40 @@ class AI_Chat_Bedrock_WooCommerce {
 	 */
 
 	/**
-	 * Whether a question is about orders or delivery.
+	 * Whether a question is about the visitor's own orders or their delivery.
+	 *
+	 * A word such as "package", "returns", "shipped", 物流 or 出荷 is not enough: on a site
+	 * that writes about robots those come up in questions about Python packages, returns in
+	 * reinforcement learning, logistics robots and robots shipped this year, and each match
+	 * sends the customer's orders to the model. A question has to point at an order: "my
+	 * order", an order number, a tracking number, "has it shipped", a refund.
 	 *
 	 * @param string $message Visitor question.
 	 * @return bool
 	 */
 	public static function asks_about_orders( $message ) {
-		$message = (string) $message;
-		$english = '/\b(orders?|ordered|purchases?|bought|ship|shipped|shipping|shipment|deliver(y|ed|ies)?|track(ing)?|parcel|package|refunds?|returns?|invoice|receipt)\b/i';
-		$cjk     = '/(订单|訂單|下单|下單|发货|發貨|物流|快递|快遞|配送|送达|送達|到货|到貨|退款|退货|退貨|包裹|运单|運單|单号|單號|注文|発送|配送|配達|追跡|荷物|返金|返品|届く|届か|届い|出荷)/u';
-		$asks    = (bool) preg_match( $english, $message ) || (bool) preg_match( $cjk, $message );
+		$message  = (string) $message;
+		$patterns = array(
+			'/\b(my|our)\s+(\w+\s+){0,2}(orders?|purchases?|package|parcel|deliver(y|ies)|shipments?|refunds?|returns?|invoices?|receipts?|tracking)\b/i',
+			'/\b(order|purchase)\s*(#|no\.?\s|number|status|history)|\border\s+#?\d{2,}\b/i',
+			'/\btracking\s+(number|code|link|id|info)|\btrack\s+(my|the|an?)\s+(order|package|parcel|shipment|delivery)\b/i',
+			'/\bI\s+(have\s+|\'ve\s+|just\s+)?(ordered|bought|purchased|paid\s+for)\b/i',
+			'/\b(has|have|did|was|were|is)\s+(it|they|this|that|my\s+\w+)\s+(been\s+)?(shipped|dispatched|delivered|sent)\b|\b(shipped|dispatched|delivered)\s+yet\b|\bwhen\s+will\s+(it|they|my\s+\w+)\s+(arrive|ship|be\s+(delivered|shipped))\b/i',
+			'/\b(refund(s|ed)?|cancel\s+(my|the|an?)\s+order)\b/i',
+			'/(我的|我们的|我們的)(订单|訂單|快递|快遞|包裹|货|貨|物流|退款|退货|退貨)|我(买|買|购买|購買|订|訂|下单|下單)的/u',
+			'/(订单|訂單)(号|號|状态|狀態|编号|編號|记录|記錄)|单号|單號|(快递|快遞|物流|运单|運單)(信息|資訊|状态|狀態)|查(一下|询|詢)?(订单|訂單|物流|快递|快遞)/u',
+			'/(发货|發貨|到货|到貨|寄出|送到|签收|簽收)了?(吗|嗎|没|沒|么|麼|呢)|什(么|麼)时候(发货|發貨|到货|到貨|送到|能到)|(多久|几天|幾天)(发货|發貨|到货|到貨|能到|送到)|退款|退货|退貨|换货|換貨/u',
+			'/(私|僕|わたし)の(注文|荷物|配送|返品|返金)|注文(番号|状況|履歴|内容|した|しました)|購入した|買った|追跡番号|配送状況|配達状況|返品|返金/u',
+			'/発送(され|し)?(まし)?たか|発送(状況|予定|はいつ)|いつ(届|発送|到着)|届(かない|きません|いていない|いてない|きますか|くのは)/u',
+		);
+
+		$asks = false;
+		foreach ( $patterns as $pattern ) {
+			if ( preg_match( $pattern, $message ) ) {
+				$asks = true;
+				break;
+			}
+		}
 
 		/**
 		 * Whether a chat message asks about the visitor's orders.
@@ -988,13 +1012,15 @@ class AI_Chat_Bedrock_WooCommerce {
 	 * @param string $message Visitor question.
 	 * @param array  $options Chat settings, with _product_id for the product being viewed.
 	 * @param array  $history Sanitized earlier turns.
-	 * @return array messages (system messages to add), products (cards), grounded.
+	 * @return array messages (system messages to add), products (cards), grounded, and
+	 *               orders, whether the question was answered from the customer's orders.
 	 */
 	public static function for_chat( $message, $options, $history = array() ) {
 		$result = array(
 			'messages' => array(),
 			'products' => array(),
 			'grounded' => false,
+			'orders'   => false,
 		);
 		if ( ! self::active() ) {
 			return $result;
@@ -1024,6 +1050,7 @@ class AI_Chat_Bedrock_WooCommerce {
 
 		if ( self::orders_enabled( $options ) && self::asks_about_orders( $message ) ) {
 			$result['messages'][] = self::orders_block( $message );
+			$result['orders']     = true;
 		}
 		return $result;
 	}
