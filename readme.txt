@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.56.0
+Stable tag: 1.56.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -432,6 +432,10 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.56.1 =
+* WooCommerce order questions: a customer's orders are sent only when the question points at an order, such as "my order", an order number, a tracking number, "has it shipped" or a refund. A shared word is no longer enough, so questions about Python packages, returns in reinforcement learning, logistics robots or robots shipped this year no longer send them.
+* An answer to an order question no longer lists the nearest articles as its sources, and is not counted as a content gap. The passages are still offered to the model, for a shipping or returns page.
+
 = 1.56.0 =
 * WooCommerce: a new WooCommerce tab, shown when WooCommerce is active, with three features that are all off by default. Product answers draws on the live catalog for product questions, quoting the price, sale price, stock and options the shop shows, and lists the products under the answer with View product and Add to cart; on a product page, the product being viewed comes first. Order questions lets a signed-in customer ask about their own recent orders, sending the order number, dates, status, items, total, shipping method and tracking number but never an address, email, phone or payment detail. The product assistant on the product edit screen drafts the short and full description from the product's own attributes and summarizes approved reviews without reviewer names.
 * Products that are drafts, private, password-protected, hidden from the catalog, or out of stock on a store that hides those are never described or linked.
@@ -450,6 +454,9 @@ what a good answer says.
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.56.1 =
+WooCommerce order questions send a customer's orders only when the question is clearly about an order.
 
 = 1.56.0 =
 WooCommerce: product answers with live prices and stock, order questions for signed-in customers, and a product description assistant. All off until enabled.

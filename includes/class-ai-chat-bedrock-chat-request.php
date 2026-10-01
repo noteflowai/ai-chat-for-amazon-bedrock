@@ -192,6 +192,13 @@ class AI_Chat_Bedrock_Chat_Request {
 			}
 			$products = $store['products'];
 			$grounded = $grounded || $store['grounded'];
+			// The answer to an order question comes from the customer's orders. The passages
+			// stay, since a shipping or returns page can help, but links to whatever articles
+			// came nearest would read as the answer's sources. Nor is it a content gap.
+			if ( ! empty( $store['orders'] ) ) {
+				$sources  = array();
+				$grounded = true;
+			}
 		}
 
 		$messages = array_merge(

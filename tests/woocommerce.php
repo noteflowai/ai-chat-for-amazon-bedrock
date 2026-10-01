@@ -279,11 +279,46 @@ check_woo( array() === $store['messages'] && array() === $store['products'], 'No
 
 // --- Orders ---------------------------------------------------------------------------
 
-foreach ( array( 'Where is my order?', 'Has it shipped yet', 'tracking number please', '我的快递到哪了', '订单状态', '注文した商品はいつ届きますか', '発送されましたか' ) as $question ) {
+$aicfab_order_questions = array(
+	'Where is my order?',
+	'Has it shipped yet',
+	'tracking number please',
+	'What is the status of order #1234?',
+	'I ordered a gripper last week, when will it arrive?',
+	'Can I get a refund?',
+	'Where is my package',
+	'我的快递到哪了',
+	'订单状态',
+	'我买的机械臂什么时候发货',
+	'发货了吗',
+	'退款到账了吗',
+	'注文した商品はいつ届きますか',
+	'発送されましたか',
+	'注文番号 1001 の配送状況',
+	'私の荷物が届かない',
+);
+foreach ( $aicfab_order_questions as $question ) {
 	check_woo( AI_Chat_Bedrock_WooCommerce::asks_about_orders( $question ), 'An order question is recognized: ' . $question );
 }
-foreach ( array( 'What does the arm weigh?', 'Is it compatible with ROS 2?', '这个机械臂多重' ) as $question ) {
-	check_woo( ! AI_Chat_Bedrock_WooCommerce::asks_about_orders( $question ), 'A product question is not taken for an order question: ' . $question );
+// Questions a site about robots gets, which share a word with orders and must not send them.
+$aicfab_other_questions = array(
+	'What does the arm weigh?',
+	'Is it compatible with ROS 2?',
+	'这个机械臂多重',
+	'What are returns in reinforcement learning?',
+	'How do I install the Python package?',
+	'Which humanoid robots shipped this year?',
+	'Is second-order optimization worth it?',
+	'How does visual object tracking work?',
+	'Explain the delivery robot in the article',
+	'Figure 获得了宝马的订单吗？',
+	'物流机器人有哪些？',
+	'配送机器人能爬楼梯吗',
+	'荷物を運ぶロボットはありますか',
+	'今年のヒューマノイドの出荷台数は？',
+);
+foreach ( $aicfab_other_questions as $question ) {
+	check_woo( ! AI_Chat_Bedrock_WooCommerce::asks_about_orders( $question ), 'A question about something else is not taken for an order question: ' . $question );
 }
 
 $block = AI_Chat_Bedrock_WooCommerce::orders_block( 'Where is my order?' );
@@ -310,9 +345,9 @@ check_woo( false !== strpos( $block, 'not signed in' ) && false === strpos( $blo
 $GLOBALS['aicfab_user'] = 7;
 
 $store = AI_Chat_Bedrock_WooCommerce::for_chat( 'where is my order?', array( 'woo_orders' => true ) );
-check_woo( 1 === count( $store['messages'] ) && false !== strpos( $store['messages'][0], 'Order #101' ), 'An order question adds the orders.' );
+check_woo( 1 === count( $store['messages'] ) && false !== strpos( $store['messages'][0], 'Order #101' ) && true === $store['orders'], 'An order question adds the orders and says so.' );
 $store = AI_Chat_Bedrock_WooCommerce::for_chat( 'what does the arm weigh?', array( 'woo_orders' => true ) );
-check_woo( array() === $store['messages'], 'Orders are not sent with a question about something else.' );
+check_woo( array() === $store['messages'] && false === $store['orders'], 'Orders are not sent with a question about something else.' );
 $store = AI_Chat_Bedrock_WooCommerce::for_chat( 'where is my order?', array( 'woo_orders' => false ) );
 check_woo( array() === $store['messages'], 'Orders are never sent while the feature is off.' );
 

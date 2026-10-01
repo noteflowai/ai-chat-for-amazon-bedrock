@@ -808,6 +808,33 @@ check_pub( isset( $aicfab_registered['support: welcome_message'] ) && 'Support d
 check_pub( ! in_array( 'wpml_register_single_string', array_column( isset( $GLOBALS['aicfab_actions'] ) ? $GLOBALS['aicfab_actions'] : array(), 0 ), true ), 'With Polylang, strings are not registered again through its WPML layer.' );
 check_pub( in_array( array( 'AI Chat for Amazon Bedrock', 'chat_title' ), isset( $GLOBALS['aicfab_unregistered'] ) ? $GLOBALS['aicfab_unregistered'] : array(), true ), 'The copy an earlier version registered through that layer is removed.' );
 
+// --- An answer from the customer's orders lists no articles ------------------------
+// WooCommerce is declared only here, at the end, so the checks above run without it.
+
+if ( ! class_exists( 'WooCommerce' ) ) {
+	class WooCommerce {}
+	function wc_get_product( $id ) {
+		return false;
+	}
+	function wc_get_orders( $args ) {
+		return array();
+	}
+	function wc_get_order_statuses() {
+		return array( 'wc-processing' => 'Processing' );
+	}
+}
+aicfab_reset_pub( array( 'show_sources' => true, 'woo_orders' => true ) );
+$GLOBALS['aicfab_logged_in'] = true;
+$GLOBALS['aicfab_sources']   = array( array( 'title' => 'Radar', 'url' => 'https://example.test/radar/' ) );
+$aicfab_built                = AI_Chat_Bedrock_Chat_Request::build( 'Where is my order?', '[]', $GLOBALS['aicfab_opts']['ai_chat_bedrock_settings'] );
+$aicfab_sent                 = is_wp_error( $aicfab_built ) ? '' : wp_json_encode( $aicfab_built['messages'] );
+check_pub( '' !== $aicfab_sent && false !== strpos( $aicfab_sent, 'has no orders' ), 'An order question reaches the store.' );
+check_pub( '' !== $aicfab_sent && array() === $aicfab_built['sources'] && true === $aicfab_built['grounded'], 'An answer from the customer\'s orders lists no articles as its sources and is no content gap.' );
+check_pub( false !== strpos( $aicfab_sent, 'Reference material' ), 'The passages stay, for a shipping or returns page.' );
+$aicfab_built = AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]', $GLOBALS['aicfab_opts']['ai_chat_bedrock_settings'] );
+check_pub( ! is_wp_error( $aicfab_built ) && $GLOBALS['aicfab_sources'] === $aicfab_built['sources'], 'Another question keeps its sources.' );
+$GLOBALS['aicfab_sources'] = array();
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );
