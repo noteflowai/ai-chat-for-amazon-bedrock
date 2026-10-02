@@ -13,8 +13,9 @@ $GLOBALS['aicfab_test_options'] = array(
 	'temperature' => 0.4,
 );
 class WP_Error {
-	private $code; private $message;
-	public function __construct( $code, $message ) { $this->code = $code; $this->message = $message; }
+	private $code; private $message; private $data;
+	public function __construct( $code, $message, $data = '' ) { $this->code = $code; $this->message = $message; $this->data = $data; }
+	public function get_error_data() { return $this->data; }
 	public function get_error_message() { return $this->message; }
 	public function get_error_code() { return $this->code; }
 }
@@ -631,6 +632,45 @@ $GLOBALS['aicfab_test_responses'] = array(
 ( new AI_Chat_Bedrock_AWS() )->embed( 'hello', 'amazon.titan-embed-text-v2:0', 'document', 300 );
 check_aws( 512 === json_decode( $GLOBALS['aicfab_test_posts'][0]['args']['body'], true )['dimensions'], 'A supported vector size is sent.' );
 check_aws( ! isset( json_decode( $GLOBALS['aicfab_test_posts'][1]['args']['body'], true )['dimensions'] ), 'An unsupported vector size is left to the model default.' );
+$GLOBALS['aicfab_test_responses'] = array();
+
+// Rerank, on the Agents runtime.
+$GLOBALS['aicfab_test_posts']     = array();
+$GLOBALS['aicfab_test_responses'] = array(
+	array( 'response' => array( 'code' => 200 ), 'body' => '{"results":[{"index":2,"relevanceScore":0.91},{"index":0,"relevanceScore":0.12},{"index":9,"relevanceScore":0.99},{"index":1,"relevanceScore":0.4}]}' ),
+	array( 'response' => array( 'code' => 400 ), 'body' => '{"message":"The provided model identifier is invalid."}' ),
+	array( 'response' => array( 'code' => 503 ), 'body' => '' ),
+	new WP_Error( 'http_request_failed', 'timeout' ),
+	array( 'response' => array( 'code' => 200 ), 'body' => '{"results":[]}' ),
+);
+$aicfab_ranker = new AI_Chat_Bedrock_AWS( array( 'aws_region' => 'us-west-2' ) );
+$aicfab_scores = $aicfab_ranker->rerank( '  opening hours ', array( 'Closed on Sundays', '', str_repeat( 'x', 5000 ) ), 'cohere.rerank-v3-5:0' );
+$aicfab_sent   = $GLOBALS['aicfab_test_posts'][0];
+$aicfab_req    = json_decode( $aicfab_sent['args']['body'], true );
+check_aws( 'https://bedrock-agent-runtime.us-west-2.amazonaws.com/rerank' === $aicfab_sent['url'], 'Rerank goes to the Agents runtime in the chat region.' );
+check_aws( false !== strpos( $aicfab_sent['args']['headers']['Authorization'], '/us-west-2/bedrock/aws4_request' ), 'Rerank is signed for the bedrock service.' );
+check_aws( 'opening hours' === $aicfab_req['queries'][0]['textQuery']['text'] && 'TEXT' === $aicfab_req['queries'][0]['type'], 'The trimmed question is the text query.' );
+check_aws( 3 === count( $aicfab_req['sources'] ) && 'INLINE' === $aicfab_req['sources'][0]['type'] && 'Closed on Sundays' === $aicfab_req['sources'][0]['inlineDocumentSource']['textDocument']['text'], 'Each passage is an inline text document, in order.' );
+check_aws( '-' === $aicfab_req['sources'][1]['inlineDocumentSource']['textDocument']['text'], 'An empty passage is sent as a placeholder, keeping the indexes aligned.' );
+check_aws( 4000 === strlen( $aicfab_req['sources'][2]['inlineDocumentSource']['textDocument']['text'] ), 'A long passage is cut to 4000 characters.' );
+check_aws( 'BEDROCK_RERANKING_MODEL' === $aicfab_req['rerankingConfiguration']['type'] && 3 === $aicfab_req['rerankingConfiguration']['bedrockRerankingConfiguration']['numberOfResults'], 'Every passage gets a score.' );
+check_aws( 'arn:aws:bedrock:us-west-2::foundation-model/cohere.rerank-v3-5:0' === $aicfab_req['rerankingConfiguration']['bedrockRerankingConfiguration']['modelConfiguration']['modelArn'], 'The model is named by its foundation model ARN in the region.' );
+check_aws( array( 2 => 0.91, 1 => 0.4, 0 => 0.12 ) === $aicfab_scores, 'Scores come back by passage index, best first, ignoring out-of-range indexes.' );
+$aicfab_bad = $aicfab_ranker->rerank( 'q', array( 'a' ), 'cohere.rerank-v3-5:0' );
+check_aws( is_wp_error( $aicfab_bad ) && 'The provided model identifier is invalid.' === $aicfab_bad->get_error_message() && array( 'status' => 400 ) === $aicfab_bad->get_error_data(), 'A refused request carries the service message and status.' );
+$aicfab_bad = $aicfab_ranker->rerank( 'q', array( 'a' ), 'cohere.rerank-v3-5:0' );
+check_aws( is_wp_error( $aicfab_bad ) && false !== strpos( $aicfab_bad->get_error_message(), 'HTTP 503' ), 'A bare error status is reported.' );
+$aicfab_bad = $aicfab_ranker->rerank( 'q', array( 'a' ), 'cohere.rerank-v3-5:0' );
+check_aws( is_wp_error( $aicfab_bad ) && 'aicfab_transport' === $aicfab_bad->get_error_code() && array( 'status' => 0 ) === $aicfab_bad->get_error_data(), 'A transport failure has status 0.' );
+$aicfab_bad = $aicfab_ranker->rerank( 'q', array( 'a' ), 'cohere.rerank-v3-5:0' );
+check_aws( is_wp_error( $aicfab_bad ) && 'aicfab_invalid_response' === $aicfab_bad->get_error_code(), 'A reply without scores is an error.' );
+$aicfab_count = count( $GLOBALS['aicfab_test_posts'] );
+check_aws( 'aicfab_invalid_model' === $aicfab_ranker->rerank( 'q', array( 'a' ), 'anthropic.claude-3-haiku-20240307-v1:0' )->get_error_code(), 'Only reranking models are accepted.' );
+check_aws( 'aicfab_empty_query' === $aicfab_ranker->rerank( ' ', array( 'a' ), 'amazon.rerank-v1:0' )->get_error_code() && 'aicfab_empty_query' === $aicfab_ranker->rerank( 'q', array(), 'amazon.rerank-v1:0' )->get_error_code(), 'An empty question or passage list is refused.' );
+check_aws( count( $GLOBALS['aicfab_test_posts'] ) === $aicfab_count, 'Refused reranks send nothing.' );
+$GLOBALS['aicfab_test_responses'] = array( array( 'response' => array( 'code' => 200 ), 'body' => '{"results":[{"index":0,"relevanceScore":0.5}]}' ) );
+$aicfab_ranker->rerank( 'q', array_fill( 0, 150, 'doc' ), 'amazon.rerank-v1:0' );
+check_aws( AI_Chat_Bedrock_AWS::MAX_RERANK_DOCUMENTS === count( json_decode( end( $GLOBALS['aicfab_test_posts'] )['args']['body'], true )['sources'] ), 'At most 100 passages are sent.' );
 $GLOBALS['aicfab_test_responses'] = array();
 
 if ( $failures ) {

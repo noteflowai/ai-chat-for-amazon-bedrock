@@ -185,6 +185,22 @@ $GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] = array( 'daily_request_l
 $embed_models = wp_list_pluck_compat( AI_Chat_Bedrock_Usage::by_model( 7 ), 'model' );
 check_usage( in_array( 'amazon.titan-embed-text-v2:0', $embed_models, true ), 'The embedding model still has its own row.' );
 
+// --- Reranking --------------------------------------------------------------
+
+// Rerank is billed per query, not per token, so it gets a request counter and nothing else.
+AI_Chat_Bedrock_Usage::reset();
+AI_Chat_Bedrock_Usage::record( array(), 'cohere.rerank-v3-5:0', 'rerank' );
+AI_Chat_Bedrock_Usage::record( array(), 'cohere.rerank-v3-5:0', 'rerank' );
+AI_Chat_Bedrock_Usage::record( array( 'input_tokens' => 10, 'output_tokens' => 4 ), 'amazon.nova-lite-v1:0' );
+$rerank_today = AI_Chat_Bedrock_Usage::today_totals();
+check_usage( 1 === $rerank_today['requests'] && 10 === $rerank_today['input_tokens'], 'Reranks are not counted as chat requests.' );
+check_usage( 2 === $rerank_today['rerank_requests'] && 0 === $rerank_today['embedding_requests'], 'Reranks have a counter of their own.' );
+check_usage( 2 === AI_Chat_Bedrock_Usage::totals( 7 )['rerank_requests'], 'The weekly totals carry the rerank counter.' );
+$GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] = array( 'daily_request_limit' => 2 );
+check_usage( false === AI_Chat_Bedrock_Usage::daily_limit_reached(), 'Reranks do not use up the daily cap.' );
+$GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] = array( 'daily_request_limit' => 0 );
+check_usage( in_array( 'cohere.rerank-v3-5:0', wp_list_pluck_compat( AI_Chat_Bedrock_Usage::by_model( 7 ), 'model' ), true ), 'The reranking model has its own row.' );
+
 function wp_list_pluck_compat( $rows, $field ) {
 	return array_map(
 		static function ( $row ) use ( $field ) {

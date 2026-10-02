@@ -383,7 +383,11 @@ class AI_Chat_Bedrock_Diagnostics {
 		if ( ! empty( $index['problems'] ) ) {
 			return $this->result( 'vector_store', $label, 'fail', AI_Chat_Bedrock_Translation::sentences( ...$index['problems'] ) );
 		}
-		return $this->result( 'vector_store', $label, 'pass', __( 'The S3 Vectors index exists and matches the embedding model.', 'ai-chat-for-amazon-bedrock' ) );
+		$message = __( 'The S3 Vectors index exists and matches the embedding model.', 'ai-chat-for-amazon-bedrock' );
+		if ( 'classic' === $index['mode'] ) {
+			$message = AI_Chat_Bedrock_Translation::sentences( $message, __( 'It is a CLASSIC index, which applies metadata filters during the similarity search. The plugin asks for filtering first on every query; to make that the index default, switch it to ENHANCED with UpdateIndexMode.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		return $this->result( 'vector_store', $label, 'pass', $message );
 	}
 
 	private function check_mcp() {

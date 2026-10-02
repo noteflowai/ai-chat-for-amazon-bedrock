@@ -916,6 +916,7 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'embedding_model_id', __( 'Semantic search', 'ai-chat-for-amazon-bedrock' ), 'embedding_model_render', 'aicfab_knowledge' );
 		$this->field( 'vector_store', __( 'Vector store', 'ai-chat-for-amazon-bedrock' ), 'vector_store_render', 'aicfab_knowledge' );
 		$this->field( 'knowledge_base_id', __( 'Bedrock knowledge base ID', 'ai-chat-for-amazon-bedrock' ), 'knowledge_base_id_render', 'aicfab_knowledge' );
+		$this->field( 'rerank_model_id', __( 'Reranking', 'ai-chat-for-amazon-bedrock' ), 'rerank_model_render', 'aicfab_knowledge' );
 		$this->field( 'abilities_tools', __( 'WordPress abilities as tools', 'ai-chat-for-amazon-bedrock' ), 'abilities_tools_render', 'aicfab_knowledge' );
 		$this->field( 'site_abilities', __( 'Site content abilities', 'ai-chat-for-amazon-bedrock' ), 'site_abilities_render', 'aicfab_knowledge' );
 		$this->field( 'editor_assistant', __( 'Editor assistant', 'ai-chat-for-amazon-bedrock' ), 'editor_assistant_render', 'aicfab_knowledge' );
@@ -1075,6 +1076,11 @@ class AI_Chat_Bedrock_Admin {
 	public function knowledge_base_id_render() {
 		$this->text_input( 'knowledge_base_id', '', 64 );
 		echo '<p class="description">' . esc_html__( 'Optional. Queries an existing Amazon Bedrock knowledge base with the Retrieve API. Requires bedrock:Retrieve permission for that knowledge base.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+	public function rerank_model_render() {
+		$choices = array( '' => __( 'Off', 'ai-chat-for-amazon-bedrock' ) ) + AI_Chat_Bedrock_Retrieval::rerank_models();
+		$this->select( 'rerank_model_id', $choices, '' );
+		echo '<p class="description">' . esc_html__( 'Optional. Gathers more passages from site content and the knowledge base, then has a reranking model keep the ones that best answer the question. It adds one rerank request per question, billed per query, and the passages are used in their original order if it fails. Requires bedrock:Rerank, and bedrock:InvokeModel on the reranking model, in the chat region.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function abilities_tools_render() {
 		$checked   = ! empty( $this->option( 'abilities_tools', false ) );
@@ -1627,6 +1633,15 @@ class AI_Chat_Bedrock_Admin {
 			$output['knowledge_base_id'] = '';
 			$this->notice( 'knowledge_base_id', __( 'The knowledge base ID must be alphanumeric; the value was cleared.', 'ai-chat-for-amazon-bedrock' ) );
 		}
+
+		$rerank = isset( $input['rerank_model_id'] ) ? sanitize_text_field( $input['rerank_model_id'] ) : '';
+		if ( '' !== $rerank && ! isset( AI_Chat_Bedrock_Retrieval::rerank_models()[ $rerank ] ) ) {
+			$this->notice( 'rerank_model_id', __( 'That reranking model is not supported; reranking was left off.', 'ai-chat-for-amazon-bedrock' ) );
+			$rerank = '';
+		}
+		$output['rerank_model_id'] = $rerank;
+		// A saved model, Region or credential change may be what fixes a refused rerank request.
+		delete_transient( AI_Chat_Bedrock_Retrieval::RERANK_PAUSED );
 
 		if ( class_exists( 'AI_Chat_Bedrock_AWS_Credentials' ) ) {
 			AI_Chat_Bedrock_AWS_Credentials::flush_cache();

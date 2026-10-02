@@ -31,9 +31,11 @@ class AI_Chat_Bedrock_Usage {
 	 * counted as requests they filled the daily limit, which exists to cap chat, before a
 	 * visitor had asked anything. They are still listed per model.
 	 *
+	 * Reranking is counted apart too: one request per question, priced per query.
+	 *
 	 * @param array  $usage Token usage reported by Bedrock.
 	 * @param string $model Model identifier.
-	 * @param string $kind  answer, or embedding for a search or indexing vector.
+	 * @param string $kind  answer, embedding for a search or indexing vector, or rerank.
 	 * @return void
 	 */
 	public static function record( $usage = array(), $model = '', $kind = 'answer' ) {
@@ -62,6 +64,8 @@ class AI_Chat_Bedrock_Usage {
 			foreach ( $added as $counter => $add ) {
 				$totals[ $today ][ $counter ] = ( isset( $totals[ $today ][ $counter ] ) ? (int) $totals[ $today ][ $counter ] : 0 ) + $add;
 			}
+		} elseif ( 'rerank' === $kind ) {
+			$totals[ $today ]['rerank_requests'] = ( isset( $totals[ $today ]['rerank_requests'] ) ? (int) $totals[ $today ]['rerank_requests'] : 0 ) + 1;
 		} else {
 			$totals[ $today ]['requests']      = (int) $totals[ $today ]['requests'] + 1;
 			$totals[ $today ]['input_tokens']  = (int) $totals[ $today ]['input_tokens'] + $input;
@@ -242,6 +246,7 @@ class AI_Chat_Bedrock_Usage {
 			'cache_write_tokens' => isset( $entry['cache_write_tokens'] ) ? (int) $entry['cache_write_tokens'] : 0,
 			'embedding_requests' => isset( $entry['embedding_requests'] ) ? (int) $entry['embedding_requests'] : 0,
 			'embedding_tokens'   => isset( $entry['embedding_tokens'] ) ? (int) $entry['embedding_tokens'] : 0,
+			'rerank_requests'    => isset( $entry['rerank_requests'] ) ? (int) $entry['rerank_requests'] : 0,
 		);
 	}
 
@@ -262,6 +267,7 @@ class AI_Chat_Bedrock_Usage {
 			'cache_write_tokens' => 0,
 			'embedding_requests' => 0,
 			'embedding_tokens'   => 0,
+			'rerank_requests'    => 0,
 			'days'               => $days,
 		);
 
@@ -273,7 +279,7 @@ class AI_Chat_Bedrock_Usage {
 			$result['requests']      += isset( $totals[ $day ]['requests'] ) ? (int) $totals[ $day ]['requests'] : 0;
 			$result['input_tokens']  += isset( $totals[ $day ]['input_tokens'] ) ? (int) $totals[ $day ]['input_tokens'] : 0;
 			$result['output_tokens'] += isset( $totals[ $day ]['output_tokens'] ) ? (int) $totals[ $day ]['output_tokens'] : 0;
-			foreach ( array( 'cache_read_tokens', 'cache_write_tokens', 'embedding_requests', 'embedding_tokens' ) as $counter ) {
+			foreach ( array( 'cache_read_tokens', 'cache_write_tokens', 'embedding_requests', 'embedding_tokens', 'rerank_requests' ) as $counter ) {
 				$result[ $counter ] += isset( $totals[ $day ][ $counter ] ) ? (int) $totals[ $day ][ $counter ] : 0;
 			}
 		}
@@ -427,7 +433,7 @@ class AI_Chat_Bedrock_Usage {
 				'output_tokens' => isset( $entry['output_tokens'] ) ? (int) $entry['output_tokens'] : 0,
 				'models'        => $models,
 			);
-			foreach ( array( 'cache_read_tokens', 'cache_write_tokens', 'embedding_requests', 'embedding_tokens' ) as $counter ) {
+			foreach ( array( 'cache_read_tokens', 'cache_write_tokens', 'embedding_requests', 'embedding_tokens', 'rerank_requests' ) as $counter ) {
 				if ( ! empty( $entry[ $counter ] ) ) {
 					$clean[ $day ][ $counter ] = (int) $entry[ $counter ];
 				}

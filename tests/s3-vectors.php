@@ -13,6 +13,7 @@
 
 define( 'ABSPATH', __DIR__ . '/' );
 define( 'HOUR_IN_SECONDS', 3600 );
+define( 'DAY_IN_SECONDS', 86400 );
 
 $GLOBALS['aicfab_options'] = array();
 $GLOBALS['aicfab_meta']    = array();
@@ -33,8 +34,17 @@ function delete_option( $name ) {
 	unset( $GLOBALS['aicfab_options'][ $name ] );
 	return true;
 }
+$GLOBALS['aicfab_filters']    = array();
+$GLOBALS['aicfab_transients'] = array();
 function apply_filters( $hook, $value ) {
-	return $value;
+	return array_key_exists( $hook, $GLOBALS['aicfab_filters'] ) ? $GLOBALS['aicfab_filters'][ $hook ] : $value;
+}
+function get_transient( $key ) {
+	return isset( $GLOBALS['aicfab_transients'][ $key ] ) ? $GLOBALS['aicfab_transients'][ $key ] : false;
+}
+function set_transient( $key, $value, $ttl = 0 ) {
+	$GLOBALS['aicfab_transients'][ $key ] = $value;
+	return true;
 }
 function __( $text, $domain = null ) {
 	return $text;
@@ -170,6 +180,11 @@ class AI_Chat_Bedrock_AWS {
 			'payload' => $payload,
 			'region'  => $region,
 		);
+		if ( ! empty( $GLOBALS['aicfab_fail_once'][ $operation ] ) ) {
+			$code = $GLOBALS['aicfab_fail_once'][ $operation ];
+			unset( $GLOBALS['aicfab_fail_once'][ $operation ] );
+			return new WP_Error( $code, 'Refused' );
+		}
 		if ( in_array( $operation, $GLOBALS['aicfab_fail'], true ) ) {
 			return new WP_Error( 'aicfab_s3v_ServiceUnavailableException', 'Unavailable' );
 		}
@@ -335,7 +350,8 @@ $GLOBALS['aicfab_replies']['QueryVectors'] = array(
 $hits  = AI_Chat_Bedrock_S3_Vectors::search( array( 0.1, 0.2, 0.3 ), 'refund?', 5, $options, 'en' );
 $query = s3v_calls( 'QueryVectors' );
 check_s3v( 1 === count( $query ), 'One query when the language has hits.' );
-check_s3v( array( '$and' => array( array( 'site' => array( '$eq' => $site ) ), array( 'lang' => array( '$eq' => 'en' ) ) ) ) === $query[0]['payload']['filter'], 'The query filters by site and language.' );
+check_s3v( array( '$and' => array( array( 'site' => array( '$eq' => $site ) ), array( 'post_type' => array( '$in' => array( 'post', 'page' ) ) ), array( 'lang' => array( '$eq' => 'en' ) ) ) ) === $query[0]['payload']['filter'], 'The query filters by site, indexed post types and language.' );
+check_s3v( 'ENHANCED' === $query[0]['payload']['queryMode'], 'The metadata filter is applied before the similarity search.' );
 check_s3v( true === $query[0]['payload']['returnMetadata'] && true === $query[0]['payload']['returnDistance'], 'The query asks for metadata and distance.' );
 $json = json_encode( $hits );
 check_s3v( false === strpos( $json, 'Secret' ), 'A hit on a post that is no longer public is dropped.' );
@@ -362,7 +378,7 @@ $GLOBALS['aicfab_replies']['QueryVectors'] = array(
 );
 $hits  = AI_Chat_Bedrock_S3_Vectors::search( array( 0.1 ), 'returns', 3, $options, 'ja' );
 $query = s3v_calls( 'QueryVectors' );
-check_s3v( 2 === count( $query ) && array( 'site' => array( '$eq' => $site ) ) === $query[1]['payload']['filter'], 'The second query drops the language filter.' );
+check_s3v( 2 === count( $query ) && array( '$and' => array( array( 'site' => array( '$eq' => $site ) ), array( 'post_type' => array( '$in' => array( 'post', 'page' ) ) ) ) ) === $query[1]['payload']['filter'], 'The second query drops the language filter.' );
 check_s3v( 1 === count( $hits ), 'The fallback finds the other-language page.' );
 
 $GLOBALS['aicfab_replies']['QueryVectors'] = array(
@@ -373,14 +389,42 @@ $GLOBALS['aicfab_fail'] = array( 'QueryVectors' );
 check_s3v( array() === AI_Chat_Bedrock_S3_Vectors::search( array( 0.1 ), 'x', 3, $options ), 'A query error returns nothing, so keyword search can run.' );
 $GLOBALS['aicfab_fail'] = array();
 
+// An index or Region that refuses the query mode is asked again without it, and not asked again.
+$GLOBALS['aicfab_calls']                   = array();
+$GLOBALS['aicfab_fail_once']               = array( 'QueryVectors' => 'aicfab_s3v_ValidationException' );
+$GLOBALS['aicfab_replies']['QueryVectors'] = array(
+	array( 'vectors' => array( array( 'key' => $site . ':12#0', 'distance' => 0.2, 'metadata' => array( 'site' => $site, 'post_id' => 12, 'text' => 'Returns policy.' ) ) ) ),
+	array( 'vectors' => array() ),
+);
+$hits  = AI_Chat_Bedrock_S3_Vectors::search( array( 0.1 ), 'returns', 3, $options );
+$query = s3v_calls( 'QueryVectors' );
+check_s3v( 1 === count( $hits ) && 2 === count( $query ) && 'ENHANCED' === $query[0]['payload']['queryMode'] && ! isset( $query[1]['payload']['queryMode'] ), 'A refused query mode is retried without it.' );
+AI_Chat_Bedrock_S3_Vectors::search( array( 0.1 ), 'returns', 3, $options );
+$query = s3v_calls( 'QueryVectors' );
+check_s3v( 3 === count( $query ) && ! isset( $query[2]['payload']['queryMode'] ), 'Later searches leave the refused mode out.' );
+$GLOBALS['aicfab_transients'] = array();
+
+$GLOBALS['aicfab_calls']                   = array();
+$GLOBALS['aicfab_fail_once']               = array( 'QueryVectors' => 'aicfab_s3v_AccessDeniedException' );
+AI_Chat_Bedrock_S3_Vectors::search( array( 0.1 ), 'returns', 3, $options );
+check_s3v( 1 === count( s3v_calls( 'QueryVectors' ) ) && array() === $GLOBALS['aicfab_transients'], 'Other errors are not retried and do not drop the query mode.' );
+
+$GLOBALS['aicfab_calls']                                            = array();
+$GLOBALS['aicfab_filters']['ai_chat_bedrock_s3_vectors_query_mode'] = '';
+AI_Chat_Bedrock_S3_Vectors::search( array( 0.1 ), 'returns', 3, $options );
+$query = s3v_calls( 'QueryVectors' );
+check_s3v( ! isset( $query[0]['payload']['queryMode'] ), 'The filter can leave the query mode to the index.' );
+$GLOBALS['aicfab_filters'] = array();
+
 // --- Index checks --------------------------------------------------------------
 
 $GLOBALS['aicfab_replies']['GetIndex'] = array(
-	array( 'index' => array( 'indexArn' => 'arn:aws:s3vectors:ap-northeast-1:1:bucket/site-vectors/index/posts', 'dimension' => 1024, 'distanceMetric' => 'cosine', 'metadataConfiguration' => array( 'nonFilterableMetadataKeys' => array( 'text', 'title' ) ) ) ),
+	array( 'index' => array( 'indexArn' => 'arn:aws:s3vectors:ap-northeast-1:1:bucket/site-vectors/index/posts', 'dimension' => 1024, 'distanceMetric' => 'cosine', 'indexMode' => 'CLASSIC', 'metadataConfiguration' => array( 'nonFilterableMetadataKeys' => array( 'text', 'title' ) ) ) ),
 	array( 'index' => array( 'dimension' => 1536, 'distanceMetric' => 'euclidean', 'metadataConfiguration' => array( 'nonFilterableMetadataKeys' => array( 'text' ) ) ) ),
 );
 $good = AI_Chat_Bedrock_S3_Vectors::describe_index( $model, $options );
 check_s3v( is_array( $good ) && array() === $good['problems'] && 1024 === $good['dimension'], 'A matching index has no problems.' );
+check_s3v( 'classic' === $good['mode'], 'The index mode is reported.' );
 $bad = AI_Chat_Bedrock_S3_Vectors::describe_index( $model, $options );
 check_s3v( is_array( $bad ) && 3 === count( $bad['problems'] ), 'Dimension, metric and metadata problems are each reported: ' . ( is_array( $bad ) ? count( $bad['problems'] ) : 'error' ) );
 

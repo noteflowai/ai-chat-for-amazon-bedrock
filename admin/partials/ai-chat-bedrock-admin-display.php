@@ -132,6 +132,19 @@ $aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 					?>
 				</p>
 			<?php endif; ?>
+			<?php if ( ! empty( $week['rerank_requests'] ) ) : ?>
+				<p class="aicfab-card-detail">
+					<?php
+					echo esc_html(
+						sprintf(
+							/* translators: %s: rerank requests in the last seven days. */
+							_n( 'Reranking, last 7 days: %s request. It is not counted above or against the daily limit.', 'Reranking, last 7 days: %s requests. They are not counted above or against the daily limit.', (int) $week['rerank_requests'], 'ai-chat-for-amazon-bedrock' ),
+							number_format_i18n( (int) $week['rerank_requests'] )
+						)
+					);
+					?>
+				</p>
+			<?php endif; ?>
 			<?php if ( ! empty( $week['cache_read_tokens'] ) ) : ?>
 				<p class="aicfab-card-detail">
 					<?php
