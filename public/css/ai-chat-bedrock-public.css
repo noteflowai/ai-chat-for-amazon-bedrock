@@ -770,6 +770,14 @@
     outline-offset: 2px;
 }
 
+/* An answer being read keeps its Stop button in view. */
+.ai-chat-bedrock-message:has(.ai-chat-bedrock-listen[aria-pressed="true"]) .ai-chat-bedrock-message-meta {
+    opacity: 1;
+}
+
+.ai-chat-bedrock-container .ai-chat-bedrock-listen-status:empty {
+    display: none;
+}
 
 @media (prefers-reduced-motion: reduce) {
     .ai-chat-bedrock-message-meta {

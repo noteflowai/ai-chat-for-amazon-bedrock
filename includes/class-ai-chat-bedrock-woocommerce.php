@@ -1388,6 +1388,12 @@ class AI_Chat_Bedrock_WooCommerce {
 				$days
 			);
 		}
+		if ( class_exists( 'AI_Chat_Bedrock_Speech' ) && AI_Chat_Bedrock_Speech::replies_enabled() ) {
+			$paragraphs[] = __( 'When you press Listen under an answer, the text of that answer is sent to Amazon Polly, a service of Amazon Web Services, to be read aloud. The audio is played in your browser and is not kept on this site.', 'ai-chat-for-amazon-bedrock' );
+		}
+		if ( class_exists( 'AI_Chat_Bedrock_Speech' ) && AI_Chat_Bedrock_Speech::posts_enabled() ) {
+			$paragraphs[] = __( 'Posts can be read aloud by Amazon Polly. Only the published text of the post is sent, never anything about you, and the audio is kept on this site until the post changes.', 'ai-chat-for-amazon-bedrock' );
+		}
 		if ( self::active() ) {
 			$paragraphs[] = __( 'When you ask about products, the product details shown in the shop, such as prices and stock, are sent to Amazon Bedrock with your question.', 'ai-chat-for-amazon-bedrock' );
 			$paragraphs[] = __( 'If the store lets customers ask about their orders and you are signed in, a question about orders or delivery sends your recent orders to Amazon Bedrock: the order number, dates, status, items, total, shipping method and tracking number. Your address, email address, phone number and payment details are never sent.', 'ai-chat-for-amazon-bedrock' );

@@ -102,7 +102,17 @@ jobs:
           php-version: '8.3'
           extensions: mysqli, tokenizer, xmlwriter, simplexml, mbstring
           coverage: none
-          tools: wp-cli
+
+      - name: Install WP-CLI
+        run: |
+          # setup-php's wp-cli tool started failing to resolve a download on this runner, so the
+          # release is pinned and checked against the checksum published with it.
+          WP_CLI_VERSION=2.12.0
+          base="https://github.com/wp-cli/wp-cli/releases/download/v${WP_CLI_VERSION}"
+          curl -sSfL -o /tmp/wp-cli.phar "$base/wp-cli-${WP_CLI_VERSION}.phar"
+          echo "$(curl -sSfL "$base/wp-cli-${WP_CLI_VERSION}.phar.sha512")  /tmp/wp-cli.phar" | sha512sum -c -
+          sudo install -m 0755 /tmp/wp-cli.phar /usr/local/bin/wp
+          wp --version
 
       - name: Install WordPress
         run: |

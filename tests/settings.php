@@ -108,6 +108,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-woocommerce.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-images.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-retrieval.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-history.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-speech.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 
 $failures = array();
@@ -240,6 +241,21 @@ $saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'ever
 check_set( '' === $saved['chat_memory'] && AI_Chat_Bedrock_Chat_History::DEFAULT_DAYS === $saved['chat_memory_days'], 'An unknown memory mode is saved as off, and no retention as the default.' );
 $saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'tab', 'chat_memory_days' => '14' ) );
 check_set( 'tab' === $saved['chat_memory'] && 14 === $saved['chat_memory_days'], 'Tab memory is saved.' );
+
+// --- Reading aloud -------------------------------------------------------------
+
+$saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' ) );
+check_set( ! AI_Chat_Bedrock_Speech::replies_enabled( $saved ) && ! AI_Chat_Bedrock_Speech::posts_enabled( $saved ) && 'neural' === AI_Chat_Bedrock_Speech::engine( $saved ) && AI_Chat_Bedrock_Speech::DEFAULT_DAILY_CHARACTERS === AI_Chat_Bedrock_Speech::daily_characters( $saved ), 'Reading aloud is off by default, with the neural engine and the default daily limit.' );
+$saved = save_tab( $admin, array( 'speech_replies' ), array( 'speech_replies' => '1', 'speech_posts' => '1', 'speech_engine' => 'generative', 'speech_daily_chars' => '25000' ) );
+check_set( true === $saved['speech_replies'] && true === $saved['speech_posts'] && 'generative' === $saved['speech_engine'] && 25000 === $saved['speech_daily_chars'], 'Both switches, the engine and the daily limit are saved together.' );
+$saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'light' ) );
+check_set( true === $saved['speech_replies'] && true === $saved['speech_posts'] && 'generative' === $saved['speech_engine'] && 25000 === $saved['speech_daily_chars'], 'Another tab keeps the reading-aloud settings.' );
+$saved = save_tab( $admin, array( 'speech_replies' ), array( 'speech_posts' => '1', 'speech_engine' => 'standard', 'speech_daily_chars' => '0' ) );
+check_set( false === $saved['speech_replies'] && true === $saved['speech_posts'] && 'neural' === $saved['speech_engine'] && 0 === $saved['speech_daily_chars'], 'An unticked switch is off, an unknown engine is neural, and 0 removes the limit.' );
+$saved = save_tab( $admin, array( 'speech_replies' ), array( 'speech_daily_chars' => '99999999999' ) );
+check_set( false === $saved['speech_posts'] && AI_Chat_Bedrock_Speech::MAX_DAILY_CHARACTERS === $saved['speech_daily_chars'], 'The daily limit is capped.' );
+$saved = save_tab( $admin, array( 'speech_replies' ), array( 'speech_daily_chars' => '' ) );
+check_set( AI_Chat_Bedrock_Speech::DEFAULT_DAILY_CHARACTERS === $saved['speech_daily_chars'], 'An emptied daily limit is saved as the default, not as no limit.' );
 
 $saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'auto' ) );
 check_set( 'auto' === $saved['chat_color_scheme'], 'The color scheme is saved.' );

@@ -2062,6 +2062,93 @@ class AI_Chat_Bedrock_AWS {
 	}
 
 	/**
+	 * Turn text into speech with Amazon Polly.
+	 *
+	 * Polly accepts only Signature Version 4, never a Bedrock API key, and is billed per
+	 * character. The caller splits the text into parts Polly accepts and counts the characters.
+	 *
+	 * @param string $text     Plain text, at most 3,000 characters.
+	 * @param string $voice    Polly voice ID, such as Joanna.
+	 * @param string $language Polly language code, such as en-US.
+	 * @param string $engine   neural or generative.
+	 * @return string|WP_Error MP3 audio, or an error whose data holds the HTTP status.
+	 */
+	public function synthesize_speech( $text, $voice, $language, $engine = 'neural' ) {
+		$text     = trim( (string) $text );
+		$voice    = (string) $voice;
+		$language = (string) $language;
+		$engine   = in_array( $engine, array( 'neural', 'generative', 'standard', 'long-form' ), true ) ? $engine : 'neural';
+
+		$missing = $this->missing_credentials( 'polly', false );
+		if ( null !== $missing ) {
+			return $missing;
+		}
+		if ( '' === $text || AI_Chat_Bedrock_Security::string_length( $text ) > 3000 ) {
+			return new WP_Error( 'aicfab_speech_text', __( 'The text to read aloud is empty or too long.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		if ( ! preg_match( '/^[A-Z][A-Za-z]{1,30}$/', $voice ) || ! preg_match( '/^[a-z]{2,3}-[A-Z]{2}$/', $language ) ) {
+			return new WP_Error( 'aicfab_speech_voice', __( 'The Amazon Polly voice is invalid.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		if ( ! preg_match( '/^[a-z]{2}(?:-gov)?-[a-z]+-\d$/', $this->region ) ) {
+			return new WP_Error( 'aicfab_invalid_region', __( 'The configured AWS region is invalid.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		$endpoint = $this->service_endpoint( 'polly' ) . '/v1/speech';
+		$body     = wp_json_encode(
+			array(
+				'Engine'       => $engine,
+				'LanguageCode' => $language,
+				'OutputFormat' => 'mp3',
+				'Text'         => $text,
+				'TextType'     => 'text',
+				'VoiceId'      => $voice,
+			),
+			JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+		);
+		if ( false === $body ) {
+			return new WP_Error( 'aicfab_encode_failed', __( 'The speech request could not be encoded.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		$response = self::aws_remote(
+			'POST',
+			$endpoint,
+			array(
+				'timeout'            => 30,
+				'redirection'        => 0,
+				'httpversion'        => '1.1',
+				'reject_unsafe_urls' => true,
+				'headers'            => $this->signed_headers( $endpoint, $body, 'POST', 'polly', array(), false ),
+				'body'               => $body,
+			)
+		);
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'aicfab_transport', __( 'Amazon Polly could not be reached.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 0 ) );
+		}
+		$status = (int) wp_remote_retrieve_response_code( $response );
+		$audio  = (string) wp_remote_retrieve_body( $response );
+		if ( $status < 200 || $status >= 300 ) {
+			$this->log_debug( 'Polly error', array( 'status' => $status ) );
+			$data    = json_decode( $audio, true );
+			$message = is_array( $data ) && isset( $data['message'] ) ? sanitize_text_field( (string) $data['message'] ) : '';
+			return new WP_Error(
+				'aicfab_http_error',
+				'' !== $message
+					? $message
+					/* translators: %d: HTTP status code returned by Amazon Polly. */
+					: sprintf( __( 'Amazon Polly returned HTTP %d.', 'ai-chat-for-amazon-bedrock' ), $status ),
+				array( 'status' => $status )
+			);
+		}
+		if ( '' === $audio || false === stripos( (string) wp_remote_retrieve_header( $response, 'content-type' ), 'audio/' ) ) {
+			return new WP_Error( 'aicfab_invalid_response', __( 'Amazon Polly returned no audio.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		if ( class_exists( 'AI_Chat_Bedrock_Usage' ) ) {
+			AI_Chat_Bedrock_Usage::record( array( 'characters' => AI_Chat_Bedrock_Security::string_length( $text ) ), '', 'speech' );
+		}
+		return $audio;
+	}
+
+	/**
 	 * Call the Amazon S3 Vectors API.
 	 *
 	 * Every operation is a signed JSON POST to https://s3vectors.<region>.api.aws/<Operation>.

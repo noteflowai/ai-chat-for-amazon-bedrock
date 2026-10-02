@@ -60,6 +60,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-tool-runner.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-conversations.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-chat-history.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-speech.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-editor-assistant.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-content-generator.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-generator-stream.php';
@@ -178,6 +179,15 @@ class AI_Chat_Bedrock {
 
 		$chat_history = new AI_Chat_Bedrock_Chat_History();
 		$this->loader->add_action( 'rest_api_init', $chat_history, 'register_routes' );
+
+		// Before the chat script, which depends on the player script when answers can be heard.
+		$speech = new AI_Chat_Bedrock_Speech();
+		$this->loader->add_action( 'rest_api_init', $speech, 'register_routes' );
+		$this->loader->add_action( 'wp_enqueue_scripts', 'AI_Chat_Bedrock_Speech', 'enqueue_assets', 5 );
+		$this->loader->add_filter( 'the_content', 'AI_Chat_Bedrock_Speech', 'add_player', 20 );
+		$this->loader->add_action( 'save_post', 'AI_Chat_Bedrock_Speech', 'forget_post' );
+		$this->loader->add_action( 'before_delete_post', 'AI_Chat_Bedrock_Speech', 'forget_post' );
+		$this->loader->add_action( 'update_option_ai_chat_bedrock_settings', 'AI_Chat_Bedrock_Speech', 'settings_updated', 10, 2 );
 
 		$generator_stream = new AI_Chat_Bedrock_Generator_Stream();
 		$this->loader->add_action( 'rest_api_init', $generator_stream, 'register_routes' );

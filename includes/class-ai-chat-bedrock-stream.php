@@ -186,6 +186,9 @@ class AI_Chat_Bedrock_Stream {
 		if ( ! empty( $built['products'] ) ) {
 			$done['products'] = $built['products'];
 		}
+		if ( AI_Chat_Bedrock_Speech::replies_enabled() && '' !== $answer ) {
+			$done['speech'] = AI_Chat_Bedrock_Speech::token( $answer );
+		}
 		$this->send_event( 'done', $done );
 		$this->finish();
 	}

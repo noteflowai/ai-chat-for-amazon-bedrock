@@ -32,6 +32,7 @@ function apply_filters( $hook, $value ) {
 require_once __DIR__ . '/../includes/class-ai-chat-bedrock-iam-policy.php';
 require_once __DIR__ . '/../includes/class-ai-chat-bedrock-images.php';
 require_once __DIR__ . '/../includes/class-ai-chat-bedrock-retrieval.php';
+require_once __DIR__ . '/../includes/class-ai-chat-bedrock-speech.php';
 
 $failures = array();
 function check_policy( $condition, $message ) {
@@ -410,6 +411,15 @@ foreach ( array( 'off' => array(), 'unknown' => array( 'rerank_model_id' => 'coh
 	$aicfab_policy = AI_Chat_Bedrock_Iam_Policy::for_site( $aicfab_base + $aicfab_extra, '111122223333' );
 	check_policy( null === statement( $aicfab_policy, 'AICFABRerankRetrievedPassages' ), 'No Rerank permission when reranking is ' . $aicfab_case . '.' );
 	check_policy( false === strpos( AI_Chat_Bedrock_Iam_Policy::to_json( $aicfab_policy ), 'rerank' ), 'No reranking model is granted when reranking is ' . $aicfab_case . '.' );
+}
+
+// --- Reading aloud -------------------------------------------------------------
+
+$aicfab_base = array( 'aws_region' => 'us-east-1', 'model_id' => 'amazon.nova-lite-v1:0' );
+check_policy( null === statement( AI_Chat_Bedrock_Iam_Policy::for_site( $aicfab_base, '111122223333' ), 'AICFABReadAloudWithPolly' ), 'No Polly permission while reading aloud is off.' );
+foreach ( array( 'answers' => 'speech_replies', 'posts' => 'speech_posts' ) as $aicfab_case => $aicfab_key ) {
+	$aicfab_speech = statement( AI_Chat_Bedrock_Iam_Policy::for_site( $aicfab_base + array( $aicfab_key => true ), '111122223333' ), 'AICFABReadAloudWithPolly' );
+	check_policy( null !== $aicfab_speech && array( 'polly:SynthesizeSpeech' ) === $aicfab_speech['Action'] && '*' === $aicfab_speech['Resource'], 'Reading ' . $aicfab_case . ' aloud grants SynthesizeSpeech, which has no resource of its own.' );
 }
 
 // --- Images --------------------------------------------------------------------

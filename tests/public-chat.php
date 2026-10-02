@@ -363,6 +363,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wp-mcp-server.php'
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-stream.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-history.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-woocommerce.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-speech.php';
 require dirname( __DIR__ ) . '/public/class-ai-chat-bedrock-public.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 
@@ -453,6 +454,13 @@ $GLOBALS['aicfab_logged_in'] = true;
 $aicfab_shown                = aicfab_ajax();
 check_pub( null !== $aicfab_shown && $GLOBALS['aicfab_sources'] === $aicfab_shown->payload['data']['sources'], 'Sources are sent with the answer once the site shows them.' );
 $GLOBALS['aicfab_sources'] = array();
+
+// An answer is signed for reading aloud only when the site reads answers aloud.
+check_pub( ! isset( $aicfab_shown->payload['data']['speech'] ), 'No reading-aloud signature while reading aloud is off.' );
+aicfab_reset_pub( array( 'speech_replies' => true ) );
+$GLOBALS['aicfab_logged_in'] = true;
+$aicfab_spoken               = aicfab_ajax();
+check_pub( null !== $aicfab_spoken && $aicfab_spoken->ok && AI_Chat_Bedrock_Speech::token( $aicfab_spoken->payload['data']['message'] ) === $aicfab_spoken->payload['data']['speech'], 'With reading aloud on, the answer comes with the signature of exactly that text.' );
 
 // An answered question is saved with the account only when the site saves conversations.
 $GLOBALS['aicfab_user_meta'] = array();

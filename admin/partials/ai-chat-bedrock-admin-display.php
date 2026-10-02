@@ -145,6 +145,20 @@ $aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 					?>
 				</p>
 			<?php endif; ?>
+			<?php if ( ! empty( $week['speech_requests'] ) ) : ?>
+				<p class="aicfab-card-detail">
+					<?php
+					echo esc_html(
+						sprintf(
+							/* translators: 1: Amazon Polly requests in the last seven days, 2: characters read aloud. */
+							_n( 'Read aloud, last 7 days: %1$s Amazon Polly request, %2$s characters. They are not counted above or against the daily limit.', 'Read aloud, last 7 days: %1$s Amazon Polly requests, %2$s characters. They are not counted above or against the daily limit.', (int) $week['speech_requests'], 'ai-chat-for-amazon-bedrock' ),
+							number_format_i18n( (int) $week['speech_requests'] ),
+							number_format_i18n( (int) $week['speech_characters'] )
+						)
+					);
+					?>
+				</p>
+			<?php endif; ?>
 			<?php if ( ! empty( $week['cache_read_tokens'] ) ) : ?>
 				<p class="aicfab-card-detail">
 					<?php

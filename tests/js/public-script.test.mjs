@@ -95,7 +95,7 @@ check('' === context.safeUrl('') && '' === context.safeUrl(undefined) && '' === 
 
 const memory = vm.createContext({ TextEncoder, history: [] });
 vm.runInContext([
-    'const MAX_HISTORY = 12; const MAX_HISTORY_CHARS = 4000; const MAX_HISTORY_BYTES = 45000; const MAX_KEPT = 30; const MAX_KEPT_CHARS = 6000;',
+    'const MAX_HISTORY = 12; const MAX_HISTORY_CHARS = 4000; const MAX_HISTORY_BYTES = 45000; const MAX_KEPT = 30; const MAX_KEPT_CHARS = 6000; const SPEECH_TOKEN = /^[a-f0-9]{32}$/;',
     'var window = { TextEncoder: TextEncoder };',
     extract('clip'), extract('byteLength'), extract('historyForRequest'), extract('cleanTranscript'),
     'function setHistory(items) { history = items; }'
@@ -137,6 +137,19 @@ for (let i = 0; i < 40; i++) {
 check(30 === memory.cleanTranscript(many).length && 'm10' === memory.cleanTranscript(many)[0].content, 'At most 30 messages are kept, the most recent ones.');
 check(0 === memory.cleanTranscript('not an array').length, 'Unreadable storage restores nothing.');
 
+const signature = 'a'.repeat(32);
+const signed = memory.cleanTranscript([
+    { role: 'user', content: 'Hi', speech: signature },
+    { role: 'assistant', content: 'Hello', speech: signature },
+    { role: 'user', content: 'More' },
+    { role: 'assistant', content: 'x'.repeat(7000), speech: signature },
+    { role: 'user', content: 'Again' },
+    { role: 'assistant', content: 'Forged', speech: '<script>' }
+]);
+check(undefined === signed[0].speech && signature === signed[1].speech, 'An answer keeps its read-aloud signature, a question never has one.');
+check(undefined === signed[3].speech, 'A clipped answer drops its signature, which no longer matches.');
+check(undefined === signed[5].speech, 'Only a well-formed signature is kept.');
+
 const show = extract('showTranscript');
 check(-1 !== show.indexOf('formatMessage(item.content)') && -1 !== show.indexOf('attachSources(bubble, item.sources)') && -1 === show.indexOf('attachFeedback'), 'A restored answer is escaped, keeps its sources and has no feedback buttons.');
 check(/sentSinceLoad \|\| pending/.test(source), 'A saved conversation never replaces one the visitor has carried on.');
@@ -153,6 +166,12 @@ const products = extract('attachProducts');
 check(-1 === products.indexOf('.html(') && -1 !== products.indexOf('.text(name)'), 'Product names are inserted as text.');
 check(-1 !== products.indexOf('safeUrl(product && product.url)') && -1 !== products.indexOf('safeUrl(product.image)') && -1 !== products.indexOf('safeUrl(product.add_to_cart)'), 'Product, image and cart links pass the link check.');
 check(/rel: 'nofollow'/.test(products), 'Add-to-cart links are not followed by crawlers.');
+const speech = extract('attachSpeech');
+check(-1 !== speech.indexOf('!params.speech || !speak') && -1 !== speech.indexOf('SPEECH_TOKEN.test('), 'Listen is only offered when it is on and the answer is signed.');
+check(-1 !== speech.indexOf('text: text, token: token') && -1 !== speech.indexOf('refreshNonce()'), 'Listen sends the answer with its signature and renews an expired nonce.');
+check(-1 === speech.indexOf('.html('), 'The Listen button is built from text.');
+check(3 === (source.match(/attachSpeech\((?:state\.)?bubble, (?:response\.data\.message|payload\.message|item\.content), (?:response\.data|payload|item)\.speech\)/g) || []).length, 'Buffered, streamed and restored answers can be heard.');
+check(2 === (source.match(/keep\(message, state\.text, state\.sources, state\.done \? state\.speech : ''\)/g) || []).length, 'A streamed answer keeps its signature only once the server confirmed the text.');
 check(2 === (source.match(/attachProducts\((?:state\.)?bubble, (?:response\.data|payload)\.products\)/g) || []).length, 'Products are shown for both buffered and streamed answers.');
 
 if (failures.length) {

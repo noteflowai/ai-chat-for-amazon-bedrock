@@ -201,6 +201,23 @@ check_usage( false === AI_Chat_Bedrock_Usage::daily_limit_reached(), 'Reranks do
 $GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] = array( 'daily_request_limit' => 0 );
 check_usage( in_array( 'cohere.rerank-v3-5:0', wp_list_pluck_compat( AI_Chat_Bedrock_Usage::by_model( 7 ), 'model' ), true ), 'The reranking model has its own row.' );
 
+// --- Reading aloud -----------------------------------------------------------------
+
+// Polly is priced per character, so speech has a request and a character counter, and no model row.
+AI_Chat_Bedrock_Usage::reset();
+AI_Chat_Bedrock_Usage::record( array( 'characters' => 1200 ), '', 'speech' );
+AI_Chat_Bedrock_Usage::record( array( 'characters' => -5 ), '', 'speech' );
+AI_Chat_Bedrock_Usage::record( array( 'input_tokens' => 10, 'output_tokens' => 4 ), 'amazon.nova-lite-v1:0' );
+$speech_today = AI_Chat_Bedrock_Usage::today_totals();
+check_usage( 1 === $speech_today['requests'] && 10 === $speech_today['input_tokens'], 'Reading aloud is not counted as chat.' );
+check_usage( 2 === $speech_today['speech_requests'] && 1200 === $speech_today['speech_characters'], 'Reading aloud counts requests and characters, never fewer than none.' );
+$speech_week = AI_Chat_Bedrock_Usage::totals( 7 );
+check_usage( 2 === $speech_week['speech_requests'] && 1200 === $speech_week['speech_characters'], 'The weekly totals carry the speech counters.' );
+check_usage( array( 'amazon.nova-lite-v1:0' ) === wp_list_pluck_compat( AI_Chat_Bedrock_Usage::by_model( 7 ), 'model' ), 'Reading aloud adds no model row.' );
+$GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] = array( 'daily_request_limit' => 2 );
+check_usage( false === AI_Chat_Bedrock_Usage::daily_limit_reached(), 'Reading aloud does not use up the daily chat cap.' );
+$GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] = array( 'daily_request_limit' => 0 );
+
 function wp_list_pluck_compat( $rows, $field ) {
 	return array_map(
 		static function ( $row ) use ( $field ) {

@@ -32,6 +32,7 @@ function ai_chat_bedrock_uninstall_site() {
 	delete_transient( 'ai_chat_bedrock_cache' );
 	delete_transient( 'aicfab_role_credentials' );
 	delete_transient( 'aicfab_converse_quirks' );
+	delete_transient( 'aicfab_speech_fallback' );
 
 	$ai_chat_bedrock_legacy_table = esc_sql( $wpdb->prefix . 'ai_chat_bedrock_history' );
 	$wpdb->query( "DROP TABLE IF EXISTS `{$ai_chat_bedrock_legacy_table}`" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
@@ -61,6 +62,24 @@ function ai_chat_bedrock_uninstall_site() {
 	// Saved chat conversations are user options, so their keys carry this site's prefix.
 	foreach ( array( 'aicfab_chat_history', 'aicfab_chat_history_oldest' ) as $ai_chat_bedrock_user_option ) {
 		delete_metadata( 'user', 0, $wpdb->get_blog_prefix() . $ai_chat_bedrock_user_option, '', true );
+	}
+
+	// Audio of posts read aloud is kept in the uploads folder.
+	$ai_chat_bedrock_uploads = wp_upload_dir( null, false );
+	if ( empty( $ai_chat_bedrock_uploads['error'] ) && ! empty( $ai_chat_bedrock_uploads['basedir'] ) ) {
+		$ai_chat_bedrock_speech = untrailingslashit( $ai_chat_bedrock_uploads['basedir'] ) . '/ai-chat-bedrock-speech';
+		foreach ( (array) glob( $ai_chat_bedrock_speech . '/*' ) as $ai_chat_bedrock_file ) {
+			if ( is_string( $ai_chat_bedrock_file ) && is_file( $ai_chat_bedrock_file ) ) {
+				wp_delete_file( $ai_chat_bedrock_file );
+			}
+		}
+		if ( is_dir( $ai_chat_bedrock_speech ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+			if ( 'direct' === get_filesystem_method() && WP_Filesystem() ) {
+				global $wp_filesystem;
+				$wp_filesystem->rmdir( $ai_chat_bedrock_speech );
+			}
+		}
 	}
 
 	// Any scheduled index run or chat history pruning is removed with the plugin data.
