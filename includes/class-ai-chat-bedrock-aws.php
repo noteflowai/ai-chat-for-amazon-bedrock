@@ -376,9 +376,10 @@ class AI_Chat_Bedrock_AWS {
 	 * @param string $model_id Embedding model identifier.
 	 * @param string $purpose  document for indexed text, query for a question. Cohere embeds the
 	 *                         two differently and retrieves noticeably better when told which is which.
+	 * @param int    $dimensions Vector size for Titan Text Embeddings V2 (256, 512 or 1024), or 0 for the default.
 	 * @return array|WP_Error List of floats, or an error.
 	 */
-	public function embed( $text, $model_id, $purpose = 'document' ) {
+	public function embed( $text, $model_id, $purpose = 'document', $dimensions = 0 ) {
 		$text = trim( (string) $text );
 		if ( '' === $text ) {
 			return new WP_Error( 'aicfab_empty_text', __( 'There is nothing to embed.', 'ai-chat-for-amazon-bedrock' ) );
@@ -400,6 +401,11 @@ class AI_Chat_Bedrock_AWS {
 				'input_type' => 'query' === $purpose ? 'search_query' : 'search_document',
 			)
 			: array( 'inputText' => $text );
+		// Titan Text Embeddings V2 can return a shorter vector; the other models have one size.
+		$dimensions = absint( $dimensions );
+		if ( false !== strpos( $model_id, 'titan-embed-text-v2' ) && in_array( $dimensions, array( 256, 512, 1024 ), true ) ) {
+			$payload['dimensions'] = $dimensions;
+		}
 
 		$this->usage_kind = 'embedding';
 		$response         = $this->invoke_model( $payload, $model_id );
@@ -414,6 +420,111 @@ class AI_Chat_Bedrock_AWS {
 			return new WP_Error( 'aicfab_no_embedding', __( 'Amazon Bedrock returned no embedding.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		return $vector;
+	}
+
+	/**
+	 * Run an image model and return what it made.
+	 *
+	 * Image models take the same InvokeModel call as text models, but Bedrock Guardrails
+	 * headers do not apply to them, so the caller checks the prompt with apply_guardrail()
+	 * first. There is no fallback model: a picture from a different model is not a retry.
+	 *
+	 * @param array  $payload  Request body in the model's own format.
+	 * @param string $model_id Model or inference profile ID.
+	 * @return array|WP_Error Array with images (base64 strings) and finish_reasons, or an error.
+	 */
+	public function invoke_image( $payload, $model_id ) {
+		if ( ! $this->has_credentials() ) {
+			$message = '' !== $this->credential_error ? $this->credential_error : __( 'Amazon Bedrock credentials are not configured.', 'ai-chat-for-amazon-bedrock' );
+			return new WP_Error( 'aicfab_no_credentials', $message );
+		}
+		if ( ! preg_match( '/^[a-z]{2}(?:-gov)?-[a-z]+-\d$/', $this->region ) ) {
+			return new WP_Error( 'aicfab_invalid_region', __( 'The configured AWS region is invalid.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		$model_id = (string) $model_id;
+		if ( ! preg_match( '/^[A-Za-z0-9._:-]{1,200}$/', $model_id ) ) {
+			return new WP_Error( 'aicfab_invalid_model', __( 'The configured image model ID is invalid.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		$this->usage_kind = 'image';
+		$response         = $this->invoke_model( $payload, $model_id, 'image', 0 );
+		$this->usage_kind = 'answer';
+		if ( empty( $response['success'] ) ) {
+			$code = isset( $response['data']['code'] ) ? (string) $response['data']['code'] : 'aicfab_error';
+			return new WP_Error( $code, isset( $response['data']['message'] ) ? (string) $response['data']['message'] : __( 'The image request failed.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		if ( empty( $response['images'] ) ) {
+			return new WP_Error( 'aicfab_no_image', __( 'Amazon Bedrock returned no image.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		return array(
+			'images'         => $response['images'],
+			'finish_reasons' => isset( $response['finish_reasons'] ) ? $response['finish_reasons'] : array(),
+		);
+	}
+
+	/**
+	 * Check text against the site's guardrail with ApplyGuardrail.
+	 *
+	 * For the calls that cannot carry the guardrail themselves, such as image models. With no
+	 * guardrail configured there is nothing to check. A guardrail that cannot be reached fails
+	 * closed, because the site chose to have every request checked.
+	 *
+	 * @param string $text   Text to check.
+	 * @param string $source INPUT for a prompt, OUTPUT for a model answer.
+	 * @return true|WP_Error True when the text may be used.
+	 */
+	public function apply_guardrail( $text, $source = 'INPUT' ) {
+		$guardrail = $this->guardrail_setting();
+		if ( empty( $guardrail ) ) {
+			return true;
+		}
+		if ( ! $this->has_credentials() ) {
+			$message = '' !== $this->credential_error ? $this->credential_error : __( 'Amazon Bedrock credentials are not configured.', 'ai-chat-for-amazon-bedrock' );
+			return new WP_Error( 'aicfab_no_credentials', $message );
+		}
+
+		$endpoint = $this->service_endpoint( 'bedrock-runtime' ) . '/guardrail/' . rawurlencode( $guardrail['id'] ) . '/version/' . rawurlencode( $guardrail['version'] ) . '/apply';
+		$body     = wp_json_encode(
+			array(
+				'source'  => 'OUTPUT' === $source ? 'OUTPUT' : 'INPUT',
+				'content' => array( array( 'text' => array( 'text' => (string) $text ) ) ),
+			),
+			JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+		);
+		if ( false === $body ) {
+			return new WP_Error( 'aicfab_error', __( 'The Bedrock request could not be encoded.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		$response = self::aws_remote(
+			'POST',
+			$endpoint,
+			array(
+				'timeout'            => 30,
+				'redirection'        => 0,
+				'httpversion'        => '1.1',
+				'reject_unsafe_urls' => true,
+				'headers'            => $this->signed_headers( $endpoint, $body, 'POST', 'bedrock' ),
+				'body'               => $body,
+			)
+		);
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'aicfab_unreachable', __( 'The guardrail could not be reached, so the request was not sent.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		$status = (int) wp_remote_retrieve_response_code( $response );
+		if ( $status < 200 || $status >= 300 ) {
+			$explained = AI_Chat_Bedrock_Bedrock_Errors::explain( $status, wp_remote_retrieve_body( $response ), '', $this->region, $this->credential_context() );
+			return new WP_Error( 'aicfab_guardrail_error', $explained['message'], array( 'status' => $status ) );
+		}
+		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( ! is_array( $data ) || ! isset( $data['action'] ) ) {
+			return new WP_Error( 'aicfab_guardrail_error', __( 'The guardrail returned an invalid response, so the request was not sent.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		if ( 'GUARDRAIL_INTERVENED' === $data['action'] ) {
+			$message = isset( $data['outputs'][0]['text'] ) && '' !== trim( (string) $data['outputs'][0]['text'] )
+				? sanitize_text_field( (string) $data['outputs'][0]['text'] )
+				: __( 'The request was blocked by the site guardrail.', 'ai-chat-for-amazon-bedrock' );
+			return new WP_Error( 'aicfab_guardrail_blocked', $message );
+		}
+		return true;
 	}
 
 	/**
@@ -883,6 +994,27 @@ class AI_Chat_Bedrock_AWS {
 	}
 
 	/**
+	 * Whether a model takes top_p (nucleus sampling).
+	 *
+	 * Claude models that refuse temperature refuse top_p too. On Converse, GPT-5.4 and later
+	 * and Grok answer "This model doesn't support the topP field". Any other model that turns
+	 * out to refuse it is remembered as a quirk and sent without it, see converse_quirks().
+	 *
+	 * @param string $model_id Model or inference profile ID.
+	 * @return bool
+	 */
+	public static function accepts_top_p( $model_id ) {
+		$model_id = (string) $model_id;
+		if ( false !== strpos( $model_id, 'anthropic.claude' ) ) {
+			return self::claude_accepts_temperature( $model_id );
+		}
+		if ( preg_match( '/openai\.gpt-(?:5\.[4-9]|[6-9])|xai\.grok/', $model_id ) ) {
+			return false;
+		}
+		return ! in_array( 'no_top_p', self::converse_quirks( $model_id ), true );
+	}
+
+	/**
 	 * Whether a Claude model on Bedrock accepts a prompt cache checkpoint.
 	 *
 	 * AWS lists Claude 3.5 Haiku, 3.7 Sonnet and every Claude 4 and later model. The older
@@ -952,6 +1084,61 @@ class AI_Chat_Bedrock_AWS {
 		return $payload;
 	}
 
+	/**
+	 * Image formats every vision family on Bedrock accepts, by media type.
+	 */
+	const IMAGE_FORMATS = array(
+		'image/jpeg' => 'jpeg',
+		'image/png'  => 'png',
+		'image/gif'  => 'gif',
+		'image/webp' => 'webp',
+	);
+
+	/**
+	 * Images attached to one message, kept only when they are something a model can read.
+	 *
+	 * @param mixed $images List of arrays with media_type and base64 data.
+	 * @return array
+	 */
+	private static function clean_images( $images ) {
+		$clean = array();
+		foreach ( is_array( $images ) ? $images : array() as $image ) {
+			$media = is_array( $image ) && isset( $image['media_type'] ) ? (string) $image['media_type'] : '';
+			$data  = is_array( $image ) && isset( $image['data'] ) ? (string) $image['data'] : '';
+			if ( isset( self::IMAGE_FORMATS[ $media ] ) && '' !== $data ) {
+				$clean[] = array(
+					'media_type' => $media,
+					'data'       => $data,
+				);
+			}
+		}
+		// Claude takes up to 20 images per request and Nova 20 as well; more is refused.
+		return array_slice( $clean, 0, 20 );
+	}
+
+	/**
+	 * Sampling and output controls a caller asked for, beyond temperature and length.
+	 *
+	 * @param array $message_data Request data.
+	 * @return array{top_p: float|null, stop: array, schema: array|null}
+	 */
+	private static function request_controls( $message_data ) {
+		$top_p = isset( $message_data['top_p'] ) && is_numeric( $message_data['top_p'] ) ? max( 0.0, min( 1.0, (float) $message_data['top_p'] ) ) : null;
+		$stop  = array();
+		foreach ( isset( $message_data['stop_sequences'] ) && is_array( $message_data['stop_sequences'] ) ? $message_data['stop_sequences'] : array() as $sequence ) {
+			if ( is_string( $sequence ) && '' !== $sequence ) {
+				$stop[] = $sequence;
+			}
+		}
+		$schema = isset( $message_data['json_schema'] ) && is_array( $message_data['json_schema'] ) && ! empty( $message_data['json_schema'] ) ? $message_data['json_schema'] : null;
+		return array(
+			'top_p'  => $top_p,
+			// Nova and Converse take at most four.
+			'stop'   => array_slice( array_values( array_unique( $stop ) ), 0, 4 ),
+			'schema' => $schema,
+		);
+	}
+
 	private function format_payload_for_model( $model_id, $message_data, $max_tokens, $temperature ) {
 		$messages = isset( $message_data['messages'] ) && is_array( $message_data['messages'] ) ? $message_data['messages'] : array();
 		$system   = '';
@@ -963,13 +1150,15 @@ class AI_Chat_Bedrock_AWS {
 			}
 			$role    = sanitize_key( $message['role'] );
 			$content = $message['content'];
+			$images  = self::clean_images( isset( $message['images'] ) ? $message['images'] : array() );
 			if ( 'system' === $role ) {
 				$system    .= ( '' === $system ? '' : "\n\n" ) . $content;
 				$sections[] = $content;
-			} elseif ( in_array( $role, array( 'user', 'assistant' ), true ) && '' !== trim( $content ) ) {
+			} elseif ( in_array( $role, array( 'user', 'assistant' ), true ) && ( '' !== trim( $content ) || ( 'user' === $role && ! empty( $images ) ) ) ) {
 				$chat[] = array(
 					'role'    => $role,
 					'content' => $content,
+					'images'  => 'user' === $role ? $images : array(),
 				);
 			}
 		}
@@ -977,32 +1166,55 @@ class AI_Chat_Bedrock_AWS {
 			return new WP_Error( 'empty_conversation', __( 'No valid chat messages were supplied.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
-		if ( false !== strpos( $model_id, 'anthropic.claude' ) ) {
-			$messages_out = $this->normalize_claude_messages( $chat );
+		// The single image the media helpers send goes with the last user turn. Before 1.57.0
+		// only Claude received it, so on Nova the alt text described an image it never saw.
+		if ( ! empty( $message_data['image'] ) && is_array( $message_data['image'] ) ) {
+			for ( $i = count( $chat ) - 1; $i >= 0; $i-- ) {
+				if ( 'user' === $chat[ $i ]['role'] ) {
+					$chat[ $i ]['images'] = array_slice( array_merge( $chat[ $i ]['images'], self::clean_images( array( $message_data['image'] ) ) ), 0, 20 );
+					break;
+				}
+			}
+		}
+		$has_images = false;
+		foreach ( $chat as $turn ) {
+			$has_images = $has_images || ! empty( $turn['images'] );
+		}
 
-			// Optional image input, used by features such as alt text generation.
-			if ( ! empty( $message_data['image'] ) && is_array( $message_data['image'] ) ) {
-				$image = $message_data['image'];
-				$media = isset( $image['media_type'] ) ? (string) $image['media_type'] : '';
-				$data  = isset( $image['data'] ) ? (string) $image['data'] : '';
-				if ( in_array( $media, array( 'image/jpeg', 'image/png', 'image/gif', 'image/webp' ), true ) && '' !== $data ) {
-					$last                             = count( $messages_out ) - 1;
-					$text                             = isset( $messages_out[ $last ]['content'] ) ? (string) $messages_out[ $last ]['content'] : '';
-					$messages_out[ $last ]['content'] = array(
-						array(
-							'type'   => 'image',
-							'source' => array(
-								'type'       => 'base64',
-								'media_type' => $media,
-								'data'       => $data,
-							),
-						),
-						array(
-							'type' => 'text',
-							'text' => $text,
+		$controls = self::request_controls( $message_data );
+		$quirks   = self::converse_quirks( $model_id );
+
+		if ( false !== strpos( $model_id, 'anthropic.claude' ) ) {
+			$messages_out = array();
+			foreach ( $this->normalize_claude_messages( $chat ) as $turn ) {
+				if ( empty( $turn['images'] ) ) {
+					$messages_out[] = array(
+						'role'    => $turn['role'],
+						'content' => $turn['content'],
+					);
+					continue;
+				}
+				$blocks = array();
+				foreach ( $turn['images'] as $image ) {
+					$blocks[] = array(
+						'type'   => 'image',
+						'source' => array(
+							'type'       => 'base64',
+							'media_type' => $image['media_type'],
+							'data'       => $image['data'],
 						),
 					);
 				}
+				if ( '' !== trim( $turn['content'] ) ) {
+					$blocks[] = array(
+						'type' => 'text',
+						'text' => $turn['content'],
+					);
+				}
+				$messages_out[] = array(
+					'role'    => $turn['role'],
+					'content' => $blocks,
+				);
 			}
 
 			$payload = array(
@@ -1011,7 +1223,23 @@ class AI_Chat_Bedrock_AWS {
 				'messages'          => $messages_out,
 			);
 			if ( self::claude_accepts_temperature( $model_id ) ) {
-				$payload['temperature'] = $temperature;
+				// Claude 4.5 models refuse temperature and top_p together, so an explicit top_p wins.
+				if ( null !== $controls['top_p'] ) {
+					$payload['top_p'] = $controls['top_p'];
+				} else {
+					$payload['temperature'] = $temperature;
+				}
+			}
+			if ( ! empty( $controls['stop'] ) ) {
+				$payload['stop_sequences'] = $controls['stop'];
+			}
+			if ( null !== $controls['schema'] && ! in_array( 'no_output_schema', $quirks, true ) ) {
+				$payload['output_config'] = array(
+					'format' => array(
+						'type'   => 'json_schema',
+						'schema' => $controls['schema'],
+					),
+				);
 			}
 			if ( '' !== $system ) {
 				$payload['system'] = $system;
@@ -1028,15 +1256,12 @@ class AI_Chat_Bedrock_AWS {
 			foreach ( $chat as $message ) {
 				$nova_messages[] = array(
 					'role'    => $message['role'],
-					'content' => array( array( 'text' => $message['content'] ) ),
+					'content' => self::content_blocks( $message ),
 				);
 			}
 			$payload = array(
 				'messages'        => $nova_messages,
-				'inferenceConfig' => array(
-					'maxTokens'   => $max_tokens,
-					'temperature' => $temperature,
-				),
+				'inferenceConfig' => self::inference_config( $max_tokens, $temperature, $controls ),
 			);
 			if ( '' !== $system ) {
 				$payload['system'] = array( array( 'text' => $system ) );
@@ -1045,7 +1270,11 @@ class AI_Chat_Bedrock_AWS {
 		}
 
 		if ( 'converse' === self::chat_api( $model_id ) ) {
-			return $this->format_converse_payload( $model_id, $chat, $system, $max_tokens, $temperature );
+			return $this->format_converse_payload( $model_id, $chat, $system, $max_tokens, $temperature, $controls );
+		}
+
+		if ( $has_images ) {
+			return new WP_Error( 'aicfab_images_unsupported', __( 'The selected model does not accept images.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
 		// Titan Text, the one native family left without a chat format of its own.
@@ -1055,13 +1284,63 @@ class AI_Chat_Bedrock_AWS {
 		}
 		$prompt .= 'Assistant: ';
 
+		$config = array(
+			'maxTokenCount' => $max_tokens,
+			'temperature'   => $temperature,
+		);
+		if ( null !== $controls['top_p'] ) {
+			$config['topP'] = $controls['top_p'];
+		}
 		return array(
 			'inputText'            => $prompt,
-			'textGenerationConfig' => array(
-				'maxTokenCount' => $max_tokens,
-				'temperature'   => $temperature,
-			),
+			'textGenerationConfig' => $config,
 		);
+	}
+
+	/**
+	 * One turn as Nova and Converse content blocks: its images, then its text.
+	 *
+	 * Both take the image bytes as base64 in the JSON body.
+	 *
+	 * @param array $turn Turn with content and images.
+	 * @return array
+	 */
+	private static function content_blocks( $turn ) {
+		$blocks = array();
+		foreach ( isset( $turn['images'] ) ? $turn['images'] : array() as $image ) {
+			$blocks[] = array(
+				'image' => array(
+					'format' => self::IMAGE_FORMATS[ $image['media_type'] ],
+					'source' => array( 'bytes' => $image['data'] ),
+				),
+			);
+		}
+		if ( '' !== trim( (string) $turn['content'] ) || empty( $blocks ) ) {
+			$blocks[] = array( 'text' => (string) $turn['content'] );
+		}
+		return $blocks;
+	}
+
+	/**
+	 * The inferenceConfig block Nova and Converse share.
+	 *
+	 * @param int   $max_tokens  Output token ceiling.
+	 * @param float $temperature Sampling temperature.
+	 * @param array $controls    Output of request_controls().
+	 * @return array
+	 */
+	private static function inference_config( $max_tokens, $temperature, $controls ) {
+		$config = array(
+			'maxTokens'   => $max_tokens,
+			'temperature' => $temperature,
+		);
+		if ( null !== $controls['top_p'] ) {
+			$config['topP'] = $controls['top_p'];
+		}
+		if ( ! empty( $controls['stop'] ) ) {
+			$config['stopSequences'] = $controls['stop'];
+		}
+		return $config;
 	}
 
 	/**
@@ -1072,32 +1351,57 @@ class AI_Chat_Bedrock_AWS {
 	 * Converse ignores the guardrail headers InvokeModel reads, and sending a chat without
 	 * the guardrail the administrator configured would be worse than failing.
 	 *
+	 * A JSON schema is sent as outputConfig, which constrains decoding on the models that
+	 * support it. A model that does not says so, and the request is retried without it; the
+	 * instruction in the prompt and the check on the answer still apply.
+	 *
 	 * @param string $model_id    Model or inference profile ID.
 	 * @param array  $chat        User and assistant turns with string content.
 	 * @param string $system      Combined system prompt.
 	 * @param int    $max_tokens  Output token ceiling.
 	 * @param float  $temperature Sampling temperature.
+	 * @param array  $controls    Output of request_controls().
 	 * @return array
 	 */
-	private function format_converse_payload( $model_id, $chat, $system, $max_tokens, $temperature ) {
-		$turns    = $this->normalize_claude_messages( $chat );
+	private function format_converse_payload( $model_id, $chat, $system, $max_tokens, $temperature, $controls = array() ) {
+		$controls = array_merge(
+			array(
+				'top_p'  => null,
+				'stop'   => array(),
+				'schema' => null,
+			),
+			$controls
+		);
 		$messages = array();
-		foreach ( $turns as $turn ) {
+		foreach ( $this->normalize_claude_messages( $chat ) as $turn ) {
 			$messages[] = array(
 				'role'    => $turn['role'],
-				'content' => array( array( 'text' => $turn['content'] ) ),
+				'content' => self::content_blocks( $turn ),
 			);
 		}
 
 		$payload = array(
 			'messages'        => $messages,
-			'inferenceConfig' => array(
-				'maxTokens'   => $max_tokens,
-				'temperature' => $temperature,
-			),
+			'inferenceConfig' => self::inference_config( $max_tokens, $temperature, $controls ),
 		);
 		if ( '' !== $system ) {
 			$payload['system'] = array( array( 'text' => $system ) );
+		}
+		if ( null !== $controls['schema'] ) {
+			$schema = wp_json_encode( $controls['schema'] );
+			if ( is_string( $schema ) ) {
+				$payload['outputConfig'] = array(
+					'textFormat' => array(
+						'type'      => 'json_schema',
+						'structure' => array(
+							'jsonSchema' => array(
+								'schema' => $schema,
+								'name'   => 'response',
+							),
+						),
+					),
+				);
+			}
 		}
 
 		$guardrail = $this->guardrail_setting();
@@ -1131,7 +1435,7 @@ class AI_Chat_Bedrock_AWS {
 		if ( is_array( $learned ) && isset( $learned[ $model_id ] ) && is_array( $learned[ $model_id ] ) ) {
 			$quirks = array_merge( $quirks, $learned[ $model_id ] );
 		}
-		return array_values( array_intersect( array( 'no_system', 'no_temperature' ), $quirks ) );
+		return array_values( array_intersect( array( 'no_system', 'no_temperature', 'no_top_p', 'no_stop_sequences', 'no_output_schema' ), $quirks ) );
 	}
 
 	/**
@@ -1147,6 +1451,17 @@ class AI_Chat_Bedrock_AWS {
 		}
 		if ( false !== strpos( $body, 'support system messages' ) ) {
 			return 'no_system';
+		}
+		// Seen on GPT-6 Astra and Grok 4.6 (topP), Qwen3 VL (stopSequences), Nova and Llama 4
+		// (outputConfig), and Claude Sonnet 5, which answers a schema with "Extra inputs are not permitted".
+		if ( false !== strpos( $body, 'support the topp field' ) ) {
+			return 'no_top_p';
+		}
+		if ( false !== strpos( $body, 'support the stopsequences field' ) ) {
+			return 'no_stop_sequences';
+		}
+		if ( false !== strpos( $body, 'support the outputconfig field' ) || false !== strpos( $body, 'output_config.format: extra inputs' ) ) {
+			return 'no_output_schema';
 		}
 		return '';
 	}
@@ -1183,7 +1498,18 @@ class AI_Chat_Bedrock_AWS {
 		if ( in_array( 'no_temperature', $quirks, true ) ) {
 			unset( $payload['inferenceConfig']['temperature'] );
 		}
-		if ( in_array( 'no_system', $quirks, true ) && ! empty( $payload['system'] ) ) {
+		if ( in_array( 'no_top_p', $quirks, true ) ) {
+			unset( $payload['inferenceConfig']['topP'] );
+		}
+		// The caller still gets text cut at the stop sequence: the core AI adapter truncates it.
+		if ( in_array( 'no_stop_sequences', $quirks, true ) ) {
+			unset( $payload['inferenceConfig']['stopSequences'] );
+		}
+		// The prompt still asks for JSON and the answer is still checked; only the constraint goes.
+		if ( in_array( 'no_output_schema', $quirks, true ) ) {
+			unset( $payload['outputConfig'], $payload['output_config'] );
+		}
+		if ( in_array( 'no_system', $quirks, true ) && ! empty( $payload['system'] ) && is_array( $payload['system'] ) ) {
 			$instructions = array();
 			foreach ( $payload['system'] as $block ) {
 				if ( isset( $block['text'] ) ) {
@@ -1191,8 +1517,13 @@ class AI_Chat_Bedrock_AWS {
 				}
 			}
 			unset( $payload['system'] );
-			if ( ! empty( $instructions ) && isset( $payload['messages'][0]['content'][0]['text'] ) ) {
-				$payload['messages'][0]['content'][0]['text'] = implode( "\n\n", $instructions ) . "\n\n" . $payload['messages'][0]['content'][0]['text'];
+			// Image blocks come before the text, so the instructions join the first text block.
+			$blocks = ! empty( $instructions ) && isset( $payload['messages'][0]['content'] ) && is_array( $payload['messages'][0]['content'] ) ? $payload['messages'][0]['content'] : array();
+			foreach ( $blocks as $index => $block ) {
+				if ( isset( $block['text'] ) ) {
+					$payload['messages'][0]['content'][ $index ]['text'] = implode( "\n\n", $instructions ) . "\n\n" . $block['text'];
+					break;
+				}
 			}
 		}
 		return $payload;
@@ -1209,6 +1540,13 @@ class AI_Chat_Bedrock_AWS {
 	private static function adapt_refused_converse( $payload, $model_id, $body ) {
 		$quirk = self::converse_quirk_from_error( $body );
 		if ( '' === $quirk ) {
+			// A schema the constrained decoder cannot take is a fault of this request, not of
+			// the model, so it is dropped for this request only and not remembered.
+			$lower = strtolower( (string) $body );
+			if ( ( isset( $payload['outputConfig'] ) || isset( $payload['output_config'] ) ) && ( false !== strpos( $lower, 'output_config' ) || false !== strpos( $lower, 'outputconfig' ) || false !== strpos( $lower, 'schema' ) ) ) {
+				$adapted = self::apply_converse_quirks( $payload, array( 'no_output_schema' ) );
+				return $adapted === $payload ? null : $adapted;
+			}
 			return null;
 		}
 		self::remember_converse_quirk( $model_id, $quirk );
@@ -1219,9 +1557,11 @@ class AI_Chat_Bedrock_AWS {
 	private function normalize_claude_messages( $messages ) {
 		$normalized = array();
 		foreach ( $messages as $message ) {
-			$last = count( $normalized ) - 1;
+			$message['images'] = isset( $message['images'] ) && is_array( $message['images'] ) ? $message['images'] : array();
+			$last              = count( $normalized ) - 1;
 			if ( $last >= 0 && $normalized[ $last ]['role'] === $message['role'] ) {
-				$normalized[ $last ]['content'] .= "\n\n" . $message['content'];
+				$normalized[ $last ]['content'] = trim( $normalized[ $last ]['content'] . "\n\n" . $message['content'] );
+				$normalized[ $last ]['images']  = array_slice( array_merge( $normalized[ $last ]['images'], $message['images'] ), 0, 20 );
 			} else {
 				$normalized[] = $message;
 			}
@@ -1232,6 +1572,7 @@ class AI_Chat_Bedrock_AWS {
 				array(
 					'role'    => 'user',
 					'content' => 'Continue the conversation.',
+					'images'  => array(),
 				)
 			);
 		}
@@ -1246,8 +1587,9 @@ class AI_Chat_Bedrock_AWS {
 			return $this->error( __( 'The Bedrock request could not be encoded.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
-		// Converse takes the guardrail in the body, and ignores these headers.
-		$headers = $this->signed_headers( $endpoint, $body, 'POST', 'bedrock', $converse ? array() : $this->guardrail_headers() );
+		// Converse takes the guardrail in the body, and ignores these headers. Image models are
+		// checked with ApplyGuardrail before the call instead, see apply_guardrail().
+		$headers = $this->signed_headers( $endpoint, $body, 'POST', 'bedrock', 'invoke' === $api ? $this->guardrail_headers() : array() );
 		$timeout = (int) apply_filters( 'ai_chat_bedrock_http_timeout', 120 );
 		$this->log_debug(
 			'Sending request',
@@ -1285,7 +1627,8 @@ class AI_Chat_Bedrock_AWS {
 				'request_id' => sanitize_text_field( $request_id ),
 			)
 		);
-		if ( $converse && 400 === $status && $adaptations > 0 ) {
+		// Claude on InvokeModel refuses an output schema the same way some Converse models do.
+		if ( ( $converse || false !== strpos( $model_id, 'anthropic.claude' ) ) && 400 === $status && $adaptations > 0 ) {
 			$adapted = self::adapt_refused_converse( $payload, $model_id, wp_remote_retrieve_body( $response ) );
 			if ( null !== $adapted ) {
 				$this->log_debug( 'Retrying without a field the model refused', array( 'model' => $model_id ) );
@@ -2013,6 +2356,25 @@ class AI_Chat_Bedrock_AWS {
 	}
 
 	private function parse_model_response( $data, $model_id ) {
+		// Stability image models answer with base64 images and one finish reason per image.
+		if ( isset( $data['images'] ) && is_array( $data['images'] ) ) {
+			$images = array();
+			foreach ( $data['images'] as $image ) {
+				if ( is_string( $image ) && '' !== $image ) {
+					$images[] = $image;
+				}
+			}
+			if ( empty( $images ) ) {
+				return $this->error( __( 'Amazon Bedrock returned no image.', 'ai-chat-for-amazon-bedrock' ) );
+			}
+			return array(
+				'success'        => true,
+				'data'           => array( 'message' => '' ),
+				'images'         => $images,
+				'finish_reasons' => isset( $data['finish_reasons'] ) && is_array( $data['finish_reasons'] ) ? $data['finish_reasons'] : array(),
+			);
+		}
+
 		// Embedding models answer with a vector rather than text.
 		$vector = self::extract_embedding( $data );
 		if ( ! empty( $vector ) ) {
@@ -2069,6 +2431,16 @@ class AI_Chat_Bedrock_AWS {
 		);
 		if ( ! empty( $tool_calls ) ) {
 			$result['tool_calls'] = $tool_calls;
+		}
+		// Claude says stop_reason, Nova and Converse stopReason, Titan completionReason.
+		foreach ( array( 'stop_reason', 'stopReason' ) as $key ) {
+			if ( isset( $data[ $key ] ) && is_string( $data[ $key ] ) ) {
+				$result['stop_reason'] = sanitize_key( $data[ $key ] );
+				break;
+			}
+		}
+		if ( ! isset( $result['stop_reason'] ) && isset( $data['results'][0]['completionReason'] ) && is_string( $data['results'][0]['completionReason'] ) ) {
+			$result['stop_reason'] = sanitize_key( $data['results'][0]['completionReason'] );
 		}
 		$usage = AI_Chat_Bedrock_Event_Stream::usage( $data );
 		if ( ! empty( $usage ) ) {

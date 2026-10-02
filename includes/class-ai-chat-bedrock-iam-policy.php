@@ -137,8 +137,9 @@ class AI_Chat_Bedrock_Iam_Policy {
 	 * Build the policy document for a configuration.
 	 *
 	 * Recognised keys: region, account, models, streaming, guardrail_id, prompt_id,
-	 * knowledge_base, s3_vectors (bucket, index, region) and agentcore. Everything except region and models is optional, and
-	 * an unset feature produces no statement for it.
+	 * knowledge_base, s3_vectors (bucket, index, region), images (region, models) and agentcore.
+	 * Everything except region and models is optional, and an unset feature produces no
+	 * statement for it.
 	 *
 	 * @param array $config Configuration to build from.
 	 * @return array Policy document.
@@ -180,6 +181,28 @@ class AI_Chat_Bedrock_Iam_Policy {
 				'Action'   => $actions,
 				'Resource' => $resources,
 			);
+		}
+
+		// Image models live in their own region, so they get their own statement.
+		$image_models = isset( $config['images']['models'] ) ? (array) $config['images']['models'] : array();
+		if ( $image_models ) {
+			$image_region    = self::clean_region( ! empty( $config['images']['region'] ) ? $config['images']['region'] : $region );
+			$image_resources = array();
+			foreach ( $image_models as $model ) {
+				foreach ( self::model_resources( $model, $image_region, $account ) as $arn ) {
+					if ( ! in_array( $arn, $image_resources, true ) ) {
+						$image_resources[] = $arn;
+					}
+				}
+			}
+			if ( $image_resources ) {
+				$statements[] = array(
+					'Sid'      => 'AICFABGenerateAndEditImages',
+					'Effect'   => 'Allow',
+					'Action'   => array( 'bedrock:InvokeModel' ),
+					'Resource' => $image_resources,
+				);
+			}
 		}
 
 		// The model picker lists what the account can use. No resource-level scoping exists.
@@ -278,6 +301,31 @@ class AI_Chat_Bedrock_Iam_Policy {
 	}
 
 	/**
+	 * Image models the site can call, and their region.
+	 *
+	 * Every generation model is included once one is chosen, because the WordPress AI Client
+	 * is offered all three: Stable Diffusion 3.5 Large is the one that edits an image. The
+	 * editing models are included when the Media Library actions are on.
+	 *
+	 * @param array $options Plugin settings.
+	 * @return array Array with region and models, or an empty array.
+	 */
+	private static function image_config( $options ) {
+		if ( ! class_exists( 'AI_Chat_Bedrock_Images' ) || ! AI_Chat_Bedrock_Images::enabled( $options ) ) {
+			return array();
+		}
+		$models = array_keys( AI_Chat_Bedrock_Images::models() );
+		if ( ! empty( $options['media_assistant'] ) ) {
+			$models[] = AI_Chat_Bedrock_Images::profile( AI_Chat_Bedrock_Images::REMOVE_BACKGROUND_MODEL );
+			$models[] = AI_Chat_Bedrock_Images::profile( AI_Chat_Bedrock_Images::UPSCALE_MODEL );
+		}
+		return array(
+			'region' => AI_Chat_Bedrock_Images::region(),
+			'models' => $models,
+		);
+	}
+
+	/**
 	 * The policy for the current site configuration.
 	 *
 	 * @param array  $options Plugin settings.
@@ -324,6 +372,7 @@ class AI_Chat_Bedrock_Iam_Policy {
 					'region' => isset( $options['s3_vectors_region'] ) ? $options['s3_vectors_region'] : '',
 				) : array(),
 				'agentcore'      => $agentcore,
+				'images'         => self::image_config( $options ),
 				'api_key'        => class_exists( 'AI_Chat_Bedrock_AWS_Credentials' ) && null !== AI_Chat_Bedrock_AWS_Credentials::api_key( $options ),
 			)
 		);

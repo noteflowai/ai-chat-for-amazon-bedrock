@@ -101,6 +101,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-s3-vectors.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-integrations.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-woocommerce.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-images.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 
 $failures = array();
@@ -225,6 +226,15 @@ check_set( false === $saved['show_sources'], 'An unticked sources switch is save
 
 $saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'auto' ) );
 check_set( 'auto' === $saved['chat_color_scheme'], 'The color scheme is saved.' );
+
+$saved = save_tab( $admin, array( 'model_id', 'image_model_id' ), array( 'model_id' => 'amazon.nova-lite-v1:0', 'image_model_id' => 'stability.stable-image-core-v1:1' ) );
+check_set( 'stability.stable-image-core-v1:1' === $saved['image_model_id'], 'The image model is saved with the Model tab.' );
+$saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' ) );
+check_set( 'stability.stable-image-core-v1:1' === $saved['image_model_id'], 'Another tab keeps the image model.' );
+$saved = save_tab( $admin, array( 'model_id', 'image_model_id' ), array( 'model_id' => 'amazon.nova-lite-v1:0', 'image_model_id' => 'stability.not-a-model' ) );
+check_set( '' === $saved['image_model_id'] && isset( $GLOBALS['aicfab_notices']['image_model_id'] ), 'An unsupported image model leaves image generation off, with a notice.' );
+$saved = save_tab( $admin, array( 'model_id', 'image_model_id' ), array( 'model_id' => 'amazon.nova-lite-v1:0' ) );
+check_set( '' === $saved['image_model_id'], 'Choosing no image model turns image generation off.' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

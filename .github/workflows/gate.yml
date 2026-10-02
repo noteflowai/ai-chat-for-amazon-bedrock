@@ -50,6 +50,16 @@ jobs:
       - name: Run the gate
         run: bin/prerelease.sh --php "$(which php)"
 
+      # The provider against the AI Client library itself, which the gate's suites stand in
+      # for. 1.4.0 is the first release with embeddings and 1.5.0 the current one; the copy
+      # bundled with WordPress is covered in the plugin-check job.
+      - name: Test the AI Client provider against php-ai-client
+        run: |
+          for tag in 1.4.0 1.5.0; do
+            git clone --quiet --depth 1 --branch "$tag" https://github.com/WordPress/php-ai-client "/tmp/php-ai-client-$tag" 2>/dev/null
+            AICFAB_AI_CLIENT="/tmp/php-ai-client-$tag" php tests/core-ai-library.php
+          done
+
       # The gate skips this suite while running, because it drives the gate itself.
       - name: Test the release tooling
         run: php tests/tooling.php
@@ -127,5 +137,7 @@ jobs:
       - name: Run the official Plugin Check
         run: |
           bin/setup-tools.sh
-          bin/prerelease.sh --php "$(which php)" \
+          # The provider suite also runs against the AI Client this WordPress bundles.
+          AICFAB_AI_CLIENT=/tmp/wp/wp-includes/php-ai-client \
+            bin/prerelease.sh --php "$(which php)" \
             --wp-cli "wp --path=/tmp/wp --allow-root"

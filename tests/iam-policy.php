@@ -25,7 +25,12 @@ function __( $text, $domain = null ) {
 	return $text;
 }
 
+function apply_filters( $hook, $value ) {
+	return isset( $GLOBALS['aicfab_filters'][ $hook ] ) ? $GLOBALS['aicfab_filters'][ $hook ] : $value;
+}
+
 require_once __DIR__ . '/../includes/class-ai-chat-bedrock-iam-policy.php';
+require_once __DIR__ . '/../includes/class-ai-chat-bedrock-images.php';
 
 $failures = array();
 function check_policy( $condition, $message ) {
@@ -391,6 +396,30 @@ foreach ( array(
 	$aicfab_json = AI_Chat_Bedrock_Iam_Policy::to_json( AI_Chat_Bedrock_Iam_Policy::for_site( array_merge( array( 'aws_region' => 'us-east-1', 'model_id' => 'amazon.nova-lite-v1:0' ), $aicfab_extra ), '111122223333' ) );
 	check_policy( false === strpos( $aicfab_json, 's3vectors' ), 'No S3 Vectors permission for ' . $aicfab_case . '.' );
 }
+
+// --- Images --------------------------------------------------------------------
+
+$aicfab_base = array( 'aws_region' => 'us-east-1', 'model_id' => 'amazon.nova-lite-v1:0' );
+check_policy( null === statement( AI_Chat_Bedrock_Iam_Policy::for_site( $aicfab_base, '111122223333' ), 'AICFABGenerateAndEditImages' ), 'No image permission while image generation is off.' );
+check_policy( null === statement( AI_Chat_Bedrock_Iam_Policy::for_site( $aicfab_base + array( 'image_model_id' => 'stability.unknown-v9' ), '111122223333' ), 'AICFABGenerateAndEditImages' ), 'An unknown image model grants nothing.' );
+
+$aicfab_img = statement( AI_Chat_Bedrock_Iam_Policy::for_site( $aicfab_base + array( 'image_model_id' => 'stability.stable-image-core-v1:1' ), '111122223333' ), 'AICFABGenerateAndEditImages' );
+check_policy( null !== $aicfab_img && array( 'bedrock:InvokeModel' ) === $aicfab_img['Action'], 'Image models get InvokeModel only: they do not stream.' );
+foreach ( array( 'stability.stable-image-core-v1:1', 'stability.sd3-5-large-v1:0', 'stability.stable-image-ultra-v1:1' ) as $aicfab_model ) {
+	check_policy( null !== $aicfab_img && in_array( 'arn:aws:bedrock:us-west-2::foundation-model/' . $aicfab_model, $aicfab_img['Resource'], true ), 'Image generation model ' . $aicfab_model . ' is granted in the image Region, not the chat Region.' );
+}
+check_policy( null !== $aicfab_img && false === strpos( implode( ' ', $aicfab_img['Resource'] ), 'remove-background' ), 'Editing models are not granted while the Media Library assistant is off.' );
+
+$aicfab_img = statement( AI_Chat_Bedrock_Iam_Policy::for_site( $aicfab_base + array( 'image_model_id' => 'stability.sd3-5-large-v1:0', 'media_assistant' => 1 ), '111122223333' ), 'AICFABGenerateAndEditImages' );
+foreach ( array( 'stability.stable-image-remove-background-v1:0', 'stability.stable-fast-upscale-v1:0' ) as $aicfab_model ) {
+	check_policy( null !== $aicfab_img && in_array( 'arn:aws:bedrock:us-west-2:111122223333:inference-profile/us.' . $aicfab_model, $aicfab_img['Resource'], true ), 'The ' . $aicfab_model . ' inference profile is granted.' );
+	check_policy( null !== $aicfab_img && in_array( 'arn:aws:bedrock:*::foundation-model/' . $aicfab_model, $aicfab_img['Resource'], true ), 'The ' . $aicfab_model . ' foundation model is granted in every Region the profile routes to.' );
+}
+
+$GLOBALS['aicfab_filters']['ai_chat_bedrock_image_region'] = 'eu-central-1';
+$aicfab_img = statement( AI_Chat_Bedrock_Iam_Policy::for_site( $aicfab_base + array( 'image_model_id' => 'stability.sd3-5-large-v1:0', 'media_assistant' => 1 ), '111122223333' ), 'AICFABGenerateAndEditImages' );
+check_policy( null !== $aicfab_img && in_array( 'arn:aws:bedrock:eu-central-1:111122223333:inference-profile/eu.stability.stable-fast-upscale-v1:0', $aicfab_img['Resource'], true ), 'A filtered image Region moves the grant and uses its geographic profile.' );
+unset( $GLOBALS['aicfab_filters']['ai_chat_bedrock_image_region'] );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

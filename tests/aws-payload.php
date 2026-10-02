@@ -507,6 +507,132 @@ $rejected = $format->invoke(
 );
 check_aws( is_string( $rejected['messages'][ count( $rejected['messages'] ) - 1 ]['content'] ), 'unsupported media types are dropped' );
 
+// --- 1.57.0: images on every vision family, sampling and output controls ----------
+
+$aicfab_png    = array( 'media_type' => 'image/png', 'data' => 'UE5H' );
+$aicfab_vision = array(
+	'messages'       => array(
+		array( 'role' => 'system', 'content' => 'System instruction.' ),
+		array( 'role' => 'user', 'content' => 'First', 'images' => array( $aicfab_png ) ),
+		array( 'role' => 'assistant', 'content' => 'Seen', 'images' => array( $aicfab_png ) ),
+		array( 'role' => 'user', 'content' => '', 'images' => array( $aicfab_png, array( 'media_type' => 'image/tiff', 'data' => 'x' ) ) ),
+	),
+	'top_p'          => 0.7,
+	'stop_sequences' => array( 'END', '', 'END', 5 ),
+	'json_schema'    => array( 'type' => 'object' ),
+);
+$aicfab_c = $format->invoke( $aws, 'us.anthropic.claude-haiku-4-5-20251001-v1:0', $aicfab_vision, 500, 0.2 );
+check_aws( 'image' === $aicfab_c['messages'][0]['content'][0]['type'] && 'UE5H' === $aicfab_c['messages'][0]['content'][0]['source']['data'], 'Claude gets an image from any user turn, not only the last.' );
+check_aws( is_string( $aicfab_c['messages'][1]['content'] ), 'Images on an assistant turn are never sent.' );
+check_aws( 1 === count( $aicfab_c['messages'][2]['content'] ) && 'image' === $aicfab_c['messages'][2]['content'][0]['type'], 'An image-only turn is sent without an empty text block, and an unsupported type is dropped.' );
+check_aws( 0.7 === $aicfab_c['top_p'] && ! isset( $aicfab_c['temperature'] ), 'Claude 4.5 gets top_p instead of temperature, since it refuses both together.' );
+check_aws( array( 'END' ) === $aicfab_c['stop_sequences'], 'Stop sequences are cleaned and deduplicated.' );
+check_aws( array( 'type' => 'json_schema', 'schema' => array( 'type' => 'object' ) ) === $aicfab_c['output_config']['format'], 'Claude gets the schema as output_config.' );
+$aicfab_c = $format->invoke( $aws, 'us.anthropic.claude-sonnet-5', $aicfab_vision, 500, 0.2 );
+check_aws( ! isset( $aicfab_c['top_p'] ) && ! isset( $aicfab_c['temperature'] ), 'A Claude model that refuses sampling controls gets neither.' );
+check_aws( false === AI_Chat_Bedrock_AWS::accepts_top_p( 'us.anthropic.claude-sonnet-5' ) && true === AI_Chat_Bedrock_AWS::accepts_top_p( 'us.anthropic.claude-haiku-4-5-20251001-v1:0' ), 'Top P is offered to the Claude models that take it.' );
+foreach ( array( 'global.openai.gpt-6-astra', 'openai.gpt-5.6', 'xai.grok-4.6' ) as $aicfab_model ) {
+	check_aws( false === AI_Chat_Bedrock_AWS::accepts_top_p( $aicfab_model ), $aicfab_model . ' is not offered top P; it answers "doesn\'t support the topP field".' );
+}
+check_aws( true === AI_Chat_Bedrock_AWS::accepts_top_p( 'amazon.nova-lite-v1:0' ) && true === AI_Chat_Bedrock_AWS::accepts_top_p( 'openai.gpt-oss-20b-1:0' ), 'Models without a known refusal are offered top P.' );
+
+$aicfab_n = $format->invoke( $aws, 'us.amazon.nova-lite-v1:0', $aicfab_vision, 500, 0.2 );
+check_aws( array( 'format' => 'png', 'source' => array( 'bytes' => 'UE5H' ) ) === $aicfab_n['messages'][0]['content'][0]['image'] && 'First' === $aicfab_n['messages'][0]['content'][1]['text'], 'Nova gets image blocks ahead of the text.' );
+check_aws( 0.7 === $aicfab_n['inferenceConfig']['topP'] && array( 'END' ) === $aicfab_n['inferenceConfig']['stopSequences'] && 0.2 === $aicfab_n['inferenceConfig']['temperature'], 'Nova gets top P and stop sequences beside temperature.' );
+check_aws( ! isset( $aicfab_n['outputConfig'] ) && ! isset( $aicfab_n['output_config'] ), 'Nova is not sent a schema; it refuses outputConfig.' );
+
+$aicfab_q = $format->invoke( $aws, 'qwen.qwen3-vl-235b-a22b', $aicfab_vision, 500, 0.2 );
+check_aws( 'png' === $aicfab_q['messages'][0]['content'][0]['image']['format'], 'Converse gets image blocks.' );
+check_aws( '{"type":"object"}' === $aicfab_q['outputConfig']['textFormat']['structure']['jsonSchema']['schema'], 'Converse gets the schema as a JSON string in outputConfig.' );
+
+$aicfab_legacy = $format->invoke( $aws, 'amazon.nova-lite-v1:0', array( 'messages' => array( array( 'role' => 'user', 'content' => 'Alt text?' ) ), 'image' => $aicfab_png ), 500, 0.2 );
+check_aws( 'png' === $aicfab_legacy['messages'][0]['content'][0]['image']['format'], 'The single image the media helpers send now reaches Nova too.' );
+$aicfab_titan = $format->invoke( $aws, 'amazon.titan-text-express-v1', array( 'messages' => array( array( 'role' => 'user', 'content' => 'Alt text?' ) ), 'image' => $aicfab_png ), 500, 0.2 );
+check_aws( is_wp_error( $aicfab_titan ) && 'aicfab_images_unsupported' === $aicfab_titan->get_error_code(), 'A text-only model is refused an image rather than answering without it.' );
+
+$aicfab_m = $format->invoke( $aws, 'mistral.mistral-7b-instruct-v0:2', array( 'messages' => array( array( 'role' => 'system', 'content' => 'System instruction.' ), array( 'role' => 'user', 'content' => 'Q', 'images' => array( $aicfab_png ) ) ) ), 500, 0.2 );
+$aicfab_t = array_values( array_filter( $aicfab_m['messages'][0]['content'], function ( $b ) { return isset( $b['text'] ); } ) );
+check_aws( ! isset( $aicfab_m['system'] ) && isset( $aicfab_t[0] ) && 0 === strpos( $aicfab_t[0]['text'], 'System instruction.' ), 'A folded system prompt joins the first text block even when an image comes first.' );
+
+// Refusals of the new fields are learned like temperature was.
+foreach ( array(
+	'no_top_p'          => '{"message":"This model doesn\'t support the topP field. Remove topP and try again."}',
+	'no_stop_sequences' => '{"message":"This model doesn\'t support the stopSequences field."}',
+	'no_output_schema'  => '{"message":"This model doesn\'t support the outputConfig field."}',
+) as $aicfab_quirk => $aicfab_body ) {
+	$aicfab_model                     = 'test.refuses-' . $aicfab_quirk;
+	$GLOBALS['aicfab_test_posts']     = array();
+	$GLOBALS['aicfab_test_responses'] = array(
+		array( 'response' => array( 'code' => 400 ), 'body' => $aicfab_body ),
+		array( 'response' => array( 'code' => 200 ), 'body' => '{"output":{"message":{"role":"assistant","content":[{"text":"ok"}]}},"stopReason":"end_turn"}' ),
+	);
+	$aicfab_first = $format->invoke( $aws, $aicfab_model, $aicfab_vision, 500, 0.2 );
+	$aicfab_done  = $invoke->invoke( $aws, $aicfab_first, $aicfab_model, 'converse' );
+	$aicfab_retry = json_decode( $GLOBALS['aicfab_test_posts'][1]['args']['body'], true );
+	$aicfab_field = array( 'no_top_p' => isset( $aicfab_retry['inferenceConfig']['topP'] ), 'no_stop_sequences' => isset( $aicfab_retry['inferenceConfig']['stopSequences'] ), 'no_output_schema' => isset( $aicfab_retry['outputConfig'] ) );
+	check_aws( true === $aicfab_done['success'] && false === $aicfab_field[ $aicfab_quirk ] && 0.2 === $aicfab_retry['inferenceConfig']['temperature'], 'A ' . $aicfab_quirk . ' refusal drops only that field.' );
+	check_aws( 'end_turn' === $aicfab_done['stop_reason'], 'The stop reason is reported (' . $aicfab_quirk . ').' );
+}
+check_aws( false === AI_Chat_Bedrock_AWS::accepts_top_p( 'test.refuses-no_top_p' ), 'A learned top P refusal stops it being offered.' );
+
+// Claude Sonnet 5 refuses output_config; the InvokeModel request is retried without it.
+$GLOBALS['aicfab_test_posts']     = array();
+$GLOBALS['aicfab_test_responses'] = array(
+	array( 'response' => array( 'code' => 400 ), 'body' => '{"message":"output_config.format: Extra inputs are not permitted"}' ),
+	array( 'response' => array( 'code' => 200 ), 'body' => '{"content":[{"type":"text","text":"{}"}],"stop_reason":"end_turn"}' ),
+);
+$aicfab_s5   = $format->invoke( $aws, 'us.anthropic.claude-sonnet-5', $aicfab_vision, 500, 0.2 );
+$aicfab_done = $invoke->invoke( $aws, $aicfab_s5, 'us.anthropic.claude-sonnet-5', 'invoke' );
+$aicfab_body = json_decode( $GLOBALS['aicfab_test_posts'][1]['args']['body'], true );
+check_aws( true === $aicfab_done['success'] && 2 === count( $GLOBALS['aicfab_test_posts'] ) && ! isset( $aicfab_body['output_config'] ) && isset( $aicfab_body['messages'] ), 'A refused Claude schema is dropped and the request retried once.' );
+$aicfab_s5 = $format->invoke( $aws, 'us.anthropic.claude-sonnet-5', $aicfab_vision, 500, 0.2 );
+check_aws( ! isset( $aicfab_s5['output_config'] ), 'Claude Sonnet 5 is sent no schema afterwards.' );
+
+// Stability image responses.
+$aicfab_img = $parse->invoke( $aws, array( 'images' => array( 'QUJD' ), 'finish_reasons' => array( null ), 'seeds' => array( 3 ) ), 'stability.stable-image-core-v1:1' );
+check_aws( true === $aicfab_img['success'] && array( 'QUJD' ) === $aicfab_img['images'] && array( null ) === $aicfab_img['finish_reasons'], 'A Stability response is read as images.' );
+$GLOBALS['aicfab_test_posts']     = array();
+$GLOBALS['aicfab_test_responses'] = array( array( 'response' => array( 'code' => 200 ), 'body' => '{"images":["QUJD"],"finish_reasons":["Filter reason: prompt"],"seeds":[1]}' ) );
+$aicfab_west = new AI_Chat_Bedrock_AWS( array( 'aws_region' => 'us-west-2' ) );
+$aicfab_out  = $aicfab_west->invoke_image( array( 'prompt' => 'p' ), 'us.stability.stable-fast-upscale-v1:0' );
+check_aws( is_array( $aicfab_out ) && array( 'Filter reason: prompt' ) === $aicfab_out['finish_reasons'], 'invoke_image passes the finish reason on.' );
+check_aws( 0 === strpos( $GLOBALS['aicfab_test_posts'][0]['url'], 'https://bedrock-runtime.us-west-2.amazonaws.com/model/us.stability.stable-fast-upscale-v1%3A0/invoke' ), 'Image requests go to the image region\'s InvokeModel.' );
+check_aws( is_wp_error( $aicfab_west->invoke_image( array(), 'bad model id' ) ), 'An invalid image model ID is refused before a request.' );
+
+// ApplyGuardrail for requests that cannot carry the guardrail themselves.
+$GLOBALS['aicfab_test_posts'] = array();
+check_aws( true === ( new AI_Chat_Bedrock_AWS() )->apply_guardrail( 'a cat' ) && 0 === count( $GLOBALS['aicfab_test_posts'] ), 'With no guardrail configured nothing is checked or sent.' );
+$GLOBALS['aicfab_test_options']['guardrail_id']      = 'gr-abc123';
+$GLOBALS['aicfab_test_options']['guardrail_version'] = '2';
+$aicfab_guarded                                      = new AI_Chat_Bedrock_AWS();
+$GLOBALS['aicfab_test_responses']                    = array(
+	array( 'response' => array( 'code' => 200 ), 'body' => '{"action":"NONE","outputs":[]}' ),
+	array( 'response' => array( 'code' => 200 ), 'body' => '{"action":"GUARDRAIL_INTERVENED","outputs":[{"text":"Sorry, not that."}]}' ),
+	array( 'response' => array( 'code' => 403 ), 'body' => '{"message":"not authorized to perform: bedrock:ApplyGuardrail"}' ),
+	new WP_Error( 'http_request_failed', 'timeout' ),
+);
+check_aws( true === $aicfab_guarded->apply_guardrail( 'a cat' ), 'A prompt the guardrail lets through may be used.' );
+$aicfab_req = json_decode( $GLOBALS['aicfab_test_posts'][0]['args']['body'], true );
+check_aws( false !== strpos( $GLOBALS['aicfab_test_posts'][0]['url'], '/guardrail/gr-abc123/version/2/apply' ) && 'INPUT' === $aicfab_req['source'] && 'a cat' === $aicfab_req['content'][0]['text']['text'], 'ApplyGuardrail is called with the prompt as input.' );
+$aicfab_blocked = $aicfab_guarded->apply_guardrail( 'bad' );
+check_aws( is_wp_error( $aicfab_blocked ) && 'aicfab_guardrail_blocked' === $aicfab_blocked->get_error_code() && 'Sorry, not that.' === $aicfab_blocked->get_error_message(), 'An intervention blocks with the guardrail\'s own message.' );
+check_aws( is_wp_error( $aicfab_guarded->apply_guardrail( 'x' ) ), 'A guardrail error fails closed.' );
+$aicfab_down = $aicfab_guarded->apply_guardrail( 'x' );
+check_aws( is_wp_error( $aicfab_down ) && 'aicfab_unreachable' === $aicfab_down->get_error_code(), 'An unreachable guardrail fails closed.' );
+unset( $GLOBALS['aicfab_test_options']['guardrail_id'], $GLOBALS['aicfab_test_options']['guardrail_version'] );
+
+// Titan Text Embeddings V2 takes a vector size.
+$GLOBALS['aicfab_test_posts']     = array();
+$GLOBALS['aicfab_test_responses'] = array(
+	array( 'response' => array( 'code' => 200 ), 'body' => '{"embedding":[0.1,0.2],"inputTextTokenCount":2}' ),
+	array( 'response' => array( 'code' => 200 ), 'body' => '{"embedding":[0.1,0.2],"inputTextTokenCount":2}' ),
+);
+( new AI_Chat_Bedrock_AWS() )->embed( 'hello', 'amazon.titan-embed-text-v2:0', 'document', 512 );
+( new AI_Chat_Bedrock_AWS() )->embed( 'hello', 'amazon.titan-embed-text-v2:0', 'document', 300 );
+check_aws( 512 === json_decode( $GLOBALS['aicfab_test_posts'][0]['args']['body'], true )['dimensions'], 'A supported vector size is sent.' );
+check_aws( ! isset( json_decode( $GLOBALS['aicfab_test_posts'][1]['args']['body'], true )['dimensions'] ), 'An unsupported vector size is left to the model default.' );
+$GLOBALS['aicfab_test_responses'] = array();
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

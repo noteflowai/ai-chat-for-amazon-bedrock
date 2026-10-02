@@ -46,6 +46,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-profiles.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-content.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-embeddings.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-images.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-s3-vectors.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-integrations.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-translation.php';
@@ -100,6 +101,7 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_dismiss_setup_notice', $admin, 'ajax_dismiss_setup_notice' );
 		$this->loader->add_filter( 'media_row_actions', $admin, 'add_media_row_action', 10, 2 );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_alt_text', $admin, 'handle_alt_text_action' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_edit_image', $admin, 'handle_edit_image_action' );
 		$this->loader->add_filter( 'bulk_actions-upload', $admin, 'add_media_bulk_action' );
 		$this->loader->add_filter( 'handle_bulk_actions-upload', $admin, 'handle_media_bulk_action', 10, 3 );
 		$this->loader->add_action( 'admin_notices', $admin, 'render_media_notice' );

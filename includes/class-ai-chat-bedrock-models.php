@@ -67,6 +67,51 @@ class AI_Chat_Bedrock_Models {
 	}
 
 	/**
+	 * Whether a text model reads images as well as text.
+	 *
+	 * Bedrock reports input modalities per foundation model but not per inference profile, and
+	 * the cached catalog keeps only labels, so this goes by model family. The families were
+	 * checked with an image prompt in October 2026; Nova Micro, Titan, gpt-oss and the older
+	 * Llama and Mistral models answer "doesn't support image" and are left out.
+	 *
+	 * @param string $model_id Model or inference profile ID.
+	 * @return bool
+	 */
+	public static function accepts_images( $model_id ) {
+		$model_id = strtolower( (string) $model_id );
+		$patterns = array(
+			'/anthropic\.claude-(?:3|[a-z]+-[4-9]|[4-9]|fable)/',
+			'/amazon\.nova-(?:lite|pro|premier|2-lite|2-pro)/',
+			'/meta\.llama(?:3-2-(?:11|90)b|4)/',
+			'/mistral\.(?:pixtral|magistral|ministral-3|mistral-large-3)/',
+			'/google\.gemma-3/',
+			'/moonshotai\.kimi-k(?:2\.5|[3-9])/',
+			'/nvidia\.nemotron-nano-12b/',
+			'/openai\.gpt-(?:5\.[4-9]|[6-9])/',
+			'/qwen\.qwen3-vl/',
+			'/writer\.palmyra-vision/',
+			'/xai\.grok-(?:4\.[6-9]|[5-9])/',
+		);
+		$accepts  = false;
+		foreach ( $patterns as $pattern ) {
+			if ( preg_match( $pattern, $model_id ) ) {
+				$accepts = true;
+				break;
+			}
+		}
+
+		/**
+		 * Filters whether a text model is offered image input through the WordPress AI Client.
+		 *
+		 * @since 1.57.0
+		 *
+		 * @param bool   $accepts  Whether the model reads images.
+		 * @param string $model_id Model or inference profile ID.
+		 */
+		return (bool) apply_filters( 'ai_chat_bedrock_model_accepts_images', $accepts, $model_id );
+	}
+
+	/**
 	 * Selectable models for the current region, using cached discovery results.
 	 *
 	 * @param string $region  AWS region.
