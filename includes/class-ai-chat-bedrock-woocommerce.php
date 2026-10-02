@@ -1371,6 +1371,23 @@ class AI_Chat_Bedrock_WooCommerce {
 			__( 'When you use the chat assistant, your message and the earlier messages of the conversation are sent to Amazon Bedrock, a service of Amazon Web Services, to generate the answer. Passages from this site that relate to your question are sent with it.', 'ai-chat-for-amazon-bedrock' ),
 			__( 'If the site keeps a conversation log, your questions and the answers are stored on this site for the number of days the site has set, together with your user account if you were signed in. You can ask for them to be exported or erased.', 'ai-chat-for-amazon-bedrock' ),
 		);
+		$memory     = class_exists( 'AI_Chat_Bedrock_Chat_History' ) ? AI_Chat_Bedrock_Chat_History::mode() : '';
+		if ( '' !== $memory ) {
+			$paragraphs[] = __( 'The chat keeps your conversation in your browser\'s session storage while you move between pages of this site. It is removed when you close the tab or clear the chat.', 'ai-chat-for-amazon-bedrock' );
+		}
+		if ( 'account' === $memory ) {
+			$days         = AI_Chat_Bedrock_Chat_History::retention_days();
+			$paragraphs[] = sprintf(
+				/* translators: %d: number of days a saved conversation is kept. */
+				_n(
+					'If you are signed in, your conversation is also stored on this site with your user account, so you can continue it on a later visit or another device. Each message is kept for %d day, and clearing the chat deletes the conversation. You can ask for it to be exported or erased.',
+					'If you are signed in, your conversation is also stored on this site with your user account, so you can continue it on a later visit or another device. Each message is kept for %d days, and clearing the chat deletes the conversation. You can ask for it to be exported or erased.',
+					$days,
+					'ai-chat-for-amazon-bedrock'
+				),
+				$days
+			);
+		}
 		if ( self::active() ) {
 			$paragraphs[] = __( 'When you ask about products, the product details shown in the shop, such as prices and stock, are sent to Amazon Bedrock with your question.', 'ai-chat-for-amazon-bedrock' );
 			$paragraphs[] = __( 'If the store lets customers ask about their orders and you are signed in, a question about orders or delivery sends your recent orders to Amazon Bedrock: the order number, dates, status, items, total, shipping method and tracking number. Your address, email address, phone number and payment details are never sent.', 'ai-chat-for-amazon-bedrock' );

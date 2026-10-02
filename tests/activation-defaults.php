@@ -158,7 +158,8 @@ check_act(
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-deactivator.php';
 
 wp_schedule_event( time() + 60, 'hourly', 'ai_chat_bedrock_index_embeddings' );
-check_act( false !== wp_next_scheduled( 'ai_chat_bedrock_index_embeddings' ), 'The fixture has the event scheduled, or the next check proves nothing.' );
+wp_schedule_event( time() + 60, 'daily', 'ai_chat_bedrock_prune_chat_history' );
+check_act( false !== wp_next_scheduled( 'ai_chat_bedrock_index_embeddings' ) && false !== wp_next_scheduled( 'ai_chat_bedrock_prune_chat_history' ), 'The fixture has the events scheduled, or the next check proves nothing.' );
 
 $aicfab_before_deactivate = get_option( 'ai_chat_bedrock_settings' );
 AI_Chat_Bedrock_Deactivator::deactivate();

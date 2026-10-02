@@ -59,6 +59,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-tool-log.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-tool-runner.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-conversations.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-chat-history.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-editor-assistant.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-content-generator.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-generator-stream.php';
@@ -119,6 +120,10 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_Embeddings', 'schedule' );
 		$this->loader->add_action( 'update_option_ai_chat_bedrock_settings', 'AI_Chat_Bedrock_Embeddings', 'schedule' );
 		$this->loader->add_action( AI_Chat_Bedrock_Embeddings::CRON_HOOK, 'AI_Chat_Bedrock_Embeddings', 'run_scheduled_index' );
+		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_Chat_History', 'schedule' );
+		$this->loader->add_action( 'update_option_ai_chat_bedrock_settings', 'AI_Chat_Bedrock_Chat_History', 'schedule' );
+		$this->loader->add_action( 'update_option_ai_chat_bedrock_settings', 'AI_Chat_Bedrock_Chat_History', 'settings_updated', 10, 2 );
+		$this->loader->add_action( AI_Chat_Bedrock_Chat_History::CRON_HOOK, 'AI_Chat_Bedrock_Chat_History', 'prune_expired' );
 		// Before, not after: once a post is deleted its meta is gone and so is the record of its S3 vectors.
 		$this->loader->add_action( 'before_delete_post', 'AI_Chat_Bedrock_Embeddings', 'forget' );
 
@@ -171,11 +176,16 @@ class AI_Chat_Bedrock {
 		$feedback = new AI_Chat_Bedrock_Feedback();
 		$this->loader->add_action( 'rest_api_init', $feedback, 'register_routes' );
 
+		$chat_history = new AI_Chat_Bedrock_Chat_History();
+		$this->loader->add_action( 'rest_api_init', $chat_history, 'register_routes' );
+
 		$generator_stream = new AI_Chat_Bedrock_Generator_Stream();
 		$this->loader->add_action( 'rest_api_init', $generator_stream, 'register_routes' );
 
 		$this->loader->add_filter( 'wp_privacy_personal_data_exporters', 'AI_Chat_Bedrock_Conversations', 'register_exporter' );
 		$this->loader->add_filter( 'wp_privacy_personal_data_erasers', 'AI_Chat_Bedrock_Conversations', 'register_eraser' );
+		$this->loader->add_filter( 'wp_privacy_personal_data_exporters', 'AI_Chat_Bedrock_Chat_History', 'register_exporter' );
+		$this->loader->add_filter( 'wp_privacy_personal_data_erasers', 'AI_Chat_Bedrock_Chat_History', 'register_eraser' );
 		$this->loader->add_action( 'enqueue_block_editor_assets', $assistant, 'enqueue_editor_assets' );
 	}
 

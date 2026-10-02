@@ -107,6 +107,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-integrations.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-woocommerce.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-images.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-retrieval.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-history.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 
 $failures = array();
@@ -228,6 +229,17 @@ $saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' )
 check_set( true === $saved['show_sources'], 'Another tab keeps sources shown.' );
 $saved = save_tab( $admin, array( 'show_sources' ), array() );
 check_set( false === $saved['show_sources'], 'An unticked sources switch is saved as off.' );
+
+// --- Conversation memory --------------------------------------------------------
+
+$saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'account', 'chat_memory_days' => '400' ) );
+check_set( 'account' === $saved['chat_memory'] && AI_Chat_Bedrock_Chat_History::MAX_DAYS === $saved['chat_memory_days'], 'Account memory is saved with its retention, capped at a year.' );
+$saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'light' ) );
+check_set( 'account' === $saved['chat_memory'] && 365 === $saved['chat_memory_days'], 'Another tab keeps the memory setting and its retention.' );
+$saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'everywhere', 'chat_memory_days' => '0' ) );
+check_set( '' === $saved['chat_memory'] && AI_Chat_Bedrock_Chat_History::DEFAULT_DAYS === $saved['chat_memory_days'], 'An unknown memory mode is saved as off, and no retention as the default.' );
+$saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'tab', 'chat_memory_days' => '14' ) );
+check_set( 'tab' === $saved['chat_memory'] && 14 === $saved['chat_memory_days'], 'Tab memory is saved.' );
 
 $saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'auto' ) );
 check_set( 'auto' === $saved['chat_color_scheme'], 'The color scheme is saved.' );
