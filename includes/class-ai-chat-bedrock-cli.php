@@ -232,6 +232,9 @@ class AI_Chat_Bedrock_CLI {
 	 * [--by-model]
 	 * : Break the totals down per model instead of per day.
 	 *
+	 * Without --by-model, the output ends with a First token line: how many streamed answers
+	 * were timed, the median bucket and the mean wait for the first text, measured on the server.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp ai-chat-bedrock usage
@@ -281,6 +284,41 @@ class AI_Chat_Bedrock_CLI {
 		if ( ! empty( $totals['cache_read_tokens'] ) || ! empty( $totals['cache_write_tokens'] ) ) {
 			WP_CLI::log( sprintf( 'Prompt cache: %d input tokens read, %d written.', (int) $totals['cache_read_tokens'], (int) $totals['cache_write_tokens'] ) );
 		}
+		if ( method_exists( 'AI_Chat_Bedrock_Usage', 'first_token_summary' ) ) {
+			WP_CLI::log( self::first_token_line( AI_Chat_Bedrock_Usage::first_token_summary( $days ) ) );
+		}
+	}
+
+	/**
+	 * One line describing first-token latency for the usage command.
+	 *
+	 * @param array $summary Result of AI_Chat_Bedrock_Usage::first_token_summary().
+	 * @return string
+	 */
+	private static function first_token_line( $summary ) {
+		$days    = isset( $summary['days'] ) ? (int) $summary['days'] : 7;
+		$samples = isset( $summary['samples'] ) ? (int) $summary['samples'] : 0;
+
+		if ( $samples <= 0 ) {
+			return sprintf( 'First token: unknown, no streamed answers measured in the last %d %s.', $days, 1 === $days ? 'day' : 'days' );
+		}
+
+		$bucket = isset( $summary['median_bucket'] ) ? (string) $summary['median_bucket'] : '';
+		if ( 'over' === $bucket ) {
+			$median = 'median 15000 ms or more';
+		} elseif ( '' !== $bucket ) {
+			$median = sprintf( 'median under %s ms', $bucket );
+		} else {
+			$median = 'median unknown';
+		}
+
+		return sprintf(
+			'First token: %d %s, %s, mean %d ms.',
+			$samples,
+			1 === $samples ? 'streamed answer' : 'streamed answers',
+			$median,
+			isset( $summary['mean_ms'] ) ? (int) $summary['mean_ms'] : 0
+		);
 	}
 
 	/**

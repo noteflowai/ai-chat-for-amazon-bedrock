@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.58.0
+Stable tag: 1.59.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -230,6 +230,10 @@ It is a single credential created in the Amazon Bedrock console and sent as a be
 = Does the plugin use prompt caching? =
 
 Yes, on Claude 3.5 Haiku, Claude 3.7 Sonnet and newer Claude models, which Bedrock supports it for. The site's system prompt and tool definitions are the same for every visitor, so they are marked for Bedrock's prompt cache; a later request that starts the same way reads them at a fraction of the input price. Writing to the cache costs slightly more than a normal input token, and a prompt shorter than the model's minimum is simply not cached, so a site with a short prompt pays what it paid before. The dashboard and `wp ai-chat-bedrock usage` show cache reads and writes. The `ai_chat_bedrock_prompt_caching` filter turns it off.
+
+= How long do visitors wait for the first words of an answer? =
+
+Run `wp ai-chat-bedrock usage --days=7`. After the daily table and the Total line it prints, for example, `First token: 12 streamed answers, median under 1000 ms, mean 840 ms.` The wait is measured on the server, from just before Amazon Bedrock is called to the first text sent to the visitor, so any tool rounds before the answer are included and browser and network time are not. The median is the upper bound of a bucket (under 250, 500, 1000, 2000, 4000, 8000 or 15000 ms, or 15000 ms or more), not an exact percentile. Only streamed answers are timed, at most the last 30 days are kept, and only counters are stored. With nothing measured yet the line reads `First token: unknown`.
 
 = Why do I receive AccessDeniedException or a model access error? =
 
@@ -484,6 +488,9 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.59.0 =
+* First token: `wp ai-chat-bedrock usage` reports how many streamed answers were timed, with the median bucket and mean wait for the first text, or unknown. Counters only; no text is stored.
+
 = 1.58.0 =
 * Reranking: choose Cohere Rerank 3.5 or Amazon Rerank 1.0 under Answer grounding, and more passages are gathered from site content and the knowledge base, then reranked against the question so only the best are passed to the model. Off by default. One rerank request per question is counted apart on the dashboard and not against the daily limit. If reranking fails the passages are used in their original order, and a refused request pauses it for an hour or until the settings are saved.
 * Amazon S3 Vectors: queries ask for the metadata filter to be applied before the similarity search, so a site sharing an index, or one language of a multilingual site, gets a full set of matches. Passages of a post type removed from the search are filtered out too. An index that refuses the setting is queried as before. Diagnostics says when an index is CLASSIC.
@@ -515,6 +522,9 @@ what a good answer says.
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.59.0 =
+Records the wait for the first words of each streamed answer and reports it in wp ai-chat-bedrock usage. Counters only.
 
 = 1.58.0 =
 Optional reranking of retrieved passages with Cohere or Amazon rerank models, and S3 Vectors filtering before the search. Reranking is off until enabled.
