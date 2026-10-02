@@ -25,6 +25,17 @@ class AI_Chat_Bedrock_Usage {
 	const FAILURE_CATEGORIES = array( 'throttled', 'access_denied', 'validation', 'unavailable', 'network', 'other' );
 
 	/**
+	 * Exclusive upper bounds, in milliseconds, of the first-token buckets. Anything at or
+	 * above the last bound is counted as over.
+	 */
+	const FIRST_TOKEN_BOUNDS = array( 250, 500, 1000, 2000, 4000, 8000, 15000 );
+
+	/**
+	 * Longest first-token wait accepted as a sample, in milliseconds.
+	 */
+	const FIRST_TOKEN_MAX_MS = 600000;
+
+	/**
 	 * Record one completed Bedrock invocation.
 	 *
 	 * Embeddings are counted apart from answers. Indexing a site makes one per passage, and
@@ -393,6 +404,187 @@ class AI_Chat_Bedrock_Usage {
 	}
 
 	/**
+	 * Wrap a stream's delta callback so the wait for the first visible text is recorded.
+	 *
+	 * Every delta is passed on unchanged and the inner callback's return value is returned
+	 * as is, so a false that stops generation after a disconnect still reaches Bedrock. One
+	 * sample is recorded per wrapper, at the first non-empty delta. Only the elapsed
+	 * milliseconds are kept; the text itself is never stored.
+	 *
+	 * @param callable  $emit    Callback that sends a delta to the visitor.
+	 * @param float|int $started microtime( true ) taken before the model was invoked.
+	 * @return Closure
+	 */
+	public static function first_token_timer( callable $emit, $started ) {
+		$recorded = false;
+		$started  = (float) $started;
+
+		return static function ( $delta = '' ) use ( $emit, $started, &$recorded ) {
+			$result = call_user_func_array( $emit, func_get_args() );
+			if ( ! $recorded && is_scalar( $delta ) && '' !== (string) $delta ) {
+				AI_Chat_Bedrock_Usage::record_first_token( (int) round( ( microtime( true ) - $started ) * 1000 ) );
+				$recorded = true;
+			}
+			return $result;
+		};
+	}
+
+	/**
+	 * Count one first-token wait, in milliseconds, for today.
+	 *
+	 * Non-numeric, non-finite, negative and implausible values (over ten minutes) are ignored.
+	 * Requests, tokens and the daily cap are not touched.
+	 *
+	 * @param mixed $ms Milliseconds from invocation to the first visible text.
+	 * @return void
+	 */
+	public static function record_first_token( $ms ) {
+		if ( ! is_numeric( $ms ) || ! is_finite( (float) $ms ) ) {
+			return;
+		}
+		$ms = (int) $ms;
+		if ( $ms < 0 || $ms > self::FIRST_TOKEN_MAX_MS ) {
+			return;
+		}
+
+		$today  = self::today();
+		$totals = self::all();
+		if ( ! isset( $totals[ $today ] ) || ! is_array( $totals[ $today ] ) ) {
+			$totals[ $today ] = array(
+				'requests'      => 0,
+				'input_tokens'  => 0,
+				'output_tokens' => 0,
+				'models'        => array(),
+			);
+		}
+
+		$buckets = self::clean_first_token_buckets( isset( $totals[ $today ]['first_token_buckets'] ) ? $totals[ $today ]['first_token_buckets'] : array() );
+		$bucket  = self::first_token_bucket( $ms );
+
+		++$buckets[ $bucket ];
+
+		$totals[ $today ]['first_token_samples']  = self::counter( $totals[ $today ], 'first_token_samples' ) + 1;
+		$totals[ $today ]['first_token_ms_total'] = self::counter( $totals[ $today ], 'first_token_ms_total' ) + $ms;
+		$totals[ $today ]['first_token_buckets']  = $buckets;
+
+		update_option( self::OPTION, self::prune( $totals ), false );
+	}
+
+	/**
+	 * First-token latency over a number of days.
+	 *
+	 * The median is reported as the bucket holding the sample at rank ceil( samples / 2 ),
+	 * so it is an upper bound, not an exact percentile.
+	 *
+	 * @param int $days Days to include, including today. Clamped to 1..30.
+	 * @return array With days, samples, mean_ms, buckets and median_bucket.
+	 */
+	public static function first_token_summary( $days = 7 ) {
+		$days    = max( 1, min( self::RETENTION_DAYS, absint( $days ) ) );
+		$totals  = self::all();
+		$samples = 0;
+		$sum     = 0;
+		$buckets = self::empty_first_token_buckets();
+
+		for ( $offset = 0; $offset < $days; $offset++ ) {
+			$day = gmdate( 'Y-m-d', time() - ( $offset * DAY_IN_SECONDS ) );
+			if ( ! isset( $totals[ $day ] ) || ! is_array( $totals[ $day ] ) ) {
+				continue;
+			}
+			$count = self::counter( $totals[ $day ], 'first_token_samples' );
+			if ( 0 === $count ) {
+				continue;
+			}
+			$samples += $count;
+			$sum     += self::counter( $totals[ $day ], 'first_token_ms_total' );
+			$stored   = isset( $totals[ $day ]['first_token_buckets'] ) ? $totals[ $day ]['first_token_buckets'] : array();
+			foreach ( self::clean_first_token_buckets( $stored ) as $key => $value ) {
+				$buckets[ $key ] += $value;
+			}
+		}
+
+		$median = null;
+		if ( $samples > 0 ) {
+			$rank = (int) ceil( $samples / 2 );
+			$seen = 0;
+			foreach ( $buckets as $key => $value ) {
+				$seen += $value;
+				if ( $seen >= $rank ) {
+					$median = (string) $key;
+					break;
+				}
+			}
+		}
+
+		return array(
+			'days'          => $days,
+			'samples'       => $samples,
+			'mean_ms'       => $samples > 0 ? (int) round( $sum / $samples ) : null,
+			'buckets'       => $buckets,
+			'median_bucket' => $median,
+		);
+	}
+
+	/**
+	 * The bucket a first-token wait falls in: the first bound it is below, else over.
+	 *
+	 * @param int $ms Milliseconds.
+	 * @return string
+	 */
+	private static function first_token_bucket( $ms ) {
+		foreach ( self::FIRST_TOKEN_BOUNDS as $bound ) {
+			if ( $ms < $bound ) {
+				return (string) $bound;
+			}
+		}
+		return 'over';
+	}
+
+	/**
+	 * All eight first-token buckets at zero, in fixed order.
+	 *
+	 * @return array
+	 */
+	private static function empty_first_token_buckets() {
+		$keys   = array_map( 'strval', self::FIRST_TOKEN_BOUNDS );
+		$keys[] = 'over';
+		return array_fill_keys( $keys, 0 );
+	}
+
+	/**
+	 * Keep only the fixed bucket keys, as non-negative integers.
+	 *
+	 * @param mixed $raw Stored bucket map.
+	 * @return array
+	 */
+	private static function clean_first_token_buckets( $raw ) {
+		$clean = self::empty_first_token_buckets();
+		if ( ! is_array( $raw ) ) {
+			return $clean;
+		}
+		foreach ( array_keys( $clean ) as $key ) {
+			if ( isset( $raw[ $key ] ) && is_numeric( $raw[ $key ] ) ) {
+				$clean[ $key ] = max( 0, (int) $raw[ $key ] );
+			}
+		}
+		return $clean;
+	}
+
+	/**
+	 * A stored counter as a non-negative integer, zero when absent.
+	 *
+	 * @param mixed  $entry Day entry.
+	 * @param string $key   Counter name.
+	 * @return int
+	 */
+	private static function counter( $entry, $key ) {
+		if ( ! is_array( $entry ) || ! isset( $entry[ $key ] ) || ! is_numeric( $entry[ $key ] ) ) {
+			return 0;
+		}
+		return max( 0, (int) $entry[ $key ] );
+	}
+
+	/**
 	 * Delete all usage counters.
 	 */
 	public static function reset() {
@@ -441,6 +633,13 @@ class AI_Chat_Bedrock_Usage {
 			$failures = self::clean_failures( isset( $entry['failures'] ) ? $entry['failures'] : array() );
 			if ( ! empty( $failures ) ) {
 				$clean[ $day ]['failures'] = $failures;
+			}
+			// First-token latency counters, kept only on days that have a sample.
+			$first_token_samples = self::counter( $entry, 'first_token_samples' );
+			if ( $first_token_samples > 0 ) {
+				$clean[ $day ]['first_token_samples']  = $first_token_samples;
+				$clean[ $day ]['first_token_ms_total'] = self::counter( $entry, 'first_token_ms_total' );
+				$clean[ $day ]['first_token_buckets']  = self::clean_first_token_buckets( is_array( $entry ) && isset( $entry['first_token_buckets'] ) ? $entry['first_token_buckets'] : array() );
 			}
 		}
 		return $clean;

@@ -115,8 +115,8 @@ class AI_Chat_Bedrock_Stream {
 			$this->finish();
 		}
 
-		$aws   = new AI_Chat_Bedrock_AWS( AI_Chat_Bedrock_Profiles::overrides_for_client( $options ) );
-		$emit  = function ( $delta ) {
+		$aws  = new AI_Chat_Bedrock_AWS( AI_Chat_Bedrock_Profiles::overrides_for_client( $options ) );
+		$emit = function ( $delta ) {
 			$this->send_event( 'delta', array( 'text' => (string) $delta ) );
 
 			// Nobody is reading any more, so stop paying for the rest of the answer.
@@ -126,6 +126,13 @@ class AI_Chat_Bedrock_Stream {
 			}
 			return true;
 		};
+
+		// Measures the wait until the first visible text; deltas and return values pass through unchanged.
+		$started = microtime( true );
+		if ( class_exists( 'AI_Chat_Bedrock_Usage' ) ) {
+			$emit = AI_Chat_Bedrock_Usage::first_token_timer( $emit, $started );
+		}
+
 		$round = function ( $number, $tools, $names = array(), $labels = array() ) {
 			$this->send_event(
 				'tools',
