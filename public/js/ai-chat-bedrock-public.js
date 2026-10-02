@@ -3,6 +3,13 @@
 
     const params = window.ai_chat_bedrock_params || {};
     const MAX_HISTORY = 12;
+    // What the server accepts as history: 4,000 characters a message and 50,000 bytes in all.
+    const MAX_HISTORY_CHARS = 4000;
+    const MAX_HISTORY_BYTES = 45000;
+    // A remembered conversation, as the server keeps it.
+    const MAX_KEPT = 30;
+    const MAX_KEPT_CHARS = 6000;
+    const MEMORY_PREFIX = 'aicfabChat:';
 
     function escapeHtml(value) {
         return $('<div>').text(String(value == null ? '' : value)).html();
@@ -77,6 +84,46 @@
         } catch (error) {
             return '';
         }
+    }
+
+    /**
+     * Shorten text to a number of characters, counting as the server does.
+     */
+    function clip(value, max) {
+        const text = String(value == null ? '' : value);
+        if (text.length <= max) {
+            return text;
+        }
+        const chars = Array.from(text);
+        return chars.length <= max ? text : chars.slice(0, max - 1).join('') + '…';
+    }
+
+    function byteLength(text) {
+        if (window.TextEncoder) {
+            return new window.TextEncoder().encode(text).length;
+        }
+        return text.length * 3;
+    }
+
+    function memoryPrefix() {
+        return MEMORY_PREFIX + String(params.user_key || '0') + ':';
+    }
+
+    /*
+     * A conversation kept in this tab belongs to whoever was signed in when it was kept. Drop
+     * any other, so signing out or switching accounts on a shared computer does not leave the
+     * previous conversation readable, and drop all of them once the site stops keeping them.
+     */
+    try {
+        const storage = window.sessionStorage;
+        for (let i = storage.length - 1; i >= 0; i--) {
+            const key = storage.key(i);
+            if (key && 0 === key.indexOf(MEMORY_PREFIX) && (!params.memory || 0 !== key.indexOf(memoryPrefix()))) {
+                storage.removeItem(key);
+            }
+        }
+    } catch (error) {
+        // Session storage is unavailable, so nothing was kept in it either.
     }
 
     function streamingAvailable() {
@@ -162,14 +209,18 @@
         const welcome = $container.attr('data-welcome') || params.welcome_message;
         let history = [];
         let pending = false;
+        // The conversation as kept between pages, with the links shown under each answer.
+        const storageKey = params.memory ? memoryPrefix() + (profile || 'default') : '';
+        let transcript = [];
+        let sentSinceLoad = false;
 
         function scrollToBottom() {
             $messages.scrollTop($messages.prop('scrollHeight'));
         }
 
-        function timeLabel() {
+        function timeLabel(seconds) {
             try {
-                return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                return (seconds ? new Date(seconds * 1000) : new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             } catch (error) {
                 return '';
             }
@@ -458,14 +509,14 @@
             }
         }
 
-        function appendBubble(isUser) {
+        function appendBubble(isUser, seconds) {
             hideSuggestions();
             const $content = $('<div>', { 'class': 'ai-chat-bedrock-message-content' });
             const $body = $('<div>', { 'class': 'ai-chat-bedrock-message-body' });
             const $meta = $('<div>', { 'class': 'ai-chat-bedrock-message-meta' });
             const $message = $('<div>', { 'class': 'ai-chat-bedrock-message ' + (isUser ? 'user-message' : 'ai-message') });
 
-            $meta.append($('<time>', { 'class': 'ai-chat-bedrock-time' }).text(timeLabel()));
+            $meta.append($('<time>', { 'class': 'ai-chat-bedrock-time' }).text(timeLabel(seconds)));
             if (!isUser) {
                 $meta.append(copyButton($content));
             }
@@ -515,6 +566,124 @@
             history = history.slice(-MAX_HISTORY);
         }
 
+        /**
+         * The recent conversation, within what the server accepts. A long answer in Chinese or
+         * Japanese takes three bytes a character, so a dozen of them could exceed the byte limit
+         * and the next question was refused as too large.
+         */
+        function historyForRequest() {
+            const picked = [];
+            let bytes = 2;
+            for (let i = history.length - 1; i >= 0 && picked.length < MAX_HISTORY; i--) {
+                const item = { role: history[i].role, content: clip(history[i].content, MAX_HISTORY_CHARS) };
+                const size = byteLength(JSON.stringify(item)) + 1;
+                if (bytes + size > MAX_HISTORY_BYTES) {
+                    break;
+                }
+                bytes += size;
+                picked.unshift(item);
+            }
+            while (picked.length && 'user' !== picked[0].role) {
+                picked.shift();
+            }
+            return picked;
+        }
+
+        function cleanTranscript(items) {
+            const clean = [];
+            (Array.isArray(items) ? items : []).forEach(function (item) {
+                if (!item || ('user' !== item.role && 'assistant' !== item.role) || 'string' !== typeof item.content || !item.content) {
+                    return;
+                }
+                const entry = { role: item.role, content: clip(item.content, MAX_KEPT_CHARS), time: Number(item.time) || 0 };
+                if ('assistant' === item.role && Array.isArray(item.sources) && item.sources.length) {
+                    entry.sources = item.sources.slice(0, 5).map(function (source) {
+                        return { title: String((source && source.title) || ''), url: String((source && source.url) || '') };
+                    });
+                }
+                clean.push(entry);
+            });
+            const kept = clean.slice(-MAX_KEPT);
+            while (kept.length && 'user' !== kept[0].role) {
+                kept.shift();
+            }
+            return kept;
+        }
+
+        function storeTranscript() {
+            if (!storageKey) {
+                return;
+            }
+            try {
+                if (transcript.length) {
+                    window.sessionStorage.setItem(storageKey, JSON.stringify(transcript));
+                } else {
+                    window.sessionStorage.removeItem(storageKey);
+                }
+            } catch (error) {
+                // Storage is full or unavailable; the conversation is simply not kept.
+            }
+        }
+
+        function keep(question, answer, sources) {
+            if (!storageKey || !answer) {
+                return;
+            }
+            const time = Math.floor(Date.now() / 1000);
+            transcript = cleanTranscript(transcript.concat([
+                { role: 'user', content: question, time: time },
+                { role: 'assistant', content: answer, time: time, sources: sources }
+            ]));
+            storeTranscript();
+        }
+
+        /**
+         * Show a kept conversation in place of the greeting. Answers come back with their
+         * sources; feedback buttons and product cards belonged to the moment and do not.
+         */
+        function showTranscript(items) {
+            const clean = cleanTranscript(items);
+            if (!clean.length) {
+                return false;
+            }
+            $messages.empty();
+            history = [];
+            clean.forEach(function (item) {
+                const bubble = appendBubble('user' === item.role, item.time);
+                bubble.content.html(formatMessage(item.content));
+                remember(item.role, item.content);
+                if ('assistant' === item.role) {
+                    attachSources(bubble, item.sources);
+                }
+            });
+            transcript = clean;
+            scrollToBottom();
+            return true;
+        }
+
+        function sameTranscript(a, b) {
+            return a.length === b.length && a.every(function (item, index) {
+                return item.role === b[index].role && item.content === b[index].content;
+            });
+        }
+
+        function savedHistory(method, retried) {
+            const url = String(params.history_url || '');
+            return Promise.resolve($.ajax({
+                url: url + (-1 === url.indexOf('?') ? '?' : '&') + 'profile=' + encodeURIComponent(profile),
+                method: method,
+                dataType: 'json',
+                headers: params.rest_nonce ? { 'X-WP-Nonce': params.rest_nonce } : {}
+            })).catch(function (xhr) {
+                if (!retried && xhr && isNonceError(xhr.status, xhr.responseJSON)) {
+                    return refreshNonce().then(function () {
+                        return savedHistory(method, true);
+                    });
+                }
+                throw xhr;
+            });
+        }
+
         function hideSuggestions() {
             if ($suggestions.length) {
                 $suggestions.attr('hidden', 'hidden');
@@ -525,6 +694,17 @@
             if ($suggestions.length) {
                 $suggestions.removeAttr('hidden');
             }
+        }
+
+        function showWelcome() {
+            history = [];
+            $messages.empty();
+            $usage.text('');
+            showSuggestions();
+            const $welcome = $('<div>', { 'class': 'ai-chat-bedrock-welcome-message' });
+            const $message = $('<div>', { 'class': 'ai-chat-bedrock-message ai-message' });
+            $message.append(avatar(false), $('<div>', { 'class': 'ai-chat-bedrock-message-content' }).text(welcome));
+            $messages.append($welcome.append($message));
         }
 
         function addMessage(content, isUser) {
@@ -642,6 +822,7 @@
                 $messages.find('.ai-chat-bedrock-status').remove();
                 if (response && response.success && response.data && typeof response.data.message === 'string') {
                     const bubble = addMessage(response.data.message, false);
+                    keep(message, response.data.message, response.data.sources);
                     // The message list is not a live region, so a buffered answer is
                     // announced here just as a streamed one is when it completes.
                     announce(bubble && bubble.content ? bubble.content.text() : response.data.message);
@@ -746,6 +927,7 @@
                     state.bubble.content.html(formatMessage(state.text));
                     scrollToBottom();
                 }
+                state.sources = payload.sources;
                 if (state.bubble) {
                     state.bubble.content.removeClass('is-streaming');
                     attachNote(state.bubble, fallbackNote(payload.fallback_model));
@@ -895,6 +1077,7 @@
                 }
                 if (state.text) {
                     remember('assistant', state.text);
+                    keep(message, state.text, state.sources);
                     if (stopped) {
                         announce(state.bubble ? state.bubble.content.text() : state.text);
                     }
@@ -922,6 +1105,7 @@
                     }
                     if (state.text) {
                         remember('assistant', state.text);
+                        keep(message, state.text, state.sources);
                         announce(state.bubble ? state.bubble.content.text() : state.text);
                     } else {
                         if (state.bubble) {
@@ -969,7 +1153,8 @@
                 return;
             }
 
-            const requestHistory = history.slice(-MAX_HISTORY);
+            const requestHistory = historyForRequest();
+            sentSinceLoad = true;
             addMessage(message, true);
             $textarea.val('');
             setPending(true);
@@ -1017,17 +1202,49 @@
             if (!window.confirm(params.i18n.clear_confirm)) {
                 return;
             }
-            history = [];
-            $messages.empty();
-            $usage.text('');
+            showWelcome();
             $textarea.val('');
             autoGrow();
-            showSuggestions();
-            const $welcome = $('<div>', { 'class': 'ai-chat-bedrock-welcome-message' });
-            const $message = $('<div>', { 'class': 'ai-chat-bedrock-message ai-message' });
-            $message.append(avatar(false), $('<div>', { 'class': 'ai-chat-bedrock-message-content' }).text(welcome));
-            $messages.append($welcome.append($message));
+            transcript = [];
+            storeTranscript();
+            // Cleared here, cleared everywhere: the copy saved with the account goes too.
+            if (params.history_url) {
+                savedHistory('DELETE').catch(function () {
+                    // Nothing to tell the visitor; the next page shows what is still saved.
+                });
+            }
             $textarea.trigger('focus');
         });
+
+        // Bring back the conversation kept in this tab, then the one saved with the account,
+        // which is newer when the visitor last chatted on another device.
+        if (storageKey) {
+            try {
+                showTranscript(JSON.parse(window.sessionStorage.getItem(storageKey) || '[]'));
+            } catch (error) {
+                // A kept conversation that cannot be read is left out.
+            }
+        }
+        if (params.history_url) {
+            savedHistory('GET').then(function (data) {
+                // Never replace a conversation the visitor has already carried on.
+                if (sentSinceLoad || pending || !data || !data.enabled || !Array.isArray(data.messages)) {
+                    return;
+                }
+                const saved = cleanTranscript(data.messages);
+                if (sameTranscript(saved, transcript)) {
+                    return;
+                }
+                if (!saved.length) {
+                    showWelcome();
+                    transcript = [];
+                } else {
+                    showTranscript(saved);
+                }
+                storeTranscript();
+            }).catch(function () {
+                // The kept or empty conversation stays as it is.
+            });
+        }
     });
 })(jQuery);

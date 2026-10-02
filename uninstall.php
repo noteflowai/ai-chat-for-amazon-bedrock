@@ -58,11 +58,14 @@ function ai_chat_bedrock_uninstall_site() {
 	$ai_chat_bedrock_prompt_timeout = $wpdb->esc_like( '_transient_timeout_aicfab_prompt_' ) . '%';
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $ai_chat_bedrock_prompt_timeout ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 
-	// Any scheduled index run is removed with the plugin data.
-	$ai_chat_bedrock_cron_next = wp_next_scheduled( 'ai_chat_bedrock_index_embeddings' );
-	while ( $ai_chat_bedrock_cron_next ) {
-		wp_unschedule_event( $ai_chat_bedrock_cron_next, 'ai_chat_bedrock_index_embeddings' );
-		$ai_chat_bedrock_cron_next = wp_next_scheduled( 'ai_chat_bedrock_index_embeddings' );
+	// Saved chat conversations are user options, so their keys carry this site's prefix.
+	foreach ( array( 'aicfab_chat_history', 'aicfab_chat_history_oldest' ) as $ai_chat_bedrock_user_option ) {
+		delete_metadata( 'user', 0, $wpdb->get_blog_prefix() . $ai_chat_bedrock_user_option, '', true );
+	}
+
+	// Any scheduled index run or chat history pruning is removed with the plugin data.
+	foreach ( array( 'ai_chat_bedrock_index_embeddings', 'ai_chat_bedrock_prune_chat_history' ) as $ai_chat_bedrock_cron_hook ) {
+		wp_clear_scheduled_hook( $ai_chat_bedrock_cron_hook );
 	}
 }
 

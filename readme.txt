@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.58.0
+Stable tag: 1.59.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -128,7 +128,9 @@ encrypted, or SigV4. Endpoints must be public HTTPS URLs.
 
 No custom table is created. The conversation log is optional and off by default; when enabled it
 holds the 200 most recent exchanges in a WordPress option, with a retention window you set, and it
-supports the WordPress personal-data export and erase tools. Debug mode records redacted metadata,
+supports the WordPress personal-data export and erase tools. Conversation memory is off by default
+too: it can keep a conversation in the visitor's browser tab only, or also save a signed-in visitor's
+recent conversation in their user data for the days you set. Debug mode records redacted metadata,
 not prompts, responses or credentials. AWS states that model providers have no access to Bedrock
 prompts and completions, and that they are not used to train the base models. The Privacy Policy section
 sets out what is sent, to whom, and what is kept.
@@ -340,6 +342,10 @@ The chat is a self-contained, responsive interface with message bubbles, a typin
 
 Add up to four suggested questions and they appear as buttons above the input, disappear once the conversation starts and return when the chat is cleared. When the conversation log is enabled, each answer also gets a discreet **Was this helpful?** control; only the rating is stored, never anything about the visitor.
 
+= Can the chat remember a conversation? =
+
+Yes, under Chat > Conversation memory, which is off by default so every page starts a new conversation. **Keep it while the visitor browses** stores the conversation in the browser tab's session storage: it follows the visitor from page to page and is gone when the tab closes, and nothing is stored on the site. **Also save it for signed-in visitors** keeps a signed-in visitor's last 30 messages per chat on the site, so the conversation is there on their next visit and on another device. Saved messages are deleted after the days you set (30 by default), when the visitor clears the chat, through Tools > Erase Personal Data, and all at once when you switch the option off. Guests only ever get the browser-tab memory. Add the suggested text from Settings > Privacy to your privacy policy before turning saving on.
+
 = Can the chat float instead of sitting in the page? =
 
 Any chat can render as a floating button instead of an inline panel:
@@ -484,6 +490,11 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.59.0 =
+* Conversation memory, under Chat and off by default. Keep the conversation while the visitor browses, in the browser tab's session storage, or also save a signed-in visitor's recent conversation on the site so it is there on their next visit and on another device. Saved conversations are kept for the days you set (30 by default), deleted when the visitor clears the chat or the option is switched off, and included in personal data exports and erasures. Guests' conversations are never stored on the site.
+* Long conversations, especially in Chinese or Japanese, no longer fail with "Conversation history is too large": the earlier messages sent with a question are kept within the size the server accepts.
+* Suggested privacy policy text covers conversation memory when it is on.
+
 = 1.58.0 =
 * Reranking: choose Cohere Rerank 3.5 or Amazon Rerank 1.0 under Answer grounding, and more passages are gathered from site content and the knowledge base, then reranked against the question so only the best are passed to the model. Off by default. One rerank request per question is counted apart on the dashboard and not against the daily limit. If reranking fails the passages are used in their original order, and a refused request pauses it for an hour or until the settings are saved.
 * Amazon S3 Vectors: queries ask for the metadata filter to be applied before the similarity search, so a site sharing an index, or one language of a multilingual site, gets a full set of matches. Passages of a post type removed from the search are filtered out too. An index that refuses the setting is queried as before. Diagnostics says when an index is CLASSIC.
@@ -501,20 +512,12 @@ what a good answer says.
 * WooCommerce order questions: a customer's orders are sent only when the question points at an order, such as "my order", an order number, a tracking number, "has it shipped" or a refund. A shared word is no longer enough, so questions about Python packages, returns in reinforcement learning, logistics robots or robots shipped this year no longer send them.
 * An answer to an order question no longer lists the nearest articles as its sources, and is not counted as a content gap. The passages are still offered to the model, for a shipping or returns page.
 
-= 1.56.0 =
-* WooCommerce: a new WooCommerce tab, shown when WooCommerce is active, with three features that are all off by default. Product answers draws on the live catalog for product questions, quoting the price, sale price, stock and options the shop shows, and lists the products under the answer with View product and Add to cart; on a product page, the product being viewed comes first. Order questions lets a signed-in customer ask about their own recent orders, sending the order number, dates, status, items, total, shipping method and tracking number but never an address, email, phone or payment detail. The product assistant on the product edit screen drafts the short and full description from the product's own attributes and summarizes approved reviews without reviewer names.
-* Products that are drafts, private, password-protected, hidden from the catalog, or out of stock on a store that hides those are never described or linked.
-* Declares compatibility with WooCommerce High-Performance Order Storage and the Cart and Checkout blocks.
-* Suggested privacy policy text under Settings > Privacy covers the chat, the conversation log and, on a WooCommerce store, product and order data.
-* A source or product without a link no longer gets a link to the page the chat is on.
-
-= 1.55.1 =
-* Lists in the admin, such as the per-role rate limits, the unresolved prompt variables and the answer check's results, are separated with 、 in Chinese and Japanese instead of an English comma, and a legacy model's label is translated as a whole.
-* The release gate regenerates the translation template from the code and fails when it differs, so a new string cannot ship untranslated while the bundled translations say they cover everything.
-
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.59.0 =
+Optional conversation memory, in the browser tab or saved for signed-in visitors, and a fix for long conversations in Chinese and Japanese. Memory is off until enabled.
 
 = 1.58.0 =
 Optional reranking of retrieved passages with Cohere or Amazon rerank models, and S3 Vectors filtering before the search. Reranking is off until enabled.
@@ -748,6 +751,8 @@ Chat messages and the configured system prompt are sent to Amazon Bedrock. When 
 When semantic search is on, the text a signed-out visitor can read on each published post is sent to Amazon Bedrock to create embeddings, and each question is embedded the same way. With a reranking model chosen, the question and the passages found for it are also sent to that model on Amazon Bedrock. With Amazon S3 Vectors chosen, those passages and their vectors are stored in the vector bucket of your own AWS account, labelled with the site and post they came from. Uninstalling the plugin does not delete them; delete the index in AWS. The optional fixes for other plugins send nothing anywhere.
 
 Conversation logging is disabled by default, and with it off no chat content is written to the database. When an administrator enables it, questions and answers are stored for the configured retention window, capped at the 200 most recent exchanges, and can be deleted per user or in full from the Conversations screen. Administrators are responsible for disclosing this recording to visitors.
+
+Conversation memory is off by default. In browser-tab mode the conversation is kept in the visitor's own session storage and nothing is stored on the site. When saving for signed-in visitors is on, their questions, answers and the links listed under each answer are stored in their user data on this site, up to 30 messages per chat, for the configured number of days. They are deleted when the visitor clears the chat or the option is switched off, and are reachable through Tools > Export Personal Data and Erase Personal Data.
 
 The plugin creates no custom database tables; the optional log is kept in a WordPress option and is reachable through Tools > Export Personal Data and Erase Personal Data. Request limiting stores a salted hash-derived transient counter for each visitor for up to one minute. Debug logging is optional and records only redacted operational metadata. Administrators are responsible for disclosing these data flows and obtaining any consent required in their jurisdiction.
 

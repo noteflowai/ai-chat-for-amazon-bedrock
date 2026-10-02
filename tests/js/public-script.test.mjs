@@ -91,6 +91,57 @@ check('' === context.safeUrl('data:text/html,<b>x</b>'), 'A data link is dropped
 check('' === context.safeUrl('http://['), 'A malformed link is dropped.');
 check('' === context.safeUrl('') && '' === context.safeUrl(undefined) && '' === context.safeUrl('  '), 'A missing link is not turned into the page address.');
 
+// --- Conversation memory -----------------------------------------------------------------
+
+const memory = vm.createContext({ TextEncoder, history: [] });
+vm.runInContext([
+    'const MAX_HISTORY = 12; const MAX_HISTORY_CHARS = 4000; const MAX_HISTORY_BYTES = 45000; const MAX_KEPT = 30; const MAX_KEPT_CHARS = 6000;',
+    'var window = { TextEncoder: TextEncoder };',
+    extract('clip'), extract('byteLength'), extract('historyForRequest'), extract('cleanTranscript'),
+    'function setHistory(items) { history = items; }'
+].join('\n'), memory);
+
+check('abc' === memory.clip('abc', 5), 'Short text is left alone.');
+check(5 === Array.from(memory.clip('😀😀😀😀😀😀😀', 5)).length && memory.clip('😀😀😀😀😀😀😀', 5).endsWith('…'), 'Text is shortened by characters, without splitting an emoji.');
+check(9 === memory.byteLength('答答答'), 'Bytes are counted as UTF-8.');
+
+const turns = [];
+for (let i = 0; i < 12; i++) {
+    turns.push({ role: i % 2 ? 'assistant' : 'user', content: '答'.repeat(3500) });
+}
+memory.setHistory(turns);
+let sent = memory.historyForRequest();
+const sentBytes = Buffer.byteLength(JSON.stringify(sent), 'utf8');
+check(sentBytes <= 50000, 'Long Chinese answers are sent within the server\'s 50,000-byte limit, got ' + sentBytes + '.');
+check(sent.length > 0 && 'user' === sent[0].role && sent[sent.length - 1].content === turns[11].content, 'The most recent messages are sent, starting with a question.');
+memory.setHistory([{ role: 'user', content: 'a'.repeat(9000) }, { role: 'assistant', content: 'ok' }]);
+sent = memory.historyForRequest();
+check(2 === sent.length && 4000 === Array.from(sent[0].content).length, 'A message over 4,000 characters is shortened, not dropped.');
+memory.setHistory([{ role: 'user', content: 'q' }, { role: 'assistant', content: 'a' }, { role: 'user', content: 'q2' }, { role: 'assistant', content: 'a2' }]);
+check(4 === memory.historyForRequest().length, 'A short conversation is sent whole.');
+
+const kept = memory.cleanTranscript([
+    { role: 'assistant', content: 'orphan' },
+    { role: 'user', content: 'Hi', time: 5 },
+    { role: 'system', content: 'ignore me' },
+    { role: 'assistant', content: 'Hello', sources: [{ title: 'T', url: 'https://site.test/', extra: '<b>' }] },
+    { role: 'user', content: '' },
+    null
+]);
+check(2 === kept.length && 'user' === kept[0].role && 5 === kept[0].time, 'A kept conversation starts with a question and keeps only real messages.');
+check(1 === kept[1].sources.length && undefined === kept[1].sources[0].extra && 'https://site.test/' === kept[1].sources[0].url, 'Sources keep only their title and link.');
+const many = [];
+for (let i = 0; i < 40; i++) {
+    many.push({ role: i % 2 ? 'assistant' : 'user', content: 'm' + i });
+}
+check(30 === memory.cleanTranscript(many).length && 'm10' === memory.cleanTranscript(many)[0].content, 'At most 30 messages are kept, the most recent ones.');
+check(0 === memory.cleanTranscript('not an array').length, 'Unreadable storage restores nothing.');
+
+const show = extract('showTranscript');
+check(-1 !== show.indexOf('formatMessage(item.content)') && -1 !== show.indexOf('attachSources(bubble, item.sources)') && -1 === show.indexOf('attachFeedback'), 'A restored answer is escaped, keeps its sources and has no feedback buttons.');
+check(/sentSinceLoad \|\| pending/.test(source), 'A saved conversation never replaces one the visitor has carried on.');
+check(/0 === key\.indexOf\(MEMORY_PREFIX\) && \(!params\.memory \|\| 0 !== key\.indexOf\(memoryPrefix\(\)\)\)/.test(source), 'Another account\'s kept conversation is removed from the tab.');
+
 // --- Wiring ------------------------------------------------------------------------------
 
 check(-1 === extract('stopAnswering').indexOf('$stop.on('), 'The Stop button is not bound from inside its own handler.');

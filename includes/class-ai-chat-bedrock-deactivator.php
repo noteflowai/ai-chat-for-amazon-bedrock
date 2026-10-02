@@ -20,11 +20,8 @@ class AI_Chat_Bedrock_Deactivator {
 	 * every hour with no code to answer it.
 	 */
 	public static function deactivate() {
-		if ( class_exists( 'AI_Chat_Bedrock_Embeddings' ) ) {
-			wp_clear_scheduled_hook( AI_Chat_Bedrock_Embeddings::CRON_HOOK );
-			return;
-		}
-		// Deactivation can run without the rest of the plugin loaded, so the name is spelled out.
+		// Deactivation can run without the rest of the plugin loaded, so the names are spelled out.
 		wp_clear_scheduled_hook( 'ai_chat_bedrock_index_embeddings' );
+		wp_clear_scheduled_hook( 'ai_chat_bedrock_prune_chat_history' );
 	}
 }

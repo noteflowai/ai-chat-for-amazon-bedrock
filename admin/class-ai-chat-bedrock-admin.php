@@ -930,6 +930,7 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'welcome_message', __( 'Welcome message', 'ai-chat-for-amazon-bedrock' ), 'welcome_message_render', 'aicfab_chat' );
 		$this->field( 'suggested_questions', __( 'Suggested questions', 'ai-chat-for-amazon-bedrock' ), 'suggested_questions_render', 'aicfab_chat' );
 		$this->field( 'enable_streaming', __( 'Streaming responses', 'ai-chat-for-amazon-bedrock' ), 'enable_streaming_render', 'aicfab_chat' );
+		$this->field( 'chat_memory', __( 'Conversation memory', 'ai-chat-for-amazon-bedrock' ), 'chat_memory_render', 'aicfab_chat' );
 		$this->field( 'allow_public_chat', __( 'Guest access', 'ai-chat-for-amazon-bedrock' ), 'allow_public_chat_render', 'aicfab_chat' );
 		$this->field( 'rate_limit_per_minute', __( 'Requests per visitor per minute', 'ai-chat-for-amazon-bedrock' ), 'rate_limit_render', 'aicfab_chat' );
 		$this->field( 'role_limits', __( 'Per-role limits', 'ai-chat-for-amazon-bedrock' ), 'role_limits_render', 'aicfab_chat' );
@@ -1115,6 +1116,24 @@ class AI_Chat_Bedrock_Admin {
 		echo '<label for="aicfab_field_log_retention_days">' . esc_html__( 'Keep for', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="number" id="aicfab_field_log_retention_days" class="small-text" name="ai_chat_bedrock_settings[log_retention_days]" value="' . esc_attr( $retention ) . '" min="1" max="' . esc_attr( AI_Chat_Bedrock_Conversations::MAX_DAYS ) . '"> ' . esc_html__( 'days', 'ai-chat-for-amazon-bedrock' );
 		echo '</fieldset>';
 		echo '<p class="description">' . esc_html__( 'Disabled by default. When enabled, chat content is stored in the database, capped at 200 recent entries, and visible to administrators. Disclose this to your visitors.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+	public function chat_memory_render() {
+		$current = AI_Chat_Bedrock_Chat_History::mode( get_option( 'ai_chat_bedrock_settings', array() ) );
+		$days    = AI_Chat_Bedrock_Chat_History::retention_days();
+		$choices = array(
+			''        => __( 'Off (default): each page starts a new conversation', 'ai-chat-for-amazon-bedrock' ),
+			'tab'     => __( 'Keep it while the visitor browses, in their browser tab', 'ai-chat-for-amazon-bedrock' ),
+			'account' => __( 'Also save it for signed-in visitors, across visits and devices', 'ai-chat-for-amazon-bedrock' ),
+		);
+		echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'Conversation memory', 'ai-chat-for-amazon-bedrock' ) . '</legend>';
+		echo '<select id="aicfab_field_chat_memory" name="ai_chat_bedrock_settings[chat_memory]">';
+		foreach ( $choices as $key => $label ) {
+			echo '<option value="' . esc_attr( $key ) . '" ' . selected( $current, $key, false ) . '>' . esc_html( $label ) . '</option>';
+		}
+		echo '</select><br>';
+		echo '<label for="aicfab_field_chat_memory_days">' . esc_html__( 'Keep saved conversations for', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="number" id="aicfab_field_chat_memory_days" class="small-text" name="ai_chat_bedrock_settings[chat_memory_days]" value="' . esc_attr( $days ) . '" min="1" max="' . esc_attr( AI_Chat_Bedrock_Chat_History::MAX_DAYS ) . '"> ' . esc_html__( 'days', 'ai-chat-for-amazon-bedrock' );
+		echo '</fieldset>';
+		echo '<p class="description">' . esc_html__( 'Kept in the browser tab, the conversation is stored only in the visitor\'s browser and is gone when the tab is closed. Saved for signed-in visitors, it is also stored on this site with their account, included in personal data exports and erasures, and deleted after the days above. Clear in the chat deletes it, and switching saving off deletes every saved conversation. Disclose this to your visitors.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function suggested_questions_render() {
 		$value = (string) $this->option( 'suggested_questions', '' );
@@ -1626,6 +1645,9 @@ class AI_Chat_Bedrock_Admin {
 		$retention_days               = isset( $input['log_retention_days'] ) ? absint( $input['log_retention_days'] ) : AI_Chat_Bedrock_Conversations::DEFAULT_DAYS;
 		$output['log_retention_days'] = max( 1, min( AI_Chat_Bedrock_Conversations::MAX_DAYS, $retention_days ) );
 
+		$output['chat_memory']      = AI_Chat_Bedrock_Chat_History::mode( $input );
+		$output['chat_memory_days'] = AI_Chat_Bedrock_Chat_History::retention_days( $input );
+
 		$knowledge_base = isset( $input['knowledge_base_id'] ) ? trim( sanitize_text_field( $input['knowledge_base_id'] ) ) : '';
 		if ( '' === $knowledge_base || preg_match( '/^[A-Za-z0-9]{1,64}$/', $knowledge_base ) ) {
 			$output['knowledge_base_id'] = $knowledge_base;
@@ -1726,6 +1748,7 @@ class AI_Chat_Bedrock_Admin {
 	 */
 	const COMPANION_FIELDS = array(
 		'log_conversations'  => array( 'log_retention_days' ),
+		'chat_memory'        => array( 'chat_memory_days' ),
 		'popup_site_wide'    => array( 'popup_profile' ),
 		'prompt_id'          => array( 'prompt_version' ),
 		'embedding_model_id' => array( 'embedding_background' ),

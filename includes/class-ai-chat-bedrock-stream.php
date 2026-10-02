@@ -162,6 +162,8 @@ class AI_Chat_Bedrock_Stream {
 			)
 		);
 
+		AI_Chat_Bedrock_Chat_History::append( get_current_user_id(), $profile, $built['message'], $answer, $built['sources'] );
+
 		$done = array( 'message' => $answer );
 		if ( ! empty( $response['usage'] ) && is_array( $response['usage'] ) ) {
 			$done['usage'] = $response['usage'];

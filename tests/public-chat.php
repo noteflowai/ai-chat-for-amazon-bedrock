@@ -22,6 +22,7 @@
 
 define( 'ABSPATH', __DIR__ );
 define( 'AI_CHAT_BEDROCK_VERSION', 'test' );
+define( 'DAY_IN_SECONDS', 86400 );
 
 $failures = array();
 function check_pub( $condition, $message ) {
@@ -76,6 +77,24 @@ function check_ajax_referer( $action, $query_arg = false, $die = true ) {
 }
 function wp_create_nonce( $action = -1 ) {
 	return 'nonce-for-' . $action;
+}
+function wp_hash( $data, $scheme = 'auth' ) {
+	return hash_hmac( 'md5', (string) $data, 'test-salt' );
+}
+$GLOBALS['aicfab_user_meta'] = array();
+function get_user_meta( $user_id, $key = '', $single = false ) {
+	return isset( $GLOBALS['aicfab_user_meta'][ $user_id ][ $key ] ) ? $GLOBALS['aicfab_user_meta'][ $user_id ][ $key ] : '';
+}
+function update_user_meta( $user_id, $key, $value ) {
+	$GLOBALS['aicfab_user_meta'][ $user_id ][ $key ] = $value;
+	return true;
+}
+function delete_user_meta( $user_id, $key ) {
+	unset( $GLOBALS['aicfab_user_meta'][ $user_id ][ $key ] );
+	return true;
+}
+function esc_url_raw( $url, $protocols = null ) {
+	return preg_match( '#^https?://#', (string) $url ) ? (string) $url : '';
 }
 function wp_salt( $scheme = 'auth' ) {
 	return 'test-salt';
@@ -342,6 +361,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-rate-limits.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-request.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wp-mcp-server.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-stream.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-history.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-woocommerce.php';
 require dirname( __DIR__ ) . '/public/class-ai-chat-bedrock-public.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
@@ -433,6 +453,22 @@ $GLOBALS['aicfab_logged_in'] = true;
 $aicfab_shown                = aicfab_ajax();
 check_pub( null !== $aicfab_shown && $GLOBALS['aicfab_sources'] === $aicfab_shown->payload['data']['sources'], 'Sources are sent with the answer once the site shows them.' );
 $GLOBALS['aicfab_sources'] = array();
+
+// An answered question is saved with the account only when the site saves conversations.
+$GLOBALS['aicfab_user_meta'] = array();
+aicfab_reset_pub( array( 'chat_memory' => 'tab' ) );
+$GLOBALS['aicfab_logged_in'] = true;
+aicfab_ajax();
+check_pub( array() === $GLOBALS['aicfab_user_meta'], 'Tab memory saves nothing on the site.' );
+aicfab_reset_pub( array( 'chat_memory' => 'account', 'show_sources' => true ) );
+$GLOBALS['aicfab_logged_in'] = true;
+$GLOBALS['aicfab_sources']   = array( array( 'title' => 'Refunds', 'url' => 'https://example.test/refunds/' ) );
+$aicfab_saved_reply          = aicfab_ajax();
+$aicfab_saved                = AI_Chat_Bedrock_Chat_History::get( 7, '' );
+check_pub( null !== $aicfab_saved_reply && $aicfab_saved_reply->ok && 2 === count( $aicfab_saved ) && 'What is your refund policy?' === $aicfab_saved[0]['content'] && 'assistant' === $aicfab_saved[1]['role'], 'Account memory saves the question and the answer.' );
+check_pub( isset( $aicfab_saved[1]['sources'][0]['url'] ) && 'https://example.test/refunds/' === $aicfab_saved[1]['sources'][0]['url'], 'The answer is saved with its sources.' );
+$GLOBALS['aicfab_sources']   = array();
+$GLOBALS['aicfab_user_meta'] = array();
 
 aicfab_reset_pub();
 $aicfab_guest = aicfab_ajax();
@@ -533,6 +569,24 @@ check_pub(
 
 // With conversation logging off, no feedback endpoint is advertised.
 check_pub( '' === $aicfab_params['feedback_url'], 'No feedback url is given when logging is off.' );
+
+// --- Conversation memory --------------------------------------------------------
+
+check_pub( '' === $aicfab_params['memory'] && '' === $aicfab_params['history_url'] && '0' === $aicfab_params['user_key'], 'Memory is off by default, and a guest gets no account key or history url.' );
+aicfab_reset_pub( array( 'chat_memory' => 'account' ) );
+$aicfab_public->enqueue_scripts();
+$aicfab_params = $GLOBALS['aicfab_localized']['ai_chat_bedrock_params'];
+check_pub( 'account' === $aicfab_params['memory'] && '' === $aicfab_params['history_url'], 'A guest keeps the conversation in the tab only, with no saved history to fetch.' );
+$GLOBALS['aicfab_logged_in'] = true;
+$aicfab_public->enqueue_scripts();
+$aicfab_params = $GLOBALS['aicfab_localized']['ai_chat_bedrock_params'];
+check_pub( false !== strpos( $aicfab_params['history_url'], 'ai-chat-bedrock/v1/history' ), 'A signed-in visitor is given the saved history url.' );
+check_pub( 1 === preg_match( '/^[a-f0-9]{16}$/', $aicfab_params['user_key'] ) && false === strpos( wp_json_encode( $aicfab_params ), '"7"' ), 'The tab key is a hash, not the user ID.' );
+aicfab_reset_pub( array( 'chat_memory' => 'tab' ) );
+$GLOBALS['aicfab_logged_in'] = true;
+$aicfab_public->enqueue_scripts();
+$aicfab_params = $GLOBALS['aicfab_localized']['ai_chat_bedrock_params'];
+check_pub( 'tab' === $aicfab_params['memory'] && '' === $aicfab_params['history_url'], 'Tab memory stores nothing on the site, so there is nothing to fetch.' );
 
 // --- Shortcode attributes are bounded -----------------------------------------
 

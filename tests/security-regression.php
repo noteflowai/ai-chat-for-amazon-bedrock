@@ -185,6 +185,13 @@ foreach ( array_merge( glob( __DIR__ . '/../includes/*.php' ), glob( __DIR__ . '
 			$aicfab_meta_written[ $aicfab_key ] = true;
 		}
 	}
+	// Constants holding a per-site user option, stored as user meta under the site's prefix:
+	// the saved chat history.
+	if ( preg_match_all( "/const\\s+OPTION[A-Z_]*\\s*=\\s*'(aicfab[a-z_]*)'/", $aicfab_body, $aicfab_consts ) ) {
+		foreach ( $aicfab_consts[1] as $aicfab_key ) {
+			$aicfab_meta_written[ $aicfab_key ] = true;
+		}
+	}
 }
 
 $aicfab_uninstall = file_get_contents( __DIR__ . '/../uninstall.php' );

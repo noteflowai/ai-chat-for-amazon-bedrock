@@ -195,6 +195,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-content.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-retrieval.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-woocommerce.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-history.php';
 
 $failures = array();
 function check_woo( $condition, $message ) {
@@ -370,6 +371,28 @@ check_woo( is_array( $prompt ) && false !== strpos( $prompt[0]['content'], 'Neve
 check_woo( is_array( $prompt ) && false === strpos( $prompt[1]['content'], 'Price:' ) && false !== strpos( $prompt[1]['content'], 'Product name: Robot Arm Kit' ), 'Product copy leaves out the price, which changes.' );
 
 check_woo( 4 === AI_Chat_Bedrock_WooCommerce::limit( array() ) && 8 === AI_Chat_Bedrock_WooCommerce::limit( array( 'woo_catalog_limit' => 50 ) ) && 1 === AI_Chat_Bedrock_WooCommerce::limit( array( 'woo_catalog_limit' => 1 ) ), 'The product limit is kept between 1 and 8.' );
+
+// --- Suggested privacy policy text -------------------------------------------------
+
+$GLOBALS['aicfab_privacy'] = '';
+function wp_add_privacy_policy_content( $name, $content ) { $GLOBALS['aicfab_privacy'] = $content; }
+function esc_html( $text ) { return htmlspecialchars( (string) $text, ENT_QUOTES ); }
+function esc_html__( $text, $domain = null ) { return esc_html( $text ); }
+function wp_kses_post( $text ) { return $text; }
+function _n( $single, $plural, $number, $domain = null ) { return 1 === (int) $number ? $single : $plural; }
+function aicfab_privacy_with( $settings ) {
+	$GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] = $settings;
+	AI_Chat_Bedrock_WooCommerce::privacy_policy_content();
+	return $GLOBALS['aicfab_privacy'];
+}
+$aicfab_saved_settings = isset( $GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] ) ? $GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] : array();
+$text                  = aicfab_privacy_with( array() );
+check_woo( false !== strpos( $text, 'Amazon Bedrock' ) && false === strpos( $text, 'session storage' ) && false === strpos( $text, 'with your user account, so you can continue' ), 'Without conversation memory the policy text does not mention it.' );
+$text = aicfab_privacy_with( array( 'chat_memory' => 'tab' ) );
+check_woo( false !== strpos( $text, 'session storage' ) && false === strpos( $text, 'so you can continue' ), 'Tab memory is described as kept in the browser only.' );
+$text = aicfab_privacy_with( array( 'chat_memory' => 'account', 'chat_memory_days' => 45 ) );
+check_woo( false !== strpos( $text, 'session storage' ) && false !== strpos( $text, 'kept for 45 days' ) && false !== strpos( $text, 'exported or erased' ), 'Account memory is described with its retention and the right to export or erase.' );
+$GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] = $aicfab_saved_settings;
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

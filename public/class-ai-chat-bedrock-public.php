@@ -41,6 +41,11 @@ class AI_Chat_Bedrock_Public {
 				'feedback_url'      => AI_Chat_Bedrock_Conversations::enabled() ? rest_url( AI_Chat_Bedrock_WP_MCP_Server::NAMESPACE_V1 . AI_Chat_Bedrock_Feedback::REST_ROUTE ) : '',
 				'welcome_message'   => isset( $text['welcome_message'] ) ? $text['welcome_message'] : __( 'Hello! How can I help you today?', 'ai-chat-for-amazon-bedrock' ),
 				'max_message_chars' => 4000,
+				// Conversation memory. The key ties a conversation kept in the tab to who was
+				// signed in, without putting a user ID in the page.
+				'memory'            => AI_Chat_Bedrock_Chat_History::mode(),
+				'user_key'          => is_user_logged_in() ? substr( wp_hash( 'aicfab_chat_' . get_current_user_id() ), 0, 16 ) : '0',
+				'history_url'       => AI_Chat_Bedrock_Chat_History::saves_for( get_current_user_id() ) ? rest_url( AI_Chat_Bedrock_WP_MCP_Server::NAMESPACE_V1 . AI_Chat_Bedrock_Chat_History::REST_ROUTE ) : '',
 				// The language of the page, so answers are drawn from content in the same language first.
 				'language'          => AI_Chat_Bedrock_Content::current_language(),
 				'product_id'        => AI_Chat_Bedrock_WooCommerce::current_product_id(),
@@ -346,6 +351,13 @@ class AI_Chat_Bedrock_Public {
 					'grounded' => ! empty( $built['grounded'] ),
 					'model'    => isset( $options['model_id'] ) ? $options['model_id'] : '',
 				)
+			);
+			AI_Chat_Bedrock_Chat_History::append(
+				get_current_user_id(),
+				$profile,
+				$built['message'],
+				isset( $response['data']['message'] ) ? (string) $response['data']['message'] : '',
+				$built['sources']
 			);
 			if ( is_string( $entry ) && '' !== $entry ) {
 				$response['data']['entry'] = $entry;
