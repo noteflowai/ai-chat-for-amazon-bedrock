@@ -38,6 +38,15 @@ class AI_Chat_Bedrock_Content {
 	private static $rendering = false;
 
 	/**
+	 * Whether a post is being rendered for its text right now, so content filters can stay out.
+	 *
+	 * @return bool
+	 */
+	public static function is_rendering() {
+		return self::$rendering;
+	}
+
+	/**
 	 * Whether a post is published and readable by anyone.
 	 *
 	 * @param WP_Post|null $post Post.

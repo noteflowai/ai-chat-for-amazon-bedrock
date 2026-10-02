@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.59.0
+Stable tag: 1.60.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -158,7 +158,7 @@ error text or identity is kept, and they measure what this site saw, not AWS ser
 
 = The rest =
 
-Streaming, managed prompts from Bedrock Prompt Management, a fallback model, multiple chats with
+Streaming, reading answers and posts aloud with Amazon Polly, managed prompts from Bedrock Prompt Management, a fallback model, multiple chats with
 profiles, a floating launcher, the content tools, the WordPress abilities integration, WP-CLI, moving
 a configuration between sites and the full MCP setup are covered in the FAQ tab, with their limits
 stated.
@@ -346,6 +346,10 @@ Add up to four suggested questions and they appear as buttons above the input, d
 
 Yes, under Chat > Conversation memory, which is off by default so every page starts a new conversation. **Keep it while the visitor browses** stores the conversation in the browser tab's session storage: it follows the visitor from page to page and is gone when the tab closes, and nothing is stored on the site. **Also save it for signed-in visitors** keeps a signed-in visitor's last 30 messages per chat on the site, so the conversation is there on their next visit and on another device. Saved messages are deleted after the days you set (30 by default), when the visitor clears the chat, through Tools > Erase Personal Data, and all at once when you switch the option off. Guests only ever get the browser-tab memory. Add the suggested text from Settings > Privacy to your privacy policy before turning saving on.
 
+= Can answers and posts be read aloud? =
+
+Yes, under Chat > Read aloud, which is off by default. **Add a Listen button to chat answers** puts Listen next to Copy under each answer, and **Add a Listen to this post button to posts** puts one above the text of each post. Amazon Polly reads in a voice for the language, chosen from the page or from the answer itself: Mandarin for Chinese, Japanese, Korean, the main European languages and more. The chat only reads answers it gave to that visitor, so the site cannot be used as a free text-to-speech service. A post is read as a signed-out visitor sees it, so member-only sections are never read; each part is saved in the uploads folder the first time it is played, so later listeners cost nothing, and changing the post makes new audio. Polly is priced per character, and the generative voices cost about twice as much as the neural ones. The dashboard counts the characters read, and reading stops for the day at the limit you set (100,000 by default). The AWS identity needs `polly:SynthesizeSpeech`, which the IAM policy in Diagnostics includes. Change the voice with the `ai_chat_bedrock_speech_voice` filter, the post types with `ai_chat_bedrock_speech_post_types`, the Region with `ai_chat_bedrock_speech_region` and the length read with `ai_chat_bedrock_speech_max_chars`. Add the suggested text from Settings > Privacy to your privacy policy before turning it on.
+
 = Can the chat float instead of sitting in the page? =
 
 Any chat can render as a floating button instead of an inline panel:
@@ -490,6 +494,10 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.60.0 =
+* Read aloud, under Chat and off by default: a Listen button under chat answers and a Listen to this post button on posts, read by Amazon Polly in a voice for the language. Only answers the chat gave to that visitor can be read. Post audio is made from the text a signed-out visitor sees, saved in the uploads folder, and made again when the post changes. Choose the neural or generative engine and a daily character limit (100,000 by default); the dashboard shows the characters read.
+* The IAM policy in Diagnostics includes `polly:SynthesizeSpeech` when reading aloud is on, and the suggested privacy policy text covers it.
+
 = 1.59.0 =
 * Conversation memory, under Chat and off by default. Keep the conversation while the visitor browses, in the browser tab's session storage, or also save a signed-in visitor's recent conversation on the site so it is there on their next visit and on another device. Saved conversations are kept for the days you set (30 by default), deleted when the visitor clears the chat or the option is switched off, and included in personal data exports and erasures. Guests' conversations are never stored on the site.
 * Long conversations, especially in Chinese or Japanese, no longer fail with "Conversation history is too large": the earlier messages sent with a question are kept within the size the server accepts.
@@ -508,13 +516,12 @@ what a good answer says.
 * The IAM policy in Diagnostics includes the image models when image generation is on.
 * When a Converse model refuses top P, stop sequences or a schema, the request is retried once without it and that is remembered for the model, as for temperature. Claude models that refuse a schema are retried without it too.
 
-= 1.56.1 =
-* WooCommerce order questions: a customer's orders are sent only when the question points at an order, such as "my order", an order number, a tracking number, "has it shipped" or a refund. A shared word is no longer enough, so questions about Python packages, returns in reinforcement learning, logistics robots or robots shipped this year no longer send them.
-* An answer to an order question no longer lists the nearest articles as its sources, and is not counted as a content gap. The passages are still offered to the model, for a shipping or returns page.
-
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.60.0 =
+Optional reading aloud of chat answers and posts with Amazon Polly. It is off until enabled, and then needs polly:SynthesizeSpeech for the AWS identity.
 
 = 1.59.0 =
 Optional conversation memory, in the browser tab or saved for signed-in visitors, and a fix for long conversations in Chinese and Japanese. Memory is off until enabled.
@@ -753,6 +760,8 @@ When semantic search is on, the text a signed-out visitor can read on each publi
 Conversation logging is disabled by default, and with it off no chat content is written to the database. When an administrator enables it, questions and answers are stored for the configured retention window, capped at the 200 most recent exchanges, and can be deleted per user or in full from the Conversations screen. Administrators are responsible for disclosing this recording to visitors.
 
 Conversation memory is off by default. In browser-tab mode the conversation is kept in the visitor's own session storage and nothing is stored on the site. When saving for signed-in visitors is on, their questions, answers and the links listed under each answer are stored in their user data on this site, up to 30 messages per chat, for the configured number of days. They are deleted when the visitor clears the chat or the option is switched off, and are reachable through Tools > Export Personal Data and Erase Personal Data.
+
+Reading aloud is off by default. With Listen under answers on, the text of an answer is sent to Amazon Polly when the visitor presses Listen, and the audio is not kept. With Listen to this post on, the text a signed-out visitor can read on the post is sent to Amazon Polly the first time someone listens, and the audio is kept in the uploads folder until the post changes or the option is switched off. Nothing about the visitor is sent.
 
 The plugin creates no custom database tables; the optional log is kept in a WordPress option and is reachable through Tools > Export Personal Data and Erase Personal Data. Request limiting stores a salted hash-derived transient counter for each visitor for up to one minute. Debug logging is optional and records only redacted operational metadata. Administrators are responsible for disclosing these data flows and obtaining any consent required in their jurisdiction.
 

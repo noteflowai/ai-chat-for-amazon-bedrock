@@ -196,6 +196,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-content.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-retrieval.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-woocommerce.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-history.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-speech.php';
 
 $failures = array();
 function check_woo( $condition, $message ) {
@@ -392,6 +393,11 @@ $text = aicfab_privacy_with( array( 'chat_memory' => 'tab' ) );
 check_woo( false !== strpos( $text, 'session storage' ) && false === strpos( $text, 'so you can continue' ), 'Tab memory is described as kept in the browser only.' );
 $text = aicfab_privacy_with( array( 'chat_memory' => 'account', 'chat_memory_days' => 45 ) );
 check_woo( false !== strpos( $text, 'session storage' ) && false !== strpos( $text, 'kept for 45 days' ) && false !== strpos( $text, 'exported or erased' ), 'Account memory is described with its retention and the right to export or erase.' );
+check_woo( false === strpos( $text, 'Amazon Polly' ), 'Without reading aloud the policy text does not mention Polly.' );
+$text = aicfab_privacy_with( array( 'speech_replies' => true ) );
+check_woo( false !== strpos( $text, 'press Listen under an answer' ) && false === strpos( $text, 'Posts can be read aloud' ), 'Reading answers aloud is described on its own.' );
+$text = aicfab_privacy_with( array( 'speech_posts' => true ) );
+check_woo( false !== strpos( $text, 'Posts can be read aloud' ) && false === strpos( $text, 'press Listen under an answer' ), 'Reading posts aloud is described on its own.' );
 $GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] = $aicfab_saved_settings;
 
 if ( $failures ) {

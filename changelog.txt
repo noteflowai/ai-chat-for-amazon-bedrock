@@ -3,6 +3,10 @@ Full changelog. The readme lists the latest releases only.
 
 == Changelog ==
 
+= 1.60.0 =
+* Read aloud, under Chat and off by default: a Listen button under chat answers and a Listen to this post button on posts, read by Amazon Polly in a voice for the language. Only answers the chat gave to that visitor can be read. Post audio is made from the text a signed-out visitor sees, saved in the uploads folder, and made again when the post changes. Choose the neural or generative engine and a daily character limit (100,000 by default); the dashboard shows the characters read.
+* The IAM policy in Diagnostics includes `polly:SynthesizeSpeech` when reading aloud is on, and the suggested privacy policy text covers it.
+
 = 1.59.0 =
 * Conversation memory, under Chat and off by default. Keep the conversation while the visitor browses, in the browser tab's session storage, or also save a signed-in visitor's recent conversation on the site so it is there on their next visit and on another device. Saved conversations are kept for the days you set (30 by default), deleted when the visitor clears the chat or the option is switched off, and included in personal data exports and erasures. Guests' conversations are never stored on the site.
 * Long conversations, especially in Chinese or Japanese, no longer fail with "Conversation history is too large": the earlier messages sent with a question are kept within the size the server accepts.

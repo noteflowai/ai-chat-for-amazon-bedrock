@@ -299,9 +299,18 @@ class AI_Chat_Bedrock_Chat_History {
 		$user_id  = get_current_user_id();
 		$enabled  = self::saves_for( $user_id );
 		$profile  = AI_Chat_Bedrock_Profiles::sanitize_key( (string) $request->get_param( 'profile' ) );
+		$messages = $enabled ? self::get( $user_id, $profile ) : array();
+		// Stored answers can be heard again, as they were when first given.
+		if ( class_exists( 'AI_Chat_Bedrock_Speech' ) && AI_Chat_Bedrock_Speech::replies_enabled() ) {
+			foreach ( $messages as $index => $message ) {
+				if ( 'assistant' === $message['role'] ) {
+					$messages[ $index ]['speech'] = AI_Chat_Bedrock_Speech::token( $message['content'], $user_id );
+				}
+			}
+		}
 		$data     = array(
 			'enabled'  => $enabled,
-			'messages' => $enabled ? self::get( $user_id, $profile ) : array(),
+			'messages' => $messages,
 		);
 		$response = new WP_REST_Response( $data, 200 );
 		$response->header( 'Cache-Control', 'no-store, private' );

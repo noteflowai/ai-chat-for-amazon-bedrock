@@ -38,7 +38,7 @@ function delete_transient( $key ) { unset( $GLOBALS['aicfab_test_transients'][ $
 function wp_remote_request( $url, $args = array() ) { return new WP_Error( 'aicfab_test_blocked', 'Metadata requests are blocked during tests.' ); }
 function wp_remote_retrieve_response_code( $response ) { return isset( $response['response']['code'] ) ? (int) $response['response']['code'] : 0; }
 function wp_remote_retrieve_body( $response ) { return isset( $response['body'] ) ? (string) $response['body'] : ''; }
-function wp_remote_retrieve_header( $response, $name ) { return ''; }
+function wp_remote_retrieve_header( $response, $name ) { return isset( $response['headers'][ $name ] ) ? (string) $response['headers'][ $name ] : ''; }
 function untrailingslashit( $value ) { return rtrim( (string) $value, '/\\' ); }
 if ( ! defined( 'DAY_IN_SECONDS' ) ) { define( 'DAY_IN_SECONDS', 86400 ); }
 // Queued Bedrock answers for requests that reach the runtime; each request is recorded.
@@ -671,6 +671,38 @@ check_aws( count( $GLOBALS['aicfab_test_posts'] ) === $aicfab_count, 'Refused re
 $GLOBALS['aicfab_test_responses'] = array( array( 'response' => array( 'code' => 200 ), 'body' => '{"results":[{"index":0,"relevanceScore":0.5}]}' ) );
 $aicfab_ranker->rerank( 'q', array_fill( 0, 150, 'doc' ), 'amazon.rerank-v1:0' );
 check_aws( AI_Chat_Bedrock_AWS::MAX_RERANK_DOCUMENTS === count( json_decode( end( $GLOBALS['aicfab_test_posts'] )['args']['body'], true )['sources'] ), 'At most 100 passages are sent.' );
+$GLOBALS['aicfab_test_responses'] = array();
+
+// Read aloud, with Amazon Polly.
+$GLOBALS['aicfab_test_posts']     = array();
+$GLOBALS['aicfab_test_responses'] = array(
+	array( 'response' => array( 'code' => 200 ), 'headers' => array( 'content-type' => 'audio/mpeg' ), 'body' => 'ID3-mp3-bytes' ),
+	array( 'response' => array( 'code' => 400 ), 'body' => '{"message":"This voice does not support the selected engine: generative"}' ),
+	array( 'response' => array( 'code' => 200 ), 'headers' => array( 'content-type' => 'application/json' ), 'body' => '{}' ),
+	new WP_Error( 'http_request_failed', 'timeout' ),
+);
+$aicfab_polly = new AI_Chat_Bedrock_AWS( array( 'aws_region' => 'eu-west-1' ) );
+$aicfab_audio = $aicfab_polly->synthesize_speech( '你好，世界。', 'Zhiyu', 'cmn-CN', 'neural' );
+$aicfab_sent  = $GLOBALS['aicfab_test_posts'][0];
+$aicfab_req   = json_decode( $aicfab_sent['args']['body'], true );
+check_aws( 'ID3-mp3-bytes' === $aicfab_audio, 'The audio comes back as bytes.' );
+check_aws( 'https://polly.eu-west-1.amazonaws.com/v1/speech' === $aicfab_sent['url'], 'Speech goes to Polly in the given region.' );
+check_aws( false !== strpos( $aicfab_sent['args']['headers']['Authorization'], '/eu-west-1/polly/aws4_request' ), 'Speech is signed for the polly service.' );
+check_aws( array( 'Engine' => 'neural', 'LanguageCode' => 'cmn-CN', 'OutputFormat' => 'mp3', 'Text' => '你好，世界。', 'TextType' => 'text', 'VoiceId' => 'Zhiyu' ) === $aicfab_req, 'The request names the engine, language, voice and plain text, and asks for MP3.' );
+check_aws( 0 === $aicfab_sent['args']['redirection'], 'Polly is never followed through a redirect.' );
+$aicfab_bad = $aicfab_polly->synthesize_speech( 'Hi', 'Joanna', 'en-US', 'generative' );
+check_aws( is_wp_error( $aicfab_bad ) && 'aicfab_http_error' === $aicfab_bad->get_error_code() && array( 'status' => 400 ) === $aicfab_bad->get_error_data() && false !== strpos( $aicfab_bad->get_error_message(), 'generative' ), 'A refused engine reports the service message and a 400.' );
+$aicfab_bad = $aicfab_polly->synthesize_speech( 'Hi', 'Joanna', 'en-US' );
+check_aws( is_wp_error( $aicfab_bad ) && 'aicfab_invalid_response' === $aicfab_bad->get_error_code(), 'A reply that is not audio is an error.' );
+$aicfab_bad = $aicfab_polly->synthesize_speech( 'Hi', 'Joanna', 'en-US' );
+check_aws( is_wp_error( $aicfab_bad ) && 'aicfab_transport' === $aicfab_bad->get_error_code(), 'A transport failure is reported.' );
+$aicfab_count = count( $GLOBALS['aicfab_test_posts'] );
+check_aws( 'aicfab_speech_text' === $aicfab_polly->synthesize_speech( '  ', 'Joanna', 'en-US' )->get_error_code() && 'aicfab_speech_text' === $aicfab_polly->synthesize_speech( str_repeat( 'a', 3001 ), 'Joanna', 'en-US' )->get_error_code(), 'Empty text and text over 3000 characters are refused.' );
+check_aws( 'aicfab_speech_voice' === $aicfab_polly->synthesize_speech( 'Hi', 'joanna"', 'en-US' )->get_error_code() && 'aicfab_speech_voice' === $aicfab_polly->synthesize_speech( 'Hi', 'Joanna', 'english' )->get_error_code(), 'A malformed voice or language is refused.' );
+check_aws( count( $GLOBALS['aicfab_test_posts'] ) === $aicfab_count, 'Refused speech sends nothing.' );
+$GLOBALS['aicfab_test_responses'] = array( array( 'response' => array( 'code' => 200 ), 'headers' => array( 'content-type' => 'audio/mpeg' ), 'body' => 'x' ) );
+$aicfab_polly->synthesize_speech( 'Hi', 'Joanna', 'en-US', 'turbo' );
+check_aws( 'neural' === json_decode( end( $GLOBALS['aicfab_test_posts'] )['args']['body'], true )['Engine'], 'An unknown engine becomes neural.' );
 $GLOBALS['aicfab_test_responses'] = array();
 
 if ( $failures ) {

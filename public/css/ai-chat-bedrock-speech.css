@@ -1,0 +1,50 @@
+/* Listen to this post. Plain enough to sit above any theme's post content. */
+.aicfab-listen {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5em 0.75em;
+    margin: 0 0 1.5em;
+}
+
+.aicfab-listen .aicfab-listen-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.4em 0.9em;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.9em;
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.aicfab-listen .aicfab-listen-button::before {
+    content: "";
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0.4em 0 0.4em 0.65em;
+    border-color: transparent transparent transparent currentColor;
+}
+
+.aicfab-listen .aicfab-listen-button[aria-pressed="true"]::before {
+    width: 0.65em;
+    height: 0.65em;
+    border: 0;
+    background: currentColor;
+}
+
+.aicfab-listen .aicfab-listen-button:hover,
+.aicfab-listen .aicfab-listen-button:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+.aicfab-listen .aicfab-listen-status {
+    font-size: 0.85em;
+    opacity: 0.8;
+}

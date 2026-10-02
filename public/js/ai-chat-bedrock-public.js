@@ -10,6 +10,8 @@
     const MAX_KEPT = 30;
     const MAX_KEPT_CHARS = 6000;
     const MEMORY_PREFIX = 'aicfabChat:';
+    // The signature the site gives an answer, so it can be read aloud.
+    const SPEECH_TOKEN = /^[a-f0-9]{32}$/;
 
     function escapeHtml(value) {
         return $('<div>').text(String(value == null ? '' : value)).html();
@@ -495,6 +497,49 @@
             return $wrap;
         }
 
+        /**
+         * A Listen button for an answer the site signed. The text sent back is the answer as
+         * it was given, so the signature matches.
+         */
+        function attachSpeech(bubble, text, token) {
+            const speak = window.aicfabSpeak;
+            if (!params.speech || !speak || !bubble || !bubble.message || 'string' !== typeof text || !text || !SPEECH_TOKEN.test(String(token || ''))) {
+                return;
+            }
+            const $meta = bubble.message.find('.ai-chat-bedrock-message-meta').first();
+            if ($meta.find('.ai-chat-bedrock-listen').length) {
+                return;
+            }
+            const $status = $('<span>', { 'class': 'ai-chat-bedrock-listen-status', role: 'status' });
+            const $button = $('<button>', {
+                type: 'button',
+                'class': 'ai-chat-bedrock-copy ai-chat-bedrock-listen',
+                'aria-pressed': 'false'
+            }).text(speak.label || '');
+            const fetchPart = function (part, retried) {
+                return speak.request({ text: text, token: token, part: part, lang: params.language || '' }, params.rest_nonce).catch(function (error) {
+                    if (!retried && error && isNonceError(error.status, { code: error.code })) {
+                        return refreshNonce().then(function () {
+                            return fetchPart(part, true);
+                        });
+                    }
+                    throw error;
+                });
+            };
+            $button.on('click', function () {
+                speak.play($button[0], function (part) {
+                    return fetchPart(part, false);
+                }, $status[0]);
+            });
+            const $copy = $meta.find('.ai-chat-bedrock-copy').first();
+            if ($copy.length) {
+                $button.insertAfter($copy);
+            } else {
+                $meta.append($button);
+            }
+            $status.insertAfter($button);
+        }
+
         function attachFeedback(bubble, entryId) {
             if (!bubble || !bubble.message || !entryId) {
                 return;
@@ -596,6 +641,10 @@
                     return;
                 }
                 const entry = { role: item.role, content: clip(item.content, MAX_KEPT_CHARS), time: Number(item.time) || 0 };
+                // A clipped answer no longer matches its signature.
+                if ('assistant' === item.role && entry.content === item.content && SPEECH_TOKEN.test(String(item.speech || ''))) {
+                    entry.speech = String(item.speech);
+                }
                 if ('assistant' === item.role && Array.isArray(item.sources) && item.sources.length) {
                     entry.sources = item.sources.slice(0, 5).map(function (source) {
                         return { title: String((source && source.title) || ''), url: String((source && source.url) || '') };
@@ -625,14 +674,14 @@
             }
         }
 
-        function keep(question, answer, sources) {
+        function keep(question, answer, sources, speech) {
             if (!storageKey || !answer) {
                 return;
             }
             const time = Math.floor(Date.now() / 1000);
             transcript = cleanTranscript(transcript.concat([
                 { role: 'user', content: question, time: time },
-                { role: 'assistant', content: answer, time: time, sources: sources }
+                { role: 'assistant', content: answer, time: time, sources: sources, speech: speech }
             ]));
             storeTranscript();
         }
@@ -654,6 +703,7 @@
                 remember(item.role, item.content);
                 if ('assistant' === item.role) {
                     attachSources(bubble, item.sources);
+                    attachSpeech(bubble, item.content, item.speech);
                 }
             });
             transcript = clean;
@@ -822,7 +872,7 @@
                 $messages.find('.ai-chat-bedrock-status').remove();
                 if (response && response.success && response.data && typeof response.data.message === 'string') {
                     const bubble = addMessage(response.data.message, false);
-                    keep(message, response.data.message, response.data.sources);
+                    keep(message, response.data.message, response.data.sources, response.data.speech);
                     // The message list is not a live region, so a buffered answer is
                     // announced here just as a streamed one is when it completes.
                     announce(bubble && bubble.content ? bubble.content.text() : response.data.message);
@@ -830,6 +880,7 @@
                     attachSteps(bubble, response.data.steps, response.data.steps_truncated);
                     attachSources(bubble, response.data.sources);
                     attachProducts(bubble, response.data.products);
+                    attachSpeech(bubble, response.data.message, response.data.speech);
                     attachFeedback(bubble, response.data.entry);
                     showUsage(response.usage);
                 } else {
@@ -928,12 +979,14 @@
                     scrollToBottom();
                 }
                 state.sources = payload.sources;
+                state.speech = typeof payload.message === 'string' ? payload.speech : '';
                 if (state.bubble) {
                     state.bubble.content.removeClass('is-streaming');
                     attachNote(state.bubble, fallbackNote(payload.fallback_model));
                     attachSteps(state.bubble, payload.steps, payload.steps_truncated);
                     attachSources(state.bubble, payload.sources);
                     attachProducts(state.bubble, payload.products);
+                    attachSpeech(state.bubble, payload.message, payload.speech);
                     attachFeedback(state.bubble, payload.entry);
                 }
                 showUsage(payload.usage);
@@ -1077,7 +1130,7 @@
                 }
                 if (state.text) {
                     remember('assistant', state.text);
-                    keep(message, state.text, state.sources);
+                    keep(message, state.text, state.sources, state.done ? state.speech : '');
                     if (stopped) {
                         announce(state.bubble ? state.bubble.content.text() : state.text);
                     }
@@ -1105,7 +1158,7 @@
                     }
                     if (state.text) {
                         remember('assistant', state.text);
-                        keep(message, state.text, state.sources);
+                        keep(message, state.text, state.sources, state.done ? state.speech : '');
                         announce(state.bubble ? state.bubble.content.text() : state.text);
                     } else {
                         if (state.bubble) {

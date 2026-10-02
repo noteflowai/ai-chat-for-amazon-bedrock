@@ -137,7 +137,7 @@ class AI_Chat_Bedrock_Iam_Policy {
 	 * Build the policy document for a configuration.
 	 *
 	 * Recognised keys: region, account, models, streaming, guardrail_id, prompt_id,
-	 * knowledge_base, rerank, s3_vectors (bucket, index, region), images (region, models) and agentcore.
+	 * knowledge_base, rerank, speech, s3_vectors (bucket, index, region), images (region, models) and agentcore.
 	 * Everything except region and models is optional, and an unset feature produces no
 	 * statement for it.
 	 *
@@ -265,6 +265,16 @@ class AI_Chat_Bedrock_Iam_Policy {
 			);
 		}
 
+		// Polly scopes SynthesizeSpeech only to lexicons, which the plugin does not use.
+		if ( ! empty( $config['speech'] ) ) {
+			$statements[] = array(
+				'Sid'      => 'AICFABReadAloudWithPolly',
+				'Effect'   => 'Allow',
+				'Action'   => array( 'polly:SynthesizeSpeech' ),
+				'Resource' => '*',
+			);
+		}
+
 		$bucket = isset( $config['s3_vectors']['bucket'] ) ? strtolower( (string) $config['s3_vectors']['bucket'] ) : '';
 		$index  = isset( $config['s3_vectors']['index'] ) ? strtolower( (string) $config['s3_vectors']['index'] ) : '';
 		if ( preg_match( '/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/', $bucket ) && preg_match( '/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/', $index ) ) {
@@ -381,6 +391,7 @@ class AI_Chat_Bedrock_Iam_Policy {
 				'prompt_id'      => isset( $options['prompt_id'] ) ? $options['prompt_id'] : '',
 				'knowledge_base' => isset( $options['knowledge_base_id'] ) ? $options['knowledge_base_id'] : '',
 				'rerank'         => '' !== $rerank,
+				'speech'         => class_exists( 'AI_Chat_Bedrock_Speech' ) && ( AI_Chat_Bedrock_Speech::replies_enabled( $options ) || AI_Chat_Bedrock_Speech::posts_enabled( $options ) ),
 				's3_vectors'     => isset( $options['vector_store'] ) && 's3_vectors' === $options['vector_store'] ? array(
 					'bucket' => isset( $options['s3_vectors_bucket'] ) ? $options['s3_vectors_bucket'] : '',
 					'index'  => isset( $options['s3_vectors_index'] ) ? $options['s3_vectors_index'] : '',

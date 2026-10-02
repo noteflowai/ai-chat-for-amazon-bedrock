@@ -26,9 +26,14 @@ class AI_Chat_Bedrock_Public {
 	}
 
 	public function enqueue_scripts() {
-		wp_register_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-public.js', array( 'jquery' ), $this->version, true );
 		$options = get_option( 'ai_chat_bedrock_settings', array() );
-		$text    = AI_Chat_Bedrock_Translation::presentation( $options );
+		$speech  = AI_Chat_Bedrock_Speech::replies_enabled( $options );
+		if ( $speech ) {
+			// The chat shares the player, also where wp_enqueue_scripts does not run, as in the admin Test Chat.
+			AI_Chat_Bedrock_Speech::register_assets();
+		}
+		wp_register_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-public.js', $speech ? array( 'jquery', 'ai-chat-bedrock-speech' ) : array( 'jquery' ), $this->version, true );
+		$text = AI_Chat_Bedrock_Translation::presentation( $options );
 		wp_localize_script(
 			$this->plugin_name,
 			'ai_chat_bedrock_params',
@@ -49,6 +54,7 @@ class AI_Chat_Bedrock_Public {
 				// The language of the page, so answers are drawn from content in the same language first.
 				'language'          => AI_Chat_Bedrock_Content::current_language(),
 				'product_id'        => AI_Chat_Bedrock_WooCommerce::current_product_id(),
+				'speech'            => $speech,
 				'i18n'              => array(
 					'generic_error'     => __( 'The request could not be completed. Please try again.', 'ai-chat-for-amazon-bedrock' ),
 					'stopped'           => __( 'Answer stopped.', 'ai-chat-for-amazon-bedrock' ),
@@ -374,6 +380,9 @@ class AI_Chat_Bedrock_Public {
 			}
 			if ( ! empty( $built['products'] ) ) {
 				$response['data']['products'] = $built['products'];
+			}
+			if ( AI_Chat_Bedrock_Speech::replies_enabled() && isset( $response['data']['message'] ) ) {
+				$response['data']['speech'] = AI_Chat_Bedrock_Speech::token( (string) $response['data']['message'] );
 			}
 		}
 

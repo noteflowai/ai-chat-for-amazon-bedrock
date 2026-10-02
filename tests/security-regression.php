@@ -359,6 +359,14 @@ check(
 	'uninstall clears every scheduled hook the plugin declares, missing: ' . implode( ', ', $aicfab_hooks_left )
 );
 
+// Read-aloud keeps files outside the database, and a transient beside them.
+$aicfab_speech_source = file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock-speech.php' );
+check(
+	preg_match( "/const DIRECTORY\\s*=\\s*'([a-z-]+)'/", $aicfab_speech_source, $aicfab_dir ) && false !== strpos( $aicfab_uninstall, "'/" . $aicfab_dir[1] . "'" )
+		&& preg_match( "/const FALLBACK\\s*=\\s*'([a-z_]+)'/", $aicfab_speech_source, $aicfab_fallback ) && false !== strpos( $aicfab_uninstall, "'" . $aicfab_fallback[1] . "'" ),
+	'uninstall removes the saved post audio and the read-aloud transient'
+);
+
 // --- Saving settings says so ---------------------------------------------------
 
 // The settings page calls settings_errors() filtered to this plugin's slug. WordPress
