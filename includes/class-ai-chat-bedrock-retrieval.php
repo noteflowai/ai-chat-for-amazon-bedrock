@@ -24,6 +24,12 @@ class AI_Chat_Bedrock_Retrieval {
 	const MAX_SOURCES       = 3;
 
 	/**
+	 * Transient set while the reranking model keeps refusing requests, so each question does
+	 * not wait on a call that will fail again.
+	 */
+	const RERANK_PAUSED = 'aicfab_rerank_paused';
+
+	/**
 	 * Assemble reference material for a question.
 	 *
 	 * @param string     $query   Visitor question.
@@ -56,12 +62,26 @@ class AI_Chat_Bedrock_Retrieval {
 			return '';
 		}
 
-		$passages = array();
+		/*
+		 * With a reranking model, each source is asked for as many candidates as an answer can
+		 * hold, and the model picks the best of them all. Without one, or when it fails, each
+		 * source contributes its own top results in its own order.
+		 */
+		$rerank  = self::rerank_model( $options );
+		$limit   = max( 1, min( self::MAX_PASSAGES, isset( $options['context_results'] ) ? absint( $options['context_results'] ) : 3 ) );
+		$request = '' !== $rerank ? array_merge( $options, array( 'context_results' => self::MAX_PASSAGES ) ) : $options;
+
+		$site = array();
+		$kb   = array();
 		if ( ! empty( $options['enable_site_context'] ) ) {
-			$passages = array_merge( $passages, self::site_passages( $query, $options ) );
+			$site = self::site_passages( $query, $request );
 		}
 		if ( ! empty( $options['knowledge_base_id'] ) ) {
-			$passages = array_merge( $passages, self::knowledge_base_passages( $query, $options ) );
+			$kb = self::knowledge_base_passages( $query, $request );
+		}
+		$passages = '' !== $rerank ? self::rerank( $query, array_merge( $site, $kb ), $rerank, $limit, $options ) : null;
+		if ( null === $passages ) {
+			$passages = array_merge( array_slice( $site, 0, $limit ), array_slice( $kb, 0, $limit ) );
 		}
 
 		$passages = apply_filters( 'ai_chat_bedrock_retrieved_passages', $passages, $query );
@@ -95,6 +115,102 @@ class AI_Chat_Bedrock_Retrieval {
 		$context = self::format( $passages, $used );
 		$sources = self::sources( $used );
 		return $context;
+	}
+
+	/**
+	 * Reranking models, in the order offered.
+	 *
+	 * @return array Map of model ID to label.
+	 */
+	public static function rerank_models() {
+		return array(
+			'cohere.rerank-v3-5:0' => __( 'Cohere Rerank 3.5 (multilingual)', 'ai-chat-for-amazon-bedrock' ),
+			'amazon.rerank-v1:0'   => __( 'Amazon Rerank 1.0 (not offered in US East, N. Virginia)', 'ai-chat-for-amazon-bedrock' ),
+		);
+	}
+
+	/**
+	 * The reranking model the site chose, or an empty string when reranking is off.
+	 *
+	 * @param array|null $options Plugin options.
+	 * @return string
+	 */
+	public static function rerank_model( $options = null ) {
+		if ( ! is_array( $options ) ) {
+			$options = get_option( 'ai_chat_bedrock_settings', array() );
+			$options = is_array( $options ) ? $options : array();
+		}
+		$model = isset( $options['rerank_model_id'] ) ? (string) $options['rerank_model_id'] : '';
+		return isset( self::rerank_models()[ $model ] ) ? $model : '';
+	}
+
+	/**
+	 * Put passages from every source in order of how well they answer the question.
+	 *
+	 * The search scores of the two sources are not comparable, and a keyword match has none,
+	 * so merged results were ordered by source. A reranking model reads the question and each
+	 * passage together, which also tells a page that answers it from one that only shares
+	 * its words.
+	 *
+	 * @param string $query    Visitor question.
+	 * @param array  $passages Candidates from every source.
+	 * @param string $model    Reranking model ID.
+	 * @param int    $limit    Passages to keep.
+	 * @param array  $options  Plugin options.
+	 * @return array|null The best passages, best first, or null when reranking failed and the
+	 *                    caller should use the original order.
+	 */
+	public static function rerank( $query, $passages, $model, $limit, $options ) {
+		$passages = array_values( array_filter( (array) $passages, 'is_array' ) );
+		if ( count( $passages ) < 2 ) {
+			return $passages;
+		}
+		if ( get_transient( self::RERANK_PAUSED ) ) {
+			return null;
+		}
+
+		$documents = array();
+		foreach ( $passages as $passage ) {
+			$title   = isset( $passage['title'] ) ? trim( wp_strip_all_tags( (string) $passage['title'] ) ) : '';
+			$excerpt = isset( $passage['excerpt'] ) ? trim( (string) $passage['excerpt'] ) : '';
+			// Site passages already open with the page title.
+			$documents[] = '' === $title || 0 === strpos( $excerpt, $title ) ? $excerpt : $title . "\n" . $excerpt;
+		}
+		$scores = ( new AI_Chat_Bedrock_AWS( $options ) )->rerank( $query, $documents, $model );
+		if ( is_wp_error( $scores ) ) {
+			$data   = $scores->get_error_data();
+			$status = is_array( $data ) && isset( $data['status'] ) ? (int) $data['status'] : 0;
+			// A refused model or Region does not fix itself; a timeout or throttling might.
+			if ( in_array( $status, array( 400, 403, 404 ), true ) ) {
+				set_transient( self::RERANK_PAUSED, 1, HOUR_IN_SECONDS );
+			}
+			return null;
+		}
+
+		/**
+		 * Filters the lowest rerank relevance a passage needs to be kept.
+		 *
+		 * Off by default: relevance scales differ between models. The best passage is always kept.
+		 *
+		 * @since 1.58.0
+		 *
+		 * @param float  $floor Lowest relevance score, from 0 to 1.
+		 * @param string $model Reranking model ID.
+		 */
+		$floor  = (float) apply_filters( 'ai_chat_bedrock_rerank_floor', 0.0, $model );
+		$ranked = array();
+		foreach ( $scores as $index => $relevance ) {
+			if ( ! isset( $passages[ $index ] ) || ( ! empty( $ranked ) && $relevance < $floor ) ) {
+				continue;
+			}
+			$passage                 = $passages[ $index ];
+			$passage['rerank_score'] = round( (float) $relevance, 4 );
+			$ranked[]                = $passage;
+			if ( count( $ranked ) >= $limit ) {
+				break;
+			}
+		}
+		return $ranked;
 	}
 
 	/**

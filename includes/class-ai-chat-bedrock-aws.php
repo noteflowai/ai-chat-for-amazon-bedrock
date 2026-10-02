@@ -16,6 +16,11 @@ class AI_Chat_Bedrock_AWS {
 	 */
 	const CONVERSE_QUIRKS = 'aicfab_converse_quirks';
 
+	/**
+	 * Most documents one rerank call scores. The API takes 1,000; retrieval sends far fewer.
+	 */
+	const MAX_RERANK_DOCUMENTS = 100;
+
 	private $region;
 	private $access_key;
 	private $secret_key;
@@ -1945,6 +1950,115 @@ class AI_Chat_Bedrock_AWS {
 			return new WP_Error( 'aicfab_invalid_response', __( 'The knowledge base returned an invalid response.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		return $data;
+	}
+
+	/**
+	 * Score documents by how well they answer a query, with a Bedrock reranking model.
+	 *
+	 * Uses the Rerank API of Bedrock Agent Runtime in the configured Region. It is billed per
+	 * query, so the plugin sends every candidate in one call.
+	 *
+	 * @param string $query     Search query.
+	 * @param array  $documents Texts to score, in any order.
+	 * @param string $model_id  Reranking model, such as cohere.rerank-v3-5:0.
+	 * @return array|WP_Error Map of document position to relevance score (0 to 1), best first.
+	 */
+	public function rerank( $query, $documents, $model_id ) {
+		$query     = trim( (string) $query );
+		$documents = array_values( array_map( 'strval', (array) $documents ) );
+		$model_id  = (string) $model_id;
+
+		$missing = $this->missing_credentials( 'bedrock-agent-runtime' );
+		if ( null !== $missing ) {
+			return $missing;
+		}
+		if ( ! preg_match( '/^[a-z0-9-]+\.rerank-[a-z0-9.-]+:\d+$/', $model_id ) ) {
+			return new WP_Error( 'aicfab_invalid_model', __( 'The reranking model ID is invalid.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		if ( '' === $query || empty( $documents ) ) {
+			return new WP_Error( 'aicfab_empty_query', __( 'A search query is required.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		if ( ! preg_match( '/^[a-z]{2}(?:-gov)?-[a-z]+-\d$/', $this->region ) ) {
+			return new WP_Error( 'aicfab_invalid_region', __( 'The configured AWS region is invalid.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		$sources = array();
+		foreach ( array_slice( $documents, 0, self::MAX_RERANK_DOCUMENTS ) as $document ) {
+			$sources[] = array(
+				'type'                 => 'INLINE',
+				'inlineDocumentSource' => array(
+					'type'         => 'TEXT',
+					'textDocument' => array( 'text' => AI_Chat_Bedrock_Security::string_substr( '' !== trim( $document ) ? $document : '-', 0, 4000 ) ),
+				),
+			);
+		}
+		$payload  = array(
+			'queries'                => array(
+				array(
+					'type'      => 'TEXT',
+					'textQuery' => array( 'text' => AI_Chat_Bedrock_Security::string_substr( $query, 0, 1000 ) ),
+				),
+			),
+			'sources'                => $sources,
+			'rerankingConfiguration' => array(
+				'type'                          => 'BEDROCK_RERANKING_MODEL',
+				'bedrockRerankingConfiguration' => array(
+					'numberOfResults'    => count( $sources ),
+					'modelConfiguration' => array( 'modelArn' => sprintf( 'arn:aws:bedrock:%s::foundation-model/%s', $this->region, $model_id ) ),
+				),
+			),
+		);
+		$endpoint = $this->service_endpoint( 'bedrock-agent-runtime' ) . '/rerank';
+		$body     = wp_json_encode( $payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+		if ( false === $body ) {
+			return new WP_Error( 'aicfab_encode_failed', __( 'The reranking request could not be encoded.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
+		$response = self::aws_remote(
+			'POST',
+			$endpoint,
+			array(
+				// A visitor is waiting, and the passages are usable in their original order.
+				'timeout'            => 10,
+				'redirection'        => 0,
+				'httpversion'        => '1.1',
+				'reject_unsafe_urls' => true,
+				'headers'            => $this->signed_headers( $endpoint, $body ),
+				'body'               => $body,
+			)
+		);
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'aicfab_transport', __( 'The Amazon Bedrock reranking model could not be reached.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 0 ) );
+		}
+		$status = (int) wp_remote_retrieve_response_code( $response );
+		$data   = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+		if ( $status < 200 || $status >= 300 ) {
+			$this->log_debug( 'Rerank error', array( 'status' => $status ) );
+			$message = is_array( $data ) && isset( $data['message'] ) ? sanitize_text_field( (string) $data['message'] ) : '';
+			return new WP_Error(
+				'aicfab_http_error',
+				'' !== $message
+					? $message
+					/* translators: %d: HTTP status code returned by Amazon Bedrock. */
+					: sprintf( __( 'The reranking model returned HTTP %d.', 'ai-chat-for-amazon-bedrock' ), $status ),
+				array( 'status' => $status )
+			);
+		}
+
+		$scores = array();
+		foreach ( is_array( $data ) && isset( $data['results'] ) && is_array( $data['results'] ) ? $data['results'] : array() as $result ) {
+			if ( isset( $result['index'], $result['relevanceScore'] ) && is_numeric( $result['index'] ) && is_numeric( $result['relevanceScore'] ) && (int) $result['index'] < count( $sources ) ) {
+				$scores[ (int) $result['index'] ] = (float) $result['relevanceScore'];
+			}
+		}
+		if ( empty( $scores ) ) {
+			return new WP_Error( 'aicfab_invalid_response', __( 'The reranking model returned no scores.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		arsort( $scores );
+		if ( class_exists( 'AI_Chat_Bedrock_Usage' ) ) {
+			AI_Chat_Bedrock_Usage::record( array(), $model_id, 'rerank' );
+		}
+		return $scores;
 	}
 
 	/**

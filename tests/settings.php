@@ -28,6 +28,10 @@ function update_option( $name, $value, $autoload = null ) {
 function add_settings_error( $setting, $code, $message, $type = 'error' ) {
 	$GLOBALS['aicfab_notices'][ $code ] = $type;
 }
+function delete_transient( $key ) {
+	$GLOBALS['aicfab_deleted_transients'][] = $key;
+	return true;
+}
 function apply_filters( $hook, $value ) {
 	return $value;
 }
@@ -102,6 +106,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-s3-vectors.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-integrations.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-woocommerce.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-images.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-retrieval.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 
 $failures = array();
@@ -235,6 +240,15 @@ $saved = save_tab( $admin, array( 'model_id', 'image_model_id' ), array( 'model_
 check_set( '' === $saved['image_model_id'] && isset( $GLOBALS['aicfab_notices']['image_model_id'] ), 'An unsupported image model leaves image generation off, with a notice.' );
 $saved = save_tab( $admin, array( 'model_id', 'image_model_id' ), array( 'model_id' => 'amazon.nova-lite-v1:0' ) );
 check_set( '' === $saved['image_model_id'], 'Choosing no image model turns image generation off.' );
+
+$GLOBALS['aicfab_deleted_transients'] = array();
+$saved = save_tab( $admin, array( 'knowledge_base_id', 'rerank_model_id' ), array( 'knowledge_base_id' => 'KB123', 'rerank_model_id' => 'cohere.rerank-v3-5:0' ) );
+check_set( 'cohere.rerank-v3-5:0' === $saved['rerank_model_id'] && ! isset( $GLOBALS['aicfab_notices']['rerank_model_id'] ), 'A supported reranking model is saved.' );
+check_set( in_array( AI_Chat_Bedrock_Retrieval::RERANK_PAUSED, $GLOBALS['aicfab_deleted_transients'], true ), 'Saving lifts a reranking pause.' );
+$saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' ) );
+check_set( 'cohere.rerank-v3-5:0' === $saved['rerank_model_id'], 'Another tab keeps the reranking model.' );
+$saved = save_tab( $admin, array( 'knowledge_base_id', 'rerank_model_id' ), array( 'knowledge_base_id' => 'KB123', 'rerank_model_id' => 'cohere.rerank-v9:0' ) );
+check_set( '' === $saved['rerank_model_id'] && isset( $GLOBALS['aicfab_notices']['rerank_model_id'] ), 'An unsupported reranking model leaves reranking off, with a notice.' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

@@ -115,7 +115,51 @@ function wp_reset_postdata() {}
 function is_wp_error( $thing ) {
 	return $thing instanceof WP_Error;
 }
-class WP_Error {}
+class WP_Error {
+	private $data;
+	public function __construct( $code = '', $message = '', $data = '' ) {
+		$this->data = $data;
+	}
+	public function get_error_data() {
+		return $this->data;
+	}
+}
+function sanitize_text_field( $value ) {
+	return trim( strip_tags( (string) $value ) );
+}
+define( 'HOUR_IN_SECONDS', 3600 );
+$GLOBALS['aicfab_transients'] = array();
+function get_transient( $key ) {
+	return isset( $GLOBALS['aicfab_transients'][ $key ] ) ? $GLOBALS['aicfab_transients'][ $key ] : false;
+}
+function set_transient( $key, $value, $ttl = 0 ) {
+	$GLOBALS['aicfab_transients'][ $key ] = $value;
+	return true;
+}
+
+// Knowledge base and reranking calls are recorded and answered from the test.
+$GLOBALS['aicfab_kb_limits']    = array();
+$GLOBALS['aicfab_rerank_calls'] = array();
+$GLOBALS['aicfab_rerank_reply'] = null;
+class AI_Chat_Bedrock_AWS {
+	public function __construct( $overrides = array() ) {}
+	public function retrieve_from_knowledge_base( $knowledge_base, $query, $limit ) {
+		$GLOBALS['aicfab_kb_limits'][] = $limit;
+		$results                       = array();
+		foreach ( array( 'Alpha', 'Beta', 'Gamma' ) as $name ) {
+			$results[] = array(
+				'content'  => array( 'text' => 'Knowledge base ' . $name ),
+				'metadata' => array( 'title' => 'KB ' . $name ),
+			);
+		}
+		return array( 'retrievalResults' => $results );
+	}
+	public function rerank( $query, $documents, $model ) {
+		$GLOBALS['aicfab_rerank_calls'][] = array( $query, $documents, $model );
+		$reply                            = $GLOBALS['aicfab_rerank_reply'];
+		return is_callable( $reply ) ? $reply( $documents ) : $reply;
+	}
+}
 function __( $text, $domain = null ) {
 	return $text;
 }
@@ -343,6 +387,71 @@ AI_Chat_Bedrock_Retrieval::context( 'hours', $aicfab_options, $aicfab_score, $ai
 check_ret( array( array( 'title' => 'Hours & days', 'url' => 'https://example.com/?p=15' ) ) === $aicfab_sources, 'The context reports the page it used as a source, titled in plain text.' );
 $aicfab_passages = AI_Chat_Bedrock_Retrieval::site_passages( 'hours', $aicfab_options );
 check_ret( isset( $aicfab_passages[0]['title'] ) && 'Hours & days' === $aicfab_passages[0]['title'], 'The passage handed to the model is titled in plain text.' );
+
+// --- Reranking ------------------------------------------------------------------
+
+check_ret( '' === AI_Chat_Bedrock_Retrieval::rerank_model( array( 'rerank_model_id' => 'cohere.rerank-v9:0' ) ), 'An unknown reranking model leaves reranking off.' );
+check_ret( 'cohere.rerank-v3-5:0' === AI_Chat_Bedrock_Retrieval::rerank_model( array( 'rerank_model_id' => 'cohere.rerank-v3-5:0' ) ), 'A listed reranking model is used.' );
+
+$aicfab_rerank_posts = array();
+for ( $aicfab_i = 0; $aicfab_i < 10; $aicfab_i++ ) {
+	$aicfab_rerank_posts[] = new WP_Post( array( 'ID' => 400 + $aicfab_i, 'post_title' => 'Page ' . $aicfab_i, 'post_content' => 'shipping detail ' . $aicfab_i ) );
+}
+$aicfab_rerank_options = array(
+	'enable_site_context' => true,
+	'context_results'     => 2,
+	'knowledge_base_id'   => 'KB12345678',
+	'rerank_model_id'     => 'cohere.rerank-v3-5:0',
+);
+
+// Without a reranking model each source keeps its own top results, as before.
+$GLOBALS['aicfab_posts']      = $aicfab_rerank_posts;
+$GLOBALS['aicfab_query_args'] = array();
+$GLOBALS['aicfab_kb_limits']  = array();
+$aicfab_plain                 = AI_Chat_Bedrock_Retrieval::context( 'shipping', array_merge( $aicfab_rerank_options, array( 'rerank_model_id' => '' ) ) );
+check_ret( 2 === $GLOBALS['aicfab_query_args'][0]['posts_per_page'] && array( 2 ) === $GLOBALS['aicfab_kb_limits'], 'Without reranking each source is asked for the configured number of passages.' );
+check_ret( false !== strpos( $aicfab_plain, '[4] KB Beta' ) && false === strpos( $aicfab_plain, '[5]' ) && array() === $GLOBALS['aicfab_rerank_calls'], 'Without reranking the sources are merged in order and nothing is reranked.' );
+
+// With one, both sources are asked for a full set and the model keeps the configured number.
+$GLOBALS['aicfab_query_args']   = array();
+$GLOBALS['aicfab_kb_limits']    = array();
+$GLOBALS['aicfab_rerank_reply'] = function ( $documents ) {
+	// The last document (KB Gamma) is the best, then the second site page.
+	$scores                           = array();
+	$scores[ count( $documents ) - 1 ] = 0.91;
+	$scores[1]                        = 0.40;
+	$scores[0]                        = 0.05;
+	return $scores;
+};
+$aicfab_sources = null;
+$aicfab_ranked  = AI_Chat_Bedrock_Retrieval::context( 'shipping', $aicfab_rerank_options, $aicfab_score, $aicfab_weak, $aicfab_sources );
+$aicfab_call    = $GLOBALS['aicfab_rerank_calls'][0];
+check_ret( AI_Chat_Bedrock_Retrieval::MAX_PASSAGES === $GLOBALS['aicfab_query_args'][0]['posts_per_page'] && array( AI_Chat_Bedrock_Retrieval::MAX_PASSAGES ) === $GLOBALS['aicfab_kb_limits'], 'With reranking each source is asked for as many passages as an answer can hold.' );
+check_ret( 1 === count( $GLOBALS['aicfab_rerank_calls'] ) && 'shipping' === $aicfab_call[0] && 'cohere.rerank-v3-5:0' === $aicfab_call[2], 'All candidates go to the reranking model in one call.' );
+check_ret( 11 === count( $aicfab_call[1] ) && "Page 0 shipping detail 0" === $aicfab_call[1][0] && "KB Gamma\nKnowledge base Gamma" === $aicfab_call[1][10], 'Each candidate is sent with its title once, site pages and knowledge base alike.' );
+check_ret( 0 === strpos( substr( $aicfab_ranked, strpos( $aicfab_ranked, '[1]' ) ), '[1] KB Gamma' ) && false !== strpos( $aicfab_ranked, '[2] Page 1' ) && false === strpos( $aicfab_ranked, '[3]' ), 'The answer gets the configured number of passages, best first.' );
+check_ret( array( array( 'title' => 'Page 1', 'url' => 'https://example.com/?p=401' ) ) === $aicfab_sources, 'Sources follow the reranked order.' );
+
+$aicfab_reranked = AI_Chat_Bedrock_Retrieval::rerank( 'q', array( array( 'excerpt' => 'a' ), array( 'excerpt' => 'b' ) ), 'cohere.rerank-v3-5:0', 5, array() );
+check_ret( isset( $aicfab_reranked[0]['rerank_score'] ) && ! isset( $aicfab_reranked[0]['score'] ), 'The rerank score is kept apart from the search score the content-gap report reads.' );
+
+$GLOBALS['aicfab_rerank_calls'] = array();
+check_ret( array( array( 'excerpt' => 'only' ) ) === AI_Chat_Bedrock_Retrieval::rerank( 'q', array( array( 'excerpt' => 'only' ) ), 'cohere.rerank-v3-5:0', 2, array() ) && array() === $GLOBALS['aicfab_rerank_calls'], 'A single passage is not sent for reranking.' );
+
+// A timeout leaves the passages in their original order and tries again next time.
+$GLOBALS['aicfab_rerank_reply'] = new WP_Error( 'aicfab_transport', 'down', array( 'status' => 0 ) );
+$aicfab_failed                  = AI_Chat_Bedrock_Retrieval::context( 'shipping', $aicfab_rerank_options );
+check_ret( false !== strpos( $aicfab_failed, '[1] Page 0' ) && false !== strpos( $aicfab_failed, '[4] KB Beta' ) && false === strpos( $aicfab_failed, '[5]' ), 'A failed rerank falls back to each source\'s own top results.' );
+check_ret( false === get_transient( AI_Chat_Bedrock_Retrieval::RERANK_PAUSED ), 'A timeout does not pause reranking.' );
+
+// A refused model or Region pauses reranking, so visitors do not each wait on it.
+$GLOBALS['aicfab_rerank_reply'] = new WP_Error( 'aicfab_http_error', 'The provided model identifier is invalid.', array( 'status' => 400 ) );
+AI_Chat_Bedrock_Retrieval::context( 'shipping', $aicfab_rerank_options );
+$GLOBALS['aicfab_rerank_calls'] = array();
+$aicfab_paused                  = AI_Chat_Bedrock_Retrieval::context( 'shipping', $aicfab_rerank_options );
+check_ret( false !== get_transient( AI_Chat_Bedrock_Retrieval::RERANK_PAUSED ) && array() === $GLOBALS['aicfab_rerank_calls'] && false !== strpos( $aicfab_paused, '[4] KB Beta' ), 'A refused rerank pauses reranking and answers from the original order.' );
+$GLOBALS['aicfab_transients']   = array();
+$GLOBALS['aicfab_rerank_reply'] = null;
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

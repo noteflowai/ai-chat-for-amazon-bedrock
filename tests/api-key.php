@@ -192,6 +192,8 @@ $kb = $aws->retrieve_from_knowledge_base( 'KB12345678', 'opening hours' );
 check_key( is_wp_error( $kb ) && 'aicfab_api_key_unsupported' === $kb->get_error_code(), 'Knowledge Base retrieval explains that an API key cannot be used' );
 check_key( is_wp_error( $kb ) && false !== strpos( $kb->get_error_message(), 'bedrock-agent-runtime' ), 'the explanation names the service' );
 check_key( 0 === count( array_filter( $GLOBALS['aicfab_test_posts'], function ( $post ) { return false !== strpos( $post['url'], 'bedrock-agent-runtime' ); } ) ), 'no doomed Knowledge Base request is sent' );
+$rerank = $aws->rerank( 'opening hours', array( 'a', 'b' ), 'cohere.rerank-v3-5:0' );
+check_key( is_wp_error( $rerank ) && 'aicfab_api_key_unsupported' === $rerank->get_error_code(), 'Reranking explains that an API key cannot be used' );
 $identity = $aws->caller_identity( true );
 check_key( is_wp_error( $identity ) && 'aicfab_api_key_unsupported' === $identity->get_error_code(), 'STS is not called with an API key' );
 $agentcore = AI_Chat_Bedrock_AWS::sign_request( 'https://gateway.bedrock-agentcore.us-east-1.amazonaws.com/mcp', '{}' );

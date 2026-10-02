@@ -137,7 +137,7 @@ class AI_Chat_Bedrock_Iam_Policy {
 	 * Build the policy document for a configuration.
 	 *
 	 * Recognised keys: region, account, models, streaming, guardrail_id, prompt_id,
-	 * knowledge_base, s3_vectors (bucket, index, region), images (region, models) and agentcore.
+	 * knowledge_base, rerank, s3_vectors (bucket, index, region), images (region, models) and agentcore.
 	 * Everything except region and models is optional, and an unset feature produces no
 	 * statement for it.
 	 *
@@ -255,6 +255,16 @@ class AI_Chat_Bedrock_Iam_Policy {
 			);
 		}
 
+		// Rerank has no resource-level scope; the model itself is in the InvokeModel statement.
+		if ( ! empty( $config['rerank'] ) ) {
+			$statements[] = array(
+				'Sid'      => 'AICFABRerankRetrievedPassages',
+				'Effect'   => 'Allow',
+				'Action'   => array( 'bedrock:Rerank' ),
+				'Resource' => '*',
+			);
+		}
+
 		$bucket = isset( $config['s3_vectors']['bucket'] ) ? strtolower( (string) $config['s3_vectors']['bucket'] ) : '';
 		$index  = isset( $config['s3_vectors']['index'] ) ? strtolower( (string) $config['s3_vectors']['index'] ) : '';
 		if ( preg_match( '/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/', $bucket ) && preg_match( '/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/', $index ) ) {
@@ -340,6 +350,10 @@ class AI_Chat_Bedrock_Iam_Policy {
 			isset( $options['fallback_model_id'] ) ? $options['fallback_model_id'] : '',
 			isset( $options['embedding_model_id'] ) ? $options['embedding_model_id'] : '',
 		);
+		$rerank = class_exists( 'AI_Chat_Bedrock_Retrieval' ) ? AI_Chat_Bedrock_Retrieval::rerank_model( $options ) : '';
+		if ( '' !== $rerank ) {
+			$models[] = $rerank;
+		}
 
 		// Profiles may pin their own model, and each one costs money too.
 		if ( class_exists( 'AI_Chat_Bedrock_Profiles' ) ) {
@@ -366,6 +380,7 @@ class AI_Chat_Bedrock_Iam_Policy {
 				'guardrail_id'   => isset( $options['guardrail_id'] ) ? $options['guardrail_id'] : '',
 				'prompt_id'      => isset( $options['prompt_id'] ) ? $options['prompt_id'] : '',
 				'knowledge_base' => isset( $options['knowledge_base_id'] ) ? $options['knowledge_base_id'] : '',
+				'rerank'         => '' !== $rerank,
 				's3_vectors'     => isset( $options['vector_store'] ) && 's3_vectors' === $options['vector_store'] ? array(
 					'bucket' => isset( $options['s3_vectors_bucket'] ) ? $options['s3_vectors_bucket'] : '',
 					'index'  => isset( $options['s3_vectors_index'] ) ? $options['s3_vectors_index'] : '',

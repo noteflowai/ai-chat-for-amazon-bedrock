@@ -3,6 +3,11 @@ Full changelog. The readme lists the latest releases only.
 
 == Changelog ==
 
+= 1.58.0 =
+* Reranking: choose Cohere Rerank 3.5 or Amazon Rerank 1.0 under Answer grounding, and more passages are gathered from site content and the knowledge base, then reranked against the question so only the best are passed to the model. Off by default. One rerank request per question is counted apart on the dashboard and not against the daily limit. If reranking fails the passages are used in their original order, and a refused request pauses it for an hour or until the settings are saved.
+* Amazon S3 Vectors: queries ask for the metadata filter to be applied before the similarity search, so a site sharing an index, or one language of a multilingual site, gets a full set of matches. Passages of a post type removed from the search are filtered out too. An index that refuses the setting is queried as before. Diagnostics says when an index is CLASSIC.
+* The IAM policy in Diagnostics includes `bedrock:Rerank` and the reranking model when reranking is on.
+
 = 1.57.0 =
 * WordPress AI Client: Bedrock is now a full provider. Text models take images in the prompt where the model reads them, return JSON on request (checked, and constrained by the schema where the model takes one), give several candidates, and honour top P and stop sequences. Core is told exactly which models can do what, so it no longer picks a model that fails.
 * Image generation through the AI Client with Stability AI Stable Image Core, Stable Diffusion 3.5 Large and Stable Image Ultra, chosen on the Model tab and off by default. Stable Diffusion 3.5 also edits a supplied image. Prompts are checked with the site's guardrail first.

@@ -31,6 +31,7 @@ function apply_filters( $hook, $value ) {
 
 require_once __DIR__ . '/../includes/class-ai-chat-bedrock-iam-policy.php';
 require_once __DIR__ . '/../includes/class-ai-chat-bedrock-images.php';
+require_once __DIR__ . '/../includes/class-ai-chat-bedrock-retrieval.php';
 
 $failures = array();
 function check_policy( $condition, $message ) {
@@ -166,7 +167,7 @@ $minimal = AI_Chat_Bedrock_Iam_Policy::build(
 		'models'  => array( 'anthropic.claude-3-haiku-20240307-v1:0' ),
 	)
 );
-foreach ( array( 'AICFABApplyConfiguredGuardrail', 'AICFABReadManagedPrompt', 'AICFABRetrieveFromKnowledgeBase', 'AICFABInvokeAgentCoreGateway', 'AICFABUseBedrockApiKey' ) as $sid ) {
+foreach ( array( 'AICFABApplyConfiguredGuardrail', 'AICFABReadManagedPrompt', 'AICFABRetrieveFromKnowledgeBase', 'AICFABInvokeAgentCoreGateway', 'AICFABUseBedrockApiKey', 'AICFABRerankRetrievedPassages' ) as $sid ) {
 	check_policy( null === statement( $minimal, $sid ), "nothing grants $sid when the feature is unconfigured" );
 }
 
@@ -395,6 +396,20 @@ foreach ( array(
 ) as $aicfab_case => $aicfab_extra ) {
 	$aicfab_json = AI_Chat_Bedrock_Iam_Policy::to_json( AI_Chat_Bedrock_Iam_Policy::for_site( array_merge( array( 'aws_region' => 'us-east-1', 'model_id' => 'amazon.nova-lite-v1:0' ), $aicfab_extra ), '111122223333' ) );
 	check_policy( false === strpos( $aicfab_json, 's3vectors' ), 'No S3 Vectors permission for ' . $aicfab_case . '.' );
+}
+
+// --- Reranking -----------------------------------------------------------------
+
+$aicfab_base   = array( 'aws_region' => 'us-east-1', 'model_id' => 'amazon.nova-lite-v1:0' );
+$aicfab_policy = AI_Chat_Bedrock_Iam_Policy::for_site( $aicfab_base + array( 'rerank_model_id' => 'cohere.rerank-v3-5:0' ), '111122223333' );
+$aicfab_rerank = statement( $aicfab_policy, 'AICFABRerankRetrievedPassages' );
+check_policy( null !== $aicfab_rerank && array( 'bedrock:Rerank' ) === $aicfab_rerank['Action'] && '*' === $aicfab_rerank['Resource'], 'Rerank is granted on every resource: it has no resource type.' );
+$aicfab_invoke = statement( $aicfab_policy, 'AICFABInvokeConfiguredModels' );
+check_policy( null !== $aicfab_invoke && in_array( 'arn:aws:bedrock:us-east-1::foundation-model/cohere.rerank-v3-5:0', (array) $aicfab_invoke['Resource'], true ), 'The reranking model itself may be invoked.' );
+foreach ( array( 'off' => array(), 'unknown' => array( 'rerank_model_id' => 'cohere.rerank-v9:0' ) ) as $aicfab_case => $aicfab_extra ) {
+	$aicfab_policy = AI_Chat_Bedrock_Iam_Policy::for_site( $aicfab_base + $aicfab_extra, '111122223333' );
+	check_policy( null === statement( $aicfab_policy, 'AICFABRerankRetrievedPassages' ), 'No Rerank permission when reranking is ' . $aicfab_case . '.' );
+	check_policy( false === strpos( AI_Chat_Bedrock_Iam_Policy::to_json( $aicfab_policy ), 'rerank' ), 'No reranking model is granted when reranking is ' . $aicfab_case . '.' );
 }
 
 // --- Images --------------------------------------------------------------------

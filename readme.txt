@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.57.0
+Stable tag: 1.58.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -90,7 +90,9 @@ Point the chat at your published pages and it answers from them, citing what it 
 embedding model and it matches by meaning rather than by shared words, so "when will my parcel
 arrive" can find a page titled "Getting parcels to you". Keep the vectors in Amazon S3 Vectors and
 every passage of every page is searched, in the visitor's language first. Only what a signed-out
-visitor can read is ever indexed or quoted, so members-only sections stay out of answers. Questions
+visitor can read is ever indexed or quoted, so members-only sections stay out of answers. Add a
+reranking model and the passages that best answer the question are kept, from your pages and a
+knowledge base alike. Questions
 the site does not cover return no context, and the Conversations screen lists them as content gaps
 with a shortcut to draft the page that is missing.
 
@@ -180,7 +182,7 @@ To keep the key out of the database, define it in `wp-config.php` instead:
 
 `define( 'AI_CHAT_BEDROCK_API_KEY', 'replace-with-bedrock-api-key' );`
 
-The plugin also reads `AWS_BEARER_TOKEN_BEDROCK`, the variable the AWS SDKs use. An API key covers chat, streaming, the model list and embeddings. Knowledge Bases, Prompt Management and AgentCore Gateway do not accept API keys, so they still need an IAM role or access keys, and Diagnostics says so when one of them is configured. Short-term keys expire after at most 12 hours, which suits a test but not a live site.
+The plugin also reads `AWS_BEARER_TOKEN_BEDROCK`, the variable the AWS SDKs use. An API key covers chat, streaming, the model list and embeddings. Knowledge Bases, reranking, Prompt Management and AgentCore Gateway do not accept API keys, so they still need an IAM role or access keys, and Diagnostics says so when one of them is configured. Short-term keys expire after at most 12 hours, which suits a test but not a live site.
 
 = Minimal IAM policy =
 
@@ -218,6 +220,8 @@ No. Model requests use Amazon Bedrock and your AWS credentials. Availability, mo
 Text models in the Anthropic Claude, Amazon Nova, Amazon Titan, Meta Llama, Mistral and DeepSeek families that your Region offers, including Claude Sonnet 5, Claude Opus 5.5 and Claude Haiku 4.5, and the other chat models Bedrock serves, such as OpenAI gpt-oss, Qwen3, Llama 4, Mistral Large, DeepSeek R1 and Kimi. Models other than Claude, Nova and Titan are called through the Bedrock Converse API, which applies each model's own chat format; when a model refuses a setting such as temperature or a system prompt, the plugin retries once without it and remembers that for the model. The settings screen lists the models your account offers in that Region, and "Refresh model list" updates it. A new installation starts on Amazon Nova Lite because it answers with nothing enabled beyond an IAM role. Newer Claude models such as Sonnet 5 and Opus 5.5 are called through a cross-region inference profile, an ID beginning with `us.`, `eu.` or `global.`, and they reject the temperature setting, so the plugin does not send it to them. A specific model may still need a supported Region and suitable IAM permissions.
 
 For images: Stability AI Stable Image Core, Stable Diffusion 3.5 Large and Stable Image Ultra, plus Stable Image Remove Background and Stable Fast Upscale for the Media Library. Image models run in US West (Oregon) whatever region the chat uses; the `ai_chat_bedrock_image_region` filter moves them to another region that offers them.
+
+For reranking: Cohere Rerank 3.5 and Amazon Rerank 1.0. US East (N. Virginia) offers only Cohere Rerank 3.5.
 
 = What is an Amazon Bedrock API key, and should I use one? =
 
@@ -306,9 +310,13 @@ Point the chat at a prompt in Bedrock Prompt Management and its text replaces th
 
 Keyword search only finds passages sharing words with the question, so "when will my parcel arrive" misses "Getting parcels to you". Choose an embedding model and the plugin indexes published content, then matches questions by meaning. Indexing runs in small batches from the settings screen, unattended through WP-Cron, or with `wp ai-chat-bedrock index`. Editing a post marks it for re-indexing, and keyword search runs when nothing relevant is found. Questions the site does not cover return no context.
 
-By default one vector per post is kept in the WordPress database and a question is compared with the 500 most recent items. For a larger site, choose Amazon S3 Vectors under Answer grounding: every post is split into overlapping passages, each passage gets its own vector in a vector bucket in your AWS account, and every one of them is searched. Create the bucket in the Amazon S3 console, then check or create the index from the settings screen or with `wp ai-chat-bedrock index --create-index`. S3 Vectors needs an IAM role or access keys, not a Bedrock API key; Diagnostics lists the `s3vectors` actions to allow. Several sites can share one index, and each only reads and deletes its own vectors.
+By default one vector per post is kept in the WordPress database and a question is compared with the 500 most recent items. For a larger site, choose Amazon S3 Vectors under Answer grounding: every post is split into overlapping passages, each passage gets its own vector in a vector bucket in your AWS account, and every one of them is searched. Create the bucket in the Amazon S3 console, then check or create the index from the settings screen or with `wp ai-chat-bedrock index --create-index`. S3 Vectors needs an IAM role or access keys, not a Bedrock API key; Diagnostics lists the `s3vectors` actions to allow. Several sites can share one index, and each only reads and deletes its own vectors. Each query asks S3 Vectors to filter by site, language and post type before the similarity search, so a selective filter still returns a full set of matches. Return `CLASSIC` from the `ai_chat_bedrock_s3_vectors_query_mode` filter to filter during the search instead.
 
 Only published, public content is indexed, as a signed-out visitor sees it: sections that a membership or visibility plugin hides from guests are left out, and every result is checked against the live post again before it is quoted. Blocks with Block Visibility rules are left out whoever they are shown to, since that plugin applies its rules only on front-end pages; to leave out blocks that another plugin restricts, return true from the `ai_chat_bedrock_block_is_restricted` filter. With Polylang, a question is answered from pages in the visitor's language first. With Polylang or WPML, the model is also asked to reply in the language of the page; change or remove that instruction with the `ai_chat_bedrock_language_instruction` filter.
+
+= What does reranking do? =
+
+Without it, the closest few passages from site content and from the knowledge base are each passed to the model. Choose a reranking model under Answer grounding and up to eight passages from each are gathered, then the reranking model scores them all against the question and only the best are kept, up to the number of passages set. It is one extra request per question, billed per query rather than per token, and shown apart from chat requests on the dashboard. If reranking fails the passages are used as before, and a refused request pauses it for an hour. The IAM policy in Diagnostics adds `bedrock:Rerank`. To drop passages that score below a threshold, return it, between 0 and 1, from the `ai_chat_bedrock_rerank_floor` filter; the best passage is always kept.
 
 = Can the chat show where an answer came from? =
 
@@ -476,6 +484,11 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.58.0 =
+* Reranking: choose Cohere Rerank 3.5 or Amazon Rerank 1.0 under Answer grounding, and more passages are gathered from site content and the knowledge base, then reranked against the question so only the best are passed to the model. Off by default. One rerank request per question is counted apart on the dashboard and not against the daily limit. If reranking fails the passages are used in their original order, and a refused request pauses it for an hour or until the settings are saved.
+* Amazon S3 Vectors: queries ask for the metadata filter to be applied before the similarity search, so a site sharing an index, or one language of a multilingual site, gets a full set of matches. Passages of a post type removed from the search are filtered out too. An index that refuses the setting is queried as before. Diagnostics says when an index is CLASSIC.
+* The IAM policy in Diagnostics includes `bedrock:Rerank` and the reranking model when reranking is on.
+
 = 1.57.0 =
 * WordPress AI Client: Bedrock is now a full provider. Text models take images in the prompt where the model reads them, return JSON on request (checked, and constrained by the schema where the model takes one), give several candidates, and honour top P and stop sequences. Core is told exactly which models can do what, so it no longer picks a model that fails.
 * Image generation through the AI Client with Stability AI Stable Image Core, Stable Diffusion 3.5 Large and Stable Image Ultra, chosen on the Model tab and off by default. Stable Diffusion 3.5 also edits a supplied image. Prompts are checked with the site's guardrail first.
@@ -499,13 +512,12 @@ what a good answer says.
 * Lists in the admin, such as the per-role rate limits, the unresolved prompt variables and the answer check's results, are separated with 、 in Chinese and Japanese instead of an English comma, and a legacy model's label is translated as a whole.
 * The release gate regenerates the translation template from the code and fails when it differs, so a new string cannot ship untranslated while the bundled translations say they cover everything.
 
-= 1.55.0 =
-* The settings screens, dashboard, diagnostics, conversation log, MCP pages and block editor read in Simplified Chinese (zh_CN) and Japanese (ja). 1.52.0 translated only what visitors read in the chat, so a Chinese or Japanese admin saw these screens in English, with a few translated words among them. As before, a language pack from translate.wordpress.org replaces the bundled translation once there is one.
-* Where a message puts two sentences together, Chinese and Japanese no longer get a space after the full stop between them.
-
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.58.0 =
+Optional reranking of retrieved passages with Cohere or Amazon rerank models, and S3 Vectors filtering before the search. Reranking is off until enabled.
 
 = 1.57.0 =
 A full WordPress AI Client provider: image input, JSON, Stability image generation and embeddings. Media Library background removal and upscaling. All new features are off until enabled.
@@ -733,7 +745,7 @@ Security and reliability release. Review the AWS credential settings after upgra
 
 Chat messages and the configured system prompt are sent to Amazon Bedrock. When MCP tools are enabled for authenticated users, relevant tool parameters are sent to the selected external MCP server and tool output is sent to Amazon Bedrock to complete the answer. Review AWS and each MCP provider's privacy terms before use.
 
-When semantic search is on, the text a signed-out visitor can read on each published post is sent to Amazon Bedrock to create embeddings, and each question is embedded the same way. With Amazon S3 Vectors chosen, those passages and their vectors are stored in the vector bucket of your own AWS account, labelled with the site and post they came from. Uninstalling the plugin does not delete them; delete the index in AWS. The optional fixes for other plugins send nothing anywhere.
+When semantic search is on, the text a signed-out visitor can read on each published post is sent to Amazon Bedrock to create embeddings, and each question is embedded the same way. With a reranking model chosen, the question and the passages found for it are also sent to that model on Amazon Bedrock. With Amazon S3 Vectors chosen, those passages and their vectors are stored in the vector bucket of your own AWS account, labelled with the site and post they came from. Uninstalling the plugin does not delete them; delete the index in AWS. The optional fixes for other plugins send nothing anywhere.
 
 Conversation logging is disabled by default, and with it off no chat content is written to the database. When an administrator enables it, questions and answers are stored for the configured retention window, capped at the 200 most recent exchanges, and can be deleted per user or in full from the Conversations screen. Administrators are responsible for disclosing this recording to visitors.
 

@@ -48,6 +48,11 @@ class AI_Chat_Bedrock_S3_Vectors {
 	const MAX_TOP_K     = 30;
 
 	/**
+	 * Transient set when the index refused a query mode, so later searches leave it out.
+	 */
+	const MODE_REFUSED = 'aicfab_s3v_mode_refused';
+
+	/**
 	 * The configured bucket, index and Region.
 	 *
 	 * @param array|null $options Plugin options.
@@ -420,6 +425,7 @@ class AI_Chat_Bedrock_S3_Vectors {
 			'arn'       => isset( $index['indexArn'] ) ? sanitize_text_field( (string) $index['indexArn'] ) : '',
 			'dimension' => $dimension,
 			'metric'    => $metric,
+			'mode'      => isset( $index['indexMode'] ) ? sanitize_key( (string) $index['indexMode'] ) : '',
 			'problems'  => $problems,
 		);
 	}
@@ -511,27 +517,53 @@ class AI_Chat_Bedrock_S3_Vectors {
 	 * @return array Hits with post_id, score and text, best first.
 	 */
 	private static function query( $vector, $limit, $options, $language ) {
-		$config  = self::config( $options );
-		$filters = array( array( 'site' => array( '$eq' => self::site_id() ) ) );
+		$config = self::config( $options );
+		// Passages of a post type removed from the search after indexing would otherwise use up topK.
+		$filters = array(
+			array( 'site' => array( '$eq' => self::site_id() ) ),
+			array( 'post_type' => array( '$in' => AI_Chat_Bedrock_Embeddings::post_types( $options ) ) ),
+		);
 		if ( '' !== $language ) {
 			$filters[] = array( 'lang' => array( '$eq' => $language ) );
 		}
 
-		$aws    = new AI_Chat_Bedrock_AWS();
-		$result = $aws->s3_vectors(
-			'QueryVectors',
-			array(
-				'vectorBucketName' => $config['bucket'],
-				'indexName'        => $config['index'],
-				// Several passages of one post can lead the list; ask for more and keep one per post.
-				'topK'             => min( self::MAX_TOP_K, max( 10, $limit * 4 ) ),
-				'queryVector'      => array( 'float32' => array_map( 'floatval', (array) $vector ) ),
-				'filter'           => 1 === count( $filters ) ? $filters[0] : array( '$and' => $filters ),
-				'returnMetadata'   => true,
-				'returnDistance'   => true,
-			),
-			$config['region']
+		$payload = array(
+			'vectorBucketName' => $config['bucket'],
+			'indexName'        => $config['index'],
+			// Several passages of one post can lead the list; ask for more and keep one per post.
+			'topK'             => min( self::MAX_TOP_K, max( 10, $limit * 4 ) ),
+			'queryVector'      => array( 'float32' => array_map( 'floatval', (array) $vector ) ),
+			'filter'           => array( '$and' => $filters ),
+			'returnMetadata'   => true,
+			'returnDistance'   => true,
 		);
+
+		/**
+		 * Filters how the index applies the metadata filter: ENHANCED filters before the
+		 * similarity search, CLASSIC during it, and an empty string leaves it to the index.
+		 *
+		 * ENHANCED finds more of the matching passages when the filter is selective, as it is
+		 * for one language of a multilingual site or one site of several sharing an index.
+		 * Indexes created before 30 September 2026 are CLASSIC unless switched with
+		 * UpdateIndexMode, and still accept ENHANCED per query.
+		 *
+		 * @since 1.58.0
+		 *
+		 * @param string $mode Query mode.
+		 */
+		$mode = strtoupper( (string) apply_filters( 'ai_chat_bedrock_s3_vectors_query_mode', 'ENHANCED' ) );
+		if ( in_array( $mode, array( 'ENHANCED', 'CLASSIC' ), true ) && get_transient( self::MODE_REFUSED ) !== $mode ) {
+			$payload['queryMode'] = $mode;
+		}
+
+		$aws    = new AI_Chat_Bedrock_AWS();
+		$result = $aws->s3_vectors( 'QueryVectors', $payload, $config['region'] );
+		if ( is_wp_error( $result ) && isset( $payload['queryMode'] ) && 'aicfab_s3v_ValidationException' === $result->get_error_code() ) {
+			// A Region the feature has not reached yet, or CLASSIC asked of an ENHANCED index.
+			set_transient( self::MODE_REFUSED, $payload['queryMode'], DAY_IN_SECONDS );
+			unset( $payload['queryMode'] );
+			$result = $aws->s3_vectors( 'QueryVectors', $payload, $config['region'] );
+		}
 		if ( is_wp_error( $result ) ) {
 			return array();
 		}
