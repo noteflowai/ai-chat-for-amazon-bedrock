@@ -235,7 +235,7 @@ Yes, on Claude 3.5 Haiku, Claude 3.7 Sonnet and newer Claude models, which Bedro
 
 = Why do I receive AccessDeniedException or a model access error? =
 
-Confirm that the model is available and enabled in the configured AWS Region, the model ID is correct, and the IAM identity can call `bedrock:InvokeModel` for the required resource. Some models use inference profiles with different IDs and IAM resources.
+Amazon Bedrock no longer has a Model access page: a model is turned on for the AWS account the first time it is called. That first call fails when the identity may not subscribe through AWS Marketplace, when the account has no payment method, or, for Anthropic models, before the one-time use case form is submitted. Opening the model once in the Bedrock console playground as an administrator settles all three, and the chat's error names which one it was. Otherwise, check the model ID, whether it needs an inference profile ID, and that the identity can call `bedrock:InvokeModel` on it.
 
 = Does the chat work on a multilingual site? =
 
@@ -460,6 +460,8 @@ what a good answer says.
 * Contact requests, under Chat and off by default: a Contact a person button below the chat, also offered after a thumbs-down. Visitors leave an email address or phone number and a message, and can include the conversation; nothing is stored without their consent. Requests are listed under Contact requests, exported as CSV, deleted after the days you set (180 by default) and covered by personal data export and erasure. Akismet checks them when set up, Flamingo files a copy, an email can go to the site, and `ai_chat_bedrock_lead_captured` passes them on. Joinchat's WhatsApp number is offered as another way to reach the site.
 * Abilities of other plugins are offered by how well they match the question, with every plugin getting a turn, rather than the first twenty registered. MCP > Tool policy lists them by plugin, switches a plugin off as a whole, and lets an ability that changes data be allowed.
 * Fixed: saving the tool policy forgot the decisions for MCP servers that were offline while the form was open.
+* Fixed: the failures of a model's first use in an AWS account now say what to do. Bedrock no longer has a Model access page; a missing AWS Marketplace permission, payment method or Anthropic use case form each get their own fix instead of "HTTP 404" or a generic permission message, and a fallback model is used meanwhile.
+* The last setup step creates a draft page with the chat on it, rather than opening an empty page.
 
 = 1.63.0 =
 * Amazon Bedrock now appears under Settings > Connectors on WordPress 7.1 and later. On AWS it shows as connected with nothing entered, because the IAM role is used. Elsewhere, paste an Amazon Bedrock API key there: it is checked with Bedrock before it is kept, and stored encrypted. A key in the plugin settings or `wp-config.php` still takes precedence.
@@ -487,7 +489,7 @@ Earlier releases are listed in changelog.txt, which ships with the plugin.
 == Upgrade Notice ==
 
 = 1.64.0 =
-Optional contact requests: visitors leave their details for a person to reply, with consent, spam checks and export. Abilities of other plugins are chosen by the question. Off until enabled.
+Optional contact requests: visitors leave their details for a person to reply, with consent, spam checks and export. Abilities of other plugins are chosen by the question, and a model's first use in an AWS account says what is missing.
 
 = 1.63.0 =
 Amazon Bedrock appears under Settings > Connectors: connected through the IAM role, or with an API key that is checked and stored encrypted. Renamed AI Chatbot & Agents for Amazon Bedrock.

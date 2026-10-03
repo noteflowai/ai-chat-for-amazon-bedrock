@@ -606,6 +606,10 @@ class AI_Chat_Bedrock_AWS {
 				"don't have access to the model",
 				'model is not available',
 				'invalid model',
+				// A model the account has not turned on yet, for want of Marketplace permissions,
+				// a payment method or Anthropic's use case form.
+				'model access is denied',
+				'use case details',
 			)
 		);
 

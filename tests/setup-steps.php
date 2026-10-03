@@ -45,6 +45,59 @@ function get_edit_post_link( $id, $context = 'display' ) {
 function __( $text, $domain = null ) {
 	return $text;
 }
+function _x( $text, $context, $domain = null ) {
+	return $text;
+}
+function esc_html__( $text, $domain = null ) {
+	return $text;
+}
+function wp_nonce_url( $url, $action = -1 ) {
+	return $url . '&_wpnonce=nonce-' . $action;
+}
+
+// What the chat page handler touches.
+$GLOBALS['aicfab_caps']     = array( 'edit_pages' => true );
+$GLOBALS['aicfab_pages']    = array();
+$GLOBALS['aicfab_referer']  = '';
+$GLOBALS['aicfab_redirect'] = '';
+class Aicfab_Exit extends Exception {
+}
+function current_user_can( $cap, ...$args ) {
+	if ( 'edit_post' === $cap ) {
+		return ! empty( $GLOBALS['aicfab_caps']['edit_post'] );
+	}
+	return ! empty( $GLOBALS['aicfab_caps'][ $cap ] );
+}
+function check_admin_referer( $action ) {
+	$GLOBALS['aicfab_referer'] = $action;
+	return 1;
+}
+function get_current_user_id() {
+	return 3;
+}
+function get_posts( $args ) {
+	$ids = array();
+	foreach ( $GLOBALS['aicfab_pages'] as $id => $page ) {
+		if ( in_array( $page['post_status'], (array) $args['post_status'], true ) && ! empty( $page['meta_input'][ $args['meta_key'] ] ) ) {
+			$ids[] = $id;
+		}
+	}
+	return array_slice( $ids, 0, $args['posts_per_page'] );
+}
+function wp_insert_post( $post, $wp_error = false ) {
+	$id                             = 100 + count( $GLOBALS['aicfab_pages'] );
+	$GLOBALS['aicfab_pages'][ $id ] = $post;
+	return $id;
+}
+function is_wp_error( $value ) {
+	return false;
+}
+function wp_safe_redirect( $url ) {
+	$GLOBALS['aicfab_redirect'] = $url;
+}
+function wp_die( $message = '', $title = '', $args = array() ) {
+	throw new Aicfab_Exit( 'die:' . $message );
+}
 
 /**
  * Minimal wpdb that answers the placement lookup from a fixture.
@@ -330,6 +383,67 @@ check_step( ! in_array( $aicfab_ability, $labels, true ), 'once the chat can use
 $labels = array_column( AI_Chat_Bedrock_Setup_Steps::next( array( 'options' => $aicfab_done ) ), 'label' );
 check_step( ! in_array( $aicfab_ability, $labels, true ), 'a site without such plugins is not told about abilities' );
 unset( $GLOBALS['aicfab_options']['ai_chat_bedrock_enable_mcp'] );
+
+// --- Creating the chat page -------------------------------------------------
+
+reset_state();
+$publish = null;
+foreach ( AI_Chat_Bedrock_Setup_Steps::essential( context( array(), true, 'a-model', 'US East', 1 ) ) as $aicfab_step ) {
+	if ( 'Publish the chat' === $aicfab_step['label'] ) {
+		$publish = $aicfab_step;
+	}
+}
+check_step( null !== $publish && ! $publish['done'], 'an unplaced chat leaves the publish step open' );
+check_step( null !== $publish && false !== strpos( $publish['url'], 'admin-post.php?action=ai_chat_bedrock_create_chat_page' ) && false !== strpos( $publish['url'], '_wpnonce=nonce-ai_chat_bedrock_create_chat_page' ), 'the publish step creates the page, behind a nonce' );
+
+// A handler that gets as far as its exit would end this file with success, so that is a failure.
+$GLOBALS['aicfab_in_handler'] = true;
+register_shutdown_function(
+	function () {
+		if ( ! empty( $GLOBALS['aicfab_in_handler'] ) ) {
+			fwrite( STDERR, "FAILED\n- the handler went on to create a page and exit for a user who may not\n" );
+			exit( 1 );
+		}
+	}
+);
+$GLOBALS['aicfab_caps'] = array();
+try {
+	AI_Chat_Bedrock_Setup_Steps::handle_create_chat_page();
+	$aicfab_stopped = '';
+} catch ( Aicfab_Exit $stop ) {
+	$aicfab_stopped = $stop->getMessage();
+}
+$GLOBALS['aicfab_in_handler'] = false;
+check_step( 0 === strpos( $aicfab_stopped, 'die:' ) && array() === $GLOBALS['aicfab_pages'], 'a user who cannot create pages gets none' );
+check_step( '' === $GLOBALS['aicfab_referer'], 'the capability is checked before anything else' );
+
+$GLOBALS['aicfab_caps'] = array(
+	'edit_pages' => true,
+	'edit_post'  => true,
+);
+$aicfab_edit = AI_Chat_Bedrock_Setup_Steps::open_chat_page();
+check_step( 1 === count( $GLOBALS['aicfab_pages'] ), 'the first visit creates one page' );
+$aicfab_page = reset( $GLOBALS['aicfab_pages'] );
+check_step( 'draft' === $aicfab_page['post_status'] && 'page' === $aicfab_page['post_type'], 'the page is a draft, so nothing goes live unpublished' );
+check_step( '<!-- wp:ai-chat-bedrock/chat /-->' === $aicfab_page['post_content'], 'the page holds the chat block' );
+check_step( 3 === $aicfab_page['post_author'], 'the page belongs to whoever created it' );
+check_step( 'https://example.test/wp-admin/post.php?post=100&action=edit' === $aicfab_edit, 'the editor for the new page opens, got ' . $aicfab_edit );
+
+check_step( $aicfab_edit === AI_Chat_Bedrock_Setup_Steps::open_chat_page() && 1 === count( $GLOBALS['aicfab_pages'] ), 'a second visit reopens the same draft' );
+
+$GLOBALS['aicfab_caps']['edit_post'] = false;
+AI_Chat_Bedrock_Setup_Steps::open_chat_page();
+check_step( 2 === count( $GLOBALS['aicfab_pages'] ), 'a draft the user may not edit is not handed to them' );
+
+$GLOBALS['aicfab_caps']['edit_post']          = true;
+$GLOBALS['aicfab_pages'][100]['post_status'] = 'publish';
+$GLOBALS['aicfab_pages'][101]['post_status'] = 'publish';
+AI_Chat_Bedrock_Setup_Steps::open_chat_page();
+check_step( 3 === count( $GLOBALS['aicfab_pages'] ), 'a published page is not reopened as the draft' );
+
+$aicfab_wiring = file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock.php' );
+check_step( false !== strpos( $aicfab_wiring, "'admin_post_" . AI_Chat_Bedrock_Setup_Steps::CREATE_ACTION . "', 'AI_Chat_Bedrock_Setup_Steps', 'handle_create_chat_page'" ), 'the handler is wired to admin-post under its action' );
+check_step( false !== strpos( file_get_contents( __DIR__ . '/../uninstall.php' ), "'_aicfab_chat_page'" ), 'uninstalling removes the mark on the page' );
 
 // --- Progress ----------------------------------------------------------------
 

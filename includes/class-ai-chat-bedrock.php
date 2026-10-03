@@ -100,6 +100,7 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_refresh_models', $admin, 'ajax_refresh_models' );
 		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_run_diagnostics', $admin, 'ajax_run_diagnostics' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_clear_conversations', $admin, 'handle_clear_conversations' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_create_chat_page', 'AI_Chat_Bedrock_Setup_Steps', 'handle_create_chat_page' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_save_profile', $admin, 'handle_save_profile' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_delete_profile', $admin, 'handle_delete_profile' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_generate_content', $admin, 'handle_generate_content' );

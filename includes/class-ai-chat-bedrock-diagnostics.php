@@ -163,7 +163,7 @@ class AI_Chat_Bedrock_Diagnostics {
 
 		$catalog = AI_Chat_Bedrock_Models::options();
 		if ( ! isset( $catalog[ $model ] ) ) {
-			return $this->result( 'model', __( 'Model selection', 'ai-chat-for-amazon-bedrock' ), 'warn', __( 'The selected model was not returned by the region catalog. Confirm model access and whether an inference profile ID is required.', 'ai-chat-for-amazon-bedrock' ) );
+			return $this->result( 'model', __( 'Model selection', 'ai-chat-for-amazon-bedrock' ), 'warn', __( 'The selected model was not returned by the region catalog. Confirm the region offers it and whether an inference profile ID is required.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		return $this->result( 'model', __( 'Model selection', 'ai-chat-for-amazon-bedrock' ), 'pass', $model );
 	}

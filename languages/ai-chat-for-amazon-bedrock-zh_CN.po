@@ -1553,10 +1553,6 @@ msgstr "策略已选中，请使用键盘复制。"
 msgid "Copy policy"
 msgstr "复制策略"
 
-#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:86
-msgid "Model access must also be requested in the Amazon Bedrock console for the region above. Permissions alone are not enough: an account without model access is refused even with a correct policy."
-msgstr "还必须在 Amazon Bedrock 控制台中为上述区域申请模型访问权限。仅有权限是不够的：即使策略正确，没有模型访问权限的账户也会被拒绝。"
-
 #: admin/partials/ai-chat-bedrock-admin-diagnostics.php:89
 msgid "Common fixes"
 msgstr "常见解决方法"
@@ -1564,10 +1560,6 @@ msgstr "常见解决方法"
 #: admin/partials/ai-chat-bedrock-admin-diagnostics.php:91
 msgid "AccessDeniedException: grant bedrock:InvokeModel for the exact model or inference profile ARN."
 msgstr "AccessDeniedException：为确切的模型或推理配置文件 ARN 授予 bedrock:InvokeModel 权限。"
-
-#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:92
-msgid "ValidationException or model not found: confirm model access in the region and whether a cross-region inference profile ID is required."
-msgstr "ValidationException 或找不到模型：请确认该区域的模型访问权限，以及是否需要跨区域推理配置文件 ID。"
 
 #: admin/partials/ai-chat-bedrock-admin-diagnostics.php:93
 msgid "Chat works but streaming fails: bedrock:InvokeModelWithResponseStream is a separate action from bedrock:InvokeModel and has to be granted as well."
@@ -2029,7 +2021,7 @@ msgid "You are not allowed to create drafts."
 msgstr "你无权创建草稿。"
 
 #: admin/partials/ai-chat-bedrock-admin-generator.php:48
-#: includes/class-ai-chat-bedrock-aws.php:675
+#: includes/class-ai-chat-bedrock-aws.php:679
 #: includes/class-ai-chat-bedrock-chat-request.php:110
 #: includes/class-ai-chat-bedrock-core-ai.php:277
 #: includes/class-ai-chat-bedrock-images.php:205
@@ -2749,13 +2741,13 @@ msgstr "Abilities API 不可用。"
 #: includes/class-ai-chat-bedrock-aws.php:393
 #: includes/class-ai-chat-bedrock-aws.php:443
 #: includes/class-ai-chat-bedrock-aws.php:487
-#: includes/class-ai-chat-bedrock-aws.php:654
-#: includes/class-ai-chat-bedrock-aws.php:1846
+#: includes/class-ai-chat-bedrock-aws.php:658
+#: includes/class-ai-chat-bedrock-aws.php:1850
 msgid "Amazon Bedrock credentials are not configured."
 msgstr "尚未配置 Amazon Bedrock 凭证。"
 
 #: includes/class-ai-chat-bedrock-aws-credentials.php:210
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:175
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:217
 msgid "wp-config.php constants"
 msgstr "wp-config.php 常量"
 
@@ -2830,134 +2822,134 @@ msgid "Amazon Bedrock returned no embedding."
 msgstr "Amazon Bedrock 未返回嵌入。"
 
 #: includes/class-ai-chat-bedrock-aws.php:447
-#: includes/class-ai-chat-bedrock-aws.php:658
-#: includes/class-ai-chat-bedrock-aws.php:1925
-#: includes/class-ai-chat-bedrock-aws.php:1997
-#: includes/class-ai-chat-bedrock-aws.php:2108
-#: includes/class-ai-chat-bedrock-aws.php:2190
-#: includes/class-ai-chat-bedrock-aws.php:2291
-#: includes/class-ai-chat-bedrock-aws.php:2355
-#: includes/class-ai-chat-bedrock-aws.php:2419
+#: includes/class-ai-chat-bedrock-aws.php:662
+#: includes/class-ai-chat-bedrock-aws.php:1929
+#: includes/class-ai-chat-bedrock-aws.php:2001
+#: includes/class-ai-chat-bedrock-aws.php:2112
+#: includes/class-ai-chat-bedrock-aws.php:2194
+#: includes/class-ai-chat-bedrock-aws.php:2295
+#: includes/class-ai-chat-bedrock-aws.php:2359
+#: includes/class-ai-chat-bedrock-aws.php:2423
 msgid "The configured AWS region is invalid."
 msgstr "配置的 AWS 区域无效。"
 
-#: includes/class-ai-chat-bedrock-aws.php:671
-#: includes/class-ai-chat-bedrock-aws.php:1855
+#: includes/class-ai-chat-bedrock-aws.php:675
+#: includes/class-ai-chat-bedrock-aws.php:1859
 msgid "The configured model ID is invalid."
 msgstr "配置的模型 ID 无效。"
 
-#: includes/class-ai-chat-bedrock-aws.php:733
+#: includes/class-ai-chat-bedrock-aws.php:737
 msgid "Streaming is not available on this server."
 msgstr "此服务器不支持流式回答。"
 
 #: includes/class-ai-chat-bedrock-aws.php:500
-#: includes/class-ai-chat-bedrock-aws.php:797
-#: includes/class-ai-chat-bedrock-aws.php:1592
+#: includes/class-ai-chat-bedrock-aws.php:801
+#: includes/class-ai-chat-bedrock-aws.php:1596
 msgid "The Bedrock request could not be encoded."
 msgstr "无法编码 Bedrock 请求。"
 
-#: includes/class-ai-chat-bedrock-aws.php:943
+#: includes/class-ai-chat-bedrock-aws.php:947
 msgid "The Bedrock response stream was interrupted."
 msgstr "Bedrock 响应流已中断。"
 
-#: includes/class-ai-chat-bedrock-aws.php:964
-#: includes/class-ai-chat-bedrock-aws.php:2642
+#: includes/class-ai-chat-bedrock-aws.php:968
+#: includes/class-ai-chat-bedrock-aws.php:2646
 msgid "Amazon Bedrock returned no usable content."
 msgstr "Amazon Bedrock 未返回可用内容。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1171
+#: includes/class-ai-chat-bedrock-aws.php:1175
 msgid "No valid chat messages were supplied."
 msgstr "未提供有效的对话消息。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1624
-#: includes/class-ai-chat-bedrock-aws.php:1886
-#: includes/class-ai-chat-bedrock-aws.php:2374
+#: includes/class-ai-chat-bedrock-aws.php:1628
+#: includes/class-ai-chat-bedrock-aws.php:1890
+#: includes/class-ai-chat-bedrock-aws.php:2378
 msgid "Amazon Bedrock could not be reached."
 msgstr "无法连接到 Amazon Bedrock。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1657
-#: includes/class-ai-chat-bedrock-aws.php:2387
+#: includes/class-ai-chat-bedrock-aws.php:1661
+#: includes/class-ai-chat-bedrock-aws.php:2391
 msgid "Amazon Bedrock returned an invalid response."
 msgstr "Amazon Bedrock 返回了无效的响应。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1894
+#: includes/class-ai-chat-bedrock-aws.php:1898
 msgid "Amazon Bedrock responded successfully."
 msgstr "Amazon Bedrock 已成功响应。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1919
+#: includes/class-ai-chat-bedrock-aws.php:1923
 msgid "The knowledge base ID is invalid."
 msgstr "知识库 ID 无效。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1922
-#: includes/class-ai-chat-bedrock-aws.php:1994
+#: includes/class-ai-chat-bedrock-aws.php:1926
+#: includes/class-ai-chat-bedrock-aws.php:1998
 msgid "A search query is required."
 msgstr "需要提供搜索查询。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1937
+#: includes/class-ai-chat-bedrock-aws.php:1941
 msgid "The retrieval request could not be encoded."
 msgstr "无法编码检索请求。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1954
+#: includes/class-ai-chat-bedrock-aws.php:1958
 msgid "The Amazon Bedrock knowledge base could not be reached."
 msgstr "无法连接到 Amazon Bedrock 知识库。"
 
 #. translators: %d: HTTP status code returned by Amazon Bedrock.
-#: includes/class-ai-chat-bedrock-aws.php:1960
+#: includes/class-ai-chat-bedrock-aws.php:1964
 #, php-format
 msgid "The knowledge base returned HTTP %d."
 msgstr "知识库返回了 HTTP %d。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1965
+#: includes/class-ai-chat-bedrock-aws.php:1969
 msgid "The knowledge base returned an invalid response."
 msgstr "知识库返回了无效的响应。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2180
+#: includes/class-ai-chat-bedrock-aws.php:2184
 msgid "That S3 Vectors operation is not supported."
 msgstr "不支持该 S3 Vectors 操作。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2200
+#: includes/class-ai-chat-bedrock-aws.php:2204
 msgid "The S3 Vectors request could not be encoded."
 msgstr "无法编码 S3 Vectors 请求。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2223
+#: includes/class-ai-chat-bedrock-aws.php:2227
 msgid "Amazon S3 Vectors could not be reached."
 msgstr "无法连接到 Amazon S3 Vectors。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2252
+#: includes/class-ai-chat-bedrock-aws.php:2256
 msgid "The AWS identity is not authorized for this S3 Vectors operation. Add the s3vectors actions from the IAM policy on the Diagnostics screen."
 msgstr "该 AWS 身份无权执行此 S3 Vectors 操作。请从“诊断”页面上的 IAM 策略中添加 s3vectors 相关操作。"
 
 #. translators: %d: HTTP status code returned by Amazon S3 Vectors.
-#: includes/class-ai-chat-bedrock-aws.php:2255
+#: includes/class-ai-chat-bedrock-aws.php:2259
 #, php-format
 msgid "Amazon S3 Vectors returned HTTP %d."
 msgstr "Amazon S3 Vectors 返回了 HTTP %d。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2314
+#: includes/class-ai-chat-bedrock-aws.php:2318
 msgid "AWS Security Token Service could not be reached."
 msgstr "无法连接到 AWS Security Token Service。"
 
 #. translators: %d: HTTP status code returned by AWS STS.
-#: includes/class-ai-chat-bedrock-aws.php:2322
+#: includes/class-ai-chat-bedrock-aws.php:2326
 #, php-format
 msgid "AWS Security Token Service returned HTTP %d."
 msgstr "AWS Security Token Service 返回了 HTTP %d。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2338
+#: includes/class-ai-chat-bedrock-aws.php:2342
 msgid "AWS Security Token Service returned an unexpected response."
 msgstr "AWS Security Token Service 返回了意外的响应。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2378
+#: includes/class-ai-chat-bedrock-aws.php:2382
 msgid "The AWS identity is not authorized for this Amazon Bedrock operation."
 msgstr "该 AWS 身份无权执行此 Amazon Bedrock 操作。"
 
 #. translators: %d: HTTP status code returned by Amazon Bedrock.
-#: includes/class-ai-chat-bedrock-aws.php:2382
+#: includes/class-ai-chat-bedrock-aws.php:2386
 #, php-format
 msgid "Amazon Bedrock returned HTTP %d."
 msgstr "Amazon Bedrock 返回了 HTTP %d。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2409
+#: includes/class-ai-chat-bedrock-aws.php:2413
 msgid "The AWS service name is invalid."
 msgstr "AWS 服务名称无效。"
 
@@ -2987,70 +2979,62 @@ msgstr "Amazon Bedrock 在 %s 中无法识别此模型 ID。可能是 ID 有误�
 msgid "Amazon Bedrock does not recognise this model ID in the configured region. Either the ID is wrong, or the region does not offer the model."
 msgstr "Amazon Bedrock 在已配置的区域中无法识别此模型 ID。可能是 ID 有误，或该区域不提供此模型。"
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:112
-msgid "This account has not been granted access to the model. Request access for it in the Amazon Bedrock console, under Model access, in this region."
-msgstr "此账户尚未获得该模型的访问权限。请在 Amazon Bedrock 控制台中此区域的“模型访问权限”下申请访问。"
-
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:128
-msgid "Amazon Bedrock refused the request. Attach the generated IAM policy from the Diagnostics screen, and confirm model access is granted in this region."
-msgstr "Amazon Bedrock 拒绝了该请求。请附加诊断页面生成的 IAM 策略，并确认已在此区域获得模型访问权限。"
-
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:137
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:179
 msgid "Amazon Bedrock is throttling requests. Retry shortly, lower the per-minute limit, or request a quota increase."
 msgstr "Amazon Bedrock 正在限流请求。请稍后重试、降低每分钟限制，或申请提高配额。"
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:144
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:186
 msgid "Amazon Bedrock reported a service error. Retrying usually succeeds; a configured fallback model is used automatically."
 msgstr "Amazon Bedrock 报告了服务错误。重试通常会成功；已配置的备用模型会被自动使用。"
 
 #. translators: %d: HTTP status code returned by Amazon Bedrock.
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:152
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:194
 #, php-format
 msgid "Amazon Bedrock returned HTTP %d. The Diagnostics screen lists the permissions this site needs."
 msgstr "Amazon Bedrock 返回了 HTTP %d。诊断页面列出了此站点所需的权限。"
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:176
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:218
 msgid "environment variables"
 msgstr "环境变量"
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:177
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:219
 msgid "the container IAM role"
 msgstr "容器的 IAM 角色"
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:178
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:220
 msgid "the instance IAM role"
 msgstr "实例的 IAM 角色"
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:179
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:181
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:221
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:223
 msgid "keys stored in the settings"
 msgstr "设置中保存的密钥"
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:186
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:228
 msgid "The request used an Amazon Bedrock API key. Bedrock refuses a key that has expired or been revoked, and one whose IAM identity lacks bedrock:CallWithBearerToken or permission for this model."
 msgstr "该请求使用了 Amazon Bedrock API 密钥。如果密钥已过期或已被撤销，或者其 IAM 身份缺少 bedrock:CallWithBearerToken 或此模型的权限，Bedrock 将拒绝该密钥。"
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:188
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:230
 msgid "It is a short-term key, which lasts at most 12 hours. Use a long-term key or an IAM role for a site that has to keep working."
 msgstr "这是短期密钥，最长有效 12 小时。对于需要持续运行的站点，请使用长期密钥或 IAM 角色。"
 
 #. translators: %s: where the AWS credentials came from.
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:197
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:239
 #, php-format
 msgid "The request used credentials from %s."
 msgstr "该请求使用了来自 %s 的凭证。"
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:202
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:244
 msgid "Those are temporary credentials, which nothing renews once they expire. Replace them, or use an IAM role instead."
 msgstr "这些是临时凭证，过期后不会被续期。请更换它们，或改用 IAM 角色。"
 
 #. translators: %s: IAM action name, such as bedrock:InvokeModelWithResponseStream.
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:218
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:260
 #, php-format
 msgid "The AWS identity is not allowed to perform %s. Attach the generated IAM policy from the Diagnostics screen, which includes it."
 msgstr "该 AWS 身份无权执行 %s。请附加诊断页面生成的 IAM 策略，其中已包含此权限。"
 
-#: includes/class-ai-chat-bedrock-bedrock-errors.php:222
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:264
 msgid "The AWS identity is missing a required permission. The Diagnostics screen generates the policy this site needs."
 msgstr "该 AWS 身份缺少必需的权限。诊断页面可生成此站点所需的策略。"
 
@@ -3203,10 +3187,6 @@ msgstr "模型选择"
 #: includes/class-ai-chat-bedrock-diagnostics.php:161
 msgid "Select a Bedrock model in the settings."
 msgstr "请在设置中选择 Bedrock 模型。"
-
-#: includes/class-ai-chat-bedrock-diagnostics.php:166
-msgid "The selected model was not returned by the region catalog. Confirm model access and whether an inference profile ID is required."
-msgstr "该区域的模型目录中未返回所选模型。请确认模型访问权限，以及是否需要使用推理配置文件 ID。"
 
 #: includes/class-ai-chat-bedrock-diagnostics.php:176
 msgid "Streaming is disabled, so answers appear only when generation finishes."
@@ -4011,85 +3991,77 @@ msgstr[0] "已提议 %s 个页面。创建草稿前请先审阅。"
 msgid "Too many requests. Wait a moment and continue."
 msgstr "请求过多。请稍候再继续。"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:141
+#: includes/class-ai-chat-bedrock-setup-steps.php:223
 msgid "Connect AWS credentials"
 msgstr "连接 AWS 凭证"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:144
+#: includes/class-ai-chat-bedrock-setup-steps.php:226
 msgid "Paste an Amazon Bedrock API key for the quickest start, or use an IAM role, wp-config.php constants or encrypted access keys."
 msgstr "粘贴 Amazon Bedrock API 密钥即可最快上手，也可以使用 IAM 角色、wp-config.php 常量或加密的访问密钥。"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:149
+#: includes/class-ai-chat-bedrock-setup-steps.php:231
 msgid "Choose a region and model"
 msgstr "选择区域和模型"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:152
-msgid "Request model access in your AWS account, then select the model here."
-msgstr "请先在你的 AWS 账户中申请模型访问权限，然后在此处选择模型。"
-
-#: includes/class-ai-chat-bedrock-setup-steps.php:157
+#: includes/class-ai-chat-bedrock-setup-steps.php:239
 msgid "Send a test message"
 msgstr "发送测试消息"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:159
+#: includes/class-ai-chat-bedrock-setup-steps.php:241
 msgid "Amazon Bedrock has answered from this site."
 msgstr "Amazon Bedrock 已回复来自本站点的请求。"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:160
+#: includes/class-ai-chat-bedrock-setup-steps.php:242
 msgid "Confirm the model answers before putting the chat in front of visitors."
 msgstr "在向访客开放对话之前，请确认模型能够正常回答。"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:169
-#: includes/class-ai-chat-bedrock-setup-steps.php:176
-#: includes/class-ai-chat-bedrock-setup-steps.php:185
+#: includes/class-ai-chat-bedrock-setup-steps.php:251
+#: includes/class-ai-chat-bedrock-setup-steps.php:258
+#: includes/class-ai-chat-bedrock-setup-steps.php:267
 msgid "Publish the chat"
 msgstr "发布对话"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:170
+#: includes/class-ai-chat-bedrock-setup-steps.php:252
 msgid "The floating button shows the chat on every page."
 msgstr "浮动按钮会在每个页面上显示对话。"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:178
+#: includes/class-ai-chat-bedrock-setup-steps.php:260
 msgid "The chat block is on a published page."
 msgstr "对话区块已放置在一个已发布的页面上。"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:179
+#: includes/class-ai-chat-bedrock-setup-steps.php:261
 msgid "The shortcode is on a published page."
 msgstr "简码已放置在一个已发布的页面上。"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:186
-msgid "Add the Amazon Bedrock Chat block to a page, use the [ai_chat_bedrock] shortcode, or switch on the floating button."
-msgstr "将 Amazon Bedrock Chat 区块添加到页面、使用 [ai_chat_bedrock] 简码，或开启浮动按钮。"
-
-#: includes/class-ai-chat-bedrock-setup-steps.php:210
+#: includes/class-ai-chat-bedrock-setup-steps.php:292
 msgid "Ground answers in your own content"
 msgstr "让回答以你自己的内容为依据"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:211
+#: includes/class-ai-chat-bedrock-setup-steps.php:293
 msgid "Without this the model answers from general knowledge and cannot cite your pages."
 msgstr "否则模型只能根据通用知识作答，也无法引用你的页面。"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:218
+#: includes/class-ai-chat-bedrock-setup-steps.php:300
 msgid "Record conversations to see what visitors ask"
 msgstr "记录对话，了解访客在问什么"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:219
+#: includes/class-ai-chat-bedrock-setup-steps.php:301
 msgid "Off by default. With it on, the Conversations screen reports the questions your site does not answer. Disclose the recording to visitors."
 msgstr "默认关闭。开启后，“对话”页面会列出你的站点无法回答的问题。请告知访客对话会被记录。"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:226
+#: includes/class-ai-chat-bedrock-setup-steps.php:308
 msgid "Pick a fallback model"
 msgstr "选择备用模型"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:227
+#: includes/class-ai-chat-bedrock-setup-steps.php:309
 msgid "Used automatically when the main model is throttled or unavailable, so the chat keeps working."
 msgstr "主模型被限流或不可用时自动使用，确保对话持续可用。"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:251
+#: includes/class-ai-chat-bedrock-setup-steps.php:333
 msgid "Set a limit for visitors who are not signed in"
 msgstr "为未登录的访客设置限制"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:252
+#: includes/class-ai-chat-bedrock-setup-steps.php:334
 msgid "Guest chat is on. A per-role limit for guests caps what an anonymous visitor can spend."
 msgstr "访客对话已开启。为访客设置按角色的限制，可以限定匿名访客的消耗上限。"
 
@@ -4772,7 +4744,7 @@ msgid "The image request failed."
 msgstr "图片请求失败。"
 
 #: includes/class-ai-chat-bedrock-aws.php:462
-#: includes/class-ai-chat-bedrock-aws.php:2584
+#: includes/class-ai-chat-bedrock-aws.php:2588
 #: includes/class-ai-chat-bedrock-images.php:431
 msgid "Amazon Bedrock returned no image."
 msgstr "Amazon Bedrock 未返回图片。"
@@ -4789,7 +4761,7 @@ msgstr "护栏返回了无效响应，因此未发送请求。"
 msgid "The request was blocked by the site guardrail."
 msgstr "该请求被站点护栏拦截。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1282
+#: includes/class-ai-chat-bedrock-aws.php:1286
 msgid "The selected model does not accept images."
 msgstr "所选模型不支持图片输入。"
 
@@ -4920,25 +4892,25 @@ msgid "Reranking, last 7 days: %s request. It is not counted above or against th
 msgid_plural "Reranking, last 7 days: %s requests. They are not counted above or against the daily limit."
 msgstr[0] "重排序（过去 7 天）：%s 次请求。这些不计入上方的统计，也不计入每日上限。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1991
+#: includes/class-ai-chat-bedrock-aws.php:1995
 msgid "The reranking model ID is invalid."
 msgstr "重排序模型 ID 无效。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2029
+#: includes/class-ai-chat-bedrock-aws.php:2033
 msgid "The reranking request could not be encoded."
 msgstr "无法编码重排序请求。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2046
+#: includes/class-ai-chat-bedrock-aws.php:2050
 msgid "The Amazon Bedrock reranking model could not be reached."
 msgstr "无法连接 Amazon Bedrock 重排序模型。"
 
 #. translators: %d: HTTP status code returned by Amazon Bedrock.
-#: includes/class-ai-chat-bedrock-aws.php:2058
+#: includes/class-ai-chat-bedrock-aws.php:2062
 #, php-format
 msgid "The reranking model returned HTTP %d."
 msgstr "重排序模型返回了 HTTP %d。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2070
+#: includes/class-ai-chat-bedrock-aws.php:2074
 msgid "The reranking model returned no scores."
 msgstr "重排序模型未返回评分。"
 
@@ -5040,29 +5012,29 @@ msgid "Read aloud, last 7 days: %1$s Amazon Polly request, %2$s characters. They
 msgid_plural "Read aloud, last 7 days: %1$s Amazon Polly requests, %2$s characters. They are not counted above or against the daily limit."
 msgstr[0] "朗读，最近 7 天：%1$s 次 Amazon Polly 请求，%2$s 个字符。不计入上方统计，也不计入每日上限。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2102
+#: includes/class-ai-chat-bedrock-aws.php:2106
 msgid "The text to read aloud is empty or too long."
 msgstr "要朗读的文本为空或过长。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2105
+#: includes/class-ai-chat-bedrock-aws.php:2109
 msgid "The Amazon Polly voice is invalid."
 msgstr "Amazon Polly 语音无效。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2124
+#: includes/class-ai-chat-bedrock-aws.php:2128
 msgid "The speech request could not be encoded."
 msgstr "无法编码语音请求。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2140
+#: includes/class-ai-chat-bedrock-aws.php:2144
 msgid "Amazon Polly could not be reached."
 msgstr "无法连接 Amazon Polly。"
 
 #. translators: %d: HTTP status code returned by Amazon Polly.
-#: includes/class-ai-chat-bedrock-aws.php:2153
+#: includes/class-ai-chat-bedrock-aws.php:2157
 #, php-format
 msgid "Amazon Polly returned HTTP %d."
 msgstr "Amazon Polly 返回了 HTTP %d。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2158
+#: includes/class-ai-chat-bedrock-aws.php:2162
 msgid "Amazon Polly returned no audio."
 msgstr "Amazon Polly 没有返回音频。"
 
@@ -6109,12 +6081,12 @@ msgstr "你没有执行此操作的权限。"
 msgid "AI chat contact requests"
 msgstr "AI 对话联系请求"
 
-#: includes/class-ai-chat-bedrock-setup-steps.php:236
+#: includes/class-ai-chat-bedrock-setup-steps.php:318
 msgid "Let the chat use your plugins' abilities"
 msgstr "让对话使用插件的能力"
 
 #. translators: %s: names of plugins.
-#: includes/class-ai-chat-bedrock-setup-steps.php:239
+#: includes/class-ai-chat-bedrock-setup-steps.php:321
 #, php-format
 msgid "%s register abilities with WordPress. Signed-in users can then get answers from their live data. Read-only abilities are offered, and ones that change data stay off until you allow them."
 msgstr "%s 已向 WordPress 注册能力。这样，已登录用户可以根据实时数据获得回答。只读能力会被提供，更改数据的能力在你允许之前保持关闭。"
@@ -6138,3 +6110,56 @@ msgstr "每条联系请求的副本会通过邮件发送给本站工作人员。
 msgctxt "sender of a contact request"
 msgid "From"
 msgstr "来自"
+
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:86
+msgid "Amazon Bedrock turns a model on for the AWS account the first time it is called. That first call subscribes to most third-party models through AWS Marketplace, which this policy does not allow, since the site needs it only once. The simplest way through is to open the model once in the Amazon Bedrock console playground, signed in as an administrator, in the region above. Anthropic models also ask for a one-time use case form there."
+msgstr "Amazon Bedrock 会在某个模型第一次被调用时为该 AWS 账户开启它。对大多数第三方模型来说，这第一次调用会通过 AWS Marketplace 订阅该模型，而此策略并不允许这样做，因为站点只需要做一次。最简单的办法是以管理员身份登录，在上面的区域中于 Amazon Bedrock 控制台的操作台（playground）里打开该模型一次。Anthropic 模型还会在那里要求填写一次性的用例表单。"
+
+#: admin/partials/ai-chat-bedrock-admin-diagnostics.php:92
+msgid "ValidationException or model not found: confirm the region offers the model and whether a cross-region inference profile ID is required."
+msgstr "ValidationException 或找不到模型：确认该区域提供此模型，以及是否需要使用跨区域推理配置文件 ID。"
+
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:120
+msgid "Anthropic asks each AWS account to describe its use case once before its models can be used. Open any Anthropic model in the Amazon Bedrock console model catalog and submit the form; access usually follows within 15 minutes. Models from other providers do not need it."
+msgstr "Anthropic 要求每个 AWS 账户在使用其模型之前先说明一次用例。请在 Amazon Bedrock 控制台的模型目录中打开任意一个 Anthropic 模型并提交表单，通常 15 分钟内即可使用。其他提供商的模型不需要这一步。"
+
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:130
+msgid "The AWS account has no valid payment method for AWS Marketplace, through which most third-party models are sold. Add one in the AWS Billing console, or choose an Amazon Nova model, which does not need it."
+msgstr "该 AWS 账户没有可用于 AWS Marketplace 的有效付款方式，而大多数第三方模型都是通过它销售的。请在 AWS Billing 控制台中添加付款方式，或选择不需要它的 Amazon Nova 模型。"
+
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:143
+msgid "This model has not been used in the AWS account before, and the first use has to subscribe to it through AWS Marketplace, which this AWS identity may not do. Have an administrator open the model once in the Amazon Bedrock console playground, or allow aws-marketplace:Subscribe, aws-marketplace:Unsubscribe and aws-marketplace:ViewSubscriptions for one request. Access can take up to 15 minutes to follow."
+msgstr "此 AWS 账户以前没有使用过这个模型，第一次使用时需要通过 AWS Marketplace 订阅它，而当前的 AWS 身份无权这样做。请让管理员在 Amazon Bedrock 控制台的操作台（playground）中打开该模型一次，或者为一次请求允许 aws-marketplace:Subscribe、aws-marketplace:Unsubscribe 和 aws-marketplace:ViewSubscriptions。开通可能需要最多 15 分钟。"
+
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:154
+msgid "This AWS account does not have access to the model yet. Open the model once in the Amazon Bedrock console playground, in this region, which turns it on or says what is missing."
+msgstr "此 AWS 账户还不能使用该模型。请在此区域的 Amazon Bedrock 控制台操作台（playground）中打开该模型一次，这会开启它，或者告诉你缺少什么。"
+
+#: includes/class-ai-chat-bedrock-bedrock-errors.php:170
+msgid "Amazon Bedrock refused the request. Attach the generated IAM policy from the Diagnostics screen, and open the model once in the Amazon Bedrock console playground in this region to confirm the account can use it."
+msgstr "Amazon Bedrock 拒绝了该请求。请附加“诊断”页面生成的 IAM 策略，并在此区域的 Amazon Bedrock 控制台操作台（playground）中打开该模型一次，确认账户可以使用它。"
+
+#: includes/class-ai-chat-bedrock-diagnostics.php:166
+msgid "The selected model was not returned by the region catalog. Confirm the region offers it and whether an inference profile ID is required."
+msgstr "所选模型不在该区域的目录中。请确认该区域提供此模型，以及是否需要推理配置文件 ID。"
+
+#: includes/class-ai-chat-bedrock-setup-steps.php:130
+msgid "Sorry, you are not allowed to create pages."
+msgstr "抱歉，你无权创建页面。"
+
+#: includes/class-ai-chat-bedrock-setup-steps.php:136
+msgid "The page could not be created. Add the Amazon Bedrock Chat block to a page instead."
+msgstr "无法创建页面。请改为把 Amazon Bedrock Chat 区块添加到某个页面中。"
+
+#: includes/class-ai-chat-bedrock-setup-steps.php:155
+msgctxt "title of the page the chat is on"
+msgid "Ask us"
+msgstr "向我们提问"
+
+#: includes/class-ai-chat-bedrock-setup-steps.php:234
+msgid "Select a region and a model. If the model is new to the AWS account, open it once in the Amazon Bedrock console playground first."
+msgstr "选择区域和模型。如果此 AWS 账户之前没用过该模型，请先在 Amazon Bedrock 控制台的操作台（playground）中打开它一次。"
+
+#: includes/class-ai-chat-bedrock-setup-steps.php:268
+msgid "Opens a draft page with the chat on it, ready to publish. Or add the Amazon Bedrock Chat block to any page, use the [ai_chat_bedrock] shortcode, or switch on the floating button."
+msgstr "打开一个放好对话的草稿页面，可直接发布。也可以把 Amazon Bedrock Chat 区块添加到任意页面、使用 [ai_chat_bedrock] 短代码，或开启浮动按钮。"

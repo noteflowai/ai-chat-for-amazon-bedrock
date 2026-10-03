@@ -124,7 +124,7 @@ check_error( false === stripos( $result['message'], 'IAM' ), 'an end-of-life 404
 
 $result = AI_Chat_Bedrock_Bedrock_Errors::explain( 403, '{"message":"You don\'t have access to the model with the specified model ID."}', 'anthropic.claude-3-5-sonnet-20240620-v1:0', 'us-east-1' );
 check_error( 'model_access_missing' === $result['kind'], 'a missing model grant is recognised, got ' . $result['kind'] );
-check_error( false !== stripos( $result['message'], 'model access' ), 'the fix points at model access' );
+check_error( false !== stripos( $result['message'], 'playground' ), 'the fix is to open the model once, now that there is no model access page' );
 
 // --- An IAM denial ----------------------------------------------------------
 
@@ -243,6 +243,39 @@ foreach ( array( '', 'not json at all', '{', '[]', 'null' ) as $body ) {
 	$result = AI_Chat_Bedrock_Bedrock_Errors::explain( 400, $body, '', '' );
 	check_error( isset( $result['kind'], $result['message'] ), 'a body of ' . var_export( $body, true ) . ' still yields a message' );
 	check_error( '' !== $result['message'], 'the message is never empty for ' . var_export( $body, true ) );
+}
+
+// --- A model turned on at first use ------------------------------------------
+// As users have reported them; Bedrock no longer has a model access page to send them to.
+
+$result = AI_Chat_Bedrock_Bedrock_Errors::explain( 404, '{"message":"Model use case details have not been submitted for this account. Fill out the Anthropic use case details form before using the model. If you have already filled out the form, try again in 15 minutes."}', 'us.anthropic.claude-sonnet-4-5-20250929-v1:0', 'us-east-1' );
+check_error( 'use_case_required' === $result['kind'], 'the Anthropic use case form is recognised, got ' . $result['kind'] );
+check_error( false !== stripos( $result['message'], 'model catalog' ), 'the fix says where the form is' );
+check_error( false === stripos( $result['message'], 'HTTP 404' ), 'a 404 for the form is not reported as unknown' );
+
+$marketplace = '{"message":"Model access is denied due to IAM user or service role is not authorized to perform the required AWS Marketplace actions (aws-marketplace:ViewSubscriptions, aws-marketplace:Subscribe) to enable access to this model. Refer to the Amazon Bedrock documentation for further details. Your AWS Marketplace subscription for this model cannot be completed at this time. If you recently fixed this issue, try again after 15 minutes."}';
+$result      = AI_Chat_Bedrock_Bedrock_Errors::explain( 403, $marketplace, 'us.anthropic.claude-sonnet-4-5-20250929-v1:0', 'us-east-1', array( 'source' => 'instance_role' ) );
+check_error( 'marketplace_first_use' === $result['kind'], 'a first use without Marketplace permissions is recognised, got ' . $result['kind'] );
+check_error( false !== strpos( $result['message'], 'aws-marketplace:Subscribe' ), 'the missing Marketplace action is named' );
+check_error( false !== stripos( $result['message'], 'playground' ), 'the one-time way round it is offered' );
+check_error( false !== strpos( $result['message'], 'instance IAM role' ), 'the identity that was refused is named' );
+check_error( false === stripos( $result['message'], 'Model access page' ) && false === stripos( $result['message'], 'under Model access' ), 'the retired console page is not mentioned' );
+
+$result = AI_Chat_Bedrock_Bedrock_Errors::explain( 403, '{"message":"Model access is denied due to INVALID_PAYMENT_INSTRUMENT:A valid payment instrument must be provided.. Your AWS Marketplace subscription for this model cannot be completed at this time. If you recently fixed this issue, try again after 15 minutes."}', 'us.anthropic.claude-sonnet-4-5-20250929-v1:0', 'us-east-1' );
+check_error( 'payment_required' === $result['kind'], 'a missing payment method is recognised before the Marketplace permissions, got ' . $result['kind'] );
+check_error( false !== stripos( $result['message'], 'Nova' ), 'a model that needs no Marketplace subscription is offered' );
+
+foreach ( array( 'use_case_required', 'payment_required', 'marketplace_first_use', 'model_access_missing', 'forbidden' ) as $kind ) {
+	// Nothing tells the operator to visit a console page that no longer exists.
+	$bodies = array(
+		'use_case_required'     => '{"message":"Model use case details have not been submitted for this account."}',
+		'payment_required'      => '{"message":"Model access is denied due to INVALID_PAYMENT_INSTRUMENT"}',
+		'marketplace_first_use' => $marketplace,
+		'model_access_missing'  => '{"message":"You don\'t have access to the model with the specified model ID."}',
+		'forbidden'             => '{"message":"Forbidden"}',
+	);
+	$message = AI_Chat_Bedrock_Bedrock_Errors::explain( 403, $bodies[ $kind ], '', 'us-east-1' )['message'];
+	check_error( false === stripos( $message, 'under Model access' ) && false === stripos( $message, 'model access is granted' ), $kind . ' does not send the operator to the retired Model access page' );
 }
 
 // A plain text body, which some AWS front ends return.
