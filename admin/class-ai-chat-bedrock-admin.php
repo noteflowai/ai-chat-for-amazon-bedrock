@@ -174,6 +174,9 @@ class AI_Chat_Bedrock_Admin {
 		add_submenu_page( $this->plugin_name, __( 'Chat Profiles', 'ai-chat-for-amazon-bedrock' ), __( 'Chat Profiles', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-profiles', array( $this, 'display_plugin_admin_profiles_page' ) );
 		add_submenu_page( $this->plugin_name, __( 'Conversations', 'ai-chat-for-amazon-bedrock' ), __( 'Conversations', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-conversations', array( $this, 'display_plugin_admin_conversations_page' ) );
 		add_submenu_page( $this->plugin_name, __( 'Answer checks', 'ai-chat-for-amazon-bedrock' ), __( 'Answer checks', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_Eval::CAPABILITY, $this->plugin_name . '-eval', array( $this, 'display_plugin_admin_eval_page' ) );
+		if ( AI_Chat_Bedrock_Metrics::enabled() ) {
+			add_submenu_page( $this->plugin_name, __( 'Business insights', 'ai-chat-for-amazon-bedrock' ), __( 'Business insights', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_Metrics::CAPABILITY, $this->plugin_name . '-metrics', array( $this, 'display_plugin_admin_metrics_page' ) );
+		}
 		add_submenu_page( $this->plugin_name, __( 'Diagnostics', 'ai-chat-for-amazon-bedrock' ), __( 'Diagnostics', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-diagnostics', array( $this, 'display_plugin_admin_diagnostics_page' ) );
 	}
 
@@ -204,6 +207,15 @@ class AI_Chat_Bedrock_Admin {
 
 	public function display_plugin_admin_diagnostics_page() {
 		include plugin_dir_path( __FILE__ ) . 'partials/ai-chat-bedrock-admin-diagnostics.php';
+	}
+
+	/**
+	 * Business insights screen.
+	 *
+	 * @return void
+	 */
+	public function display_plugin_admin_metrics_page() {
+		include plugin_dir_path( __FILE__ ) . 'partials/ai-chat-bedrock-admin-metrics.php';
 	}
 
 	/**
@@ -492,6 +504,101 @@ class AI_Chat_Bedrock_Admin {
 			$row = array_map(
 				static function ( $value ) {
 					$value = (string) $value;
+					// Also cover whitespace before a spreadsheet formula.
+					return preg_match( '/^[\x00-\x20]*[=+\-@]/', $value ) ? "'" . $value : $value;
+				},
+				$row
+			);
+			// An empty escape character preserves literal backslashes and RFC 4180 quoting.
+			fputcsv( $handle, $row, ',', '"', '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fputcsv
+		}
+		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		exit;
+	}
+
+	/**
+	 * The query fields of the Business insights form, read from a request.
+	 *
+	 * Values are only passed on: AI_Chat_Bedrock_Metrics::normalize() checks each one
+	 * against its fixed list.
+	 *
+	 * @param array $source $_GET or $_POST, unslashed.
+	 * @return array
+	 */
+	public static function metrics_query_args( $source ) {
+		$args = array();
+		foreach ( array( 'metric', 'period', 'after', 'before', 'compare', 'interval', 'dimension', 'limit' ) as $key ) {
+			if ( isset( $source[ $key ] ) && is_scalar( $source[ $key ] ) ) {
+				$args[ $key ] = sanitize_text_field( (string) $source[ $key ] );
+			}
+		}
+		return $args;
+	}
+
+	/**
+	 * Turn a question in words into a query, and show its figure on the Business insights screen.
+	 *
+	 * The question is not put in the address; only the query it became, or an error code.
+	 */
+	public function handle_metrics_ask() {
+		if ( ! current_user_can( AI_Chat_Bedrock_Metrics::CAPABILITY ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'ai-chat-for-amazon-bedrock' ), '', array( 'response' => 403 ) );
+		}
+		check_admin_referer( 'ai_chat_bedrock_metrics_ask' );
+
+		$question = isset( $_POST['aicfab_question'] ) && is_scalar( $_POST['aicfab_question'] ) ? sanitize_textarea_field( wp_unslash( $_POST['aicfab_question'] ) ) : '';
+		$plan     = AI_Chat_Bedrock_Metrics::plan( $question );
+		$url      = admin_url( 'admin.php?page=' . $this->plugin_name . '-metrics' );
+		if ( is_wp_error( $plan ) ) {
+			$url = add_query_arg( 'aicfab_ask_error', rawurlencode( sanitize_key( $plan->get_error_code() ) ), $url );
+		} else {
+			unset( $plan['notes'] );
+			$url = add_query_arg( array_map( 'rawurlencode', array_map( 'strval', $plan ) ) + array( 'aicfab_asked' => '1' ), $url );
+		}
+		wp_safe_redirect( $url );
+		exit;
+	}
+
+	/**
+	 * Download the figure shown on the Business insights screen as CSV.
+	 */
+	public function handle_export_metrics() {
+		if ( ! current_user_can( AI_Chat_Bedrock_Metrics::CAPABILITY ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'ai-chat-for-amazon-bedrock' ), '', array( 'response' => 403 ) );
+		}
+		check_admin_referer( 'ai_chat_bedrock_export_metrics' );
+
+		$result = AI_Chat_Bedrock_Metrics::query( self::metrics_query_args( wp_unslash( $_POST ) ), 'analytics' );
+		if ( is_wp_error( $result ) ) {
+			wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 400 ) );
+		}
+		$this->send_csv( AI_Chat_Bedrock_Metrics::export_rows( $result ), AI_Chat_Bedrock_Metrics::export_filename( $result ) );
+	}
+
+	/**
+	 * Stream rows as a CSV download and stop.
+	 *
+	 * @param array  $rows     Rows, the header first.
+	 * @param string $filename File name.
+	 */
+	private function send_csv( $rows, $filename ) {
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+
+		// This is a response stream, not a file on disk; WP_Filesystem does not apply.
+		$handle = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+		if ( false === $handle ) {
+			wp_die( esc_html__( 'The export could not be created.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		foreach ( $rows as $row ) {
+			$row = array_map(
+				static function ( $value ) {
+					$value = (string) $value;
+					// A plain number, such as net sales after refunds, stays a number.
+					if ( preg_match( '/\A-?[0-9]+(?:\.[0-9]+)?\z/', $value ) ) {
+						return $value;
+					}
 					// Also cover whitespace before a spreadsheet formula.
 					return preg_match( '/^[\x00-\x20]*[=+\-@]/', $value ) ? "'" . $value : $value;
 				},
@@ -920,6 +1027,7 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'abilities_tools', __( 'WordPress abilities as tools', 'ai-chat-for-amazon-bedrock' ), 'abilities_tools_render', 'aicfab_knowledge' );
 		$this->field( 'site_abilities', __( 'Site content abilities', 'ai-chat-for-amazon-bedrock' ), 'site_abilities_render', 'aicfab_knowledge' );
 		$this->field( 'site_ontology', __( 'Site description', 'ai-chat-for-amazon-bedrock' ), 'site_ontology_render', 'aicfab_knowledge' );
+		$this->field( 'business_metrics', __( 'Business insights', 'ai-chat-for-amazon-bedrock' ), 'business_metrics_render', 'aicfab_knowledge' );
 		$this->field( 'editor_assistant', __( 'Editor assistant', 'ai-chat-for-amazon-bedrock' ), 'editor_assistant_render', 'aicfab_knowledge' );
 		$this->field( 'log_conversations', __( 'Conversation log', 'ai-chat-for-amazon-bedrock' ), 'log_conversations_render', 'aicfab_knowledge' );
 		$this->field( 'media_assistant', __( 'Media helpers', 'ai-chat-for-amazon-bedrock' ), 'media_assistant_render', 'aicfab_knowledge' );
@@ -1109,6 +1217,11 @@ class AI_Chat_Bedrock_Admin {
 		$checked = ! empty( $this->option( 'site_ontology', false ) );
 		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[site_ontology]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Describe the site to agents and label passages with their type and language', 'ai-chat-for-amazon-bedrock' ) . '</label>';
 		echo '<p class="description">' . esc_html__( 'Adds a read-only describe-site ability and MCP tool. It lists what the site holds as schema.org types, with counts per language, how they relate and which data an AI may see, using the same IDs as Yoast SEO and WooCommerce. Passages given to the model also say whether they come from a post, page or product, and in which language. Only published, public content is described.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+	public function business_metrics_render() {
+		$checked = ! empty( $this->option( 'business_metrics', false ) );
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[business_metrics]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Show figures for content, questions, AI usage and the store, and let agents query them', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Adds a Business insights screen with periods, comparisons, charts, a CSV download and questions in words, and a read-only query-metrics ability and MCP tool. Figures are read from data the site already keeps, including WooCommerce Analytics. Figures from fewer than five questions or orders are withheld, question figures stay on the screen, and no figure is sent to Amazon Bedrock.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function editor_assistant_render() {
 		$checked = ! empty( $this->option( 'editor_assistant', false ) );
@@ -1615,6 +1728,7 @@ class AI_Chat_Bedrock_Admin {
 		$output['abilities_tools']     = ! empty( $input['abilities_tools'] );
 		$output['site_abilities']      = ! empty( $input['site_abilities'] );
 		$output['site_ontology']       = ! empty( $input['site_ontology'] );
+		$output['business_metrics']    = ! empty( $input['business_metrics'] );
 		$output['editor_assistant']    = ! empty( $input['editor_assistant'] );
 		$output['log_conversations']   = ! empty( $input['log_conversations'] );
 		$output['media_assistant']     = ! empty( $input['media_assistant'] );
@@ -1802,6 +1916,7 @@ class AI_Chat_Bedrock_Admin {
 		'popup_site_wide',
 		'site_abilities',
 		'site_ontology',
+		'business_metrics',
 		'show_sources',
 		'speech_replies',
 		'speech_posts',

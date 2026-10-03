@@ -180,6 +180,14 @@ check_set( true === $saved['site_ontology'], 'The site description switch is sav
 $saved = save_tab( $admin, array( 'site_ontology' ), array() );
 check_set( false === $saved['site_ontology'] && true === $saved['site_abilities'], 'An unticked site description is saved as off, and nothing else changes.' );
 
+// Business insights are saved from the same tab, and unticking switches them off.
+$saved = save_tab( $admin, array( 'business_metrics' ), array( 'business_metrics' => '1' ) );
+check_set( true === $saved['business_metrics'], 'The business insights switch is saved.' );
+$saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask us' ) );
+check_set( true === $saved['business_metrics'], 'Another tab does not switch business insights off.' );
+$saved = save_tab( $admin, array( 'business_metrics' ), array() );
+check_set( false === $saved['business_metrics'] && true === $saved['site_abilities'], 'Unticked business insights are saved as off, and nothing else changes.' );
+
 // Unticking the owner field clears it, and its companions follow the submission.
 $saved = save_tab( $admin, array( 'log_conversations' ), array( 'log_retention_days' => '7' ) );
 check_set( false === $saved['log_conversations'] && 7 === $saved['log_retention_days'], 'An unticked log switch is saved as off with its retention.' );

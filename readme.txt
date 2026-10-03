@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.61.0
+Stable tag: 1.62.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -464,6 +464,10 @@ Each property has a sensitivity class, with a rule for each use: public content 
 
 Given a post ID, it describes one published item with its terms and published translations. Passages given to the chat model also say whether they come from a post, page or product, and in which language. Nothing is stored, and drafts, private and password-protected posts are never described.
 
+= What do business insights show, and to whom? =
+
+Turn on Business insights under Answer grounding. Editors see content figures, administrators also see AI usage and question figures, and store figures need the WooCommerce reports capability. Store figures come from WooCommerce Analytics with its status and date settings. Any figure counted from fewer than five orders or questions is withheld, together with one more where it could be worked out from the total. Agents get the same figures through the query-metrics ability and MCP tool, except those about visitors' questions.
+
 = Is there a command line? =
 
 `wp ai-chat-bedrock index` builds the semantic index without keeping a browser tab open, with `--batch`, `--max` and `--force`. `index-status` reports coverage, `diagnose` runs the same checks as the admin screen with an optional `--live` Bedrock request, and `usage` prints requests and tokens per day or per model. Useful in a deploy step or a cron job.
@@ -502,6 +506,12 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.62.0 =
+* Business insights, under Answer grounding and off by default: a screen with figures over a period. Content published, chat questions, unanswered and unhelpful answers, AI requests, tokens and failures and, with WooCommerce, orders, net sales, items sold and average order value from WooCommerce Analytics. Compare with the previous period or a year earlier, split by day, week or month, break down by product, category, content type, language or model, and download the figure as CSV.
+* Ask in words: Amazon Bedrock turns a question such as "net sales by week this quarter" into one of these queries, which is shown so you can see how it was read. Bedrock never sees a figure.
+* A read-only query-metrics ability and MCP tool give agents the same figures within the site description's data rules. Figures about visitors' questions stay on the screen, store figures need the WooCommerce reports capability, and anything counted from fewer than five orders or questions is withheld.
+* Suggested privacy policy text covers business insights when they are on.
+
 = 1.61.0 =
 * Site description, under Answer grounding and off by default: a read-only describe-site ability and MCP tool that tell an agent what the site holds, as schema.org types with published counts per language, how the types relate, and which data an AI may see. IDs match the ones Yoast SEO and WooCommerce print. With a post ID it describes one published item with its terms, offer and published translations.
 * With the site description on, passages given to the chat model say whether they come from a post, page or product, and in which language, and the MCP server points agents to describe_site.
@@ -520,17 +530,12 @@ what a good answer says.
 * Amazon S3 Vectors: queries ask for the metadata filter to be applied before the similarity search, so a site sharing an index, or one language of a multilingual site, gets a full set of matches. Passages of a post type removed from the search are filtered out too. An index that refuses the setting is queried as before. Diagnostics says when an index is CLASSIC.
 * The IAM policy in Diagnostics includes `bedrock:Rerank` and the reranking model when reranking is on.
 
-= 1.57.0 =
-* WordPress AI Client: Bedrock is now a full provider. Text models take images in the prompt where the model reads them, return JSON on request (checked, and constrained by the schema where the model takes one), give several candidates, and honour top P and stop sequences. Core is told exactly which models can do what, so it no longer picks a model that fails.
-* Image generation through the AI Client with Stability AI Stable Image Core, Stable Diffusion 3.5 Large and Stable Image Ultra, chosen on the Model tab and off by default. Stable Diffusion 3.5 also edits a supplied image. Prompts are checked with the site's guardrail first.
-* Media Library: Remove background and Upscale 4× on JPEG, PNG and WebP images, when an image model is chosen and the media helpers are on. Results are saved as new images and the original is unchanged.
-* Embeddings through the AI Client on WordPress 7.2 and later, with Amazon Titan and Cohere models. Titan Text Embeddings V2 takes a vector size of 256, 512 or 1024.
-* The IAM policy in Diagnostics includes the image models when image generation is on.
-* When a Converse model refuses top P, stop sequences or a schema, the request is retried once without it and that is remembered for the model, as for temperature. Claude models that refuse a schema are retried without it too.
-
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.62.0 =
+Optional business insights: content, chat, AI usage and WooCommerce figures over a period, asked in words or queried by agents, with small counts withheld. Off until enabled.
 
 = 1.61.0 =
 An optional site description for agents: schema.org types, counts per language, relations and data-sensitivity rules, through an ability and the MCP server. Off until enabled.
@@ -777,6 +782,8 @@ Conversation logging is disabled by default, and with it off no chat content is 
 Conversation memory is off by default. In browser-tab mode the conversation is kept in the visitor's own session storage and nothing is stored on the site. When saving for signed-in visitors is on, their questions, answers and the links listed under each answer are stored in their user data on this site, up to 30 messages per chat, for the configured number of days. They are deleted when the visitor clears the chat or the option is switched off, and are reachable through Tools > Export Personal Data and Erase Personal Data.
 
 Reading aloud is off by default. With Listen under answers on, the text of an answer is sent to Amazon Polly when the visitor presses Listen, and the audio is not kept. With Listen to this post on, the text a signed-out visitor can read on the post is sent to Amazon Polly the first time someone listens, and the audio is kept in the uploads folder until the post changes or the option is switched off. Nothing about the visitor is sent.
+
+Business insights are off by default. They are worked out on the site from content, the conversation log, usage counters and WooCommerce Analytics, and only totals are shown; those from fewer than five orders or questions are withheld. Asking in words sends the question and the list of figures to Amazon Bedrock, never a figure.
 
 The plugin creates no custom database tables; the optional log is kept in a WordPress option and is reachable through Tools > Export Personal Data and Erase Personal Data. Request limiting stores a salted hash-derived transient counter for each visitor for up to one minute. Debug logging is optional and records only redacted operational metadata. Administrators are responsible for disclosing these data flows and obtaining any consent required in their jurisdiction.
 

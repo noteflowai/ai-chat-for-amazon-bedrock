@@ -104,6 +104,41 @@ $init2    = $call( array( 'jsonrpc' => '2.0', 'id' => 44, 'method' => 'initializ
 check_server( false !== strpos( $discover['result']['instructions'], 'Call describe_site first' ) && false !== strpos( $init2['result']['instructions'], 'Call describe_site first' ), 'The instructions point to describe_site.' );
 unset( $GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] );
 
+// Business figures are a tool only while the site turns them on and the account may read one.
+class AI_Chat_Bedrock_Metrics {
+	public static function enabled() { return ! empty( $GLOBALS['aicfab_metrics_on'] ); }
+	public static function available( $usage ) { return 'agent' === $usage ? $GLOBALS['aicfab_metrics_available'] : array(); }
+	public static function input_schema( $usage, $current_user = false ) {
+		$GLOBALS['aicfab_metrics_schema_for'] = array( $usage, $current_user );
+		return array( 'type' => 'object', 'properties' => array( 'metric' => array( 'type' => 'string', 'enum' => array_keys( $GLOBALS['aicfab_metrics_available'] ) ) ), 'required' => array( 'metric' ) );
+	}
+	public static function query( $args, $usage ) {
+		$GLOBALS['aicfab_metrics_queried'] = array( $args, $usage );
+		return array( 'metric' => $args['metric'], 'value' => 14, 'hidden' => false );
+	}
+}
+$metric_names = function () use ( $call ) {
+	$list = $call( array( 'jsonrpc' => '2.0', 'id' => 45, 'method' => 'tools/list' ) );
+	return array_map( function ( $tool ) { return $tool['name']; }, $list['result']['tools'] );
+};
+$GLOBALS['aicfab_metrics_on']        = false;
+$GLOBALS['aicfab_metrics_available'] = array( 'orders' => array() );
+check_server( ! in_array( 'query_metrics', $metric_names(), true ), 'query_metrics stays hidden while business insights are off.' );
+$off = $call( array( 'jsonrpc' => '2.0', 'id' => 46, 'method' => 'tools/call', 'params' => array( 'name' => 'query_metrics', 'arguments' => array( 'metric' => 'orders' ) ) ) );
+check_server( isset( $off['error'] ) && ! isset( $GLOBALS['aicfab_metrics_queried'] ), 'query_metrics cannot be called while business insights are off.' );
+$GLOBALS['aicfab_metrics_on']        = true;
+$GLOBALS['aicfab_metrics_available'] = array();
+check_server( ! in_array( 'query_metrics', $metric_names(), true ), 'query_metrics stays hidden from an account that may read no figure.' );
+$GLOBALS['aicfab_metrics_available'] = array( 'orders' => array() );
+check_server( in_array( 'query_metrics', $metric_names(), true ), 'query_metrics is listed once business insights are on.' );
+check_server( array( 'agent', true ) === $GLOBALS['aicfab_metrics_schema_for'], 'The tool lists only the figures the agent may read for this account.' );
+$init3 = $call( array( 'jsonrpc' => '2.0', 'id' => 47, 'method' => 'initialize', 'params' => array( 'protocolVersion' => '2025-11-25' ) ) );
+check_server( false !== strpos( $init3['result']['instructions'], 'Call query_metrics' ), 'The instructions point to query_metrics while it is listed.' );
+$on = $call( array( 'jsonrpc' => '2.0', 'id' => 48, 'method' => 'tools/call', 'params' => array( 'name' => 'query_metrics', 'arguments' => array( 'metric' => 'orders', 'period' => 'last_month' ) ) ) );
+check_server( isset( $on['result'] ) && empty( $on['result']['isError'] ), 'query_metrics answers once business insights are on.' );
+check_server( array( array( 'metric' => 'orders', 'period' => 'last_month' ), 'agent' ) === $GLOBALS['aicfab_metrics_queried'], 'The tool queries as an agent, so the data rules for agents apply.' );
+$GLOBALS['aicfab_metrics_on'] = false;
+
 // Unknown methods and unknown tools are rejected with JSON-RPC errors.
 $unknown = $call( array( 'jsonrpc' => '2.0', 'id' => 5, 'method' => 'tools/destroy' ) );
 check_server( -32601 === $unknown['error']['code'], 'Unknown methods must return -32601.' );

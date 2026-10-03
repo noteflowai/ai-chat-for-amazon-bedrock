@@ -761,7 +761,12 @@ class AI_Chat_Bedrock_Ontology {
 		return $counts;
 	}
 
-	private static function public_post_types() {
+	/**
+	 * Public post types, without attachments.
+	 *
+	 * @return array
+	 */
+	public static function public_post_types() {
 		$types = get_post_types( array( 'public' => true ), 'names' );
 		return array_values( array_diff( array_map( 'strval', (array) $types ), array( 'attachment' ) ) );
 	}

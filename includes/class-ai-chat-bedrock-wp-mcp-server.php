@@ -170,6 +170,24 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 	}
 
 	/**
+	 * Business figures, offered when the site turns them on and the account may read one.
+	 *
+	 * @return array
+	 */
+	private function metrics_tools() {
+		if ( ! class_exists( 'AI_Chat_Bedrock_Metrics' ) || ! AI_Chat_Bedrock_Metrics::enabled() || empty( AI_Chat_Bedrock_Metrics::available( 'agent' ) ) ) {
+			return array();
+		}
+		return array(
+			'query_metrics' => array(
+				'name'        => 'query_metrics',
+				'description' => 'Return one site figure for a period: content published, AI usage and, on a store, orders and sales from WooCommerce Analytics. Optionally split by day, week or month, broken down by one dimension, and compared with an earlier period. Figures from fewer than five orders are withheld and returned as null with hidden set. Read only.',
+				'parameters'  => AI_Chat_Bedrock_Metrics::input_schema( 'agent', true ),
+			),
+		);
+	}
+
+	/**
 	 * What the server tells a client about itself.
 	 *
 	 * @return string
@@ -178,6 +196,9 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 		$text = __( 'Read-only WordPress content tools. Draft creation is available only when the site enables it and the account has permission.', 'ai-chat-for-amazon-bedrock' );
 		if ( class_exists( 'AI_Chat_Bedrock_Ontology' ) && AI_Chat_Bedrock_Ontology::enabled() ) {
 			$text .= ' ' . __( 'Call describe_site first to learn what the site holds and which data you may see.', 'ai-chat-for-amazon-bedrock' );
+		}
+		if ( ! empty( $this->metrics_tools() ) ) {
+			$text .= ' ' . __( 'Call query_metrics for figures such as orders or sales over a period, instead of counting items yourself.', 'ai-chat-for-amazon-bedrock' );
 		}
 		return $text;
 	}
@@ -188,7 +209,7 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 	 * @return array
 	 */
 	private function available_tools() {
-		$tools = array_merge( $this->tools, $this->ontology_tools(), $this->ability_tools() );
+		$tools = array_merge( $this->tools, $this->ontology_tools(), $this->metrics_tools(), $this->ability_tools() );
 		return (array) apply_filters( 'ai_chat_bedrock_wp_mcp_tools', $tools );
 	}
 
@@ -489,6 +510,11 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 					return new WP_Error( 'tool_unavailable', __( 'This tool is not enabled on this site.', 'ai-chat-for-amazon-bedrock' ) );
 				}
 				return AI_Chat_Bedrock_Ontology::describe( $arguments );
+			case 'query_metrics':
+				if ( empty( $this->metrics_tools() ) ) {
+					return new WP_Error( 'tool_unavailable', __( 'This tool is not enabled on this site.', 'ai-chat-for-amazon-bedrock' ) );
+				}
+				return AI_Chat_Bedrock_Metrics::query( $arguments, 'agent' );
 		}
 
 		if ( ! class_exists( 'AI_Chat_Bedrock_Site_Abilities' ) || ! AI_Chat_Bedrock_Site_Abilities::enabled() ) {
