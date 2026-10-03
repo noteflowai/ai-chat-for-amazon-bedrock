@@ -474,7 +474,7 @@ class AI_Chat_Bedrock_Retrieval {
 
 		$passages = array();
 		foreach ( $search->posts as $post ) {
-			if ( ! class_exists( 'AI_Chat_Bedrock_Content' ) || ! AI_Chat_Bedrock_Content::is_public( $post ) ) {
+			if ( ! class_exists( 'AI_Chat_Bedrock_Content' ) || ! AI_Chat_Bedrock_Content::is_answerable( $post ) ) {
 				continue;
 			}
 			// WordPress matched the stored markup, which can include members-only sections, so

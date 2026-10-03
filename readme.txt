@@ -90,7 +90,8 @@ Point the chat at your published pages and it answers from them, citing what it 
 embedding model and it matches by meaning rather than by shared words, so "when will my parcel
 arrive" can find a page titled "Getting parcels to you". Keep the vectors in Amazon S3 Vectors and
 every passage of every page is searched, in the visitor's language first. Only what a signed-out
-visitor can read is ever indexed or quoted, so members-only sections stay out of answers. Add a
+visitor can read is ever indexed or quoted, so members-only sections stay out of answers, and pages
+your SEO plugin keeps out of search engines stay out too. Add a
 reranking model and the passages that best answer the question are kept, from your pages and a
 knowledge base alike. Questions
 the site does not cover return no context, and the Conversations screen lists them as content gaps
@@ -473,6 +474,8 @@ what a good answer says.
 * Demo mode, for the Live Preview on WordPress.org: when `AI_CHAT_BEDROCK_DEMO` is defined and no AWS credentials are found, the chat quotes the passage of the site's pages that best matches each question and says that no AI model was called.
 * Analytics events, under Chat and off by default: opening the chat, questions, answers, followed sources and products, ratings and contact requests go to Google Analytics (Site Kit, MonsterInsights), Google Tag Manager, Matomo or Plausible, with no message text. Mark `ai_chat_contact` as a key event to count contact requests as conversions.
 * Works with the WP Consent API, used by Complianz, CookieYes and others: what the chat keeps in session storage is listed in their cookie policy as functional, and analytics events wait for consent to statistics.
+* Pages that Yoast SEO, Rank Math, SEOPress or All in One SEO keep out of search engines (noindex), such as a thank-you page with a download, are no longer used for answers or by agents. Answer grounding > Pages hidden from search includes them again.
+* A heading or question, as in Yoast SEO and Rank Math FAQ blocks, now stays in the same passage as its answer. Indexed pages are processed again once.
 * Reading aloud spends money only on new audio, and that is now shared fairly: one visitor may have at most a quarter of the daily characters made (30,000 by default), crawlers and scripts cannot have posts read, and saved audio still plays for everyone. Listen to this post can be limited to signed-in visitors.
 * Fixed: with LiteSpeed Cache, WP Rocket or Perfmatters delaying scripts until the first interaction, that first tap on the chat button or Send did nothing, notably on phones, and Send could reload the page. The tap is now kept and acted on once the chat has loaded. The chat's own script is still delayed as the site has set it.
 
@@ -483,16 +486,10 @@ what a good answer says.
 * Diagnostics and the Plugins screen link to the support forum, and the FAQ is shorter, with the longer answers on GitHub.
 * Once the chat has answered at least 20 questions over more than a week, administrators see one request for a review on the plugin's own screens. Closing it or following a link ends it for good, and the `ai_chat_bedrock_review_prompt` filter turns it off.
 
-= 1.62.0 =
-* Business insights, under Answer grounding and off by default: a screen with figures over a period. Content published, chat questions, unanswered and unhelpful answers, AI requests, tokens and failures and, with WooCommerce, orders, net sales, items sold and average order value from WooCommerce Analytics. Compare with the previous period or a year earlier, split by day, week or month, break down by product, category, content type, language or model, and download the figure as CSV.
-* Ask in words: Amazon Bedrock turns a question such as "net sales by week this quarter" into one of these queries, which is shown so you can see how it was read. Bedrock never sees a figure.
-* A read-only query-metrics ability and MCP tool give agents the same figures within the site description's data rules. Figures about visitors' questions stay on the screen, store figures need the WooCommerce reports capability, and anything counted from fewer than five orders or questions is withheld.
-* Suggested privacy policy text covers business insights when they are on.
-
 == Upgrade Notice ==
 
 = 1.64.0 =
-Optional contact requests: visitors leave their details for a person to reply, with consent, spam checks and export. Abilities of other plugins are chosen by the question, and a model's first use in an AWS account says what is missing.
+Pages your SEO plugin marks noindex are no longer used for answers; Answer grounding can include them again. Optional contact requests and analytics events, WP Consent API support, and fairer read-aloud limits.
 
 = 1.63.0 =
 Amazon Bedrock appears under Settings > Connectors: connected through the IAM role, or with an API key that is checked and stored encrypted. Renamed AI Chatbot & Agents for Amazon Bedrock.

@@ -1064,6 +1064,7 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'enable_site_context', __( 'Use site content', 'ai-chat-for-amazon-bedrock' ), 'enable_site_context_render', 'aicfab_knowledge' );
 		$this->field( 'context_results', __( 'Passages per answer', 'ai-chat-for-amazon-bedrock' ), 'context_results_render', 'aicfab_knowledge' );
 		$this->field( 'show_sources', __( 'Show sources', 'ai-chat-for-amazon-bedrock' ), 'show_sources_render', 'aicfab_knowledge' );
+		$this->field( 'include_noindex', __( 'Pages hidden from search', 'ai-chat-for-amazon-bedrock' ), 'include_noindex_render', 'aicfab_knowledge' );
 		$this->field( 'embedding_model_id', __( 'Semantic search', 'ai-chat-for-amazon-bedrock' ), 'embedding_model_render', 'aicfab_knowledge' );
 		$this->field( 'vector_store', __( 'Vector store', 'ai-chat-for-amazon-bedrock' ), 'vector_store_render', 'aicfab_knowledge' );
 		$this->field( 'knowledge_base_id', __( 'Bedrock knowledge base ID', 'ai-chat-for-amazon-bedrock' ), 'knowledge_base_id_render', 'aicfab_knowledge' );
@@ -1233,6 +1234,11 @@ class AI_Chat_Bedrock_Admin {
 		$value = absint( $this->option( 'context_results', 3 ) );
 		echo '<input type="number" id="aicfab_field_context_results" class="small-text" name="ai_chat_bedrock_settings[context_results]" value="' . esc_attr( max( 1, min( 8, $value ) ) ) . '" min="1" max="8">';
 		echo '<p class="description">' . esc_html__( 'More passages improve grounding but increase input tokens and cost.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+	public function include_noindex_render() {
+		$checked = ! empty( $this->option( 'include_noindex', false ) );
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[include_noindex]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Also answer from pages that search engines are told not to index', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Off by default. A page kept out of search engines, such as a thank-you page with a download or a campaign landing page, is usually kept out for a reason, so the chat and agents leave it out too. The noindex settings of Yoast SEO, Rank Math and SEOPress are read for each page and post type; All in One SEO for each page. Reading a post aloud is not affected.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function show_sources_render() {
 		$checked = ! empty( $this->option( 'show_sources', false ) );
@@ -1837,6 +1843,7 @@ class AI_Chat_Bedrock_Admin {
 		$output['enable_site_context'] = ! empty( $input['enable_site_context'] );
 		$output['context_results']     = max( 1, min( 8, isset( $input['context_results'] ) ? absint( $input['context_results'] ) : 3 ) );
 		$output['show_sources']        = ! empty( $input['show_sources'] );
+		$output['include_noindex']     = ! empty( $input['include_noindex'] );
 		$output['abilities_tools']     = ! empty( $input['abilities_tools'] );
 		$output['site_abilities']      = ! empty( $input['site_abilities'] );
 		$output['site_ontology']       = ! empty( $input['site_ontology'] );
@@ -2042,6 +2049,7 @@ class AI_Chat_Bedrock_Admin {
 		'site_ontology',
 		'business_metrics',
 		'show_sources',
+		'include_noindex',
 		'speech_replies',
 		'speech_posts',
 		'leads_enabled',

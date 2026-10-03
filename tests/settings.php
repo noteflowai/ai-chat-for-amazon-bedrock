@@ -259,6 +259,17 @@ check_set( '' === $saved['chat_memory'] && AI_Chat_Bedrock_Chat_History::DEFAULT
 $saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'tab', 'chat_memory_days' => '14' ) );
 check_set( 'tab' === $saved['chat_memory'] && 14 === $saved['chat_memory_days'], 'Tab memory is saved.' );
 
+// --- Pages hidden from search ----------------------------------------------------
+
+$saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' ) );
+check_set( empty( $saved['include_noindex'] ), 'Pages hidden from search engines are left out by default.' );
+$saved = save_tab( $admin, array( 'include_noindex' ), array( 'include_noindex' => '1' ) );
+check_set( true === $saved['include_noindex'], 'They can be included.' );
+$saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'light' ) );
+check_set( true === $saved['include_noindex'], 'Another tab keeps the choice.' );
+$saved = save_tab( $admin, array( 'include_noindex' ), array() );
+check_set( false === $saved['include_noindex'], 'An unticked box leaves them out again.' );
+
 // --- Analytics events ------------------------------------------------------------
 
 $saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' ) );

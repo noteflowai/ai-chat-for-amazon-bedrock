@@ -123,7 +123,7 @@ class AI_Chat_Bedrock_S3_Vectors {
 	 * @return string
 	 */
 	public static function reference( $model, $options = null ) {
-		return self::location( $options ) . '|' . $model . '|' . AI_Chat_Bedrock_Content::VERSION;
+		return self::location( $options ) . '|' . $model . '|' . AI_Chat_Bedrock_Content::index_version( $options );
 	}
 
 	/**
@@ -353,7 +353,7 @@ class AI_Chat_Bedrock_S3_Vectors {
 			}
 			$post = get_post( $hit['post_id'] );
 			// The index may lag behind the site: the live post decides.
-			if ( ! AI_Chat_Bedrock_Content::is_public( $post ) || ! in_array( $post->post_type, AI_Chat_Bedrock_Embeddings::post_types( $options ), true ) ) {
+			if ( ! AI_Chat_Bedrock_Content::is_answerable( $post, $options ) || ! in_array( $post->post_type, AI_Chat_Bedrock_Embeddings::post_types( $options ), true ) ) {
 				continue;
 			}
 
