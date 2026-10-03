@@ -412,6 +412,15 @@ class AI_Chat_Bedrock_Usage {
 		delete_option( self::OPTION );
 	}
 
+	/**
+	 * Stored counters by UTC day, for reports. Read only.
+	 *
+	 * @return array Day (Y-m-d) => counters, as stored.
+	 */
+	public static function days() {
+		return self::prune( self::all() );
+	}
+
 	private static function all() {
 		$totals = get_option( self::OPTION, array() );
 		return is_array( $totals ) ? $totals : array();

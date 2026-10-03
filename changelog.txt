@@ -3,6 +3,12 @@ Full changelog. The readme lists the latest releases only.
 
 == Changelog ==
 
+= 1.62.0 =
+* Business insights, under Answer grounding and off by default: a screen with figures over a period. Content published, chat questions, unanswered and unhelpful answers, AI requests, tokens and failures and, with WooCommerce, orders, net sales, items sold and average order value from WooCommerce Analytics. Compare with the previous period or a year earlier, split by day, week or month, break down by product, category, content type, language or model, and download the figure as CSV.
+* Ask in words: Amazon Bedrock turns a question such as "net sales by week this quarter" into one of these queries, which is shown so you can see how it was read. Bedrock never sees a figure.
+* A read-only query-metrics ability and MCP tool give agents the same figures within the site description's data rules. Figures about visitors' questions stay on the screen, store figures need the WooCommerce reports capability, and anything counted from fewer than five orders or questions is withheld.
+* Suggested privacy policy text covers business insights when they are on.
+
 = 1.61.0 =
 * Site description, under Answer grounding and off by default: a read-only describe-site ability and MCP tool that tell an agent what the site holds, as schema.org types with published counts per language, how the types relate, and which data an AI may see. IDs match the ones Yoast SEO and WooCommerce print. With a post ID it describes one published item with its terms, offer and published translations.
 * With the site description on, passages given to the chat model say whether they come from a post, page or product, and in which language, and the MCP server points agents to describe_site.

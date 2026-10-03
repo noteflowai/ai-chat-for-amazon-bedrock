@@ -1398,6 +1398,9 @@ class AI_Chat_Bedrock_WooCommerce {
 			$paragraphs[] = __( 'When you ask about products, the product details shown in the shop, such as prices and stock, are sent to Amazon Bedrock with your question.', 'ai-chat-for-amazon-bedrock' );
 			$paragraphs[] = __( 'If the store lets customers ask about their orders and you are signed in, a question about orders or delivery sends your recent orders to Amazon Bedrock: the order number, dates, status, items, total, shipping method and tracking number. Your address, email address, phone number and payment details are never sent.', 'ai-chat-for-amazon-bedrock' );
 		}
+		if ( class_exists( 'AI_Chat_Bedrock_Metrics' ) && AI_Chat_Bedrock_Metrics::enabled() ) {
+			$paragraphs[] = __( 'Staff of this site can see totals worked out on this site from orders, questions to the chat and usage counts, such as orders per week. The totals do not identify anyone, and those counted from fewer than five orders or questions are withheld.', 'ai-chat-for-amazon-bedrock' );
+		}
 		if ( class_exists( 'AI_Chat_Bedrock_Images' ) && AI_Chat_Bedrock_Images::enabled() ) {
 			$paragraphs[] = __( 'When this site generates or edits an image with AI, the description of the image, and any image being edited, are sent to Stability AI models on Amazon Bedrock.', 'ai-chat-for-amazon-bedrock' );
 		}

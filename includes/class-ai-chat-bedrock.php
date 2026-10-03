@@ -56,6 +56,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-abilities.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-site-abilities.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-ontology.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-metrics.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-tool-policy.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-tool-log.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-tool-runner.php';
@@ -110,6 +111,8 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'admin_notices', $admin, 'render_media_notice' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_export_conversations', $admin, 'handle_export_conversations' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_export_gaps', $admin, 'handle_export_gaps' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_export_metrics', $admin, 'handle_export_metrics' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_metrics_ask', $admin, 'handle_metrics_ask' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_export_settings', $admin, 'handle_export_settings' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_import_settings', $admin, 'handle_import_settings' );
 		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_index_embeddings', $admin, 'ajax_index_embeddings' );
@@ -230,6 +233,10 @@ class AI_Chat_Bedrock {
 		$ontology = new AI_Chat_Bedrock_Ontology();
 		$this->loader->add_action( 'wp_abilities_api_init', $ontology, 'register' );
 		$this->loader->add_filter( 'ai_chat_bedrock_retrieved_passages', 'AI_Chat_Bedrock_Ontology', 'annotate_passages', 5 );
+
+		$metrics = new AI_Chat_Bedrock_Metrics();
+		$this->loader->add_action( 'wp_abilities_api_init', $metrics, 'register' );
+		$this->loader->add_filter( 'ai_chat_bedrock_ontology_metrics', 'AI_Chat_Bedrock_Metrics', 'describe_metrics' );
 	}
 
 	private function init_wp_mcp_server() {

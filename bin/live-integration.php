@@ -75,8 +75,9 @@ aicfab_live(
  */
 $aicfab_had_abilities = get_option( 'ai_chat_bedrock_site_abilities', false );
 update_option( 'ai_chat_bedrock_site_abilities', 1 );
-// The site description is switched on through its filter, so no setting is written.
+// The site description and business insights are switched on through filters, so no setting is written.
 add_filter( 'ai_chat_bedrock_ontology_enabled', '__return_true' );
+add_filter( 'ai_chat_bedrock_metrics_enabled', '__return_true' );
 
 if ( ! function_exists( 'wp_get_abilities' ) ) {
 	aicfab_note( 'skipped: this WordPress has no Abilities API' );
@@ -147,6 +148,7 @@ if ( ! function_exists( 'wp_get_abilities' ) ) {
 		$aicfab_writers ? implode( ', ', $aicfab_writers ) : 'none declared'
 	);
 	aicfab_live( isset( $aicfab_ours['ai-chat-bedrock/describe-site'] ), 'the site description registers as an ability' );
+	aicfab_live( isset( $aicfab_ours['ai-chat-bedrock/query-metrics'] ), 'business insights register as an ability' );
 }
 
 // --- The site description, against the real post types and counts ---------------
@@ -179,6 +181,87 @@ aicfab_live(
 	5 === has_filter( 'ai_chat_bedrock_retrieved_passages', array( 'AI_Chat_Bedrock_Ontology', 'annotate_passages' ) ),
 	'retrieved passages are labelled before other filters see them'
 );
+
+// --- Business insights, against WordPress's own counts and WooCommerce Analytics ---
+
+// Figures are read as a person who may see them all; the script itself runs as nobody.
+$aicfab_admins = get_users(
+	array(
+		'role'   => 'administrator',
+		'number' => 1,
+		'fields' => 'ID',
+	)
+);
+if ( empty( $aicfab_admins ) ) {
+	aicfab_note( 'skipped: no administrator to read business insights as' );
+} else {
+	wp_set_current_user( (int) $aicfab_admins[0] );
+	$aicfab_catalog = AI_Chat_Bedrock_Metrics::catalog();
+	$aicfab_store   = array_keys( wp_list_filter( $aicfab_catalog, array( 'source' => 'store' ) ) );
+	aicfab_live(
+		class_exists( 'WooCommerce' ) === ( array() !== $aicfab_store ),
+		'store figures are offered exactly when WooCommerce is active',
+		implode( ', ', $aicfab_store )
+	);
+
+	// Counted here straight from the posts table, so a WP_Query argument WordPress ignores shows up.
+	$aicfab_published = AI_Chat_Bedrock_Metrics::query(
+		array(
+			'metric' => 'content_published',
+			'period' => 'last_30_days',
+		)
+	);
+	if ( is_wp_error( $aicfab_published ) ) {
+		aicfab_live( false, 'published items over the last 30 days can be read', $aicfab_published->get_error_message() );
+	} else {
+		global $wpdb;
+		$aicfab_counted = AI_Chat_Bedrock_Ontology::public_post_types();
+		$aicfab_in    = implode( ', ', array_fill( 0, count( $aicfab_counted ), '%s' ) );
+		$aicfab_want  = $aicfab_counted ? (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ($aicfab_in) AND post_date >= %s AND post_date <= %s", // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				array_merge( $aicfab_counted, array( $aicfab_published['period']['after'] . ' 00:00:00', $aicfab_published['period']['before'] . ' 23:59:59' ) )
+			)
+		) : 0;
+		aicfab_live(
+			$aicfab_want === $aicfab_published['value'],
+			'published items over the last 30 days match the posts table',
+			$aicfab_published['value'] . ' against ' . $aicfab_want
+		);
+	}
+
+	// Through WooCommerce's own Analytics routes, which the suites can only imitate.
+	if ( in_array( 'net_revenue', $aicfab_store, true ) ) {
+		$aicfab_sales = AI_Chat_Bedrock_Metrics::query(
+			array(
+				'metric'   => 'net_revenue',
+				'period'   => 'last_30_days',
+				'interval' => 'week',
+			)
+		);
+		aicfab_live(
+			is_array( $aicfab_sales ) && ! empty( $aicfab_sales['series'] ),
+			'net sales by week are read from WooCommerce Analytics',
+			is_wp_error( $aicfab_sales ) ? $aicfab_sales->get_error_message() : count( $aicfab_sales['series'] ) . ' weeks'
+		);
+	}
+
+	$aicfab_refused = AI_Chat_Bedrock_Metrics::query(
+		array(
+			'metric' => 'questions',
+			'period' => 'last_30_days',
+		),
+		'agent'
+	);
+	aicfab_live(
+		is_wp_error( $aicfab_refused ) && 'aicfab_metric_restricted' === $aicfab_refused->get_error_code(),
+		'figures about visitors\' questions are kept from agents',
+		is_wp_error( $aicfab_refused ) ? $aicfab_refused->get_error_code() : 'answered'
+	);
+	wp_set_current_user( 0 );
+}
+
+remove_filter( 'ai_chat_bedrock_metrics_enabled', '__return_true' );
 remove_filter( 'ai_chat_bedrock_ontology_enabled', '__return_true' );
 
 if ( false === $aicfab_had_abilities ) {
