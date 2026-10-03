@@ -135,6 +135,7 @@ if ( ! class_exists( 'AI_Chat_Bedrock_Bedrock_Errors', false ) ) {
 }
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-usage.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-translation.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-abilities.php';
 
 function aicfab_t_check( $condition, $message ) {
 	if ( ! $condition ) {

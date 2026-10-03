@@ -1074,3 +1074,87 @@
     outline: 2px solid var(--aicfab-accent);
     outline-offset: 2px;
 }
+
+/* Contact requests */
+.ai-chat-bedrock-container .ai-chat-bedrock-contact-open {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	min-height: 0;
+	width: auto;
+	font: inherit;
+	color: var(--aicfab-link);
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.ai-chat-bedrock-container .ai-chat-bedrock-contact-open:focus-visible {
+	outline: 2px solid var(--aicfab-link);
+	outline-offset: 2px;
+}
+
+.ai-chat-bedrock-contact {
+	display: grid;
+	gap: 8px;
+	margin: 0;
+}
+
+.ai-chat-bedrock-contact p {
+	margin: 0;
+}
+
+.ai-chat-bedrock-contact-field {
+	display: grid;
+	gap: 3px;
+}
+
+.ai-chat-bedrock-contact-field label {
+	font-weight: 600;
+	font-size: .9em;
+}
+
+.ai-chat-bedrock-contact-field small {
+	color: var(--aicfab-muted);
+}
+
+.ai-chat-bedrock-container .ai-chat-bedrock-contact input[type="text"],
+.ai-chat-bedrock-container .ai-chat-bedrock-contact input[type="email"],
+.ai-chat-bedrock-container .ai-chat-bedrock-contact input[type="tel"],
+.ai-chat-bedrock-container .ai-chat-bedrock-contact textarea {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 6px 8px;
+	border: 1px solid var(--aicfab-border);
+	border-radius: 8px;
+	background: var(--aicfab-surface);
+	color: var(--aicfab-text);
+	font: inherit;
+}
+
+.ai-chat-bedrock-contact-check label {
+	font-size: .9em;
+}
+
+.ai-chat-bedrock-contact-check a,
+.ai-chat-bedrock-contact-other a {
+	color: var(--aicfab-link);
+}
+
+.ai-chat-bedrock-contact-error:empty {
+	display: none;
+}
+
+.ai-chat-bedrock-contact-error {
+	color: var(--aicfab-danger);
+}
+
+/* A field only bots fill in, kept out of sight and out of the reading order. */
+.ai-chat-bedrock-contact-trap {
+	position: absolute !important;
+	left: -9999px !important;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}

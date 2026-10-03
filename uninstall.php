@@ -60,6 +60,25 @@ function ai_chat_bedrock_uninstall_site() {
 		delete_post_meta_by_key( $ai_chat_bedrock_meta_key );
 	}
 
+	// Contact requests left in the chat are private posts of their own type, and their meta
+	// goes with them. Export them from the Contact requests page before uninstalling.
+	do {
+		$ai_chat_bedrock_leads = get_posts(
+			array(
+				'post_type'        => 'aicfab_lead',
+				'post_status'      => 'any',
+				'posts_per_page'   => 200, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- deleted in batches.
+				'fields'           => 'ids',
+				'suppress_filters' => true,
+			)
+		);
+		foreach ( $ai_chat_bedrock_leads as $ai_chat_bedrock_lead ) {
+			wp_delete_post( (int) $ai_chat_bedrock_lead, true );
+		}
+		$ai_chat_bedrock_more = count( $ai_chat_bedrock_leads ) >= 200;
+	} while ( $ai_chat_bedrock_more );
+	delete_post_meta_by_key( '_aicfab_status' );
+
 	// Cached managed prompt text is stored in transients keyed by prompt and version.
 	$ai_chat_bedrock_prompt_pattern = $wpdb->esc_like( '_transient_aicfab_prompt_' ) . '%';
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $ai_chat_bedrock_prompt_pattern ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -90,7 +109,7 @@ function ai_chat_bedrock_uninstall_site() {
 	}
 
 	// Any scheduled index run or chat history pruning is removed with the plugin data.
-	foreach ( array( 'ai_chat_bedrock_index_embeddings', 'ai_chat_bedrock_prune_chat_history' ) as $ai_chat_bedrock_cron_hook ) {
+	foreach ( array( 'ai_chat_bedrock_index_embeddings', 'ai_chat_bedrock_prune_chat_history', 'ai_chat_bedrock_prune_leads' ) as $ai_chat_bedrock_cron_hook ) {
 		wp_clear_scheduled_hook( $ai_chat_bedrock_cron_hook );
 	}
 }

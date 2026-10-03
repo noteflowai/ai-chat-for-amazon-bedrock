@@ -364,6 +364,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-stream.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-history.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-woocommerce.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-speech.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-leads.php';
 require dirname( __DIR__ ) . '/public/class-ai-chat-bedrock-public.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 

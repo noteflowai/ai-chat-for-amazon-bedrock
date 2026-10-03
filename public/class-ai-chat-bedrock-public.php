@@ -55,7 +55,9 @@ class AI_Chat_Bedrock_Public {
 				'language'          => AI_Chat_Bedrock_Content::current_language(),
 				'product_id'        => AI_Chat_Bedrock_WooCommerce::current_product_id(),
 				'speech'            => $speech,
-				'i18n'              => array(
+				// Contact requests, when visitors can leave their details for a person.
+				'contact'           => AI_Chat_Bedrock_Leads::client_config( $options ),
+				'i18n'              => AI_Chat_Bedrock_Leads::strings() + array(
 					'generic_error'     => __( 'The request could not be completed. Please try again.', 'ai-chat-for-amazon-bedrock' ),
 					'stopped'           => __( 'Answer stopped.', 'ai-chat-for-amazon-bedrock' ),
 					'clear_confirm'     => __( 'Clear this conversation?', 'ai-chat-for-amazon-bedrock' ),

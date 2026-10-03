@@ -109,6 +109,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-images.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-retrieval.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-history.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-speech.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-leads.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 
 $failures = array();

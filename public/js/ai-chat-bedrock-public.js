@@ -89,6 +89,17 @@
     }
 
     /**
+     * The other way to reach the site may also be an email or phone link.
+     */
+    function contactUrl(value) {
+        const web = safeUrl(value);
+        if (web) {
+            return web;
+        }
+        return /^(mailto|tel):[^\s<>"]+$/i.test(String(value || '').trim()) ? String(value).trim() : '';
+    }
+
+    /**
      * Shorten text to a number of characters, counting as the server does.
      */
     function clip(value, max) {
@@ -206,6 +217,7 @@
         const $form = $container.find('.ai-chat-bedrock-form');
         const $suggestions = $container.find('.ai-chat-bedrock-suggestions');
         const $usage = $container.find('.ai-chat-bedrock-usage');
+        const contact = params.contact && params.contact.url ? params.contact : null;
         const profile = String($container.attr('data-profile') || '');
         // The profile's own greeting; the site-wide one replaced it when the chat was cleared.
         const welcome = $container.attr('data-welcome') || params.welcome_message;
@@ -472,6 +484,13 @@
                     data: JSON.stringify({ entry: entryId, rating: value, profile: profile })
                 }).done(function () {
                     $wrap.empty().append($('<span>', { 'class': 'ai-chat-bedrock-feedback-label' }).text(params.i18n.feedback_thanks || ''));
+                    // An answer that did not help is where a person can.
+                    if ('down' === value && contact) {
+                        $wrap.append(
+                            $('<span>', { 'class': 'ai-chat-bedrock-feedback-label' }).text(params.i18n.contact_offer || ''),
+                            $('<button>', { type: 'button', 'class': 'ai-chat-bedrock-copy ai-chat-bedrock-contact-offer' }).text(params.i18n.contact_open || '').on('click', openContact)
+                        );
+                    }
                 }).fail(function () {
                     $wrap.data('sent', false);
                     buttons.up.prop('disabled', false);
@@ -553,6 +572,139 @@
                 $meta.append(controls);
             }
         }
+
+        /**
+         * The form a visitor leaves their details in, as a message from the assistant. Only
+         * one is open at a time, and nothing is sent until they agree to it.
+         */
+        function openContact() {
+            if (!contact) {
+                return;
+            }
+            const $open = $messages.find('.ai-chat-bedrock-contact');
+            if ($open.length) {
+                $open.find('input, textarea').filter(':visible').first().trigger('focus');
+                return;
+            }
+            const i18n = params.i18n || {};
+            const id = 'aicfab-contact-' + Math.random().toString(36).slice(2, 10);
+            const $form = $('<form>', { 'class': 'ai-chat-bedrock-contact', novalidate: 'novalidate', 'aria-labelledby': id + '-title' });
+            const field = function (name, label, $control, help) {
+                const $wrap = $('<p>', { 'class': 'ai-chat-bedrock-contact-field' });
+                $control.attr({ id: id + '-' + name, name: name });
+                $wrap.append($('<label>', { 'for': id + '-' + name }).text(label), $control);
+                if (help) {
+                    $control.attr('aria-describedby', id + '-' + name + '-help');
+                    $wrap.append($('<small>', { id: id + '-' + name + '-help' }).text(help));
+                }
+                return $wrap;
+            };
+            const lastQuestion = (function () {
+                for (let i = history.length - 1; i >= 0; i--) {
+                    if ('user' === history[i].role) {
+                        return history[i].content;
+                    }
+                }
+                return '';
+            }());
+            const $error = $('<p>', { 'class': 'ai-chat-bedrock-contact-error', role: 'alert' });
+            const $send = $('<button>', { type: 'submit', 'class': 'button button-primary' }).text(i18n.contact_send || '');
+            const $cancel = $('<button>', { type: 'button', 'class': 'button button-secondary' }).text(i18n.contact_cancel || '');
+            const $consent = $('<input>', { type: 'checkbox', name: 'consent', value: '1', required: 'required' });
+            const $include = $('<input>', { type: 'checkbox', name: 'include', value: '1', checked: 'checked' });
+            const $consentLabel = $('<label>').append($consent, ' ', document.createTextNode(i18n.contact_consent || ''));
+            const privacy = safeUrl(contact.privacy_url);
+            if (privacy) {
+                $consentLabel.append(' ', $('<a>', { href: privacy, target: '_blank', rel: 'noopener noreferrer' }).text(i18n.contact_privacy || ''));
+            }
+
+            $form.append(
+                $('<p>', { id: id + '-title', 'class': 'ai-chat-bedrock-contact-title' }).text(i18n.contact_title || ''),
+                field('name', i18n.contact_name || '', $('<input>', { type: 'text', maxlength: 100, autocomplete: 'name' })),
+                field('email', i18n.contact_email || '', $('<input>', { type: 'email', maxlength: 200, autocomplete: 'email' }), contact.signed_in ? i18n.contact_email_own : ''),
+                field('phone', i18n.contact_phone || '', $('<input>', { type: 'tel', maxlength: 40, autocomplete: 'tel' })),
+                field('message', i18n.contact_message || '', $('<textarea>', { rows: 3, maxlength: 2000 }).val(lastQuestion)),
+                // Left empty by people, who never see it.
+                $('<p>', { 'class': 'ai-chat-bedrock-contact-trap', 'aria-hidden': 'true' }).append($('<input>', { type: 'text', name: 'website', tabindex: '-1', autocomplete: 'off' })),
+                history.length ? $('<p>', { 'class': 'ai-chat-bedrock-contact-check' }).append($('<label>').append($include, ' ', document.createTextNode(i18n.contact_include || ''))) : null,
+                $('<p>', { 'class': 'ai-chat-bedrock-contact-check' }).append($consentLabel),
+                $error,
+                $('<p>', { 'class': 'ai-chat-bedrock-contact-actions' }).append($send, ' ', $cancel)
+            );
+            const other = contactUrl(contact.link);
+            if (other) {
+                $form.append($('<p>', { 'class': 'ai-chat-bedrock-contact-other' }).append(
+                    $('<a>', { href: other, target: '_blank', rel: 'noopener noreferrer' }).text(i18n.contact_other || other)
+                ));
+            }
+
+            const bubble = appendBubble(false);
+            bubble.message.addClass('is-contact');
+            bubble.message.find('.ai-chat-bedrock-copy').remove();
+            bubble.content.append($form);
+            scrollToBottom();
+            $form.find('input[name="name"]').trigger('focus');
+
+            $cancel.on('click', function () {
+                bubble.message.remove();
+                $textarea.trigger('focus');
+            });
+
+            const send = function (body, retried) {
+                return $.ajax({
+                    url: contact.url,
+                    method: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    headers: params.rest_nonce ? { 'X-WP-Nonce': params.rest_nonce } : {},
+                    data: JSON.stringify(body)
+                }).then(null, function (xhr) {
+                    const data = xhr && xhr.responseJSON;
+                    if (!retried && isNonceError(xhr.status, data)) {
+                        return refreshNonce().then(function () {
+                            return send(body, true);
+                        });
+                    }
+                    return $.Deferred().reject(data && data.message ? data.message : (i18n.generic_error || '')).promise();
+                });
+            };
+
+            $form.on('submit', function (event) {
+                event.preventDefault();
+                const value = function (name) {
+                    return String($form.find('[name="' + name + '"]').val() || '').trim();
+                };
+                const hasContact = value('email') || value('phone').replace(/[^0-9]/g, '').length >= 5 || contact.signed_in;
+                if (!hasContact || !$consent.prop('checked')) {
+                    $error.text(i18n.contact_needed || '');
+                    return;
+                }
+                $error.text('');
+                $send.prop('disabled', true);
+                send({
+                    name: value('name'),
+                    email: value('email'),
+                    phone: value('phone'),
+                    message: value('message'),
+                    website: value('website'),
+                    consent: true,
+                    conversation: history.length && $include.prop('checked') ? history.slice(-20) : [],
+                    page: window.location.href,
+                    lang: params.language || '',
+                    profile: profile
+                }).then(function () {
+                    const thanks = i18n.contact_sent || '';
+                    bubble.content.empty().text(thanks);
+                    announce(thanks);
+                    scrollToBottom();
+                }, function (message) {
+                    $send.prop('disabled', false);
+                    $error.text(String(message || i18n.generic_error || ''));
+                });
+            });
+        }
+
+        $container.find('.ai-chat-bedrock-contact-open').on('click', openContact);
 
         function appendBubble(isUser, seconds) {
             hideSuggestions();

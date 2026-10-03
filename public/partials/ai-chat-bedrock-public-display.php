@@ -76,6 +76,9 @@ $color_scheme = AI_Chat_Bedrock_Chat_Request::color_scheme( isset( $options['cha
 		</div>
 	<?php endif; ?>
 	<div class="ai-chat-bedrock-footer">
+		<?php if ( '' === $sign_in_url && AI_Chat_Bedrock_Leads::enabled( $options ) ) : ?>
+			<button type="button" class="ai-chat-bedrock-contact-open"><?php echo esc_html( AI_Chat_Bedrock_Leads::button_label() ); ?></button>
+		<?php endif; ?>
 		<small><?php esc_html_e( 'Powered by Amazon Bedrock', 'ai-chat-for-amazon-bedrock' ); ?></small>
 		<small class="ai-chat-bedrock-usage" aria-live="polite"></small>
 	</div>
