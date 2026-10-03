@@ -29,6 +29,12 @@ class AI_Chat_Bedrock_Abilities {
 	const MAX_TOOLS = 20;
 	const MAX_TEXT  = 4000;
 
+	// Plugins (ability namespaces) an administrator switched off, so a plugin installed later is not off by surprise.
+	const OPTION_SOURCES_OFF = 'ai_chat_bedrock_ability_sources_off';
+
+	// How many registered abilities are looked at per request, however many a site has.
+	const MAX_SCAN = 200;
+
 	/**
 	 * Whether abilities were already registered in this request.
 	 *
@@ -57,6 +63,69 @@ class AI_Chat_Bedrock_Abilities {
 			? ! empty( $settings['abilities_tools'] )
 			: (bool) get_option( 'ai_chat_bedrock_abilities_tools', false );
 		return (bool) apply_filters( 'ai_chat_bedrock_abilities_tools_enabled', $enabled && self::available() );
+	}
+
+	/**
+	 * The plugin an ability comes from: the namespace before the slash in its name.
+	 *
+	 * @param string $ability_id Ability name, such as woocommerce/products-query.
+	 * @return string
+	 */
+	public static function source_of( $ability_id ) {
+		$parts = explode( '/', (string) $ability_id, 2 );
+		return 2 === count( $parts ) ? $parts[0] : '';
+	}
+
+	/**
+	 * The tool name an ability is offered under.
+	 *
+	 * @param string $ability_id Ability name.
+	 * @return string
+	 */
+	public static function tool_name( $ability_id ) {
+		return self::TOOL_PREFIX . str_replace( array( '/', '-' ), array( '__', '_' ), (string) $ability_id );
+	}
+
+	/**
+	 * Plugins whose abilities an administrator switched off.
+	 *
+	 * @return string[]
+	 */
+	public static function disabled_sources() {
+		$stored = get_option( self::OPTION_SOURCES_OFF, array() );
+		return array_values( array_filter( array_map( 'sanitize_key', is_array( $stored ) ? $stored : array() ) ) );
+	}
+
+	/**
+	 * Whether the abilities of one plugin may be offered and run.
+	 *
+	 * @param string $source Ability namespace.
+	 * @return bool
+	 */
+	public static function source_enabled( $source ) {
+		$enabled = '' !== (string) $source && ! in_array( (string) $source, self::disabled_sources(), true );
+
+		/**
+		 * Filters whether the abilities of one plugin are offered to the chat model.
+		 *
+		 * @since 1.64.0
+		 *
+		 * @param bool   $enabled Whether the plugin's abilities are on.
+		 * @param string $source  Ability namespace, such as woocommerce.
+		 */
+		return (bool) apply_filters( 'ai_chat_bedrock_ability_source_enabled', $enabled, (string) $source );
+	}
+
+	/**
+	 * Store the plugins whose abilities are off.
+	 *
+	 * @param array $sources Ability namespaces.
+	 * @return string[] What was stored.
+	 */
+	public static function save_disabled_sources( $sources ) {
+		$clean = array_slice( array_values( array_unique( array_filter( array_map( 'sanitize_key', (array) $sources ) ) ) ), 0, 200 );
+		update_option( self::OPTION_SOURCES_OFF, $clean, false );
+		return $clean;
 	}
 
 	/**
@@ -238,16 +307,17 @@ class AI_Chat_Bedrock_Abilities {
 	/**
 	 * Offer allowed local abilities to the chat model as tools.
 	 *
-	 * @param array $payload Model payload.
+	 * @param array  $payload Model payload.
+	 * @param string $message The visitor's message, which decides which abilities are most useful.
 	 * @return array
 	 */
-	public function add_ability_tools( $payload ) {
+	public function add_ability_tools( $payload, $message = '' ) {
 		if ( ! self::tools_enabled() || ! AI_Chat_Bedrock_Tool_Policy::current_user_may_use_tools() ) {
 			return $payload;
 		}
 
 		$tools = isset( $payload['tools'] ) && is_array( $payload['tools'] ) ? $payload['tools'] : array();
-		foreach ( $this->available_ability_tools() as $tool ) {
+		foreach ( $this->available_ability_tools( is_string( $message ) ? $message : '' ) as $tool ) {
 			if ( count( $tools ) >= 50 ) {
 				break;
 			}
@@ -296,7 +366,7 @@ class AI_Chat_Bedrock_Abilities {
 				'name' => $tool_name,
 			);
 
-			$ability = '' !== $ability_id ? $this->get_ability( $ability_id ) : null;
+			$ability = '' !== $ability_id && self::source_enabled( self::source_of( $ability_id ) ) ? $this->get_ability( $ability_id ) : null;
 			if ( null === $ability || ! AI_Chat_Bedrock_Tool_Policy::is_tool_allowed( $tool_name, $this->ability_description( $ability ), $this->ability_readonly( $ability ) ) ) {
 				$clean['error'] = array(
 					'code'    => 'ability_not_allowed',
@@ -354,19 +424,25 @@ class AI_Chat_Bedrock_Abilities {
 	}
 
 	/**
-	 * Ability-backed tools the current user may use.
+	 * Ability-backed tools the current user may use, the most useful for the question first.
 	 *
+	 * Every eligible ability is considered, not the first ones registered: a site with a large
+	 * plugin such as WooCommerce registered early would otherwise fill the list on its own, and
+	 * the abilities of every plugin after it would never reach the model.
+	 *
+	 * @param string $query The visitor's message, or an empty string.
 	 * @return array
 	 */
-	public function available_ability_tools() {
-		$tools = array();
-		foreach ( $this->registered_abilities() as $ability ) {
-			$id = $this->ability_name( $ability );
-			if ( '' === $id || 0 === strpos( $id, 'ai-chat-bedrock/' ) ) {
+	public function available_ability_tools( $query = '' ) {
+		$candidates = array();
+		foreach ( array_slice( $this->registered_abilities(), 0, self::MAX_SCAN ) as $ability ) {
+			$id     = $this->ability_name( $ability );
+			$source = self::source_of( $id );
+			if ( '' === $id || 'ai-chat-bedrock' === $source || ! self::source_enabled( $source ) ) {
 				continue;
 			}
 
-			$tool_name   = self::TOOL_PREFIX . str_replace( array( '/', '-' ), array( '__', '_' ), $id );
+			$tool_name   = self::tool_name( $id );
 			$description = $this->ability_description( $ability );
 			if ( ! AI_Chat_Bedrock_Tool_Policy::is_tool_allowed( $tool_name, $description, $this->ability_readonly( $ability ) ) ) {
 				continue;
@@ -375,16 +451,194 @@ class AI_Chat_Bedrock_Abilities {
 				continue;
 			}
 
-			$tools[] = array(
+			$candidates[] = array(
 				'name'         => $tool_name,
 				'description'  => '' !== $description ? $description : $id,
 				'input_schema' => $this->ability_schema( $ability ),
+				'source'       => $source,
+				'text'         => $this->ability_label( $ability ) . ' ' . $description . ' ' . str_replace( array( '/', '-', '_' ), ' ', $id ),
 			);
-			if ( count( $tools ) >= self::MAX_TOOLS ) {
-				break;
+		}
+
+		/**
+		 * Filters how many abilities are offered to the model for one question.
+		 *
+		 * Each tool's description and schema is sent with every request, so more tools cost
+		 * more tokens and make the model's choice harder.
+		 *
+		 * @since 1.64.0
+		 *
+		 * @param int $limit Number of ability tools, from 1 to 50.
+		 */
+		$limit = max( 1, min( 50, (int) apply_filters( 'ai_chat_bedrock_ability_tool_limit', self::MAX_TOOLS ) ) );
+		return self::select_tools( $candidates, (string) $query, $limit );
+	}
+
+	/**
+	 * Choose which tools to offer when there are more than the limit.
+	 *
+	 * Tools that share the most words with the question come first. Between tools that match
+	 * equally, or when nothing matches, the plugins take turns, each in its own registration
+	 * order, so every plugin is represented before any plugin gets a second place.
+	 *
+	 * @param array  $candidates Tools with name, description, input_schema, source and text.
+	 * @param string $query      The visitor's message.
+	 * @param int    $limit      How many to keep.
+	 * @return array Tools with name, description and input_schema.
+	 */
+	public static function select_tools( $candidates, $query, $limit ) {
+		$wanted  = self::terms( AI_Chat_Bedrock_Security::string_substr( (string) $query, 0, 2000 ) );
+		$turn    = array();
+		$ordered = array();
+		foreach ( array_values( (array) $candidates ) as $index => $tool ) {
+			$source          = isset( $tool['source'] ) ? (string) $tool['source'] : '';
+			$turn[ $source ] = isset( $turn[ $source ] ) ? $turn[ $source ] + 1 : 0;
+			$have            = empty( $wanted ) ? array() : self::terms( isset( $tool['text'] ) ? (string) $tool['text'] : '' );
+			$ordered[]       = array(
+				'score' => count( array_intersect_key( $wanted, $have ) ),
+				'turn'  => $turn[ $source ],
+				'index' => $index,
+				'tool'  => $tool,
+			);
+		}
+
+		usort(
+			$ordered,
+			static function ( $a, $b ) {
+				if ( $a['score'] !== $b['score'] ) {
+					return $b['score'] - $a['score'];
+				}
+				if ( $a['turn'] !== $b['turn'] ) {
+					return $a['turn'] - $b['turn'];
+				}
+				return $a['index'] - $b['index'];
+			}
+		);
+
+		$selected = array();
+		foreach ( array_slice( $ordered, 0, max( 0, (int) $limit ) ) as $entry ) {
+			$selected[] = array(
+				'name'         => $entry['tool']['name'],
+				'description'  => $entry['tool']['description'],
+				'input_schema' => $entry['tool']['input_schema'],
+			);
+		}
+		return $selected;
+	}
+
+	/**
+	 * The words of a text, as a set, for matching a question against tool descriptions.
+	 *
+	 * Latin words are lowercased, and a plural s is dropped so "orders" finds "order". Chinese,
+	 * Japanese and Korean have no spaces between words, so they are split into overlapping pairs
+	 * of characters, which is how full-text search engines index them.
+	 *
+	 * @param string $text Text.
+	 * @return array Terms as keys.
+	 */
+	public static function terms( $text ) {
+		$terms = array();
+		$text  = function_exists( 'mb_strtolower' ) ? mb_strtolower( (string) $text, 'UTF-8' ) : strtolower( (string) $text );
+		$skip  = array( 'the', 'and', 'for', 'with', 'from', 'this', 'that', 'what', 'how', 'are', 'can', 'you', 'your', 'please', 'about', 'get', 'list', 'one', 'all' );
+
+		if ( preg_match_all( '/[a-z0-9]+/', $text, $words ) ) {
+			foreach ( $words[0] as $word ) {
+				if ( strlen( $word ) > 3 && 's' === substr( $word, -1 ) && 'ss' !== substr( $word, -2 ) ) {
+					$word = substr( $word, 0, -1 );
+				}
+				if ( strlen( $word ) >= 3 && ! in_array( $word, $skip, true ) ) {
+					$terms[ $word ] = true;
+				}
 			}
 		}
-		return $tools;
+		if ( preg_match_all( '/[\p{Han}\p{Hiragana}\p{Katakana}\p{Hangul}]+/u', $text, $runs ) ) {
+			foreach ( $runs[0] as $run ) {
+				$chars = preg_split( '//u', $run, -1, PREG_SPLIT_NO_EMPTY );
+				$total = count( $chars );
+				if ( 1 === $total ) {
+					$terms[ $chars[0] ] = true;
+				}
+				for ( $i = 0; $i + 1 < $total; $i++ ) {
+					$terms[ $chars[ $i ] . $chars[ $i + 1 ] ] = true;
+				}
+			}
+		}
+		return $terms;
+	}
+
+	/**
+	 * The abilities other plugins register, grouped by plugin, for the settings screens.
+	 *
+	 * @return array Groups keyed by ability namespace, each with source, label, enabled and abilities.
+	 */
+	public function catalog() {
+		$groups = array();
+		foreach ( array_slice( $this->registered_abilities(), 0, self::MAX_SCAN ) as $ability ) {
+			$id     = $this->ability_name( $ability );
+			$source = self::source_of( $id );
+			if ( '' === $source || 'ai-chat-bedrock' === $source ) {
+				continue;
+			}
+			if ( ! isset( $groups[ $source ] ) ) {
+				$groups[ $source ] = array(
+					'source'    => $source,
+					'label'     => $this->source_label( $source, $ability ),
+					'enabled'   => self::source_enabled( $source ),
+					'abilities' => array(),
+				);
+			}
+			$description                      = $this->ability_description( $ability );
+			$readonly                         = $this->ability_readonly( $ability );
+			$tool                             = self::tool_name( $id );
+			$groups[ $source ]['abilities'][] = array(
+				'id'          => $id,
+				'tool'        => $tool,
+				'label'       => $this->ability_label( $ability ),
+				'description' => $description,
+				'readonly'    => $readonly,
+				'allowed'     => AI_Chat_Bedrock_Tool_Policy::is_tool_allowed( $tool, $description, $readonly ),
+			);
+		}
+		uasort(
+			$groups,
+			static function ( $a, $b ) {
+				return strcasecmp( $a['label'], $b['label'] );
+			}
+		);
+		return $groups;
+	}
+
+	/**
+	 * Names of the plugins that offer abilities this plugin could use.
+	 *
+	 * @return string[]
+	 */
+	public function source_labels() {
+		return array_values( wp_list_pluck( $this->catalog(), 'label' ) );
+	}
+
+	/**
+	 * A readable name for an ability namespace.
+	 *
+	 * Plugins usually file their abilities under a category named like the namespace, whose
+	 * label is the plugin's own name; otherwise the namespace is made readable.
+	 *
+	 * @param string           $source  Ability namespace.
+	 * @param WP_Ability|array $ability An ability from that namespace.
+	 * @return string
+	 */
+	private function source_label( $source, $ability ) {
+		if ( 'core' === $source ) {
+			return 'WordPress';
+		}
+		$category = is_object( $ability ) && method_exists( $ability, 'get_category' ) ? (string) $ability->get_category() : '';
+		if ( $category === $source && function_exists( 'wp_get_ability_category' ) ) {
+			$found = wp_get_ability_category( $category );
+			if ( is_object( $found ) && method_exists( $found, 'get_label' ) && '' !== (string) $found->get_label() ) {
+				return (string) $found->get_label();
+			}
+		}
+		return ucwords( str_replace( array( '-', '_' ), ' ', $source ) );
 	}
 
 	private function registered_abilities() {
@@ -432,6 +686,16 @@ class AI_Chat_Bedrock_Abilities {
 		}
 		if ( is_array( $ability ) && isset( $ability['name'] ) ) {
 			return (string) $ability['name'];
+		}
+		return '';
+	}
+
+	private function ability_label( $ability ) {
+		if ( is_object( $ability ) && method_exists( $ability, 'get_label' ) ) {
+			return (string) $ability->get_label();
+		}
+		if ( is_array( $ability ) && isset( $ability['label'] ) ) {
+			return (string) $ability['label'];
 		}
 		return '';
 	}

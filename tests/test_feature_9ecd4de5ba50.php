@@ -70,6 +70,7 @@ class AI_Chat_Bedrock_Diagnostics {}
 require __DIR__ . '/../includes/class-ai-chat-bedrock-conversations.php';
 require __DIR__ . '/../includes/class-ai-chat-bedrock-chat-history.php';
 require __DIR__ . '/../includes/class-ai-chat-bedrock-insights.php';
+require __DIR__ . '/../includes/class-ai-chat-bedrock-leads.php';
 require __DIR__ . '/../admin/class-ai-chat-bedrock-admin.php';
 require __DIR__ . '/../includes/class-ai-chat-bedrock-loader.php';
 require __DIR__ . '/../includes/class-ai-chat-bedrock.php';

@@ -37,11 +37,12 @@ $mcp_url         = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-mcp' );
 $diagnostics_url = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-diagnostics' );
 
 $aicfab_state = array(
-	'options'     => $options,
-	'credentials' => $credentials,
-	'model'       => $model,
-	'region_name' => isset( $regions[ $region ] ) ? $regions[ $region ] : '',
-	'requests'    => (int) $today['requests'] + (int) $week['requests'],
+	'options'         => $options,
+	'credentials'     => $credentials,
+	'model'           => $model,
+	'region_name'     => isset( $regions[ $region ] ) ? $regions[ $region ] : '',
+	'requests'        => (int) $today['requests'] + (int) $week['requests'],
+	'ability_sources' => AI_Chat_Bedrock_Abilities::available() ? ( new AI_Chat_Bedrock_Abilities() )->source_labels() : array(),
 );
 
 $steps           = AI_Chat_Bedrock_Setup_Steps::essential( $aicfab_state );

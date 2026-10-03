@@ -24,6 +24,9 @@ $GLOBALS['aicfab_fs']      = 'direct';
 $GLOBALS['aicfab_posts']   = array();
 $GLOBALS['aicfab_page']    = array();
 $GLOBALS['aicfab_scripts'] = array();
+$GLOBALS['aicfab_spent']   = 0;
+$GLOBALS['aicfab_signed']  = true;
+$_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1';
 
 // --- WordPress stubs -------------------------------------------------------
 
@@ -68,6 +71,15 @@ function wp_hash( $data ) {
 }
 function current_user_can( $capability ) {
 	return ! empty( $GLOBALS['aicfab_admin'] ) && 'manage_options' === $capability;
+}
+function is_user_logged_in() {
+	return (bool) $GLOBALS['aicfab_signed'];
+}
+function sanitize_text_field( $value ) {
+	return trim( (string) $value );
+}
+function wp_unslash( $value ) {
+	return $value;
 }
 function get_current_user_id() {
 	return (int) $GLOBALS['aicfab_user'];
@@ -267,6 +279,14 @@ class AI_Chat_Bedrock_Security {
 	}
 	public static function check_rate_limit( $bucket, $limit, $window = 60 ) {
 		return $GLOBALS['aicfab_rate_ok'];
+	}
+	public static function daily_spent( $bucket ) {
+		return 'speech' === $bucket ? $GLOBALS['aicfab_spent'] : 0;
+	}
+	public static function spend_daily( $bucket, $amount ) {
+		if ( 'speech' === $bucket ) {
+			$GLOBALS['aicfab_spent'] += $amount;
+		}
 	}
 }
 class AI_Chat_Bedrock_Content {
@@ -582,6 +602,98 @@ $GLOBALS['aicfab_scripts']['ai-chat-bedrock-speech']['data'] = 'kept';
 AI_Chat_Bedrock_Speech::register_assets();
 check_speech( 'kept' === $GLOBALS['aicfab_scripts']['ai-chat-bedrock-speech']['data'], 'Registering again, for a chat outside wp_enqueue_scripts, changes nothing.' );
 check_speech( '<p>Body</p>' === AI_Chat_Bedrock_Speech::add_player( '<p>Body</p>' ), 'With posts off there is no player.' );
+
+// --- Who may have new audio made ----------------------------------------------------------
+
+check_speech( 30000 === AI_Chat_Bedrock_Speech::visitor_characters( array() ), 'By default a visitor may have one long post read a day: 30,000 of the site\'s 100,000 characters.' );
+check_speech( 250000 === AI_Chat_Bedrock_Speech::visitor_characters( array( 'speech_daily_chars' => 1000000 ) ), 'With a higher site limit a visitor gets a quarter of it.' );
+check_speech( 20000 === AI_Chat_Bedrock_Speech::visitor_characters( array( 'speech_daily_chars' => 20000 ) ), 'A visitor never gets more than the whole site.' );
+check_speech( 0 === AI_Chat_Bedrock_Speech::visitor_characters( array( 'speech_daily_chars' => '0' ) ), 'Without a site limit there is no visitor limit either.' );
+add_filter( 'ai_chat_bedrock_speech_visitor_chars', function ( $visitor, $site ) { return 100000 === $site ? 5000 : -1; } );
+check_speech( 5000 === AI_Chat_Bedrock_Speech::visitor_characters( array() ) && 0 === AI_Chat_Bedrock_Speech::visitor_characters( array( 'speech_daily_chars' => 7 ) ), 'A filter sets the visitor limit, and a negative one means none.' );
+remove_all_filters( 'ai_chat_bedrock_speech_visitor_chars' );
+
+aicfab_settings( array( 'aws_region' => 'us-east-1', 'speech_posts' => true ) );
+AI_Chat_Bedrock_Usage::$characters = 0;
+$GLOBALS['aicfab_posts'][20]       = new WP_Post( 20, str_repeat( 'Fresh bread every morning. ', 80 ) );
+$GLOBALS['aicfab_spent']           = 0;
+$aicfab_made                       = AI_Chat_Bedrock_Speech::post_part( 20, 0 );
+check_speech( is_array( $aicfab_made ) && $GLOBALS['aicfab_spent'] === mb_strlen( end( AI_Chat_Bedrock_AWS::$calls )['text'], 'UTF-8' ), 'New audio counts against the visitor\'s day, by the characters read.' );
+$aicfab_spent = $GLOBALS['aicfab_spent'];
+check_speech( $aicfab_made === AI_Chat_Bedrock_Speech::post_part( 20, 0 ) && $aicfab_spent === $GLOBALS['aicfab_spent'], 'Saved audio costs the visitor nothing.' );
+
+$GLOBALS['aicfab_spent'] = 29990;
+$aicfab_calls            = count( AI_Chat_Bedrock_AWS::$calls );
+$aicfab_bad              = AI_Chat_Bedrock_Speech::post_part( 20, 1 );
+check_speech( is_wp_error( $aicfab_bad ) && 'aicfab_speech_visitor_limit' === $aicfab_bad->get_error_code() && array( 'status' => 429 ) === $aicfab_bad->get_error_data() && count( AI_Chat_Bedrock_AWS::$calls ) === $aicfab_calls, 'Past the visitor\'s allowance nothing is sent to Polly.' );
+check_speech( $aicfab_made === AI_Chat_Bedrock_Speech::post_part( 20, 0 ), 'Saved audio still plays for a visitor past the allowance.' );
+$GLOBALS['aicfab_admin'] = true;
+check_speech( is_array( AI_Chat_Bedrock_Speech::post_part( 20, 1 ) ) && 29990 === $GLOBALS['aicfab_spent'], 'Administrators are not limited, and do not use the allowance.' );
+$GLOBALS['aicfab_admin'] = false;
+
+$GLOBALS['aicfab_spent']     = 0;
+AI_Chat_Bedrock_AWS::$fail   = true;
+$GLOBALS['aicfab_posts'][21] = new WP_Post( 21, 'A short post about rye.' );
+$aicfab_bad                  = AI_Chat_Bedrock_Speech::post_part( 21, 0 );
+AI_Chat_Bedrock_AWS::$fail   = false;
+check_speech( is_wp_error( $aicfab_bad ) && 0 === $GLOBALS['aicfab_spent'], 'Audio Polly could not make costs the visitor nothing.' );
+
+// Scripts and crawlers may play saved audio but not have new audio made.
+$aicfab_browser = $_SERVER['HTTP_USER_AGENT'];
+foreach ( array(
+	'Googlebot'      => 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+	'Bingbot'        => 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)',
+	'a link preview' => 'Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)',
+	'a script'       => 'python-requests/2.31.0',
+	'curl'           => 'curl/8.5.0',
+	'a headless one' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/120.0 Safari/537.36',
+	'no user agent'  => '',
+) as $aicfab_who => $aicfab_agent ) {
+	$_SERVER['HTTP_USER_AGENT'] = $aicfab_agent;
+	check_speech( AI_Chat_Bedrock_Speech::is_automated(), ucfirst( $aicfab_who ) . ' is recognised as automated.' );
+}
+unset( $_SERVER['HTTP_USER_AGENT'] );
+check_speech( AI_Chat_Bedrock_Speech::is_automated(), 'A request without the header is automated.' );
+foreach ( array(
+	'Safari on an iPhone' => $aicfab_browser,
+	'Chrome on a Cubot'   => 'Mozilla/5.0 (Linux; Android 10; CUBOT X30) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36',
+	'Firefox'             => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0',
+	'Edge'                => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36 Edg/129.0',
+) as $aicfab_who => $aicfab_agent ) {
+	$_SERVER['HTTP_USER_AGENT'] = $aicfab_agent;
+	check_speech( ! AI_Chat_Bedrock_Speech::is_automated(), $aicfab_who . ' is a visitor.' );
+}
+$_SERVER['HTTP_USER_AGENT'] = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+$aicfab_calls               = count( AI_Chat_Bedrock_AWS::$calls );
+$aicfab_bad                 = AI_Chat_Bedrock_Speech::post_part( 21, 0 );
+check_speech( is_wp_error( $aicfab_bad ) && 'aicfab_speech_automated' === $aicfab_bad->get_error_code() && array( 'status' => 403 ) === $aicfab_bad->get_error_data() && count( AI_Chat_Bedrock_AWS::$calls ) === $aicfab_calls, 'A crawler cannot have a post read.' );
+check_speech( $aicfab_made === AI_Chat_Bedrock_Speech::post_part( 20, 0 ), 'A crawler still gets audio that is already saved.' );
+add_filter( 'ai_chat_bedrock_speech_is_automated', function ( $automated, $agent ) { return false !== strpos( $agent, 'Googlebot' ) ? false : $automated; } );
+check_speech( is_array( AI_Chat_Bedrock_Speech::post_part( 21, 0 ) ), 'A filter can let a client through.' );
+remove_all_filters( 'ai_chat_bedrock_speech_is_automated' );
+$_SERVER['HTTP_USER_AGENT'] = $aicfab_browser;
+
+// --- Listening only when signed in --------------------------------------------------------
+
+check_speech( ! AI_Chat_Bedrock_Speech::posts_need_sign_in( array() ) && AI_Chat_Bedrock_Speech::posts_need_sign_in( array( 'speech_posts_signed_in' => true ) ), 'Posts are for everyone unless the site asks for signed-in visitors only.' );
+aicfab_settings( array( 'aws_region' => 'us-east-1', 'speech_posts' => true, 'speech_replies' => true, 'speech_posts_signed_in' => true ) );
+$GLOBALS['aicfab_signed'] = false;
+$aicfab_check             = $aicfab_speech->check_permission( new WP_REST_Request( array( 'post' => 5 ) ) );
+check_speech( is_wp_error( $aicfab_check ) && 'aicfab_speech_sign_in' === $aicfab_check->get_error_code() && array( 'status' => 401 ) === $aicfab_check->get_error_data(), 'A signed-out visitor is asked to sign in to listen.' );
+check_speech( true === $aicfab_speech->check_permission( new WP_REST_Request( array( 'post' => 0 ) ) ), 'Answers follow the chat\'s own rule, not this one.' );
+$GLOBALS['aicfab_page'] = array(
+	'singular' => true,
+	'post'     => 5,
+);
+check_speech( '<p>Body</p>' === AI_Chat_Bedrock_Speech::add_player( '<p>Body</p>' ), 'A signed-out visitor sees no player.' );
+$GLOBALS['aicfab_scripts'] = array();
+AI_Chat_Bedrock_Speech::enqueue_assets();
+check_speech( empty( $GLOBALS['aicfab_scripts']['ai-chat-bedrock-speech']['enqueued'] ), 'Nor is its script loaded.' );
+$GLOBALS['aicfab_signed'] = true;
+check_speech( true === $aicfab_speech->check_permission( new WP_REST_Request( array( 'post' => 5 ) ) ), 'A signed-in visitor may listen.' );
+check_speech( 0 === strpos( AI_Chat_Bedrock_Speech::add_player( '<p>Body</p>' ), '<div class="aicfab-listen"' ), 'And sees the player.' );
+AI_Chat_Bedrock_Speech::enqueue_assets();
+check_speech( ! empty( $GLOBALS['aicfab_scripts']['ai-chat-bedrock-speech']['enqueued'] ), 'With its script.' );
 
 if ( is_dir( $GLOBALS['aicfab_uploads'] ) ) {
 	if ( is_dir( $GLOBALS['aicfab_uploads'] . '/' . AI_Chat_Bedrock_Speech::DIRECTORY ) ) {

@@ -23,6 +23,12 @@ class AI_Chat_Bedrock_Setup_Steps {
 	const SHORTCODE = '[ai_chat_bedrock';
 
 	/**
+	 * The action that creates the chat page, and the mark left on the page it creates.
+	 */
+	const CREATE_ACTION = 'ai_chat_bedrock_create_chat_page';
+	const PAGE_META     = '_aicfab_chat_page';
+
+	/**
 	 * How long the published-chat lookup is cached.
 	 */
 	const CACHE_TTL = 300;
@@ -104,6 +110,82 @@ class AI_Chat_Bedrock_Setup_Steps {
 	}
 
 	/**
+	 * Where the chat page is created from.
+	 *
+	 * @return string
+	 */
+	public static function chat_page_url() {
+		return wp_nonce_url( admin_url( 'admin-post.php?action=' . self::CREATE_ACTION ), self::CREATE_ACTION );
+	}
+
+	/**
+	 * Open a draft page with the chat block on it, creating it the first time.
+	 *
+	 * The last setup step used to open an empty page, which left the site owner to find the
+	 * block. The page is a draft, so nothing goes live until it is published, and following
+	 * the link again opens the same draft rather than piling up new ones.
+	 */
+	public static function handle_create_chat_page() {
+		if ( ! current_user_can( 'edit_pages' ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to create pages.', 'ai-chat-for-amazon-bedrock' ), '', array( 'response' => 403 ) );
+		}
+		check_admin_referer( self::CREATE_ACTION );
+
+		$edit = self::open_chat_page();
+		if ( '' === $edit ) {
+			wp_die( esc_html__( 'The page could not be created. Add the Amazon Bedrock Chat block to a page instead.', 'ai-chat-for-amazon-bedrock' ), '', array( 'response' => 500 ) );
+		}
+		wp_safe_redirect( $edit );
+		exit;
+	}
+
+	/**
+	 * The editor for the draft chat page, created if there is none yet.
+	 *
+	 * @return string Edit URL, or an empty string when the page could not be created.
+	 */
+	public static function open_chat_page() {
+		$page_id = self::draft_chat_page();
+		if ( ! $page_id ) {
+			$page_id = wp_insert_post(
+				array(
+					'post_type'    => 'page',
+					'post_status'  => 'draft',
+					'post_author'  => get_current_user_id(),
+					'post_title'   => _x( 'Ask us', 'title of the page the chat is on', 'ai-chat-for-amazon-bedrock' ),
+					'post_content' => '<!-- ' . self::BLOCK . ' /-->',
+					'meta_input'   => array( self::PAGE_META => 1 ),
+				),
+				true
+			);
+		}
+		if ( is_wp_error( $page_id ) || ! $page_id ) {
+			return '';
+		}
+		$edit = get_edit_post_link( $page_id, 'raw' );
+		return $edit ? (string) $edit : admin_url( 'edit.php?post_type=page' );
+	}
+
+	/**
+	 * The chat page created earlier and not yet published, if the user may still edit it.
+	 *
+	 * @return int Page ID, or 0.
+	 */
+	private static function draft_chat_page() {
+		$found   = get_posts(
+			array(
+				'post_type'      => 'page',
+				'post_status'    => array( 'draft', 'pending' ),
+				'meta_key'       => self::PAGE_META, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- a handful of pages at most carry it.
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+			)
+		);
+		$page_id = $found ? (int) $found[0] : 0;
+		return $page_id && current_user_can( 'edit_post', $page_id ) ? $page_id : 0;
+	}
+
+	/**
 	 * Whether the answer can be grounded in this site's own content.
 	 *
 	 * @param array $options Plugin settings.
@@ -149,7 +231,7 @@ class AI_Chat_Bedrock_Setup_Steps {
 				'label' => __( 'Choose a region and model', 'ai-chat-for-amazon-bedrock' ),
 				'help'  => $chosen
 					? $region_name . ' · ' . $model
-					: __( 'Request model access in your AWS account, then select the model here.', 'ai-chat-for-amazon-bedrock' ),
+					: __( 'Select a region and a model. If the model is new to the AWS account, open it once in the Amazon Bedrock console playground first.', 'ai-chat-for-amazon-bedrock' ),
 				'url'   => $settings,
 			),
 			array(
@@ -183,8 +265,8 @@ class AI_Chat_Bedrock_Setup_Steps {
 			$steps[] = array(
 				'done'  => false,
 				'label' => __( 'Publish the chat', 'ai-chat-for-amazon-bedrock' ),
-				'help'  => __( 'Add the Amazon Bedrock Chat block to a page, use the [ai_chat_bedrock] shortcode, or switch on the floating button.', 'ai-chat-for-amazon-bedrock' ),
-				'url'   => admin_url( 'post-new.php?post_type=page' ),
+				'help'  => __( 'Opens a draft page with the chat on it, ready to publish. Or add the Amazon Bedrock Chat block to any page, use the [ai_chat_bedrock] shortcode, or switch on the floating button.', 'ai-chat-for-amazon-bedrock' ),
+				'url'   => self::chat_page_url(),
 			);
 		}
 
@@ -226,6 +308,20 @@ class AI_Chat_Bedrock_Setup_Steps {
 				'label' => __( 'Pick a fallback model', 'ai-chat-for-amazon-bedrock' ),
 				'help'  => __( 'Used automatically when the main model is throttled or unavailable, so the chat keeps working.', 'ai-chat-for-amazon-bedrock' ),
 				'url'   => $settings,
+			);
+		}
+
+		// Other plugins can answer with their own live data, through the abilities they register.
+		$sources = isset( $context['ability_sources'] ) ? array_filter( (array) $context['ability_sources'], 'is_string' ) : array();
+		if ( ! empty( $sources ) && ( empty( $options['abilities_tools'] ) || ! get_option( 'ai_chat_bedrock_enable_mcp', false ) ) ) {
+			$next[] = array(
+				'label' => __( 'Let the chat use your plugins\' abilities', 'ai-chat-for-amazon-bedrock' ),
+				'help'  => sprintf(
+					/* translators: %s: names of plugins. */
+					__( '%s register abilities with WordPress. Signed-in users can then get answers from their live data. Read-only abilities are offered, and ones that change data stay off until you allow them.', 'ai-chat-for-amazon-bedrock' ),
+					AI_Chat_Bedrock_Translation::items( array_slice( $sources, 0, 4 ) )
+				),
+				'url'   => $settings . '&tab=knowledge',
 			);
 		}
 

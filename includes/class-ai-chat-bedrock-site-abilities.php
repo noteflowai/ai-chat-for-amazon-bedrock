@@ -467,7 +467,7 @@ class AI_Chat_Bedrock_Site_Abilities {
 			return false;
 		}
 		$type = get_post_type_object( $post->post_type );
-		return $type && ! empty( $type->public ) && AI_Chat_Bedrock_Content::is_public( $post );
+		return $type && ! empty( $type->public ) && AI_Chat_Bedrock_Content::is_answerable( $post );
 	}
 
 	/**

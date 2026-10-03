@@ -52,6 +52,12 @@ class AI_Chat_Bedrock_Speech {
 	const RATE_LIMIT               = 30;
 
 	/**
+	 * One visitor may use at most this share of the site's daily characters, so no single
+	 * visitor or script can use up the day's reading for everyone else.
+	 */
+	const VISITOR_SHARE = 4;
+
+	/**
 	 * Transient listing the voices that refused the generative engine in a Region.
 	 */
 	const FALLBACK = 'aicfab_speech_fallback';
@@ -133,6 +139,61 @@ class AI_Chat_Bedrock_Speech {
 		// Only an explicit 0 removes the limit; an emptied field keeps the default.
 		$limit = isset( $options['speech_daily_chars'] ) && '' !== trim( (string) $options['speech_daily_chars'] ) ? absint( $options['speech_daily_chars'] ) : self::DEFAULT_DAILY_CHARACTERS;
 		return min( self::MAX_DAILY_CHARACTERS, $limit );
+	}
+
+	/**
+	 * Characters of new audio one visitor may have made in a day. Audio already saved costs
+	 * nothing and does not count. Zero means no limit, as when the site sets none.
+	 *
+	 * @param array|null $options Settings, or null for the saved ones.
+	 * @return int
+	 */
+	public static function visitor_characters( $options = null ) {
+		$site    = self::daily_characters( $options );
+		$visitor = min( $site, max( self::MAX_POST, intdiv( $site, self::VISITOR_SHARE ) ) );
+
+		/**
+		 * Characters of new audio one visitor may have made in a day. Administrators are not
+		 * limited by it.
+		 *
+		 * @param int $visitor Characters; by default a quarter of the site's daily limit, and
+		 *                     at least one post of the longest length read.
+		 * @param int $site    The site's daily limit, 0 for none.
+		 */
+		return max( 0, (int) apply_filters( 'ai_chat_bedrock_speech_visitor_chars', $visitor, $site ) );
+	}
+
+	/**
+	 * Whether only signed-in visitors may listen to posts.
+	 *
+	 * @param array|null $options Settings, or null for the saved ones.
+	 * @return bool
+	 */
+	public static function posts_need_sign_in( $options = null ) {
+		$options = self::options( $options );
+		return ! empty( $options['speech_posts_signed_in'] );
+	}
+
+	/**
+	 * Whether a request comes from a script or crawler rather than a browser.
+	 *
+	 * Only such a request is turned away, and only when it would make new audio: a crawler
+	 * that followed the button would otherwise have every post read on the site's account.
+	 * Something that pretends to be a browser is held by the daily allowance instead.
+	 *
+	 * @return bool
+	 */
+	public static function is_automated() {
+		$agent     = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+		$automated = '' === trim( $agent ) || 1 === preg_match( '/\bbot\b|bot\/|bot-|crawl|spider|slurp|scrap|headless|lighthouse|pagespeed|facebookexternalhit|curl\/|wget\/|python|java\/|go-http|okhttp|axios|node-fetch|libwww|httpclient/i', $agent );
+
+		/**
+		 * Whether a request to read a post aloud comes from a script or crawler.
+		 *
+		 * @param bool   $automated Whether it looks automated.
+		 * @param string $agent     User agent.
+		 */
+		return (bool) apply_filters( 'ai_chat_bedrock_speech_is_automated', $automated, $agent );
 	}
 
 	/**
@@ -376,6 +437,9 @@ class AI_Chat_Bedrock_Speech {
 		if ( 0 === $post && ! AI_Chat_Bedrock_Security::can_use_chat() ) {
 			return new WP_Error( 'aicfab_forbidden', __( 'Please sign in to use the chat.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 401 ) );
 		}
+		if ( $post > 0 && self::posts_need_sign_in() && ! is_user_logged_in() ) {
+			return new WP_Error( 'aicfab_speech_sign_in', __( 'Please sign in to listen to this post.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 401 ) );
+		}
 		if ( ! AI_Chat_Bedrock_Security::check_rate_limit( 'speech', self::RATE_LIMIT ) ) {
 			return new WP_Error( 'aicfab_rate_limited', __( 'Too many requests. Please wait a moment.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 429 ) );
 		}
@@ -478,6 +542,9 @@ class AI_Chat_Bedrock_Speech {
 			);
 		}
 
+		if ( self::is_automated() ) {
+			return new WP_Error( 'aicfab_speech_automated', __( 'Posts are read aloud for visitors listening in a browser.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 403 ) );
+		}
 		$audio = self::synthesize( $parts[ $part ], $language );
 		if ( is_wp_error( $audio ) ) {
 			return $audio;
@@ -517,6 +584,11 @@ class AI_Chat_Bedrock_Speech {
 				return new WP_Error( 'aicfab_speech_limit', __( 'Reading aloud has reached today\'s limit. Please try again tomorrow.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 429 ) );
 			}
 		}
+		$length    = AI_Chat_Bedrock_Security::string_length( $text );
+		$allowance = current_user_can( 'manage_options' ) ? 0 : self::visitor_characters();
+		if ( $allowance > 0 && AI_Chat_Bedrock_Security::daily_spent( 'speech' ) + $length > $allowance ) {
+			return new WP_Error( 'aicfab_speech_visitor_limit', __( 'You have listened to a lot today. Please try again tomorrow.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 429 ) );
+		}
 
 		$voice    = self::voice( $language );
 		$region   = self::region();
@@ -543,6 +615,9 @@ class AI_Chat_Bedrock_Speech {
 			$message = current_user_can( 'manage_options' ) ? $audio->get_error_message() : __( 'The audio could not be made right now. Please try again later.', 'ai-chat-for-amazon-bedrock' );
 			return new WP_Error( $audio->get_error_code(), $message, array( 'status' => $status ) );
 		}
+		if ( $allowance > 0 ) {
+			AI_Chat_Bedrock_Security::spend_daily( 'speech', $length );
+		}
 		return $audio;
 	}
 
@@ -553,7 +628,7 @@ class AI_Chat_Bedrock_Speech {
 	 * @return string
 	 */
 	public static function add_player( $content ) {
-		if ( ! self::posts_enabled() || AI_Chat_Bedrock_Content::is_rendering() || is_feed() || doing_filter( 'get_the_excerpt' ) || ! is_singular( self::post_types() ) || ! in_the_loop() || ! is_main_query() ) {
+		if ( ! self::posts_enabled() || ( self::posts_need_sign_in() && ! is_user_logged_in() ) || AI_Chat_Bedrock_Content::is_rendering() || is_feed() || doing_filter( 'get_the_excerpt' ) || ! is_singular( self::post_types() ) || ! in_the_loop() || ! is_main_query() ) {
 			return $content;
 		}
 		$post = get_post();
@@ -572,7 +647,7 @@ class AI_Chat_Bedrock_Speech {
 	 */
 	public static function enqueue_assets() {
 		self::register_assets();
-		if ( self::posts_enabled() && is_singular( self::post_types() ) && AI_Chat_Bedrock_Content::is_public( get_queried_object() ) ) {
+		if ( self::posts_enabled() && ( ! self::posts_need_sign_in() || is_user_logged_in() ) && is_singular( self::post_types() ) && AI_Chat_Bedrock_Content::is_public( get_queried_object() ) ) {
 			wp_enqueue_script( 'ai-chat-bedrock-speech' );
 			wp_enqueue_style( 'ai-chat-bedrock-speech' );
 		}

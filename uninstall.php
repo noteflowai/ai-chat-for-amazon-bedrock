@@ -25,7 +25,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 function ai_chat_bedrock_uninstall_site() {
 	global $wpdb;
 
-	foreach ( array( 'ai_chat_bedrock_settings', 'ai_chat_bedrock_role_limits', 'ai_chat_bedrock_enable_mcp', 'ai_chat_bedrock_mcp_public_access', 'ai_chat_bedrock_mcp_servers', 'ai_chat_bedrock_db_version', 'ai_chat_bedrock_usage', 'ai_chat_bedrock_mcp_tool_policy', 'ai_chat_bedrock_mcp_capability', 'ai_chat_bedrock_mcp_max_rounds', 'ai_chat_bedrock_mcp_log_enabled', 'ai_chat_bedrock_tool_log', 'ai_chat_bedrock_conversations', 'ai_chat_bedrock_log_conversations', 'ai_chat_bedrock_log_retention_days', 'ai_chat_bedrock_oauth_clients', 'ai_chat_bedrock_oauth_grants', 'ai_chat_bedrock_oauth_revoked', 'ai_chat_bedrock_oauth_enabled', 'ai_chat_bedrock_site_abilities', 'ai_chat_bedrock_profiles', 'ai_chat_bedrock_eval_set', 'ai_chat_bedrock_eval_runs', 'ai_chat_bedrock_abilities_tools', 'ai_chat_bedrock_s3v_delete_queue' ) as $ai_chat_bedrock_option ) {
+	foreach ( array( 'ai_chat_bedrock_settings', 'ai_chat_bedrock_role_limits', 'ai_chat_bedrock_enable_mcp', 'ai_chat_bedrock_mcp_public_access', 'ai_chat_bedrock_mcp_servers', 'ai_chat_bedrock_db_version', 'ai_chat_bedrock_usage', 'ai_chat_bedrock_mcp_tool_policy', 'ai_chat_bedrock_mcp_capability', 'ai_chat_bedrock_mcp_max_rounds', 'ai_chat_bedrock_mcp_log_enabled', 'ai_chat_bedrock_tool_log', 'ai_chat_bedrock_conversations', 'ai_chat_bedrock_log_conversations', 'ai_chat_bedrock_log_retention_days', 'ai_chat_bedrock_oauth_clients', 'ai_chat_bedrock_oauth_grants', 'ai_chat_bedrock_oauth_revoked', 'ai_chat_bedrock_oauth_enabled', 'ai_chat_bedrock_site_abilities', 'ai_chat_bedrock_profiles', 'ai_chat_bedrock_eval_set', 'ai_chat_bedrock_eval_runs', 'ai_chat_bedrock_abilities_tools', 'ai_chat_bedrock_ability_sources_off', 'ai_chat_bedrock_s3v_delete_queue' ) as $ai_chat_bedrock_option ) {
 		delete_option( $ai_chat_bedrock_option );
 	}
 	// The key entered on Settings > Connectors is stored by core but encrypted by this plugin,
@@ -56,9 +56,27 @@ function ai_chat_bedrock_uninstall_site() {
 
 	// Post meta this plugin wrote, removed by key rather than by option name. Every key the
 	// plugin writes has to appear here; tests/security-regression.php checks that it does.
-	foreach ( array( '_aicfab_embedding', '_aicfab_embedding_model', '_aicfab_embedding_hash', '_aicfab_index_state', '_aicfab_index_retry', '_aicfab_index_failures', '_aicfab_s3v_ref', '_aicfab_s3v_hash', '_aicfab_s3v_chunks', '_aicfab_scaffolded' ) as $ai_chat_bedrock_meta_key ) {
+	foreach ( array( '_aicfab_embedding', '_aicfab_embedding_model', '_aicfab_embedding_hash', '_aicfab_index_state', '_aicfab_index_retry', '_aicfab_index_failures', '_aicfab_s3v_ref', '_aicfab_s3v_hash', '_aicfab_s3v_chunks', '_aicfab_scaffolded', '_aicfab_chat_page' ) as $ai_chat_bedrock_meta_key ) {
 		delete_post_meta_by_key( $ai_chat_bedrock_meta_key );
 	}
+
+	// Contact requests left in the chat are private posts of their own type, and their meta
+	// goes with them. Export them from the Contact requests page before uninstalling.
+	do {
+		$ai_chat_bedrock_leads = get_posts(
+			array(
+				'post_type'      => 'aicfab_lead',
+				'post_status'    => 'any',
+				'posts_per_page' => 200, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- deleted in batches.
+				'fields'         => 'ids',
+			)
+		);
+		foreach ( $ai_chat_bedrock_leads as $ai_chat_bedrock_lead ) {
+			wp_delete_post( (int) $ai_chat_bedrock_lead, true );
+		}
+		$ai_chat_bedrock_more = count( $ai_chat_bedrock_leads ) >= 200;
+	} while ( $ai_chat_bedrock_more );
+	delete_post_meta_by_key( '_aicfab_status' );
 
 	// Cached managed prompt text is stored in transients keyed by prompt and version.
 	$ai_chat_bedrock_prompt_pattern = $wpdb->esc_like( '_transient_aicfab_prompt_' ) . '%';
@@ -90,7 +108,7 @@ function ai_chat_bedrock_uninstall_site() {
 	}
 
 	// Any scheduled index run or chat history pruning is removed with the plugin data.
-	foreach ( array( 'ai_chat_bedrock_index_embeddings', 'ai_chat_bedrock_prune_chat_history' ) as $ai_chat_bedrock_cron_hook ) {
+	foreach ( array( 'ai_chat_bedrock_index_embeddings', 'ai_chat_bedrock_prune_chat_history', 'ai_chat_bedrock_prune_leads' ) as $ai_chat_bedrock_cron_hook ) {
 		wp_clear_scheduled_hook( $ai_chat_bedrock_cron_hook );
 	}
 }

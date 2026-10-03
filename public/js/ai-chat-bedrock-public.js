@@ -36,6 +36,55 @@
     }
 
     /**
+     * Report what the chat did, never what was written in it.
+     *
+     * A DOM event on document always carries it, for a site's own code. When the site has
+     * turned analytics events on, it also goes to the analytics tag on the page: a Google Tag
+     * Manager container gets it in its data layer, Google Analytics otherwise through gtag
+     * (MonsterInsights names its copy __gtagTracker), and Matomo and Plausible through their
+     * queues. With a consent plugin on the WP Consent API, it waits for consent to statistics.
+     */
+    function track(name, details) {
+        const data = {};
+        Object.keys(details || {}).forEach(function (key) {
+            if (null != details[key] && '' !== details[key]) {
+                data[key] = details[key];
+            }
+        });
+        try {
+            document.dispatchEvent(new CustomEvent('ai-chat-bedrock:event', { detail: { name: name, data: Object.assign({}, data) } }));
+        } catch (error) {
+            // A browser without CustomEvent still gets the analytics below.
+        }
+        if (!params.analytics || ('function' === typeof window.wp_has_consent && !window.wp_has_consent('statistics'))) {
+            return;
+        }
+        try {
+            const layer = window[window.gtm4wp_datalayer_name || 'dataLayer'];
+            const gtm = window.google_tag_manager && Object.keys(window.google_tag_manager).some(function (key) {
+                return 0 === key.indexOf('GTM-');
+            });
+            const gtag = 'function' === typeof window.gtag ? window.gtag : ('function' === typeof window.__gtagTracker ? window.__gtagTracker : null);
+            if (gtm && Array.isArray(layer)) {
+                layer.push(Object.assign({ event: name }, data));
+            } else if (gtag) {
+                gtag('event', name, Object.assign({}, data));
+            } else if (Array.isArray(layer)) {
+                // A tag manager that has not finished loading reads the layer when it does.
+                layer.push(Object.assign({ event: name }, data));
+            }
+            if (window._paq && 'function' === typeof window._paq.push) {
+                window._paq.push(['trackEvent', 'AI chat', name, String(data.rating || data.product_action || data.question_source || data.link_url || '')]);
+            }
+            if ('function' === typeof window.plausible) {
+                window.plausible(name, { props: Object.assign({}, data) });
+            }
+        } catch (error) {
+            // An analytics tag that fails must not break the chat.
+        }
+    }
+
+    /**
      * Whether a refused request was refused only for a stale nonce.
      *
      * A cached page carries the nonces it was rendered with, which stop verifying after a
@@ -86,6 +135,17 @@
         } catch (error) {
             return '';
         }
+    }
+
+    /**
+     * The other way to reach the site may also be an email or phone link.
+     */
+    function contactUrl(value) {
+        const web = safeUrl(value);
+        if (web) {
+            return web;
+        }
+        return /^(mailto|tel):[^\s<>"]+$/i.test(String(value || '').trim()) ? String(value).trim() : '';
     }
 
     /**
@@ -173,6 +233,9 @@
             const open = 'open' !== $popup.attr('data-state');
             setOpen(open);
             remember(open);
+            if (open) {
+                track('ai_chat_open', { chat_profile: String($panel.find('.ai-chat-bedrock-container').attr('data-profile') || '') });
+            }
         });
 
         // Keep the panel open while the visitor browses other pages in this tab.
@@ -206,6 +269,7 @@
         const $form = $container.find('.ai-chat-bedrock-form');
         const $suggestions = $container.find('.ai-chat-bedrock-suggestions');
         const $usage = $container.find('.ai-chat-bedrock-usage');
+        const contact = params.contact && params.contact.url ? params.contact : null;
         const profile = String($container.attr('data-profile') || '');
         // The profile's own greeting; the site-wide one replaced it when the chat was cleared.
         const welcome = $container.attr('data-welcome') || params.welcome_message;
@@ -471,7 +535,15 @@
                     headers: params.rest_nonce ? { 'X-WP-Nonce': params.rest_nonce } : {},
                     data: JSON.stringify({ entry: entryId, rating: value, profile: profile })
                 }).done(function () {
+                    track('ai_chat_feedback', { chat_profile: profile, rating: value });
                     $wrap.empty().append($('<span>', { 'class': 'ai-chat-bedrock-feedback-label' }).text(params.i18n.feedback_thanks || ''));
+                    // An answer that did not help is where a person can.
+                    if ('down' === value && contact) {
+                        $wrap.append(
+                            $('<span>', { 'class': 'ai-chat-bedrock-feedback-label' }).text(params.i18n.contact_offer || ''),
+                            $('<button>', { type: 'button', 'class': 'ai-chat-bedrock-copy ai-chat-bedrock-contact-offer' }).text(params.i18n.contact_open || '').on('click', openContact)
+                        );
+                    }
                 }).fail(function () {
                     $wrap.data('sent', false);
                     buttons.up.prop('disabled', false);
@@ -553,6 +625,160 @@
                 $meta.append(controls);
             }
         }
+
+        /**
+         * The form a visitor leaves their details in, as a message from the assistant. Only
+         * one is open at a time, and nothing is sent until they agree to it.
+         */
+        function openContact() {
+            if (!contact) {
+                return;
+            }
+            const $open = $messages.find('.ai-chat-bedrock-contact');
+            if ($open.length) {
+                $open.find('input, textarea').filter(':visible').first().trigger('focus');
+                return;
+            }
+            const i18n = params.i18n || {};
+            const id = 'aicfab-contact-' + Math.random().toString(36).slice(2, 10);
+            const $form = $('<form>', { 'class': 'ai-chat-bedrock-contact', novalidate: 'novalidate', 'aria-labelledby': id + '-title' });
+            const field = function (name, label, $control, help) {
+                const $wrap = $('<p>', { 'class': 'ai-chat-bedrock-contact-field' });
+                $control.attr({ id: id + '-' + name, name: name });
+                $wrap.append($('<label>', { 'for': id + '-' + name }).text(label), $control);
+                if (help) {
+                    $control.attr('aria-describedby', id + '-' + name + '-help');
+                    $wrap.append($('<small>', { id: id + '-' + name + '-help' }).text(help));
+                }
+                return $wrap;
+            };
+            const lastQuestion = (function () {
+                for (let i = history.length - 1; i >= 0; i--) {
+                    if ('user' === history[i].role) {
+                        return history[i].content;
+                    }
+                }
+                return '';
+            }());
+            const $error = $('<p>', { 'class': 'ai-chat-bedrock-contact-error', role: 'alert' });
+            const $send = $('<button>', { type: 'submit', 'class': 'button button-primary' }).text(i18n.contact_send || '');
+            const $cancel = $('<button>', { type: 'button', 'class': 'button button-secondary' }).text(i18n.contact_cancel || '');
+            const $consent = $('<input>', { type: 'checkbox', name: 'consent', value: '1', required: 'required' });
+            const $include = $('<input>', { type: 'checkbox', name: 'include', value: '1', checked: 'checked' });
+            const $consentLabel = $('<label>').append($consent, ' ', document.createTextNode(i18n.contact_consent || ''));
+            const privacy = safeUrl(contact.privacy_url);
+            if (privacy) {
+                $consentLabel.append(' ', $('<a>', { href: privacy, target: '_blank', rel: 'noopener noreferrer' }).text(i18n.contact_privacy || ''));
+            }
+
+            $form.append(
+                $('<p>', { id: id + '-title', 'class': 'ai-chat-bedrock-contact-title' }).text(i18n.contact_title || ''),
+                field('name', i18n.contact_name || '', $('<input>', { type: 'text', maxlength: 100, autocomplete: 'name' })),
+                field('email', i18n.contact_email || '', $('<input>', { type: 'email', maxlength: 200, autocomplete: 'email' }), contact.signed_in ? i18n.contact_email_own : ''),
+                field('phone', i18n.contact_phone || '', $('<input>', { type: 'tel', maxlength: 40, autocomplete: 'tel' })),
+                field('message', i18n.contact_message || '', $('<textarea>', { rows: 3, maxlength: 2000 }).val(lastQuestion)),
+                // Left empty by people, who never see it.
+                $('<p>', { 'class': 'ai-chat-bedrock-contact-trap', 'aria-hidden': 'true' }).append($('<input>', { type: 'text', name: 'website', tabindex: '-1', autocomplete: 'off' })),
+                history.length ? $('<p>', { 'class': 'ai-chat-bedrock-contact-check' }).append($('<label>').append($include, ' ', document.createTextNode(i18n.contact_include || ''))) : null,
+                $('<p>', { 'class': 'ai-chat-bedrock-contact-check' }).append($consentLabel),
+                $error,
+                $('<p>', { 'class': 'ai-chat-bedrock-contact-actions' }).append($send, ' ', $cancel)
+            );
+            const other = contactUrl(contact.link);
+            if (other) {
+                $form.append($('<p>', { 'class': 'ai-chat-bedrock-contact-other' }).append(
+                    $('<a>', { href: other, target: '_blank', rel: 'noopener noreferrer' }).text(i18n.contact_other || other)
+                ));
+            }
+
+            const bubble = appendBubble(false);
+            bubble.message.addClass('is-contact');
+            bubble.message.find('.ai-chat-bedrock-copy').remove();
+            bubble.content.append($form);
+            scrollToBottom();
+            $form.find('input[name="name"]').trigger('focus');
+
+            $cancel.on('click', function () {
+                bubble.message.remove();
+                $textarea.trigger('focus');
+            });
+
+            const send = function (body, retried) {
+                return $.ajax({
+                    url: contact.url,
+                    method: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    headers: params.rest_nonce ? { 'X-WP-Nonce': params.rest_nonce } : {},
+                    data: JSON.stringify(body)
+                }).then(null, function (xhr) {
+                    const data = xhr && xhr.responseJSON;
+                    if (!retried && isNonceError(xhr.status, data)) {
+                        return refreshNonce().then(function () {
+                            return send(body, true);
+                        });
+                    }
+                    return $.Deferred().reject(data && data.message ? data.message : (i18n.generic_error || '')).promise();
+                });
+            };
+
+            $form.on('submit', function (event) {
+                event.preventDefault();
+                const value = function (name) {
+                    return String($form.find('[name="' + name + '"]').val() || '').trim();
+                };
+                const hasContact = value('email') || value('phone').replace(/[^0-9]/g, '').length >= 5 || contact.signed_in;
+                if (!hasContact || !$consent.prop('checked')) {
+                    $error.text(i18n.contact_needed || '');
+                    return;
+                }
+                $error.text('');
+                $send.prop('disabled', true);
+                send({
+                    name: value('name'),
+                    email: value('email'),
+                    phone: value('phone'),
+                    message: value('message'),
+                    website: value('website'),
+                    consent: true,
+                    conversation: history.length && $include.prop('checked') ? history.slice(-20) : [],
+                    page: window.location.href,
+                    lang: params.language || '',
+                    profile: profile
+                }).then(function () {
+                    track('ai_chat_contact', { chat_profile: profile });
+                    const thanks = i18n.contact_sent || '';
+                    bubble.content.empty().text(thanks);
+                    announce(thanks);
+                    scrollToBottom();
+                }, function (message) {
+                    $send.prop('disabled', false);
+                    $error.text(String(message || i18n.generic_error || ''));
+                });
+            });
+        }
+
+        $container.find('.ai-chat-bedrock-contact-open').on('click', openContact);
+
+        function answered(data) {
+            track('ai_chat_answer', {
+                chat_profile: profile,
+                sources: Array.isArray(data.sources) ? Math.min(5, data.sources.length) : 0,
+                products: Array.isArray(data.products) ? Math.min(8, data.products.length) : 0
+            });
+        }
+
+        $messages.on('click', '.ai-chat-bedrock-sources a', function () {
+            track('ai_chat_source_click', { chat_profile: profile, link_url: String($(this).attr('href') || '') });
+        });
+        $messages.on('click', '.ai-chat-bedrock-product a', function () {
+            const $link = $(this);
+            track('ai_chat_product_click', {
+                chat_profile: profile,
+                link_url: String($link.attr('href') || ''),
+                product_action: $link.hasClass('ai-chat-bedrock-product-cart') ? 'add_to_cart' : 'view'
+            });
+        });
 
         function appendBubble(isUser, seconds) {
             hideSuggestions();
@@ -883,6 +1109,7 @@
                     attachSpeech(bubble, response.data.message, response.data.speech);
                     attachFeedback(bubble, response.data.entry);
                     showUsage(response.usage);
+                    answered(response.data);
                 } else {
                     showError(
                         response && response.data && response.data.message ? response.data.message : params.i18n.generic_error,
@@ -988,6 +1215,7 @@
                     attachProducts(state.bubble, payload.products);
                     attachSpeech(state.bubble, payload.message, payload.speech);
                     attachFeedback(state.bubble, payload.entry);
+                    answered(payload);
                 }
                 showUsage(payload.usage);
                 // The rendered text, not the raw reply: announcing markdown makes a screen
@@ -1190,7 +1418,7 @@
             };
         }
 
-        function submitMessage(event) {
+        function submitMessage(event, suggested) {
             if (event) {
                 event.preventDefault();
             }
@@ -1206,6 +1434,7 @@
                 return;
             }
 
+            track('ai_chat_question', { chat_profile: profile, question_source: true === suggested ? 'suggestion' : 'typed' });
             const requestHistory = historyForRequest();
             sentSinceLoad = true;
             addMessage(message, true);
@@ -1240,7 +1469,7 @@
             }
             $textarea.val(text);
             autoGrow();
-            submitMessage();
+            submitMessage(null, true);
         });
 
         $form.on('submit', submitMessage);
@@ -1300,4 +1529,22 @@
             });
         }
     });
+
+    /*
+     * Taps on the chat made while an optimizer held this script back, as noted by
+     * ai-chat-bedrock-early.js. They are repeated now that the chat can answer them. A tap on
+     * the chat button is skipped when the chat is already open, since remembering an open
+     * chat may have opened it, and repeating the tap would close it again.
+     */
+    const early = window.aiChatBedrockEarly;
+    if (early) {
+        early.ready = true;
+        early.taps.splice(0).forEach(function (element) {
+            if (!document.documentElement.contains(element) || 'true' === element.getAttribute('aria-expanded')) {
+                return;
+            }
+            element.click();
+            early.repeated.push({ element: element, at: Date.now() });
+        });
+    }
 })(jQuery);

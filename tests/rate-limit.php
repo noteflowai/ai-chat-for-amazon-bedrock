@@ -108,6 +108,34 @@ AI_Chat_Bedrock_Security::check_rate_limit( 'chat', 3 );
 AI_Chat_Bedrock_Security::check_rate_limit( 'chat', 3 );
 check_rl( ! AI_Chat_Bedrock_Security::check_rate_limit( 'chat', 3 ), 'Changing address does not reset a user\'s count.' );
 
+// --- Daily allowances ------------------------------------------------------------------
+
+if ( ! defined( 'DAY_IN_SECONDS' ) ) {
+	define( 'DAY_IN_SECONDS', 86400 );
+}
+$GLOBALS['aicfab_user']       = 0;
+$GLOBALS['aicfab_transients'] = array();
+$GLOBALS['aicfab_ttls']       = array();
+$_SERVER['REMOTE_ADDR']       = '10.0.0.1';
+check_rl( 0 === AI_Chat_Bedrock_Security::daily_spent( 'speech' ), 'Nothing is used of an allowance at first.' );
+AI_Chat_Bedrock_Security::spend_daily( 'speech', 1200 );
+AI_Chat_Bedrock_Security::spend_daily( 'speech', 300 );
+check_rl( 1500 === AI_Chat_Bedrock_Security::daily_spent( 'speech' ), 'What is used adds up.' );
+AI_Chat_Bedrock_Security::spend_daily( 'speech', 0 );
+AI_Chat_Bedrock_Security::spend_daily( 'speech', -50 );
+$aicfab_day_key = array_keys( $GLOBALS['aicfab_transients'] );
+check_rl( 1500 === AI_Chat_Bedrock_Security::daily_spent( 'speech' ) && 1 === count( $aicfab_day_key ) && 2 === count( $GLOBALS['aicfab_ttls'][ $aicfab_day_key[0] ] ), 'Nothing, or less than nothing, is not counted or written.' );
+check_rl( array( DAY_IN_SECONDS, DAY_IN_SECONDS ) === $GLOBALS['aicfab_ttls'][ $aicfab_day_key[0] ] && 0 === strpos( $aicfab_day_key[0], 'aicfab_day_' ), 'The count is kept for a day under its own key.' );
+check_rl( 'aicfab_day_' . md5( 'speech|' . gmdate( 'Ymd' ) . '|guest:' . hash_hmac( 'sha256', '10.0.0.1', wp_salt( 'nonce' ) ) ) === $aicfab_day_key[0], 'The day is part of the key, so the count starts again each day however often it is used.' );
+check_rl( 0 === AI_Chat_Bedrock_Security::daily_spent( 'chat' ), 'Each allowance is counted separately.' );
+$_SERVER['REMOTE_ADDR'] = '10.0.0.2';
+check_rl( 0 === AI_Chat_Bedrock_Security::daily_spent( 'speech' ), 'Another address has its own allowance.' );
+$GLOBALS['aicfab_user'] = 5;
+AI_Chat_Bedrock_Security::spend_daily( 'speech', 40 );
+$_SERVER['REMOTE_ADDR'] = '10.0.0.1';
+check_rl( 40 === AI_Chat_Bedrock_Security::daily_spent( 'speech' ), 'A signed-in user is counted by account, wherever they connect from.' );
+check_rl( false === strpos( implode( '', array_keys( $GLOBALS['aicfab_transients'] ) ), '10.0.0' ), 'No address is kept in a key.' );
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

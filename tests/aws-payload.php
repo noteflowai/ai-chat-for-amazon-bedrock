@@ -229,6 +229,9 @@ check_aws( true === (bool) $should->invoke( $aws, array( 'success' => false, 'da
 check_aws( true === AI_Chat_Bedrock_AWS::is_model_unavailable( '{"message":"The provided model identifier is invalid."}' ), 'an invalid model identifier is recognized' );
 check_aws( true === AI_Chat_Bedrock_AWS::is_model_unavailable( '{"__type":"ResourceNotFoundException","message":"Could not resolve the model"}' ), 'a missing model resource is recognized' );
 check_aws( true === AI_Chat_Bedrock_AWS::is_model_unavailable( '{"message":"You do not have access to the model with the specified model ID."}' ), 'a model the account cannot use is recognized' );
+check_aws( true === AI_Chat_Bedrock_AWS::is_model_unavailable( '{"message":"Model access is denied due to IAM user or service role is not authorized to perform the required AWS Marketplace actions (aws-marketplace:ViewSubscriptions, aws-marketplace:Subscribe) to enable access to this model."}' ), 'a model not yet turned on for the account falls back' );
+check_aws( true === AI_Chat_Bedrock_AWS::is_model_unavailable( '{"message":"Model use case details have not been submitted for this account. Fill out the Anthropic use case details form before using the model."}' ), 'an Anthropic model waiting for the use case form falls back' );
+check_aws( false === AI_Chat_Bedrock_AWS::is_model_unavailable( '{"message":"User: arn:aws:iam::123456789012:role/site is not authorized to perform: bedrock:InvokeModel"}' ), 'an IAM denial is not retried on another model' );
 check_aws( false === AI_Chat_Bedrock_AWS::is_model_unavailable( '{"message":"malformed input request: expected type string"}' ), 'a payload complaint is not treated as a model problem' );
 check_aws( false === AI_Chat_Bedrock_AWS::is_model_unavailable( '' ), 'an empty body is not treated as a model problem' );
 check_aws( false === $case( 'aicfab_daily_limit', 0 ), 'the daily limit is not retried' );

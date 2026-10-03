@@ -288,7 +288,33 @@ $text = AI_Chat_Bedrock_Content::to_text( '<h2>Title</h2><p>One&nbsp;&amp; two</
 check_content( false === strpos( $text, 'alert' ) && false === strpos( $text, 'p{}' ), 'Scripts and styles are dropped.' );
 check_content( false === strpos( $text, 'Email' ), 'Form labels are dropped.' );
 check_content( false !== strpos( $text, 'One & two' ), 'Entities are decoded.' );
-check_content( false !== strpos( $text, "Title\n\nOne" ) && false !== strpos( $text, "A\n\nB" ), 'Block elements become paragraphs: ' . json_encode( $text ) );
+check_content( false !== strpos( $text, "Title\nOne" ) && false !== strpos( $text, "A\n\nB" ), 'Block elements become paragraphs, and a heading stays with the paragraph after it: ' . json_encode( $text ) );
+
+// --- Questions stay with their answers ---------------------------------------------
+
+$text = AI_Chat_Bedrock_Content::to_text( '<div class="schema-faq wp-block-yoast-faq-block"><div class="schema-faq-section" id="faq-question-1"><strong class="schema-faq-question">Do you deliver on Sundays?</strong> <p class="schema-faq-answer">Yes, from 9 to 12.</p> </div> <div class="schema-faq-section"><strong class="schema-faq-question">Can I pay by card?</strong> <p class="schema-faq-answer">All major cards.</p> </div></div>' );
+check_content( "Do you deliver on Sundays?\nYes, from 9 to 12.\n\nCan I pay by card?\nAll major cards." === $text, 'Each question of a Yoast SEO FAQ block is one paragraph with its answer: ' . json_encode( $text ) );
+$text = AI_Chat_Bedrock_Content::to_text( '<div id="rank-math-faq" class="rank-math-block"><div class="rank-math-list "><div id="faq-1" class="rank-math-list-item"><h3 class="rank-math-question ">Do you bake gluten-free?</h3><div class="rank-math-answer "><p>On Fridays.</p></div></div><div class="rank-math-list-item"><p class="rank-math-question">Opening hours</p><div class="rank-math-answer"><p>7 to 6.</p></div></div></div></div>' );
+check_content( "Do you bake gluten-free?\nOn Fridays.\n\nOpening hours\n7 to 6." === $text, 'So is each question of a Rank Math FAQ block, whatever element it is in: ' . json_encode( $text ) );
+$text = AI_Chat_Bedrock_Content::to_text( '<details class="wp-block-details"><summary>Is there wifi?</summary><p>Yes, ask for the code.</p></details><dl><dt>Sourdough</dt><dd>Our flagship loaf.</dd></dl>' );
+check_content( "Is there wifi?\nYes, ask for the code.\n\nSourdough\nOur flagship loaf." === $text, 'A details summary and a definition term stay with what they introduce: ' . json_encode( $text ) );
+$text = AI_Chat_Bedrock_Content::to_text( '<h2>Parking</h2><h3>Street</h3><p>Free after 6.</p><p>More.</p><h2>Last heading</h2>' );
+check_content( "Parking\nStreet\nFree after 6.\n\nMore.\n\nLast heading" === $text, 'Headings in a row lead the same paragraph, and a heading at the end is kept: ' . json_encode( $text ) );
+check_content( false === strpos( AI_Chat_Bedrock_Content::to_text( '<h2>A</h2>' ), "\x1F" ), 'No marker is left in the text.' );
+
+$faq = '<h2>Delivery</h2>';
+for ( $i = 1; $i <= 12; $i++ ) {
+	$faq .= '<div class="schema-faq-section"><strong class="schema-faq-question">Question ' . $i . ' about ' . ( 7 === $i ? 'Sunday delivery' : 'something else entirely' ) . '?</strong> <p class="schema-faq-answer">' . ( 7 === $i ? 'Sunday deliveries leave at nine.' : str_repeat( 'Unrelated answer text. ', 6 ) ) . '</p></div>';
+}
+$faq_text = AI_Chat_Bedrock_Content::to_text( $faq );
+foreach ( AI_Chat_Bedrock_Content::chunks( $faq_text, 300, 0 ) as $chunk ) {
+	if ( false !== strpos( $chunk, 'Question 7' ) ) {
+		check_content( false !== strpos( $chunk, 'Sunday deliveries leave at nine.' ), 'A passage that holds a question holds its answer too.' );
+	}
+}
+$passage = AI_Chat_Bedrock_Content::best_passage( $faq_text, 'When is Sunday delivery?', 300 );
+check_content( false !== strpos( $passage, 'Sunday deliveries leave at nine.' ), 'The passage quoted for a question has the answer in it: ' . $passage );
+
 check_content( 'a b c' === AI_Chat_Bedrock_Content::flatten( " a\n\nb \t c " ), 'Flatten puts text on one line.' );
 
 // --- Passages ------------------------------------------------------------------

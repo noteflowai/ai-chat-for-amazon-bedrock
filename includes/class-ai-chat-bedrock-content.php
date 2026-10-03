@@ -28,7 +28,7 @@ class AI_Chat_Bedrock_Content {
 	/**
 	 * Bump when the extraction changes, so cached text and stored hashes are rebuilt.
 	 */
-	const VERSION = 2;
+	const VERSION = 3;
 
 	/**
 	 * Whether a post is being rendered, so a filter that asks for text again does not recurse.
@@ -71,6 +71,118 @@ class AI_Chat_Bedrock_Content {
 		 * @param WP_Post $post   Post.
 		 */
 		return (bool) apply_filters( 'ai_chat_bedrock_is_public_post', $public, $post );
+	}
+
+	/**
+	 * Whether a public post may be used to answer questions, by the chat and by agents.
+	 *
+	 * A page the site keeps out of search engines is usually kept out for a reason: a thank-you
+	 * page with the download a form gives away, a campaign landing page, a page for one
+	 * customer. The chat is a search of the site, so it leaves those out too unless the site
+	 * says otherwise. Reading a page aloud is not affected: the visitor is already on it.
+	 *
+	 * @param WP_Post|null $post    Post.
+	 * @param array|null   $options Settings; the saved ones when omitted.
+	 * @return bool
+	 */
+	public static function is_answerable( $post, $options = null ) {
+		if ( ! self::is_public( $post ) ) {
+			return false;
+		}
+		if ( ! is_array( $options ) ) {
+			$options = function_exists( 'get_option' ) ? get_option( 'ai_chat_bedrock_settings', array() ) : array();
+			$options = is_array( $options ) ? $options : array();
+		}
+		$answerable = ! empty( $options['include_noindex'] ) || ! self::is_noindex( $post );
+
+		/**
+		 * Whether a public post may be used to answer questions and by agents.
+		 *
+		 * @param bool    $answerable Whether it may, after the search engine settings.
+		 * @param WP_Post $post       Post.
+		 */
+		return (bool) apply_filters( 'ai_chat_bedrock_is_answerable_post', $answerable, $post );
+	}
+
+	/**
+	 * The version stored indexes are built for: the extraction, and whether pages hidden
+	 * from search engines are used. A change to either has every post processed again, so
+	 * a page left out before is indexed once the site includes them.
+	 *
+	 * @param array|null $options Settings; the saved ones when omitted.
+	 * @return string
+	 */
+	public static function index_version( $options = null ) {
+		if ( ! is_array( $options ) ) {
+			$options = function_exists( 'get_option' ) ? get_option( 'ai_chat_bedrock_settings', array() ) : array();
+			$options = is_array( $options ) ? $options : array();
+		}
+		return self::VERSION . ( ! empty( $options['include_noindex'] ) ? '+noindex' : '' );
+	}
+
+	/**
+	 * Whether the site's SEO plugin tells search engines not to index a post.
+	 *
+	 * Read from the settings each plugin keeps, since its own logic only runs for the page
+	 * being viewed: Yoast SEO, Rank Math and SEOPress for the post and its post type's
+	 * default, All in One SEO for a post set to noindex on its own. Discouraging search
+	 * engines in Settings > Reading does not count: that is how staging sites are hidden.
+	 *
+	 * @param WP_Post $post Post.
+	 * @return bool
+	 */
+	public static function is_noindex( $post ) {
+		$noindex = false;
+		if ( $post instanceof WP_Post && function_exists( 'get_post_meta' ) ) {
+			$type = (string) $post->post_type;
+
+			if ( defined( 'WPSEO_VERSION' ) ) {
+				// 1 is noindex and 2 is index; anything else follows the post type.
+				$value = (string) get_post_meta( $post->ID, '_yoast_wpseo_meta-robots-noindex', true );
+				if ( '1' === $value ) {
+					$noindex = true;
+				} elseif ( '2' !== $value ) {
+					$titles  = get_option( 'wpseo_titles', array() );
+					$noindex = is_array( $titles ) && ! empty( $titles[ 'noindex-' . $type ] );
+				}
+			}
+
+			if ( ! $noindex && defined( 'RANK_MATH_VERSION' ) ) {
+				$robots = get_post_meta( $post->ID, 'rank_math_robots', true );
+				if ( empty( $robots ) || ! is_array( $robots ) ) {
+					$titles = get_option( 'rank-math-options-titles', array() );
+					$titles = is_array( $titles ) ? $titles : array();
+					$custom = isset( $titles[ 'pt_' . $type . '_custom_robots' ] ) && 'on' === $titles[ 'pt_' . $type . '_custom_robots' ];
+					$robots = $custom && isset( $titles[ 'pt_' . $type . '_robots' ] ) ? $titles[ 'pt_' . $type . '_robots' ] : ( isset( $titles['robots_global'] ) ? $titles['robots_global'] : array() );
+				}
+				$noindex = is_array( $robots ) && in_array( 'noindex', $robots, true );
+			}
+
+			if ( ! $noindex && defined( 'SEOPRESS_VERSION' ) ) {
+				$titles  = get_option( 'seopress_titles_option_name', array() );
+				$titles  = is_array( $titles ) ? $titles : array();
+				$noindex = 'yes' === get_post_meta( $post->ID, '_seopress_robots_index', true )
+					|| ! empty( $titles['seopress_titles_noindex'] )
+					|| ! empty( $titles['seopress_titles_single_titles'][ $type ]['noindex'] );
+			}
+
+			if ( ! $noindex && defined( 'AIOSEO_FILE' ) && class_exists( '\AIOSEO\Plugin\Common\Models\Post' ) ) {
+				try {
+					$meta    = \AIOSEO\Plugin\Common\Models\Post::getPost( $post->ID );
+					$noindex = is_object( $meta ) && empty( $meta->robots_default ) && ! empty( $meta->robots_noindex );
+				} catch ( Throwable $error ) {
+					$noindex = false;
+				}
+			}
+		}
+
+		/**
+		 * Whether search engines are told not to index a post, for an SEO plugin not read here.
+		 *
+		 * @param bool    $noindex Whether the post is noindex.
+		 * @param WP_Post $post    Post.
+		 */
+		return (bool) apply_filters( 'ai_chat_bedrock_post_is_noindex', $noindex, $post );
 	}
 
 	/**
@@ -291,11 +403,25 @@ class AI_Chat_Bedrock_Content {
 		// Scripts, styles and forms are not reading text, and wp_strip_all_tags keeps a form's labels.
 		$html = preg_replace( '#<(script|style|noscript|template|form|svg|iframe)\b[^>]*>.*?</\1>#is', ' ', $html );
 		$html = preg_replace( '#<br\s*/?>#i', "\n", (string) $html );
+
+		/*
+		 * A heading or a question belongs with what follows it. As paragraphs of their own, a
+		 * passage could end on "Do you deliver on Sundays?" and the next start with the answer,
+		 * so the passage that matched the question did not hold the answer. The end of each
+		 * is marked, and joined to the next paragraph below. That covers headings, the
+		 * summary of a details block, a definition term, and the questions of the Yoast SEO
+		 * and Rank Math FAQ blocks, whose markup is not a heading.
+		 */
+		$html = preg_replace( '#</(h[1-6]|summary|dt)>#i', "\x1F$0", (string) $html );
+		$html = preg_replace( '#(<(\w+)\b[^>]*\bclass="[^"]*\b(?:schema-faq-question|rank-math-question)\b[^"]*"[^>]*>.*?)(</\2>)#is', "$1\x1F$3", (string) $html );
 		$html = preg_replace( '#</?(p|div|section|article|aside|header|footer|main|h[1-6]|li|ul|ol|dl|dt|dd|tr|table|thead|tbody|blockquote|pre|figure|figcaption|details|summary|hr)\b[^>]*>#i', "\n\n", (string) $html );
 		$text = wp_strip_all_tags( (string) $html );
 		$text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 		$text = preg_replace( '/[ \t\x{00A0}\x{3000}]+/u', ' ', (string) $text );
 		$text = preg_replace( '/ *\n */', "\n", (string) $text );
+		$text = preg_replace( '/\x1F+/', "\x1F", (string) $text );
+		$text = preg_replace( '/\x1F\s*(?=\S)/u', "\n", (string) $text );
+		$text = str_replace( "\x1F", '', (string) $text );
 		$text = preg_replace( '/\n{3,}/', "\n\n", (string) $text );
 		return trim( (string) $text );
 	}

@@ -83,13 +83,13 @@ $tones           = array(
 		<span id="aicfab-copy-iam-status" role="status"></span>
 	</p>
 	<p class="description">
-		<?php esc_html_e( 'Model access must also be requested in the Amazon Bedrock console for the region above. Permissions alone are not enough: an account without model access is refused even with a correct policy.', 'ai-chat-for-amazon-bedrock' ); ?>
+		<?php esc_html_e( 'Amazon Bedrock turns a model on for the AWS account the first time it is called. That first call subscribes to most third-party models through AWS Marketplace, which this policy does not allow, since the site needs it only once. The simplest way through is to open the model once in the Amazon Bedrock console playground, signed in as an administrator, in the region above. Anthropic models also ask for a one-time use case form there.', 'ai-chat-for-amazon-bedrock' ); ?>
 	</p>
 
 	<h2><?php esc_html_e( 'Common fixes', 'ai-chat-for-amazon-bedrock' ); ?></h2>
 	<ul class="ul-disc">
 		<li><?php esc_html_e( 'AccessDeniedException: grant bedrock:InvokeModel for the exact model or inference profile ARN.', 'ai-chat-for-amazon-bedrock' ); ?></li>
-		<li><?php esc_html_e( 'ValidationException or model not found: confirm model access in the region and whether a cross-region inference profile ID is required.', 'ai-chat-for-amazon-bedrock' ); ?></li>
+		<li><?php esc_html_e( 'ValidationException or model not found: confirm the region offers the model and whether a cross-region inference profile ID is required.', 'ai-chat-for-amazon-bedrock' ); ?></li>
 		<li><?php esc_html_e( 'Chat works but streaming fails: bedrock:InvokeModelWithResponseStream is a separate action from bedrock:InvokeModel and has to be granted as well.', 'ai-chat-for-amazon-bedrock' ); ?></li>
 		<li><?php esc_html_e( 'Streaming unavailable: install the PHP cURL extension, or keep buffered responses.', 'ai-chat-for-amazon-bedrock' ); ?></li>
 		<li><?php esc_html_e( 'Using a cross-region inference profile: the underlying foundation model must be allowed in every region the profile routes to, not only the profile itself.', 'ai-chat-for-amazon-bedrock' ); ?></li>

@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai, chatbot, ai-agent, mcp, connector
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.63.0
+Stable tag: 1.64.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -90,7 +90,8 @@ Point the chat at your published pages and it answers from them, citing what it 
 embedding model and it matches by meaning rather than by shared words, so "when will my parcel
 arrive" can find a page titled "Getting parcels to you". Keep the vectors in Amazon S3 Vectors and
 every passage of every page is searched, in the visitor's language first. Only what a signed-out
-visitor can read is ever indexed or quoted, so members-only sections stay out of answers. Add a
+visitor can read is ever indexed or quoted, so members-only sections stay out of answers, and pages
+your SEO plugin keeps out of search engines stay out too. Add a
 reranking model and the passages that best answer the question are kept, from your pages and a
 knowledge base alike. Questions
 the site does not cover return no context, and the Conversations screen lists them as content gaps
@@ -221,6 +222,10 @@ Run **AI Chat Bedrock > Diagnostics** first: most problems are a missing IAM per
 
 No. Model requests use Amazon Bedrock and your AWS credentials. Availability, model access, pricing, and data handling are governed by your AWS account and Region.
 
+= Can I try it without an AWS account? =
+
+Yes, in the Live Preview on the plugin's WordPress.org page, which runs WordPress in your browser with demo mode on. The chat then quotes the passage of the site's pages that best matches each question, and says that no AI model was called. Demo mode is off unless `AI_CHAT_BEDROCK_DEMO` is defined, and ends once AWS credentials are found.
+
 = Which Bedrock models are supported? =
 
 Claude, Amazon Nova and Titan, Meta Llama, Mistral, DeepSeek and the other chat models your Region offers, including Claude Sonnet 5, Claude Opus 5.5 and Claude Haiku 4.5; Stability AI models for images; Cohere Rerank 3.5 and Amazon Rerank 1.0 for reranking. The settings screen lists what your account offers, and a new installation starts on Amazon Nova Lite. [Regions, inference profiles and image models](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#which-bedrock-models-are-supported).
@@ -235,7 +240,7 @@ Yes, on Claude 3.5 Haiku, Claude 3.7 Sonnet and newer Claude models, which Bedro
 
 = Why do I receive AccessDeniedException or a model access error? =
 
-Confirm that the model is available and enabled in the configured AWS Region, the model ID is correct, and the IAM identity can call `bedrock:InvokeModel` for the required resource. Some models use inference profiles with different IDs and IAM resources.
+Amazon Bedrock no longer has a Model access page: a model is turned on for the AWS account the first time it is called. That first call fails when the identity may not subscribe through AWS Marketplace, when the account has no payment method, or, for Anthropic models, before the one-time use case form is submitted. Opening the model once in the Bedrock console playground as an administrator settles all three, and the chat's error names which one it was. Otherwise, check the model ID, whether it needs an inference profile ID, and that the identity can call `bedrock:InvokeModel` on it.
 
 = Does the chat work on a multilingual site? =
 
@@ -333,7 +338,15 @@ Yes, under Chat > Conversation memory, which is off by default so every page sta
 
 = Can answers and posts be read aloud? =
 
-Yes, with Amazon Polly, off by default: a Listen button under chat answers and one above posts, in a voice for the page's language. Post audio is saved once and reused, and a daily character limit applies. [Voices, costs and filters](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-answers-and-posts-be-read-aloud).
+Yes, with Amazon Polly, off by default: a Listen button under chat answers and one above posts, in a voice for the page's language. Post audio is saved once and reused. New audio has a daily limit for the site and for each visitor, crawlers cannot have posts read, and posts can be kept for signed-in visitors. [Voices, costs and filters](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-answers-and-posts-be-read-aloud).
+
+= Can a visitor ask for a person? =
+
+Yes, under Chat > Contact requests, off by default. A Contact a person button below the chat opens a short form, and the assistant points to it when it cannot help. Requests need consent and are listed under Contact requests; Akismet, Flamingo and Joinchat are used when present. [Spam checks, email and hooks](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-a-visitor-ask-for-a-person).
+
+= Can I see what the chat does in Google Analytics? =
+
+Yes, under Chat > Analytics events, off by default. Opens, questions, answers, followed sources and products, ratings and contact requests go to Site Kit, MonsterInsights, Google Tag Manager, Matomo or Plausible, without message text, and wait for statistics consent where the WP Consent API is used. [Events and parameters](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-i-see-what-the-chat-does-in-google-analytics).
 
 = Can the chat float instead of sitting in the page? =
 
@@ -452,6 +465,20 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.64.0 =
+* Contact requests, under Chat and off by default: a Contact a person button below the chat, also offered after a thumbs-down. Visitors leave an email address or phone number and a message, and can include the conversation; nothing is stored without their consent. Requests are listed under Contact requests, exported as CSV, deleted after the days you set (180 by default) and covered by personal data export and erasure. Akismet checks them when set up, Flamingo files a copy, an email can go to the site, and `ai_chat_bedrock_lead_captured` passes them on. Joinchat's WhatsApp number is offered as another way to reach the site.
+* Abilities of other plugins are offered by how well they match the question, with every plugin getting a turn, rather than the first twenty registered. MCP > Tool policy lists them by plugin, switches a plugin off as a whole, and lets an ability that changes data be allowed.
+* Fixed: saving the tool policy forgot the decisions for MCP servers that were offline while the form was open.
+* Fixed: the failures of a model's first use in an AWS account now say what to do. Bedrock no longer has a Model access page; a missing AWS Marketplace permission, payment method or Anthropic use case form each get their own fix instead of "HTTP 404" or a generic permission message, and a fallback model is used meanwhile.
+* The last setup step creates a draft page with the chat on it, rather than opening an empty page.
+* Demo mode, for the Live Preview on WordPress.org: when `AI_CHAT_BEDROCK_DEMO` is defined and no AWS credentials are found, the chat quotes the passage of the site's pages that best matches each question and says that no AI model was called.
+* Analytics events, under Chat and off by default: opening the chat, questions, answers, followed sources and products, ratings and contact requests go to Google Analytics (Site Kit, MonsterInsights), Google Tag Manager, Matomo or Plausible, with no message text. Mark `ai_chat_contact` as a key event to count contact requests as conversions.
+* Works with the WP Consent API, used by Complianz, CookieYes and others: what the chat keeps in session storage is listed in their cookie policy as functional, and analytics events wait for consent to statistics.
+* Pages that Yoast SEO, Rank Math, SEOPress or All in One SEO keep out of search engines (noindex), such as a thank-you page with a download, are no longer used for answers or by agents. Answer grounding > Pages hidden from search includes them again.
+* A heading or question, as in Yoast SEO and Rank Math FAQ blocks, now stays in the same passage as its answer. Indexed pages are processed again once.
+* Reading aloud spends money only on new audio, and that is now shared fairly: one visitor may have at most a quarter of the daily characters made (30,000 by default), crawlers and scripts cannot have posts read, and saved audio still plays for everyone. Listen to this post can be limited to signed-in visitors.
+* Fixed: with LiteSpeed Cache, WP Rocket or Perfmatters delaying scripts until the first interaction, that first tap on the chat button or Send did nothing, notably on phones, and Send could reload the page. The tap is now kept and acted on once the chat has loaded. The chat's own script is still delayed as the site has set it.
+
 = 1.63.0 =
 * Amazon Bedrock now appears under Settings > Connectors on WordPress 7.1 and later. On AWS it shows as connected with nothing entered, because the IAM role is used. Elsewhere, paste an Amazon Bedrock API key there: it is checked with Bedrock before it is kept, and stored encrypted. A key in the plugin settings or `wp-config.php` still takes precedence.
 * Fixed: a key entered for Bedrock on Settings > Connectors could not be checked by WordPress and was discarded, because the connector declared that it stored no credential.
@@ -459,28 +486,10 @@ what a good answer says.
 * Diagnostics and the Plugins screen link to the support forum, and the FAQ is shorter, with the longer answers on GitHub.
 * Once the chat has answered at least 20 questions over more than a week, administrators see one request for a review on the plugin's own screens. Closing it or following a link ends it for good, and the `ai_chat_bedrock_review_prompt` filter turns it off.
 
-= 1.62.0 =
-* Business insights, under Answer grounding and off by default: a screen with figures over a period. Content published, chat questions, unanswered and unhelpful answers, AI requests, tokens and failures and, with WooCommerce, orders, net sales, items sold and average order value from WooCommerce Analytics. Compare with the previous period or a year earlier, split by day, week or month, break down by product, category, content type, language or model, and download the figure as CSV.
-* Ask in words: Amazon Bedrock turns a question such as "net sales by week this quarter" into one of these queries, which is shown so you can see how it was read. Bedrock never sees a figure.
-* A read-only query-metrics ability and MCP tool give agents the same figures within the site description's data rules. Figures about visitors' questions stay on the screen, store figures need the WooCommerce reports capability, and anything counted from fewer than five orders or questions is withheld.
-* Suggested privacy policy text covers business insights when they are on.
-
-= 1.61.0 =
-* Site description, under Answer grounding and off by default: a read-only describe-site ability and MCP tool that tell an agent what the site holds, as schema.org types with published counts per language, how the types relate, and which data an AI may see. IDs match the ones Yoast SEO and WooCommerce print. With a post ID it describes one published item with its terms, offer and published translations.
-* With the site description on, passages given to the chat model say whether they come from a post, page or product, and in which language, and the MCP server points agents to describe_site.
-
-= 1.60.0 =
-* Read aloud, under Chat and off by default: a Listen button under chat answers and a Listen to this post button on posts, read by Amazon Polly in a voice for the language. Only answers the chat gave to that visitor can be read. Post audio is made from the text a signed-out visitor sees, saved in the uploads folder, and made again when the post changes. Choose the neural or generative engine and a daily character limit (100,000 by default); the dashboard shows the characters read.
-* The IAM policy in Diagnostics includes `polly:SynthesizeSpeech` when reading aloud is on, and the suggested privacy policy text covers it.
-
-= 1.59.0 =
-* Conversation memory, under Chat and off by default. Keep the conversation while the visitor browses, in the browser tab's session storage, or also save a signed-in visitor's recent conversation on the site so it is there on their next visit and on another device. Saved conversations are kept for the days you set (30 by default), deleted when the visitor clears the chat or the option is switched off, and included in personal data exports and erasures. Guests' conversations are never stored on the site.
-* Long conversations, especially in Chinese or Japanese, no longer fail with "Conversation history is too large": the earlier messages sent with a question are kept within the size the server accepts.
-* Suggested privacy policy text covers conversation memory when it is on.
-
-Earlier releases are listed in changelog.txt, which ships with the plugin.
-
 == Upgrade Notice ==
+
+= 1.64.0 =
+Pages your SEO plugin marks noindex are no longer used for answers; Answer grounding can include them again. Optional contact requests and analytics events, WP Consent API support, and fairer read-aloud limits.
 
 = 1.63.0 =
 Amazon Bedrock appears under Settings > Connectors: connected through the IAM role, or with an API key that is checked and stored encrypted. Renamed AI Chatbot & Agents for Amazon Bedrock.
@@ -734,9 +743,11 @@ Conversation memory is off by default. In browser-tab mode the conversation is k
 
 Reading aloud is off by default. With Listen under answers on, the text of an answer is sent to Amazon Polly when the visitor presses Listen, and the audio is not kept. With Listen to this post on, the text a signed-out visitor can read on the post is sent to Amazon Polly the first time someone listens, and the audio is kept in the uploads folder until the post changes or the option is switched off. Nothing about the visitor is sent.
 
+Contact requests are off by default. When a visitor sends one, the name, email address, phone number and message they enter, the page and, if they choose, the conversation are stored on this site for the days set (180 by default), with their consent. With Akismet set up, the request, IP address and browser are sent to Akismet to check for spam. Requests are reachable through Tools > Export Personal Data and Erase Personal Data, and uninstalling deletes them.
+
 Business insights are off by default. They are worked out on the site from content, the conversation log, usage counters and WooCommerce Analytics, and only totals are shown; those from fewer than five orders or questions are withheld. Asking in words sends the question and the list of figures to Amazon Bedrock, never a figure.
 
-The plugin creates no custom database tables; the optional log is kept in a WordPress option and is reachable through Tools > Export Personal Data and Erase Personal Data. Request limiting stores a salted hash-derived transient counter for each visitor for up to one minute. Debug logging is optional and records only redacted operational metadata. Administrators are responsible for disclosing these data flows and obtaining any consent required in their jurisdiction.
+The plugin creates no custom database tables; the optional log is kept in a WordPress option and is reachable through Tools > Export Personal Data and Erase Personal Data. Request limiting stores a salted hash-derived transient counter for each visitor for up to one minute, and reading aloud a count of the characters read for that visitor for a day. Debug logging is optional and records only redacted operational metadata. Administrators are responsible for disclosing these data flows and obtaining any consent required in their jurisdiction.
 
 On a WooCommerce store with Product answers on, the public details of matching products are sent to Amazon Bedrock with each question. With Order questions on, a signed-in customer's question about orders sends their recent orders' number, dates, status, items, total, shipping method and tracking number to Amazon Bedrock; addresses, email, phone and payment details are not sent. The product assistant sends the product's own details, or its approved review texts without reviewer names, when an editor asks for a draft.
 

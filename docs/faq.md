@@ -19,6 +19,8 @@ Tool use is governed by a policy layer:
 * Up to five calls run per round, rounds are configurable from 1 to 5, and the final round answers without tools so a conversation always terminates.
 * Every call is audited with the tool, round, outcome, duration and parameter key names. Values, output and chat content are never stored.
 
+Abilities that other plugins register in the WordPress Abilities API are offered to the model as tools too. Up to twenty are offered per question, ranked by the words they share with it (pairs of characters for Chinese, Japanese and Korean), with plugins taking turns between equal matches, so a plugin that registers many abilities cannot crowd out the rest. Change the number, from 1 to 50, with the `ai_chat_bedrock_ability_tool_limit` filter. MCP > Tool policy lists them by plugin: switch a plugin off as a whole, refuse a read-only ability, or allow one that changes data, which is then offered to administrators only. Saving the form changes only the tools it shows.
+
 While the agent works, the chat names the tools it is running. The finished answer carries a collapsible list of every call, its round and whether it succeeded, showing metadata only. If the round limit is reached, the answer says so instead of quietly stopping.
 
 ## Can I keep the system prompt in AWS instead of in WordPress?
@@ -31,6 +33,10 @@ Keyword search only finds passages sharing words with the question, so "when wil
 
 By default one vector per post is kept in the WordPress database and a question is compared with the 500 most recent items. For a larger site, choose Amazon S3 Vectors under Answer grounding: every post is split into overlapping passages, each passage gets its own vector in a vector bucket in your AWS account, and every one of them is searched. Create the bucket in the Amazon S3 console, then check or create the index from the settings screen or with `wp ai-chat-bedrock index --create-index`. S3 Vectors needs an IAM role or access keys, not a Bedrock API key; Diagnostics lists the `s3vectors` actions to allow. Several sites can share one index, and each only reads and deletes its own vectors. Each query asks S3 Vectors to filter by site, language and post type before the similarity search, so a selective filter still returns a full set of matches. Return `CLASSIC` from the `ai_chat_bedrock_s3_vectors_query_mode` filter to filter during the search instead.
 
+Pages that search engines are told not to index are left out of answers and of what agents can search, since a page is usually kept out of search for a reason: a thank-you page with the download a form gives away, a campaign landing page, a page for one customer. The plugin reads the noindex settings of Yoast SEO, Rank Math and SEOPress for each page and post type, and of All in One SEO for each page; discouraging search engines in Settings > Reading is ignored, since that is how staging sites are hidden. Tick **Also answer from pages that search engines are told not to index** under Answer grounding to use them anyway, return true from `ai_chat_bedrock_post_is_noindex` for another SEO plugin, or decide per post with `ai_chat_bedrock_is_answerable_post`. Reading a post aloud is not affected.
+
+A heading, the summary of a details block and each question of a Yoast SEO or Rank Math FAQ block are kept in one passage with the text that follows, so a passage that matches a question also holds its answer.
+
 Only published, public content is indexed, as a signed-out visitor sees it: sections that a membership or visibility plugin hides from guests are left out, and every result is checked against the live post again before it is quoted. Blocks with Block Visibility rules are left out whoever they are shown to, since that plugin applies its rules only on front-end pages; to leave out blocks that another plugin restricts, return true from the `ai_chat_bedrock_block_is_restricted` filter. With Polylang, a question is answered from pages in the visitor's language first. With Polylang or WPML, the model is also asked to reply in the language of the page; change or remove that instruction with the `ai_chat_bedrock_language_instruction` filter.
 
 ## What does reranking do?
@@ -39,7 +45,48 @@ Without it, the closest few passages from site content and from the knowledge ba
 
 ## Can answers and posts be read aloud?
 
-Yes, under Chat > Read aloud, which is off by default. **Add a Listen button to chat answers** puts Listen next to Copy under each answer, and **Add a Listen to this post button to posts** puts one above the text of each post. Amazon Polly reads in a voice for the language, chosen from the page or from the answer itself: Mandarin for Chinese, Japanese, Korean, the main European languages and more. The chat only reads answers it gave to that visitor, so the site cannot be used as a free text-to-speech service. A post is read as a signed-out visitor sees it, so member-only sections are never read; each part is saved in the uploads folder the first time it is played, so later listeners cost nothing, and changing the post makes new audio. Polly is priced per character, and the generative voices cost about twice as much as the neural ones. The dashboard counts the characters read, and reading stops for the day at the limit you set (100,000 by default). The AWS identity needs `polly:SynthesizeSpeech`, which the IAM policy in Diagnostics includes. Change the voice with the `ai_chat_bedrock_speech_voice` filter, the post types with `ai_chat_bedrock_speech_post_types`, the Region with `ai_chat_bedrock_speech_region` and the length read with `ai_chat_bedrock_speech_max_chars`. Add the suggested text from Settings > Privacy to your privacy policy before turning it on.
+Yes, under Chat > Read aloud, which is off by default. **Add a Listen button to chat answers** puts Listen next to Copy under each answer, and **Add a Listen to this post button to posts** puts one above the text of each post. Amazon Polly reads in a voice for the language, chosen from the page or from the answer itself: Mandarin for Chinese, Japanese, Korean, the main European languages and more. The chat only reads answers it gave to that visitor, so the site cannot be used as a free text-to-speech service. A post is read as a signed-out visitor sees it, so member-only sections are never read; each part is saved in the uploads folder the first time it is played, so later listeners cost nothing, and changing the post makes new audio. Polly is priced per character, and the generative voices cost about twice as much as the neural ones. The dashboard counts the characters read, and reading stops for the day at the limit you set (100,000 by default). What costs money is making new audio, so that is what is limited: saved post audio plays for everyone, while one visitor may have at most a quarter of the daily limit made, and at least one post of the longest length read (30,000 characters by default), so no single visitor or script can use up the day for everyone else. Crawlers, link previews and scripts cannot have posts read at all, and administrators are not limited. **Only for signed-in visitors** hides the post button from everyone else, as on a members site. Change the allowance with `ai_chat_bedrock_speech_visitor_chars` and what counts as automated with `ai_chat_bedrock_speech_is_automated`. The AWS identity needs `polly:SynthesizeSpeech`, which the IAM policy in Diagnostics includes. Change the voice with the `ai_chat_bedrock_speech_voice` filter, the post types with `ai_chat_bedrock_speech_post_types`, the Region with `ai_chat_bedrock_speech_region` and the length read with `ai_chat_bedrock_speech_max_chars`. Add the suggested text from Settings > Privacy to your privacy policy before turning it on.
+
+## Can a visitor ask for a person?
+
+Yes, under Chat > Contact requests, which is off by default. A **Contact a person** button appears below the chat, after a thumbs-down the chat offers it, and the assistant is told to point to it when it cannot answer instead of asking for contact details itself. The form asks for a name, an email address or a phone number and a message, prefilled with the last question; a signed-in visitor can leave the email empty and the account's address is used, read on the server so it never appears in a cached page. Including the conversation is the visitor's choice, and nothing is stored until they agree.
+
+Requests are kept on this site as a private post type with no screens of its own, no REST route and no place in the WordPress export, and are listed under **Contact requests** with New, Handled and Spam views and a CSV export that spreadsheets open safely. They are deleted after the days you set (180 by default), included in Tools > Export Personal Data and Erase Personal Data, and deleted on uninstall, so export them first.
+
+A hidden field, three requests per visitor in ten minutes and a hundred per site per day keep floods out. With Akismet set up each request is checked as a contact form; spam is kept to be checked, and marking it not spam passes it on. A request is passed on by email to the administration address when that is on (Reply-To is the visitor; the site needs working mail), to Flamingo's inbox when Flamingo is active, and to the `ai_chat_bedrock_lead_captured` action for a CRM. With Joinchat active, its WhatsApp number is offered beside the form unless you set another link, which may be a web, `mailto:` or `tel:` address. Filters: `ai_chat_bedrock_leads_enabled`, `ai_chat_bedrock_leads_email`, `ai_chat_bedrock_leads_daily_limit`, `ai_chat_bedrock_leads_akismet` and `ai_chat_bedrock_leads_flamingo`. Add the suggested text from Settings > Privacy to your privacy policy before turning it on.
+
+## Can I see what the chat does in Google Analytics?
+
+Yes, under Chat > Analytics events, which is off by default. The chat then reports what it did to the analytics tag already on the site, never what was written: no message text, no answers and no contact details.
+
+| Event | When | Parameters |
+| --- | --- | --- |
+| `ai_chat_open` | The floating chat is opened | `chat_profile` |
+| `ai_chat_question` | A question is sent | `chat_profile`, `question_source` (`typed` or `suggestion`) |
+| `ai_chat_answer` | An answer arrives | `chat_profile`, `sources`, `products` (how many were shown) |
+| `ai_chat_source_click` | A source under an answer is followed | `chat_profile`, `link_url` |
+| `ai_chat_product_click` | A product card is followed | `chat_profile`, `link_url`, `product_action` (`view` or `add_to_cart`) |
+| `ai_chat_feedback` | An answer is rated | `chat_profile`, `rating` (`up` or `down`) |
+| `ai_chat_contact` | A contact request is sent | `chat_profile` |
+
+`chat_profile` is left out for the default profile. Where the events go:
+
+- **Google Tag Manager** (a container on the page, as GTM4WP and Site Kit add): pushed to the data layer as `{ event: 'ai_chat_answer', sources: 2, ... }`, GTM4WP's own layer name included, to use as Custom Event triggers.
+- **Google Analytics** without a container (Site Kit, MonsterInsights or a gtag snippet): sent with `gtag('event', ...)`. Mark `ai_chat_contact` as a key event to count contact requests as conversions, and register the parameters as custom dimensions to report on them.
+- **Matomo**: an event in the category *AI chat*, labelled with the rating, product action, question source or link.
+- **Plausible**: a custom event with its properties; add a goal for each event you want to see.
+
+With a consent plugin that uses the WP Consent API, such as Complianz, CookieYes, Cookiebot or Real Cookie Banner, events wait until the visitor allows statistics. Without one, the tag's own consent settings, such as Google Consent Mode, decide what is sent. The plugin also tells such consent plugins what it keeps in the browser: whether the floating chat is open, and the conversation while conversation memory is on. Both are in session storage, are needed for what the visitor asked for and are listed as functional.
+
+For other tools, listen for the `ai-chat-bedrock:event` DOM event on `document`. It is dispatched for every event, whether or not the setting is on, with `detail.name` and `detail.data`:
+
+```js
+document.addEventListener( 'ai-chat-bedrock:event', ( event ) => {
+	window.clarity && window.clarity( 'event', event.detail.name );
+} );
+```
+
+Add the suggested text from Settings > Privacy to your privacy policy before turning the setting on.
 
 ## Which Bedrock models are supported?
 

@@ -157,7 +157,7 @@ class AI_Chat_Bedrock_Embeddings {
 		if ( 's3_vectors' === self::store( $options ) ) {
 			return AI_Chat_Bedrock_S3_Vectors::reference( $model, $options );
 		}
-		return 'post_meta|' . $model . '|' . AI_Chat_Bedrock_Content::VERSION;
+		return 'post_meta|' . $model . '|' . AI_Chat_Bedrock_Content::index_version( $options );
 	}
 
 	/**
@@ -194,7 +194,7 @@ class AI_Chat_Bedrock_Embeddings {
 		$reference = self::reference( $model, $options );
 		$s3        = 's3_vectors' === self::store( $options );
 
-		if ( ! AI_Chat_Bedrock_Content::is_public( $post ) || ! in_array( $post->post_type, self::post_types( $options ), true ) ) {
+		if ( ! AI_Chat_Bedrock_Content::is_answerable( $post, $options ) || ! in_array( $post->post_type, self::post_types( $options ), true ) ) {
 			self::forget( $post->ID, $options );
 			self::settle( $post, $reference );
 			return 'unsupported';
@@ -406,7 +406,7 @@ class AI_Chat_Bedrock_Embeddings {
 
 		$scored = array();
 		foreach ( $candidates->posts as $post ) {
-			if ( ! AI_Chat_Bedrock_Content::is_public( $post ) ) {
+			if ( ! AI_Chat_Bedrock_Content::is_answerable( $post ) ) {
 				continue;
 			}
 
@@ -576,7 +576,7 @@ class AI_Chat_Bedrock_Embeddings {
 		AI_Chat_Bedrock_Content::flush( $post_id );
 
 		$post = get_post( $post_id );
-		if ( ! AI_Chat_Bedrock_Content::is_public( $post ) ) {
+		if ( ! AI_Chat_Bedrock_Content::is_answerable( $post ) ) {
 			self::forget( $post_id );
 		}
 	}

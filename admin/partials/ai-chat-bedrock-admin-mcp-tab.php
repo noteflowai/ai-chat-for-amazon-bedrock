@@ -243,6 +243,53 @@ $mcp_client = class_exists( 'AI_Chat_Bedrock_MCP_Client' ) ? new AI_Chat_Bedrock
 				<p class="aicfab-tool-log-empty"><?php esc_html_e( 'No tools discovered yet. Register an MCP server and refresh its tools.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 			<?php endif; ?>
 
+			<?php $ability_groups = AI_Chat_Bedrock_Abilities::available() ? ( new AI_Chat_Bedrock_Abilities() )->catalog() : array(); ?>
+			<?php if ( ! empty( $ability_groups ) ) : ?>
+				<h3 id="aicfab-mcp-abilities"><?php esc_html_e( 'Abilities from other plugins', 'ai-chat-for-amazon-bedrock' ); ?></h3>
+				<p class="description">
+					<?php esc_html_e( 'Plugins can register abilities with WordPress. Switch a plugin off to keep all of its abilities from the chat. Abilities that change data stay off until you allow them one by one, and only administrators can use them.', 'ai-chat-for-amazon-bedrock' ); ?>
+					<?php if ( ! AI_Chat_Bedrock_Abilities::tools_enabled() ) : ?>
+						<?php
+						printf(
+							/* translators: %s: link to the Answer grounding settings. */
+							esc_html__( 'They are offered to the chat once %s is on.', 'ai-chat-for-amazon-bedrock' ),
+							'<a href="' . esc_url( admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings&tab=knowledge' ) ) . '">' . esc_html__( 'WordPress abilities as tools', 'ai-chat-for-amazon-bedrock' ) . '</a>'
+						);
+						?>
+					<?php endif; ?>
+				</p>
+				<table class="widefat striped aicfab-ability-policy">
+					<thead>
+						<tr>
+							<th scope="col"><?php esc_html_e( 'Ability', 'ai-chat-for-amazon-bedrock' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Type', 'ai-chat-for-amazon-bedrock' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Allowed', 'ai-chat-for-amazon-bedrock' ); ?></th>
+						</tr>
+					</thead>
+					<?php foreach ( $ability_groups as $group ) : ?>
+						<tbody>
+							<tr class="aicfab-ability-source">
+								<th scope="rowgroup" colspan="2"><?php echo esc_html( $group['label'] ); ?> <code><?php echo esc_html( $group['source'] ); ?></code></th>
+								<td>
+									<input type="hidden" name="ability_sources_shown[]" value="<?php echo esc_attr( $group['source'] ); ?>">
+									<label><input type="checkbox" name="ability_sources_on[]" value="<?php echo esc_attr( $group['source'] ); ?>" <?php checked( $group['enabled'] ); ?>> <?php esc_html_e( 'Offer this plugin', 'ai-chat-for-amazon-bedrock' ); ?><span class="screen-reader-text"> <?php echo esc_html( $group['label'] ); ?></span></label>
+								</td>
+							</tr>
+							<?php foreach ( $group['abilities'] as $ability ) : ?>
+								<tr>
+									<td><?php echo esc_html( '' !== $ability['label'] ? $ability['label'] : $ability['id'] ); ?> <code><?php echo esc_html( $ability['id'] ); ?></code><br><span class="description"><?php echo esc_html( wp_trim_words( $ability['description'], 18 ) ); ?></span></td>
+									<td><?php echo esc_html( $ability['readonly'] ? __( 'Read only', 'ai-chat-for-amazon-bedrock' ) : __( 'Changes data', 'ai-chat-for-amazon-bedrock' ) ); ?></td>
+									<td>
+										<input type="hidden" name="ability_shown[]" value="<?php echo esc_attr( $ability['tool'] ); ?>">
+										<label><input type="checkbox" name="tool_allow[]" value="<?php echo esc_attr( $ability['tool'] ); ?>" <?php checked( $ability['allowed'] ); ?>> <?php esc_html_e( 'Allow', 'ai-chat-for-amazon-bedrock' ); ?><span class="screen-reader-text"> <?php echo esc_html( $ability['id'] ); ?></span></label>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					<?php endforeach; ?>
+				</table>
+			<?php endif; ?>
+
 			<?php submit_button( __( 'Save tool policy', 'ai-chat-for-amazon-bedrock' ) ); ?>
 		</form>
 

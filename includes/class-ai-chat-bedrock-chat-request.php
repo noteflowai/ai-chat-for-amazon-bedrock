@@ -154,6 +154,11 @@ class AI_Chat_Bedrock_Chat_Request {
 		if ( '' !== trim( $language_note ) ) {
 			$system = trim( $system . "\n\n" . sanitize_textarea_field( $language_note ) );
 		}
+		// Where a person can be reached, the model says so rather than guessing an answer.
+		if ( class_exists( 'AI_Chat_Bedrock_Leads' ) ) {
+			$handoff = AI_Chat_Bedrock_Leads::prompt_note( $options );
+			$system  = '' !== $handoff ? trim( $system . "\n\n" . $handoff ) : $system;
+		}
 
 		$messages = array(
 			array(

@@ -23,5 +23,6 @@ class AI_Chat_Bedrock_Deactivator {
 		// Deactivation can run without the rest of the plugin loaded, so the names are spelled out.
 		wp_clear_scheduled_hook( 'ai_chat_bedrock_index_embeddings' );
 		wp_clear_scheduled_hook( 'ai_chat_bedrock_prune_chat_history' );
+		wp_clear_scheduled_hook( 'ai_chat_bedrock_prune_leads' );
 	}
 }

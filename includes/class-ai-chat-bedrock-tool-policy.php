@@ -153,6 +153,38 @@ class AI_Chat_Bedrock_Tool_Policy {
 	}
 
 	/**
+	 * The policy after the tool policy form is saved.
+	 *
+	 * Only the tools the form showed change. Decisions about any other tool are kept, such as
+	 * those of an MCP server that was unreachable while the screen was open, which the form
+	 * used to erase.
+	 *
+	 * @param array $current  Stored policy.
+	 * @param array $explicit Tools whose decision is stored whichever way it goes (MCP tools).
+	 * @param array $defaults Tools stored only when the decision differs from what they declare,
+	 *                        as tool name => whether it is allowed by default (abilities).
+	 * @param array $allowed  Tools ticked on the form.
+	 * @return array Policy.
+	 */
+	public static function merge_form( $current, $explicit, $defaults, $allowed ) {
+		$allowed = array_map( 'strval', (array) $allowed );
+		$policy  = is_array( $current ) ? $current : array();
+		foreach ( array_merge( array_map( 'strval', (array) $explicit ), array_map( 'strval', array_keys( (array) $defaults ) ) ) as $tool ) {
+			unset( $policy[ $tool ] );
+		}
+		foreach ( (array) $explicit as $tool ) {
+			$policy[ (string) $tool ] = in_array( (string) $tool, $allowed, true ) ? 'allow' : 'deny';
+		}
+		foreach ( (array) $defaults as $tool => $default ) {
+			$ticked = in_array( (string) $tool, $allowed, true );
+			if ( $ticked !== (bool) $default ) {
+				$policy[ (string) $tool ] = $ticked ? 'allow' : 'deny';
+			}
+		}
+		return $policy;
+	}
+
+	/**
 	 * Capability required to use MCP tools in chat.
 	 *
 	 * @return string

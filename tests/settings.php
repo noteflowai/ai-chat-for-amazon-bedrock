@@ -109,6 +109,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-images.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-retrieval.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-history.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-speech.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-leads.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 
 $failures = array();
@@ -258,6 +259,28 @@ check_set( '' === $saved['chat_memory'] && AI_Chat_Bedrock_Chat_History::DEFAULT
 $saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'tab', 'chat_memory_days' => '14' ) );
 check_set( 'tab' === $saved['chat_memory'] && 14 === $saved['chat_memory_days'], 'Tab memory is saved.' );
 
+// --- Pages hidden from search ----------------------------------------------------
+
+$saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' ) );
+check_set( empty( $saved['include_noindex'] ), 'Pages hidden from search engines are left out by default.' );
+$saved = save_tab( $admin, array( 'include_noindex' ), array( 'include_noindex' => '1' ) );
+check_set( true === $saved['include_noindex'], 'They can be included.' );
+$saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'light' ) );
+check_set( true === $saved['include_noindex'], 'Another tab keeps the choice.' );
+$saved = save_tab( $admin, array( 'include_noindex' ), array() );
+check_set( false === $saved['include_noindex'], 'An unticked box leaves them out again.' );
+
+// --- Analytics events ------------------------------------------------------------
+
+$saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' ) );
+check_set( empty( $saved['analytics_events'] ), 'Analytics events are off by default.' );
+$saved = save_tab( $admin, array( 'analytics_events' ), array( 'analytics_events' => '1' ) );
+check_set( true === $saved['analytics_events'], 'Analytics events can be turned on.' );
+$saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'light' ) );
+check_set( true === $saved['analytics_events'], 'Another tab keeps them on.' );
+$saved = save_tab( $admin, array( 'analytics_events' ), array() );
+check_set( false === $saved['analytics_events'], 'An unticked box turns them off.' );
+
 // --- Reading aloud -------------------------------------------------------------
 
 $saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' ) );
@@ -268,6 +291,12 @@ $saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_sche
 check_set( true === $saved['speech_replies'] && true === $saved['speech_posts'] && 'generative' === $saved['speech_engine'] && 25000 === $saved['speech_daily_chars'], 'Another tab keeps the reading-aloud settings.' );
 $saved = save_tab( $admin, array( 'speech_replies' ), array( 'speech_posts' => '1', 'speech_engine' => 'standard', 'speech_daily_chars' => '0' ) );
 check_set( false === $saved['speech_replies'] && true === $saved['speech_posts'] && 'neural' === $saved['speech_engine'] && 0 === $saved['speech_daily_chars'], 'An unticked switch is off, an unknown engine is neural, and 0 removes the limit.' );
+$saved = save_tab( $admin, array( 'speech_replies' ), array( 'speech_posts' => '1', 'speech_posts_signed_in' => '1' ) );
+check_set( true === $saved['speech_posts_signed_in'], 'Listening only when signed in is saved.' );
+$saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'light' ) );
+check_set( true === $saved['speech_posts_signed_in'], 'Another tab keeps it.' );
+$saved = save_tab( $admin, array( 'speech_replies' ), array( 'speech_posts' => '1' ) );
+check_set( false === $saved['speech_posts_signed_in'], 'An unticked box opens posts to everyone again.' );
 $saved = save_tab( $admin, array( 'speech_replies' ), array( 'speech_daily_chars' => '99999999999' ) );
 check_set( false === $saved['speech_posts'] && AI_Chat_Bedrock_Speech::MAX_DAILY_CHARACTERS === $saved['speech_daily_chars'], 'The daily limit is capped.' );
 $saved = save_tab( $admin, array( 'speech_replies' ), array( 'speech_daily_chars' => '' ) );

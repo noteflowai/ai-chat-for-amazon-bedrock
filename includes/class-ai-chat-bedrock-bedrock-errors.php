@@ -104,12 +104,54 @@ class AI_Chat_Bedrock_Bedrock_Errors {
 			);
 		}
 
+		/*
+		 * Since late 2025 there is no model access page to visit: Bedrock turns a model on for
+		 * the account the first time it is called. That fails for three reasons, each with its
+		 * own fix, and the payloads below are as users have reported them rather than
+		 * reproduced here.
+		 *
+		 * Reported: ResourceNotFoundException, "Model use case details have not been submitted
+		 * for this account. Fill out the Anthropic use case details form before using the
+		 * model." It is a 404, so it read as an unknown failure.
+		 */
+		if ( false !== strpos( $haystack, 'use case details' ) ) {
+			return array(
+				'kind'    => 'use_case_required',
+				'message' => __( 'Anthropic asks each AWS account to describe its use case once before its models can be used. Open any Anthropic model in the Amazon Bedrock console model catalog and submit the form; access usually follows within 15 minutes. Models from other providers do not need it.', 'ai-chat-for-amazon-bedrock' ),
+			);
+		}
+
+		// Reported: AccessDeniedException, "Model access is denied due to
+		// INVALID_PAYMENT_INSTRUMENT: A valid payment instrument must be provided." Checked
+		// before the Marketplace permissions, since the same payload mentions the subscription.
+		if ( false !== strpos( $haystack, 'payment instrument' ) ) {
+			return array(
+				'kind'    => 'payment_required',
+				'message' => __( 'The AWS account has no valid payment method for AWS Marketplace, through which most third-party models are sold. Add one in the AWS Billing console, or choose an Amazon Nova model, which does not need it.', 'ai-chat-for-amazon-bedrock' ),
+			);
+		}
+
+		// Reported: AccessDeniedException, "Model access is denied due to IAM user or service
+		// role is not authorized to perform the required AWS Marketplace actions
+		// (aws-marketplace:ViewSubscriptions, aws-marketplace:Subscribe) to enable access to
+		// this model." The generated policy leaves these out on purpose: they are needed once
+		// per account and model, not by the site for every answer.
+		if ( false !== strpos( $haystack, 'aws-marketplace' ) || false !== strpos( $haystack, 'aws marketplace actions' ) ) {
+			return array(
+				'kind'    => 'marketplace_first_use',
+				'message' => AI_Chat_Bedrock_Translation::sentences(
+					__( 'This model has not been used in the AWS account before, and the first use has to subscribe to it through AWS Marketplace, which this AWS identity may not do. Have an administrator open the model once in the Amazon Bedrock console playground, or allow aws-marketplace:Subscribe, aws-marketplace:Unsubscribe and aws-marketplace:ViewSubscriptions for one request. Access can take up to 15 minutes to follow.', 'ai-chat-for-amazon-bedrock' ),
+					self::credential_note( $credentials )
+				),
+			);
+		}
+
 		// Documented rather than reproduced here: an account that has not been granted
 		// access to the model answers with AccessDeniedException naming the model.
 		if ( false !== strpos( $haystack, "don't have access to the model" ) || false !== strpos( $haystack, 'do not have access to the model' ) ) {
 			return array(
 				'kind'    => 'model_access_missing',
-				'message' => __( 'This account has not been granted access to the model. Request access for it in the Amazon Bedrock console, under Model access, in this region.', 'ai-chat-for-amazon-bedrock' ),
+				'message' => __( 'This AWS account does not have access to the model yet. Open the model once in the Amazon Bedrock console playground, in this region, which turns it on or says what is missing.', 'ai-chat-for-amazon-bedrock' ),
 			);
 		}
 
@@ -125,7 +167,7 @@ class AI_Chat_Bedrock_Bedrock_Errors {
 			return array(
 				'kind'    => 'forbidden',
 				'message' => AI_Chat_Bedrock_Translation::sentences(
-					__( 'Amazon Bedrock refused the request. Attach the generated IAM policy from the Diagnostics screen, and confirm model access is granted in this region.', 'ai-chat-for-amazon-bedrock' ),
+					__( 'Amazon Bedrock refused the request. Attach the generated IAM policy from the Diagnostics screen, and open the model once in the Amazon Bedrock console playground in this region to confirm the account can use it.', 'ai-chat-for-amazon-bedrock' ),
 					self::credential_note( $credentials )
 				),
 			);

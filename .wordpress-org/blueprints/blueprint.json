@@ -1,0 +1,48 @@
+{
+	"$schema": "https://playground.wordpress.net/blueprint-schema.json",
+	"meta": {
+		"title": "AI Chatbot & Agents for Amazon Bedrock: demo mode",
+		"description": "A small bakery site with the chat on it. Without an AWS account the chat answers in demo mode, quoting the passage of the site's pages that best matches each question.",
+		"author": "noteflowai",
+		"categories": [ "Chat" ]
+	},
+	"landingPage": "/ask-us/",
+	"preferredVersions": {
+		"php": "8.3",
+		"wp": "latest"
+	},
+	"features": {
+		"networking": true
+	},
+	"login": true,
+	"steps": [
+		{
+			"step": "defineWpConfigConsts",
+			"consts": {
+				"AI_CHAT_BEDROCK_DEMO": true
+			}
+		},
+		{
+			"step": "installPlugin",
+			"pluginData": {
+				"resource": "wordpress.org/plugins",
+				"slug": "ai-chat-for-amazon-bedrock"
+			},
+			"options": {
+				"activate": true
+			}
+		},
+		{
+			"step": "setSiteOptions",
+			"options": {
+				"blogname": "Harbour Street Bakery",
+				"blogdescription": "Bread and pastries, baked every morning",
+				"permalink_structure": "/%postname%/"
+			}
+		},
+		{
+			"step": "runPHP",
+			"code": "<?php\nrequire_once '/wordpress/wp-load.php';\n$settings = get_option( 'ai_chat_bedrock_settings', array() );\n$settings = array_merge( is_array( $settings ) ? $settings : array(), array(\n\t'chat_title'          => 'Ask the bakery',\n\t'welcome_message'     => 'Hello! Ask about opening hours, delivery or ingredients.',\n\t'suggested_questions' => \"When are you open?\\nDo you deliver?\\nDo you bake gluten-free bread?\",\n\t'enable_site_context' => true,\n\t'show_sources'        => true,\n\t'popup_site_wide'     => true,\n\t// Playground has no instance or container role, so there is nothing to look up.\n\t'aws_use_role_credentials' => false,\n) );\nupdate_option( 'ai_chat_bedrock_settings', $settings );\n$pages = array(\n\t'Opening hours'           => 'We are open Tuesday to Saturday from 7am to 6pm, and on Sunday from 8am to 2pm. We are closed on Mondays and on public holidays. You will find us at 12 Harbour Street, next to the library. Street parking is free after 6pm.',\n\t'Delivery and collection' => 'Order by 4pm for delivery the next day anywhere within 10 km of the shop. Delivery costs 4 dollars and is free on orders over 40 dollars. You can also collect an order from the shop at any time during opening hours.',\n\t'Allergies and ingredients' => 'Everything is baked on site. Gluten-free loaves are baked on Thursdays in a separate oven, but the kitchen also handles wheat, nuts and sesame, so we cannot promise that any product is free of traces. Ask us for the full ingredient list of any product.',\n);\nforeach ( $pages as $title => $text ) {\n\twp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => $title, 'post_content' => '<!-- wp:paragraph --><p>' . $text . '</p><!-- /wp:paragraph -->' ) );\n}\nwp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Ask us', 'post_name' => 'ask-us', 'post_content' => \"<!-- wp:paragraph --><p>Questions about the bakery? Ask here.</p><!-- /wp:paragraph -->\\n<!-- wp:ai-chat-bedrock/chat /-->\" ) );\nflush_rewrite_rules();\n"
+		}
+	]
+}
