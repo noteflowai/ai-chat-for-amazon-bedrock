@@ -3,6 +3,11 @@ Full changelog. The readme lists the latest releases only.
 
 == Changelog ==
 
+= 1.64.0 =
+* Contact requests, under Chat and off by default: a Contact a person button below the chat, also offered after a thumbs-down. Visitors leave an email address or phone number and a message, and can include the conversation; nothing is stored without their consent. Requests are listed under Contact requests, exported as CSV, deleted after the days you set (180 by default) and covered by personal data export and erasure. Akismet checks them when set up, Flamingo files a copy, an email can go to the site, and `ai_chat_bedrock_lead_captured` passes them on. Joinchat's WhatsApp number is offered as another way to reach the site.
+* Abilities of other plugins are offered by how well they match the question, with every plugin getting a turn, rather than the first twenty registered. MCP > Tool policy lists them by plugin, switches a plugin off as a whole, and lets an ability that changes data be allowed.
+* Fixed: saving the tool policy forgot the decisions for MCP servers that were offline while the form was open.
+
 = 1.63.0 =
 * Amazon Bedrock now appears under Settings > Connectors on WordPress 7.1 and later. On AWS it shows as connected with nothing entered, because the IAM role is used. Elsewhere, paste an Amazon Bedrock API key there: it is checked with Bedrock before it is kept, and stored encrypted. A key in the plugin settings or `wp-config.php` still takes precedence.
 * Fixed: a key entered for Bedrock on Settings > Connectors could not be checked by WordPress and was discarded, because the connector declared that it stored no credential.

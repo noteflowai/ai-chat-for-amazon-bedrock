@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai, chatbot, ai-agent, mcp, connector
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.63.0
+Stable tag: 1.64.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -335,6 +335,10 @@ Yes, under Chat > Conversation memory, which is off by default so every page sta
 
 Yes, with Amazon Polly, off by default: a Listen button under chat answers and one above posts, in a voice for the page's language. Post audio is saved once and reused, and a daily character limit applies. [Voices, costs and filters](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-answers-and-posts-be-read-aloud).
 
+= Can a visitor ask for a person? =
+
+Yes, under Chat > Contact requests, off by default. A Contact a person button below the chat opens a short form, and the assistant points to it when it cannot help. Requests need consent and are listed under Contact requests; Akismet, Flamingo and Joinchat are used when present. [Spam checks, email and hooks](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-a-visitor-ask-for-a-person).
+
 = Can the chat float instead of sitting in the page? =
 
 Any chat can render as a floating button instead of an inline panel:
@@ -452,6 +456,11 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.64.0 =
+* Contact requests, under Chat and off by default: a Contact a person button below the chat, also offered after a thumbs-down. Visitors leave an email address or phone number and a message, and can include the conversation; nothing is stored without their consent. Requests are listed under Contact requests, exported as CSV, deleted after the days you set (180 by default) and covered by personal data export and erasure. Akismet checks them when set up, Flamingo files a copy, an email can go to the site, and `ai_chat_bedrock_lead_captured` passes them on. Joinchat's WhatsApp number is offered as another way to reach the site.
+* Abilities of other plugins are offered by how well they match the question, with every plugin getting a turn, rather than the first twenty registered. MCP > Tool policy lists them by plugin, switches a plugin off as a whole, and lets an ability that changes data be allowed.
+* Fixed: saving the tool policy forgot the decisions for MCP servers that were offline while the form was open.
+
 = 1.63.0 =
 * Amazon Bedrock now appears under Settings > Connectors on WordPress 7.1 and later. On AWS it shows as connected with nothing entered, because the IAM role is used. Elsewhere, paste an Amazon Bedrock API key there: it is checked with Bedrock before it is kept, and stored encrypted. A key in the plugin settings or `wp-config.php` still takes precedence.
 * Fixed: a key entered for Bedrock on Settings > Connectors could not be checked by WordPress and was discarded, because the connector declared that it stored no credential.
@@ -473,14 +482,12 @@ what a good answer says.
 * Read aloud, under Chat and off by default: a Listen button under chat answers and a Listen to this post button on posts, read by Amazon Polly in a voice for the language. Only answers the chat gave to that visitor can be read. Post audio is made from the text a signed-out visitor sees, saved in the uploads folder, and made again when the post changes. Choose the neural or generative engine and a daily character limit (100,000 by default); the dashboard shows the characters read.
 * The IAM policy in Diagnostics includes `polly:SynthesizeSpeech` when reading aloud is on, and the suggested privacy policy text covers it.
 
-= 1.59.0 =
-* Conversation memory, under Chat and off by default. Keep the conversation while the visitor browses, in the browser tab's session storage, or also save a signed-in visitor's recent conversation on the site so it is there on their next visit and on another device. Saved conversations are kept for the days you set (30 by default), deleted when the visitor clears the chat or the option is switched off, and included in personal data exports and erasures. Guests' conversations are never stored on the site.
-* Long conversations, especially in Chinese or Japanese, no longer fail with "Conversation history is too large": the earlier messages sent with a question are kept within the size the server accepts.
-* Suggested privacy policy text covers conversation memory when it is on.
-
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.64.0 =
+Optional contact requests: visitors leave their details for a person to reply, with consent, spam checks and export. Abilities of other plugins are chosen by the question. Off until enabled.
 
 = 1.63.0 =
 Amazon Bedrock appears under Settings > Connectors: connected through the IAM role, or with an API key that is checked and stored encrypted. Renamed AI Chatbot & Agents for Amazon Bedrock.
@@ -733,6 +740,8 @@ Conversation logging is disabled by default, and with it off no chat content is 
 Conversation memory is off by default. In browser-tab mode the conversation is kept in the visitor's own session storage and nothing is stored on the site. When saving for signed-in visitors is on, their questions, answers and the links listed under each answer are stored in their user data on this site, up to 30 messages per chat, for the configured number of days. They are deleted when the visitor clears the chat or the option is switched off, and are reachable through Tools > Export Personal Data and Erase Personal Data.
 
 Reading aloud is off by default. With Listen under answers on, the text of an answer is sent to Amazon Polly when the visitor presses Listen, and the audio is not kept. With Listen to this post on, the text a signed-out visitor can read on the post is sent to Amazon Polly the first time someone listens, and the audio is kept in the uploads folder until the post changes or the option is switched off. Nothing about the visitor is sent.
+
+Contact requests are off by default. When a visitor sends one, the name, email address, phone number and message they enter, the page and, if they choose, the conversation are stored on this site for the days set (180 by default), with their consent. With Akismet set up, the request, IP address and browser are sent to Akismet to check for spam. Requests are reachable through Tools > Export Personal Data and Erase Personal Data, and uninstalling deletes them.
 
 Business insights are off by default. They are worked out on the site from content, the conversation log, usage counters and WooCommerce Analytics, and only totals are shown; those from fewer than five orders or questions are withheld. Asking in words sends the question and the list of figures to Amazon Bedrock, never a figure.
 

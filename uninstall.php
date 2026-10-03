@@ -65,11 +65,10 @@ function ai_chat_bedrock_uninstall_site() {
 	do {
 		$ai_chat_bedrock_leads = get_posts(
 			array(
-				'post_type'        => 'aicfab_lead',
-				'post_status'      => 'any',
-				'posts_per_page'   => 200, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- deleted in batches.
-				'fields'           => 'ids',
-				'suppress_filters' => true,
+				'post_type'      => 'aicfab_lead',
+				'post_status'    => 'any',
+				'posts_per_page' => 200, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- deleted in batches.
+				'fields'         => 'ids',
 			)
 		);
 		foreach ( $ai_chat_bedrock_leads as $ai_chat_bedrock_lead ) {

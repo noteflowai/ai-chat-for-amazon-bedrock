@@ -120,7 +120,7 @@ $export_url    = wp_nonce_url(
 			<thead>
 				<tr>
 					<th scope="col"><?php esc_html_e( 'Received', 'ai-chat-for-amazon-bedrock' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'From', 'ai-chat-for-amazon-bedrock' ); ?></th>
+					<th scope="col"><?php echo esc_html_x( 'From', 'sender of a contact request', 'ai-chat-for-amazon-bedrock' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Message', 'ai-chat-for-amazon-bedrock' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Status', 'ai-chat-for-amazon-bedrock' ); ?></th>
 				</tr>

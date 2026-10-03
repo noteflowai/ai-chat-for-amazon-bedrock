@@ -566,7 +566,7 @@ check_or( false !== strpos( $source, "current_user_can( self::CAPABILITY )" ) &&
 foreach ( array( "'init', 'AI_Chat_Bedrock_Leads', 'register_post_type'", 'AI_Chat_Bedrock_Leads::CRON_HOOK', "'admin_post_ai_chat_bedrock_lead'", "'rest_api_init', \$leads, 'register_routes'", "'wp_privacy_personal_data_erasers', 'AI_Chat_Bedrock_Leads'" ) as $hook ) {
 	check_or( false !== strpos( $bootstrap, $hook ), 'hooked: ' . $hook );
 }
-check_or( false !== strpos( $uninstall, "'post_type'        => 'aicfab_lead'" ) && false !== strpos( $uninstall, "'ai_chat_bedrock_prune_leads'" ), 'uninstall removes the requests and the schedule' );
+check_or( false !== strpos( $uninstall, "'post_type'      => 'aicfab_lead'" ) && false !== strpos( $uninstall, "'ai_chat_bedrock_prune_leads'" ), 'uninstall removes the requests and the schedule' );
 check_or( false !== strpos( file_get_contents( $root . '/includes/class-ai-chat-bedrock-deactivator.php' ), "'ai_chat_bedrock_prune_leads'" ), 'deactivation clears the schedule' );
 check_or( false !== strpos( $admin, "'leads_enabled'      => array( 'leads_notify', 'leads_days', 'leads_link' )" ), 'the settings save together' );
 check_or( false !== strpos( $admin, "AI_Chat_Bedrock_Leads::clean_link( \$input['leads_link'] )" ), 'the link is cleaned on save' );
