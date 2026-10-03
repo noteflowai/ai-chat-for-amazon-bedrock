@@ -164,13 +164,21 @@ check_set( true === get_option( 'ai_chat_bedrock_log_conversations' ) && 30 === 
 // --- Saving another tab keeps everything above ---------------------------------
 
 $GLOBALS['aicfab_options']['ai_chat_bedrock_settings']['site_abilities'] = true;
+$GLOBALS['aicfab_options']['ai_chat_bedrock_settings']['site_ontology']  = true;
 $saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask us' ) );
+check_set( true === $saved['site_ontology'], 'Another tab does not switch the site description off.' );
 check_set( 'Ask us' === $saved['chat_title'], 'The submitted field is saved.' );
 check_set( true === $saved['log_conversations'] && 30 === $saved['log_retention_days'], 'Another tab does not reset the conversation log.' );
 check_set( 'support' === $saved['popup_profile'] && '3' === $saved['prompt_version'], 'Another tab does not drop companion values.' );
 check_set( 'site-vectors' === $saved['s3_vectors_bucket'], 'Another tab does not drop the vector store.' );
 check_set( true === get_option( 'ai_chat_bedrock_log_conversations' ), 'Another tab does not switch the log option off.' );
 check_set( true === get_option( 'ai_chat_bedrock_site_abilities' ), 'Another tab does not switch site abilities off.' );
+
+// The Grounding tab saves the site description, and unticking it switches it off.
+$saved = save_tab( $admin, array( 'site_ontology' ), array( 'site_ontology' => '1' ) );
+check_set( true === $saved['site_ontology'], 'The site description switch is saved.' );
+$saved = save_tab( $admin, array( 'site_ontology' ), array() );
+check_set( false === $saved['site_ontology'] && true === $saved['site_abilities'], 'An unticked site description is saved as off, and nothing else changes.' );
 
 // Unticking the owner field clears it, and its companions follow the submission.
 $saved = save_tab( $admin, array( 'log_conversations' ), array( 'log_retention_days' => '7' ) );

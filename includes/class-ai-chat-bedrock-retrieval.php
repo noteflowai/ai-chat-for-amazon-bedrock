@@ -486,6 +486,7 @@ class AI_Chat_Bedrock_Retrieval {
 
 			$passages[] = array(
 				'source'  => 'wordpress',
+				'post_id' => (int) $post->ID,
 				'title'   => AI_Chat_Bedrock_Content::title( $post ),
 				'url'     => get_permalink( $post ),
 				'excerpt' => AI_Chat_Bedrock_Security::string_substr( $content, 0, self::MAX_PASSAGE_CHARS ),
@@ -565,6 +566,25 @@ class AI_Chat_Bedrock_Retrieval {
 		return $passages;
 	}
 
+	/**
+	 * The type and language the site description added to a passage, such as " — Product · en",
+	 * or nothing when it added none.
+	 *
+	 * @param array $passage Passage.
+	 * @return string
+	 */
+	private static function label( $passage ) {
+		$parts = array();
+		if ( ! empty( $passage['entity_type'] ) ) {
+			$parts[] = preg_replace( '/[^A-Za-z]/', '', (string) $passage['entity_type'] );
+		}
+		if ( ! empty( $passage['language'] ) ) {
+			$parts[] = sanitize_key( (string) $passage['language'] );
+		}
+		$parts = array_filter( $parts, 'strlen' );
+		return empty( $parts ) ? '' : ' — ' . implode( ' · ', $parts );
+	}
+
 	private static function format( $passages, &$used = null ) {
 		$used  = array();
 		$lines = array(
@@ -581,7 +601,7 @@ class AI_Chat_Bedrock_Retrieval {
 			$title = isset( $passage['title'] ) ? wp_strip_all_tags( (string) $passage['title'] ) : '';
 			$url   = isset( $passage['url'] ) ? esc_url_raw( (string) $passage['url'] ) : '';
 			$block = array(
-				sprintf( '[%d] %s%s', $index, $title, '' !== $url ? ' (' . $url . ')' : '' ),
+				sprintf( '[%d] %s%s%s', $index, $title, '' !== $url ? ' (' . $url . ')' : '', self::label( $passage ) ),
 				trim( (string) $passage['excerpt'] ),
 				'',
 			);

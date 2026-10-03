@@ -360,6 +360,7 @@ check_s3v( 2 === count( $hits ), 'One passage per post: ' . count( $hits ) );
 check_s3v( 'Refunds & returns' === $hits[0]['title'] && 'Refunds within 30 days.' === $hits[0]['excerpt'], 'The best passage of the best post is quoted.' );
 check_s3v( abs( 0.8 - $hits[0]['score'] ) < 0.0001, 'The score is one minus the cosine distance.' );
 check_s3v( 'semantic' === $hits[0]['source'] && 'https://example.test/?p=10' === $hits[0]['url'], 'Hits carry source and link.' );
+check_s3v( 10 === $hits[0]['post_id'], 'A hit names the post it came from.' );
 check_s3v( false === strpos( $json, 'Weak match' ), 'A weak runner-up is dropped.' );
 
 // A post edited since indexing is quoted from its live text, not the stored passage.

@@ -208,6 +208,7 @@ $GLOBALS['aicfab_abilities'] = array(
 	$aicfab_denied,
 	// The plugin's own abilities are exposed through their own path, not this one.
 	new Aicfab_Test_Ability( 'ai-chat-bedrock/search-content', 'Search content' ),
+	new Aicfab_Test_Ability( 'ai-chat-bedrock/describe-site', 'Describe the site' ),
 );
 
 $aicfab_tools = $aicfab_abilities_obj->available_ability_tools();
@@ -226,6 +227,10 @@ check_ab(
 check_ab(
 	! in_array( 'wpability___ai_chat_bedrock__search_content', $aicfab_names, true ),
 	'The plugin does not re-expose its own abilities through this path.'
+);
+check_ab(
+	! in_array( 'wpability___ai_chat_bedrock__describe_site', $aicfab_names, true ),
+	'The site description, with its policy and counts, is never offered to the visitor chat.'
 );
 foreach ( $aicfab_names as $aicfab_name ) {
 	check_ab( 0 === strpos( $aicfab_name, AI_Chat_Bedrock_Abilities::TOOL_PREFIX ), 'Every tool carries the ability prefix.' );

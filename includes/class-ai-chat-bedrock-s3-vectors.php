@@ -368,6 +368,7 @@ class AI_Chat_Bedrock_S3_Vectors {
 			$seen[ $post->ID ] = true;
 			$passages[]        = array(
 				'source'  => 'semantic',
+				'post_id' => (int) $post->ID,
 				'title'   => AI_Chat_Bedrock_Content::title( $post ),
 				'url'     => get_permalink( $post ),
 				'excerpt' => AI_Chat_Bedrock_Security::string_substr( $text, 0, AI_Chat_Bedrock_Retrieval::MAX_PASSAGE_CHARS ),

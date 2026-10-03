@@ -55,6 +55,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-woocommerce.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-abilities.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-site-abilities.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-ontology.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-tool-policy.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-tool-log.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-tool-runner.php';
@@ -223,6 +224,12 @@ class AI_Chat_Bedrock {
 
 		$site_abilities = new AI_Chat_Bedrock_Site_Abilities();
 		$this->loader->add_action( 'wp_abilities_api_init', $site_abilities, 'register' );
+
+		// The site description, and the type and language it adds to retrieved passages.
+		// Both check the setting when they run.
+		$ontology = new AI_Chat_Bedrock_Ontology();
+		$this->loader->add_action( 'wp_abilities_api_init', $ontology, 'register' );
+		$this->loader->add_filter( 'ai_chat_bedrock_retrieved_passages', 'AI_Chat_Bedrock_Ontology', 'annotate_passages', 5 );
 	}
 
 	private function init_wp_mcp_server() {

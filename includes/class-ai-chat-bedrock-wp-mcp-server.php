@@ -152,12 +152,43 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 	}
 
 	/**
+	 * The site description, offered when the site turns it on.
+	 *
+	 * @return array
+	 */
+	private function ontology_tools() {
+		if ( ! class_exists( 'AI_Chat_Bedrock_Ontology' ) || ! AI_Chat_Bedrock_Ontology::enabled() ) {
+			return array();
+		}
+		return array(
+			'describe_site' => $this->tool(
+				'describe_site',
+				'Describe what the site holds: schema.org types with counts per language, how they relate, and which data an AI may see. Pass a post ID to describe one published item. Read only.',
+				array( 'id' => 'integer' )
+			),
+		);
+	}
+
+	/**
+	 * What the server tells a client about itself.
+	 *
+	 * @return string
+	 */
+	private function instructions() {
+		$text = __( 'Read-only WordPress content tools. Draft creation is available only when the site enables it and the account has permission.', 'ai-chat-for-amazon-bedrock' );
+		if ( class_exists( 'AI_Chat_Bedrock_Ontology' ) && AI_Chat_Bedrock_Ontology::enabled() ) {
+			$text .= ' ' . __( 'Call describe_site first to learn what the site holds and which data you may see.', 'ai-chat-for-amazon-bedrock' );
+		}
+		return $text;
+	}
+
+	/**
 	 * All callable tools for the current request.
 	 *
 	 * @return array
 	 */
 	private function available_tools() {
-		$tools = array_merge( $this->tools, $this->ability_tools() );
+		$tools = array_merge( $this->tools, $this->ontology_tools(), $this->ability_tools() );
 		return (array) apply_filters( 'ai_chat_bedrock_wp_mcp_tools', $tools );
 	}
 
@@ -322,7 +353,7 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 						'protocolVersions' => array_values( self::SUPPORTED_VERSIONS ),
 						'capabilities'     => $this->capabilities(),
 						'serverInfo'       => $this->server_info(),
-						'instructions'     => __( 'Read-only WordPress content tools. Draft creation is available only when the site enables it and the account has permission.', 'ai-chat-for-amazon-bedrock' ),
+						'instructions'     => $this->instructions(),
 					),
 					$version
 				);
@@ -335,7 +366,7 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 						'protocolVersion' => $this->negotiate_version( $params ),
 						'capabilities'    => $this->capabilities(),
 						'serverInfo'      => $this->server_info(),
-						'instructions'    => __( 'Read-only WordPress content tools. Draft creation is available only when the site enables it and the account has permission.', 'ai-chat-for-amazon-bedrock' ),
+						'instructions'    => $this->instructions(),
 					),
 					$version
 				);
@@ -453,6 +484,11 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 				return array( 'tags' => $this->format_terms( get_tags( $this->term_args_from( $arguments ) ) ) );
 			case 'get_site_info':
 				return array( 'site_info' => $this->site_info() );
+			case 'describe_site':
+				if ( ! class_exists( 'AI_Chat_Bedrock_Ontology' ) || ! AI_Chat_Bedrock_Ontology::enabled() ) {
+					return new WP_Error( 'tool_unavailable', __( 'This tool is not enabled on this site.', 'ai-chat-for-amazon-bedrock' ) );
+				}
+				return AI_Chat_Bedrock_Ontology::describe( $arguments );
 		}
 
 		if ( ! class_exists( 'AI_Chat_Bedrock_Site_Abilities' ) || ! AI_Chat_Bedrock_Site_Abilities::enabled() ) {
