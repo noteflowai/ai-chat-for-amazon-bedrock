@@ -337,7 +337,7 @@ Yes, under Chat > Conversation memory, which is off by default so every page sta
 
 = Can answers and posts be read aloud? =
 
-Yes, with Amazon Polly, off by default: a Listen button under chat answers and one above posts, in a voice for the page's language. Post audio is saved once and reused, and a daily character limit applies. [Voices, costs and filters](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-answers-and-posts-be-read-aloud).
+Yes, with Amazon Polly, off by default: a Listen button under chat answers and one above posts, in a voice for the page's language. Post audio is saved once and reused. New audio has a daily limit for the site and for each visitor, crawlers cannot have posts read, and posts can be kept for signed-in visitors. [Voices, costs and filters](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-answers-and-posts-be-read-aloud).
 
 = Can a visitor ask for a person? =
 
@@ -473,6 +473,7 @@ what a good answer says.
 * Demo mode, for the Live Preview on WordPress.org: when `AI_CHAT_BEDROCK_DEMO` is defined and no AWS credentials are found, the chat quotes the passage of the site's pages that best matches each question and says that no AI model was called.
 * Analytics events, under Chat and off by default: opening the chat, questions, answers, followed sources and products, ratings and contact requests go to Google Analytics (Site Kit, MonsterInsights), Google Tag Manager, Matomo or Plausible, with no message text. Mark `ai_chat_contact` as a key event to count contact requests as conversions.
 * Works with the WP Consent API, used by Complianz, CookieYes and others: what the chat keeps in session storage is listed in their cookie policy as functional, and analytics events wait for consent to statistics.
+* Reading aloud spends money only on new audio, and that is now shared fairly: one visitor may have at most a quarter of the daily characters made (30,000 by default), crawlers and scripts cannot have posts read, and saved audio still plays for everyone. Listen to this post can be limited to signed-in visitors.
 * Fixed: with LiteSpeed Cache, WP Rocket or Perfmatters delaying scripts until the first interaction, that first tap on the chat button or Send did nothing, notably on phones, and Send could reload the page. The tap is now kept and acted on once the chat has loaded. The chat's own script is still delayed as the site has set it.
 
 = 1.63.0 =
@@ -749,7 +750,7 @@ Contact requests are off by default. When a visitor sends one, the name, email a
 
 Business insights are off by default. They are worked out on the site from content, the conversation log, usage counters and WooCommerce Analytics, and only totals are shown; those from fewer than five orders or questions are withheld. Asking in words sends the question and the list of figures to Amazon Bedrock, never a figure.
 
-The plugin creates no custom database tables; the optional log is kept in a WordPress option and is reachable through Tools > Export Personal Data and Erase Personal Data. Request limiting stores a salted hash-derived transient counter for each visitor for up to one minute. Debug logging is optional and records only redacted operational metadata. Administrators are responsible for disclosing these data flows and obtaining any consent required in their jurisdiction.
+The plugin creates no custom database tables; the optional log is kept in a WordPress option and is reachable through Tools > Export Personal Data and Erase Personal Data. Request limiting stores a salted hash-derived transient counter for each visitor for up to one minute, and reading aloud a count of the characters read for that visitor for a day. Debug logging is optional and records only redacted operational metadata. Administrators are responsible for disclosing these data flows and obtaining any consent required in their jurisdiction.
 
 On a WooCommerce store with Product answers on, the public details of matching products are sent to Amazon Bedrock with each question. With Order questions on, a signed-in customer's question about orders sends their recent orders' number, dates, status, items, total, shipping method and tracking number to Amazon Bedrock; addresses, email, phone and payment details are not sent. The product assistant sends the product's own details, or its approved review texts without reviewer names, when an editor asks for a draft.
 

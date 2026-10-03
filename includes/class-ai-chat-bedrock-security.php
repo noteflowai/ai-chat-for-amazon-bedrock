@@ -149,6 +149,41 @@ class AI_Chat_Bedrock_Security {
 	}
 
 	/**
+	 * How much of a daily allowance this visitor has used today, counted per client as the
+	 * rate limits are: by account when signed in, by a salted hash of the address otherwise.
+	 *
+	 * @param string $bucket Allowance name.
+	 * @return int
+	 */
+	public static function daily_spent( $bucket ) {
+		return max( 0, (int) get_transient( self::daily_key( $bucket ) ) );
+	}
+
+	/**
+	 * Add to what this visitor has used of a daily allowance.
+	 *
+	 * @param string $bucket Allowance name.
+	 * @param int    $amount Amount used.
+	 */
+	public static function spend_daily( $bucket, $amount ) {
+		$amount = (int) $amount;
+		if ( $amount > 0 ) {
+			set_transient( self::daily_key( $bucket ), self::daily_spent( $bucket ) + $amount, DAY_IN_SECONDS );
+		}
+	}
+
+	/**
+	 * Transient for a visitor's daily allowance. The day is part of the key, so the count
+	 * starts again at midnight UTC rather than a day after the first use.
+	 *
+	 * @param string $bucket Allowance name.
+	 * @return string
+	 */
+	private static function daily_key( $bucket ) {
+		return 'aicfab_day_' . md5( sanitize_key( $bucket ) . '|' . gmdate( 'Ymd' ) . '|' . self::client_identifier() );
+	}
+
+	/**
 	 * Validate an outbound MCP URL. HTTPS and WordPress safe-URL checks are mandatory.
 	 *
 	 * @param string $url URL to validate.

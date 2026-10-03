@@ -280,6 +280,12 @@ $saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_sche
 check_set( true === $saved['speech_replies'] && true === $saved['speech_posts'] && 'generative' === $saved['speech_engine'] && 25000 === $saved['speech_daily_chars'], 'Another tab keeps the reading-aloud settings.' );
 $saved = save_tab( $admin, array( 'speech_replies' ), array( 'speech_posts' => '1', 'speech_engine' => 'standard', 'speech_daily_chars' => '0' ) );
 check_set( false === $saved['speech_replies'] && true === $saved['speech_posts'] && 'neural' === $saved['speech_engine'] && 0 === $saved['speech_daily_chars'], 'An unticked switch is off, an unknown engine is neural, and 0 removes the limit.' );
+$saved = save_tab( $admin, array( 'speech_replies' ), array( 'speech_posts' => '1', 'speech_posts_signed_in' => '1' ) );
+check_set( true === $saved['speech_posts_signed_in'], 'Listening only when signed in is saved.' );
+$saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'light' ) );
+check_set( true === $saved['speech_posts_signed_in'], 'Another tab keeps it.' );
+$saved = save_tab( $admin, array( 'speech_replies' ), array( 'speech_posts' => '1' ) );
+check_set( false === $saved['speech_posts_signed_in'], 'An unticked box opens posts to everyone again.' );
 $saved = save_tab( $admin, array( 'speech_replies' ), array( 'speech_daily_chars' => '99999999999' ) );
 check_set( false === $saved['speech_posts'] && AI_Chat_Bedrock_Speech::MAX_DAILY_CHARACTERS === $saved['speech_daily_chars'], 'The daily limit is capped.' );
 $saved = save_tab( $admin, array( 'speech_replies' ), array( 'speech_daily_chars' => '' ) );

@@ -1333,6 +1333,7 @@ class AI_Chat_Bedrock_Admin {
 		echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'Read aloud', 'ai-chat-for-amazon-bedrock' ) . '</legend>';
 		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[speech_replies]" value="1" ' . checked( AI_Chat_Bedrock_Speech::replies_enabled( $options ), true, false ) . '> ' . esc_html__( 'Add a Listen button to chat answers', 'ai-chat-for-amazon-bedrock' ) . '</label><br>';
 		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[speech_posts]" value="1" ' . checked( AI_Chat_Bedrock_Speech::posts_enabled( $options ), true, false ) . '> ' . esc_html__( 'Add a Listen to this post button to posts', 'ai-chat-for-amazon-bedrock' ) . '</label><br>';
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[speech_posts_signed_in]" value="1" ' . checked( AI_Chat_Bedrock_Speech::posts_need_sign_in( $options ), true, false ) . '> ' . esc_html__( 'Only for signed-in visitors, as on a members site', 'ai-chat-for-amazon-bedrock' ) . '</label><br>';
 		echo '<label for="aicfab_field_speech_engine">' . esc_html__( 'Voice engine', 'ai-chat-for-amazon-bedrock' ) . '</label> <select id="aicfab_field_speech_engine" name="ai_chat_bedrock_settings[speech_engine]">';
 		foreach ( $engines as $key => $label ) {
 			echo '<option value="' . esc_attr( $key ) . '" ' . selected( $engine, $key, false ) . '>' . esc_html( $label ) . '</option>';
@@ -1341,6 +1342,13 @@ class AI_Chat_Bedrock_Admin {
 		echo '<label for="aicfab_field_speech_daily_chars">' . esc_html__( 'Characters read per day, across the site', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="number" id="aicfab_field_speech_daily_chars" class="regular-text" name="ai_chat_bedrock_settings[speech_daily_chars]" value="' . esc_attr( AI_Chat_Bedrock_Speech::daily_characters( $options ) ) . '" min="0" max="' . esc_attr( AI_Chat_Bedrock_Speech::MAX_DAILY_CHARACTERS ) . '" step="1000">';
 		echo '</fieldset>';
 		echo '<p class="description">' . esc_html__( 'Off by default. Amazon Polly reads the text aloud, in a voice for its language, and is billed per character; 0 removes the daily limit. Only answers this chat gave can be read, by the visitor they were given to. A post is read as a signed-out visitor sees it, so members-only content is never sent; its audio is saved in the uploads folder and made again when the post changes. The AWS identity needs polly:SynthesizeSpeech.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		$visitor = AI_Chat_Bedrock_Speech::visitor_characters( $options );
+		echo '<p class="description">' . esc_html(
+			$visitor > 0
+				/* translators: %s: number of characters. */
+				? sprintf( __( 'Saved audio plays for everyone at no cost. Making new audio is limited to %s characters per visitor a day, so one visitor or script cannot use up the day for the rest, and crawlers and scripts cannot have posts read at all. Administrators are not limited.', 'ai-chat-for-amazon-bedrock' ), number_format_i18n( $visitor ) )
+				: __( 'Saved audio plays for everyone at no cost. Crawlers and scripts cannot have posts read. Without a daily limit for the site, visitors have none either.', 'ai-chat-for-amazon-bedrock' )
+		) . '</p>';
 	}
 	public function analytics_events_render() {
 		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[analytics_events]" value="1" ' . checked( AI_Chat_Bedrock_Analytics::enabled(), true, false ) . '> ' . esc_html__( 'Report chat activity to the analytics already on this site', 'ai-chat-for-amazon-bedrock' ) . '</label>';
@@ -1893,10 +1901,11 @@ class AI_Chat_Bedrock_Admin {
 		$output['chat_memory']      = AI_Chat_Bedrock_Chat_History::mode( $input );
 		$output['chat_memory_days'] = AI_Chat_Bedrock_Chat_History::retention_days( $input );
 
-		$output['speech_replies']     = ! empty( $input['speech_replies'] );
-		$output['speech_posts']       = ! empty( $input['speech_posts'] );
-		$output['speech_engine']      = AI_Chat_Bedrock_Speech::engine( $input );
-		$output['speech_daily_chars'] = AI_Chat_Bedrock_Speech::daily_characters( $input );
+		$output['speech_replies']         = ! empty( $input['speech_replies'] );
+		$output['speech_posts']           = ! empty( $input['speech_posts'] );
+		$output['speech_posts_signed_in'] = ! empty( $input['speech_posts_signed_in'] );
+		$output['speech_engine']          = AI_Chat_Bedrock_Speech::engine( $input );
+		$output['speech_daily_chars']     = AI_Chat_Bedrock_Speech::daily_characters( $input );
 
 		$output['analytics_events'] = ! empty( $input['analytics_events'] );
 
@@ -2009,7 +2018,7 @@ class AI_Chat_Bedrock_Admin {
 	const COMPANION_FIELDS = array(
 		'log_conversations'  => array( 'log_retention_days' ),
 		'chat_memory'        => array( 'chat_memory_days' ),
-		'speech_replies'     => array( 'speech_posts', 'speech_engine', 'speech_daily_chars' ),
+		'speech_replies'     => array( 'speech_posts', 'speech_posts_signed_in', 'speech_engine', 'speech_daily_chars' ),
 		'leads_enabled'      => array( 'leads_notify', 'leads_days', 'leads_link' ),
 		'popup_site_wide'    => array( 'popup_profile' ),
 		'prompt_id'          => array( 'prompt_version' ),
