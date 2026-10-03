@@ -1,6 +1,6 @@
 <?php
 /**
- * Security helpers for AI Chat for Amazon Bedrock.
+ * Security helpers for AI Chatbot & Agents for Amazon Bedrock.
  *
  * @package AI_Chat_Bedrock
  */

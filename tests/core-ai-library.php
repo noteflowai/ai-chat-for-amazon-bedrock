@@ -185,6 +185,40 @@ class AI_Chat_Bedrock_AWS {
 	public function embed( $text, $model_id, $purpose = 'document', $dimensions = 0 ) {
 		return $this->reply( 'embed', array( $text, $model_id, $purpose, $dimensions ) );
 	}
+	public static $has_credentials = false;
+	public static $key_accepted    = false;
+	public static $listed_with     = array();
+	private $key                   = '';
+	public function has_credentials() {
+		return self::$has_credentials;
+	}
+	public function with_api_key( $key ) {
+		$client      = clone $this;
+		$client->key = $key;
+		return $client;
+	}
+	public function list_foundation_models() {
+		self::$listed_with[] = $this->key;
+		return self::$key_accepted ? array() : new WP_Error( 'aicfab_forbidden', 'Refused.' );
+	}
+}
+
+/** Stands in for the plugin's credential helpers. */
+class AI_Chat_Bedrock_AWS_Credentials {
+	public static function clean_api_key( $value ) {
+		$value = trim( (string) $value );
+		return preg_match( '/^[A-Za-z0-9+\/=._~:-]{20,8192}$/', $value ) ? $value : '';
+	}
+}
+function wp_hash( $data ) {
+	return hash_hmac( 'md5', (string) $data, 'salt' );
+}
+function get_transient( $name ) {
+	return isset( $GLOBALS['aicfab_transients'][ $name ] ) ? $GLOBALS['aicfab_transients'][ $name ] : false;
+}
+function set_transient( $name, $value, $ttl = 0 ) {
+	$GLOBALS['aicfab_transients'][ $name ] = $value;
+	return true;
 }
 
 define( 'AI_CHAT_BEDROCK_PLUGIN_DIR', dirname( __DIR__ ) . '/' );
@@ -463,6 +497,43 @@ if ( $aicfab_embeddings ) {
 	}
 	check_library( $aicfab_thrown, 'A failed embedding is reported, not returned as an empty vector.' );
 }
+
+// --- A key entered on Settings > Connectors -------------------------------------
+
+/*
+ * Core checks a pasted key exactly like this: hand it to the provider through the registry,
+ * then ask whether the provider is configured. Until the provider declared API key
+ * authentication the first step threw, so every key was discarded as invalid; and an
+ * availability answering from the IAM role would keep a key Bedrock refuses.
+ */
+require_once dirname( __DIR__ ) . '/includes/core-ai/class-ai-chat-bedrock-ai-availability.php';
+require_once dirname( __DIR__ ) . '/includes/core-ai/class-ai-chat-bedrock-ai-provider.php';
+/** Nothing here may reach the network; the plugin's own request path is stubbed above. */
+class AICFAB_No_Transport implements \WordPress\AiClient\Providers\Http\Contracts\HttpTransporterInterface {
+	public function send( \WordPress\AiClient\Providers\Http\DTO\Request $request, ?\WordPress\AiClient\Providers\Http\DTO\RequestOptions $options = null ): \WordPress\AiClient\Providers\Http\DTO\Response {
+		throw new RuntimeException( 'No HTTP in this suite.' );
+	}
+}
+$aicfab_registry = new \WordPress\AiClient\Providers\ProviderRegistry();
+$aicfab_registry->setHttpTransporter( new AICFAB_No_Transport() );
+$aicfab_registry->registerProvider( 'AI_Chat_Bedrock_AI_Provider' );
+check_library( AI_Chat_Bedrock_AI_Provider::metadata()->getAuthenticationMethod() && AI_Chat_Bedrock_AI_Provider::metadata()->getAuthenticationMethod()->isApiKey(), 'The provider declares API key authentication, so core can hand it a key.' );
+check_library( AI_Chat_Bedrock_Core_AI::CREDENTIALS_URL === AI_Chat_Bedrock_AI_Provider::metadata()->getCredentialsUrl(), 'The provider says where a key is created.' );
+
+AI_Chat_Bedrock_AWS::$has_credentials = true;
+check_library( true === $aicfab_registry->isProviderConfigured( 'amazon-bedrock' ), 'With no key handed over, an IAM role makes the provider configured.' );
+
+$aicfab_try_key = static function ( $key, $accepted ) use ( $aicfab_registry ) {
+	AI_Chat_Bedrock_AWS::$key_accepted = $accepted;
+	AI_Chat_Bedrock_AWS::$listed_with  = array();
+	$aicfab_registry->setProviderRequestAuthentication( 'amazon-bedrock', new \WordPress\AiClient\Providers\Http\DTO\ApiKeyRequestAuthentication( $key ) );
+	return $aicfab_registry->isProviderConfigured( 'amazon-bedrock' );
+};
+check_library( false === $aicfab_try_key( 'ABSKrefusedKey0000000000000000000', false ), 'A key Bedrock refuses is reported as not configured, even with an IAM role.' );
+check_library( array( 'ABSKrefusedKey0000000000000000000' ) === AI_Chat_Bedrock_AWS::$listed_with, 'The key is checked with Bedrock itself.' );
+check_library( true === $aicfab_try_key( 'ABSKacceptedKey000000000000000000', true ), 'A key Bedrock accepts is reported as configured.' );
+check_library( true === $aicfab_try_key( 'ABSKacceptedKey000000000000000000', false ) && array() === AI_Chat_Bedrock_AWS::$listed_with, 'An accepted key is remembered, not checked on every request.' );
+check_library( false === $aicfab_try_key( 'not a key', true ) && array() === AI_Chat_Bedrock_AWS::$listed_with, 'Text that is not a key is refused without a request.' );
 
 if ( $failures ) {
 	echo "FAILED\n";

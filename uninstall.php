@@ -28,6 +28,9 @@ function ai_chat_bedrock_uninstall_site() {
 	foreach ( array( 'ai_chat_bedrock_settings', 'ai_chat_bedrock_role_limits', 'ai_chat_bedrock_enable_mcp', 'ai_chat_bedrock_mcp_public_access', 'ai_chat_bedrock_mcp_servers', 'ai_chat_bedrock_db_version', 'ai_chat_bedrock_usage', 'ai_chat_bedrock_mcp_tool_policy', 'ai_chat_bedrock_mcp_capability', 'ai_chat_bedrock_mcp_max_rounds', 'ai_chat_bedrock_mcp_log_enabled', 'ai_chat_bedrock_tool_log', 'ai_chat_bedrock_conversations', 'ai_chat_bedrock_log_conversations', 'ai_chat_bedrock_log_retention_days', 'ai_chat_bedrock_oauth_clients', 'ai_chat_bedrock_oauth_grants', 'ai_chat_bedrock_oauth_revoked', 'ai_chat_bedrock_oauth_enabled', 'ai_chat_bedrock_site_abilities', 'ai_chat_bedrock_profiles', 'ai_chat_bedrock_eval_set', 'ai_chat_bedrock_eval_runs', 'ai_chat_bedrock_abilities_tools', 'ai_chat_bedrock_s3v_delete_queue' ) as $ai_chat_bedrock_option ) {
 		delete_option( $ai_chat_bedrock_option );
 	}
+	// The key entered on Settings > Connectors is stored by core but encrypted by this plugin,
+	// so nothing else could read it once the plugin is gone.
+	delete_option( 'connectors_ai_amazon_bedrock_api_key' );
 
 	delete_transient( 'ai_chat_bedrock_cache' );
 	delete_transient( 'aicfab_role_credentials' );
@@ -41,6 +44,10 @@ function ai_chat_bedrock_uninstall_site() {
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $ai_chat_bedrock_pattern ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 	$ai_chat_bedrock_timeout_pattern = $wpdb->esc_like( '_transient_timeout_aicfab_rl_' ) . '%';
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $ai_chat_bedrock_timeout_pattern ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+
+	foreach ( array( '_transient_aicfab_key_ok_', '_transient_timeout_aicfab_key_ok_' ) as $ai_chat_bedrock_key_prefix ) {
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( $ai_chat_bedrock_key_prefix ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+	}
 
 	$ai_chat_bedrock_model_pattern = $wpdb->esc_like( '_transient_aicfab_models_' ) . '%';
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $ai_chat_bedrock_model_pattern ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -106,3 +113,4 @@ if ( is_multisite() ) {
 
 // The one user meta key: an administrator dismissed the setup notice.
 delete_metadata( 'user', 0, 'aicfab_dismissed_setup_notice', '', true );
+delete_metadata( 'user', 0, 'aicfab_dismissed_review_prompt', '', true );

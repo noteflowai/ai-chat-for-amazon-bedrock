@@ -96,4 +96,15 @@ $tones           = array(
 		<li><?php esc_html_e( 'Guardrail configured: bedrock:ApplyGuardrail is required on the guardrail in addition to the model permissions.', 'ai-chat-for-amazon-bedrock' ); ?></li>
 		<li><?php esc_html_e( 'Credentials not found: define wp-config.php constants or allow the server IAM role.', 'ai-chat-for-amazon-bedrock' ); ?></li>
 	</ul>
+
+	<h2><?php esc_html_e( 'Still stuck?', 'ai-chat-for-amazon-bedrock' ); ?></h2>
+	<p>
+		<?php
+		printf(
+			/* translators: %s: link to the plugin's support forum on WordPress.org. */
+			esc_html__( 'Ask in the %s. Include the checks above that did not pass, but never your keys or anything from the policy that you would not post in public.', 'ai-chat-for-amazon-bedrock' ),
+			'<a href="' . esc_url( AI_Chat_Bedrock_Review_Prompt::SUPPORT_URL ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'support forum on WordPress.org', 'ai-chat-for-amazon-bedrock' ) . '</a>'
+		);
+		?>
+	</p>
 </div>

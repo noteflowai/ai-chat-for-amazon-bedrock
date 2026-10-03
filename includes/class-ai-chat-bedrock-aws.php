@@ -1756,6 +1756,21 @@ class AI_Chat_Bedrock_AWS {
 	}
 
 	/**
+	 * A copy of this client that authenticates with a given API key, for checking a key
+	 * before it is stored. The region and endpoints stay the site's.
+	 *
+	 * @param string $key Clean Amazon Bedrock API key.
+	 * @return self
+	 */
+	public function with_api_key( $key ) {
+		$client                    = clone $this;
+		$client->api_key           = (string) $key;
+		$client->api_key_temporary = 0 === strpos( (string) $key, 'bedrock-api-key-' );
+		$client->credential_source = 'api_key_connector';
+		return $client;
+	}
+
+	/**
 	 * List text-capable Bedrock foundation models available in the region.
 	 *
 	 * @return array|WP_Error

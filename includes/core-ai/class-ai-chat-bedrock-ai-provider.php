@@ -18,6 +18,7 @@ use WordPress\AiClient\Providers\Contracts\ModelMetadataDirectoryInterface;
 use WordPress\AiClient\Providers\Contracts\ProviderAvailabilityInterface;
 use WordPress\AiClient\Providers\DTO\ProviderMetadata;
 use WordPress\AiClient\Providers\Enums\ProviderTypeEnum;
+use WordPress\AiClient\Providers\Http\Enums\RequestAuthenticationMethod;
 use WordPress\AiClient\Providers\Models\Contracts\ModelInterface;
 use WordPress\AiClient\Providers\Models\DTO\ModelMetadata;
 
@@ -49,7 +50,10 @@ class AI_Chat_Bedrock_AI_Provider extends AbstractProvider {
 	/**
 	 * Describe the provider.
 	 *
-	 * No credentials URL, because there is no key to fetch: access comes from an IAM role.
+	 * API key authentication is declared because core refuses to hand a provider a key it
+	 * did not declare: without it, checking a key entered on Settings → Connectors throws,
+	 * and core discards the key as invalid. An IAM role still needs no key; availability
+	 * answers for it.
 	 *
 	 * @return ProviderMetadata
 	 */
@@ -57,7 +61,9 @@ class AI_Chat_Bedrock_AI_Provider extends AbstractProvider {
 		return new ProviderMetadata(
 			AI_Chat_Bedrock_Core_AI::PROVIDER_ID,
 			__( 'Amazon Bedrock', 'ai-chat-for-amazon-bedrock' ),
-			ProviderTypeEnum::cloud()
+			ProviderTypeEnum::cloud(),
+			AI_Chat_Bedrock_Core_AI::CREDENTIALS_URL,
+			RequestAuthenticationMethod::apiKey()
 		);
 	}
 

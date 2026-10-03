@@ -111,6 +111,12 @@ function wp_remote_retrieve_header( $response, $name ) {
 	return '';
 }
 
+/** Stands in for the Connectors key, which needs WordPress 7.1. */
+class AI_Chat_Bedrock_Core_AI {
+	public static function connector_api_key() {
+		return isset( $GLOBALS['aicfab_connector_key'] ) ? $GLOBALS['aicfab_connector_key'] : '';
+	}
+}
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-aws-credentials.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-event-stream.php';
@@ -163,6 +169,14 @@ $with_keys = array(
 	'aws_secret_key' => AI_Chat_Bedrock_Security::encrypt_secret( 'example-secret' ),
 );
 check_key( null === AI_Chat_Bedrock_AWS_Credentials::api_key( $with_keys ), 'access keys entered for this plugin are not overridden by an ambient environment key' );
+
+// A key entered on Settings > Connectors comes after this plugin's own setting and before
+// the environment, and a client built to check one uses that key and nothing else.
+$GLOBALS['aicfab_connector_key'] = $long_term;
+check_key( 'api_key_connector' === AI_Chat_Bedrock_AWS_Credentials::api_key( $env_options )['source'], 'the Connectors key wins over the environment' );
+check_key( 'api_key_option' === AI_Chat_Bedrock_AWS_Credentials::api_key( $GLOBALS['aicfab_test_options'] )['source'], 'the plugin setting wins over the Connectors key' );
+check_key( false !== strpos( AI_Chat_Bedrock_AWS_Credentials::source_label( 'api_key_connector' ), 'Connectors' ), 'Diagnostics names the Connectors screen as the source' );
+$GLOBALS['aicfab_connector_key'] = '';
 putenv( 'AWS_BEARER_TOKEN_BEDROCK' );
 
 // --- Requests ---------------------------------------------------------------
@@ -181,6 +195,10 @@ check_key( ! isset( $runtime['X-Amz-Date'] ) && ! isset( $runtime['X-Amz-Securit
 check_key( 'gr-1' === $runtime['x-amzn-bedrock-guardrailidentifier'], 'guardrail headers still travel with a bearer request' );
 $control = $sign->invoke( $aws, 'https://bedrock.us-east-1.amazonaws.com/foundation-models?byOutputModality=TEXT', '', 'GET' );
 check_key( 'Bearer ' . $long_term === $control['Authorization'], 'the model list uses the key too' );
+$candidate = $aws->with_api_key( $short_term );
+$checked   = $sign->invoke( $candidate, 'https://bedrock.us-east-1.amazonaws.com/foundation-models?byOutputModality=TEXT', '', 'GET' );
+check_key( 'Bearer ' . $short_term === $checked['Authorization'] && 'api_key_connector' === $candidate->credential_source(), 'a key being checked is the one sent' );
+check_key( 'api_key_option' === $aws->credential_source() && 'Bearer ' . $long_term === $sign->invoke( $aws, 'https://bedrock.us-east-1.amazonaws.com/foundation-models', '', 'GET' )['Authorization'], 'checking a key leaves the site client unchanged' );
 
 $answer = $aws->handle_chat_message( array( 'messages' => array( array( 'role' => 'user', 'content' => 'Hello' ) ) ) );
 check_key( true === $answer['success'] && 'Hello from Nova' === $answer['data']['message'], 'a chat answers with only an API key configured' );

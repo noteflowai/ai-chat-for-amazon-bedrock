@@ -625,7 +625,7 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 
 	private function server_info() {
 		return array(
-			'name'    => 'AI Chat for Amazon Bedrock — WordPress MCP',
+			'name'    => 'AI Chatbot & Agents for Amazon Bedrock — WordPress MCP',
 			'version' => AI_CHAT_BEDROCK_VERSION,
 		);
 	}

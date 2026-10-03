@@ -80,8 +80,9 @@ class AI_Chat_Bedrock_AWS_Credentials {
 	 *
 	 * An API key is the quickest way to connect: one value, created in the Bedrock console,
 	 * with no IAM user or access key pair. Resolution order is the AI_CHAT_BEDROCK_API_KEY
-	 * constant, then the encrypted setting, then the AWS_BEARER_TOKEN_BEDROCK environment
-	 * variable the AWS SDKs read. The environment variable is ignored when access keys are
+	 * constant, then the encrypted setting, then the key entered on Settings → Connectors
+	 * (WordPress 7.1 and later, also encrypted), then the AWS_BEARER_TOKEN_BEDROCK
+	 * environment variable the AWS SDKs read. The environment variable is ignored when access keys are
 	 * configured in wp-config.php or the settings, because a value the site owner entered for
 	 * this plugin should not be overridden by one the server happens to carry.
 	 *
@@ -100,6 +101,9 @@ class AI_Chat_Bedrock_AWS_Credentials {
 		}
 		if ( ! empty( $options['bedrock_api_key'] ) ) {
 			$candidates['api_key_option'] = AI_Chat_Bedrock_Security::decrypt_secret( $options['bedrock_api_key'] );
+		}
+		if ( class_exists( 'AI_Chat_Bedrock_Core_AI' ) ) {
+			$candidates['api_key_connector'] = AI_Chat_Bedrock_Core_AI::connector_api_key();
 		}
 		$candidates['api_key_environment'] = self::env( 'AWS_BEARER_TOKEN_BEDROCK' );
 
@@ -210,6 +214,7 @@ class AI_Chat_Bedrock_AWS_Credentials {
 			'instance_role'       => __( 'EC2 instance role (IMDSv2)', 'ai-chat-for-amazon-bedrock' ),
 			'api_key_constant'    => __( 'Amazon Bedrock API key (wp-config.php constant)', 'ai-chat-for-amazon-bedrock' ),
 			'api_key_option'      => __( 'Amazon Bedrock API key (encrypted WordPress settings)', 'ai-chat-for-amazon-bedrock' ),
+			'api_key_connector'   => __( 'Amazon Bedrock API key (Settings > Connectors, encrypted)', 'ai-chat-for-amazon-bedrock' ),
 			'api_key_environment' => __( 'Amazon Bedrock API key (AWS_BEARER_TOKEN_BEDROCK)', 'ai-chat-for-amazon-bedrock' ),
 		);
 		return isset( $labels[ $source ] ) ? $labels[ $source ] : __( 'Unknown source', 'ai-chat-for-amazon-bedrock' );

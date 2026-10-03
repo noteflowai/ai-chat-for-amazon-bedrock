@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Security fixes are provided for the latest WordPress.org release of AI Chat for Amazon Bedrock.
+Security fixes are provided for the latest WordPress.org release of AI Chatbot & Agents for Amazon Bedrock.
 
 ## Reporting a vulnerability
 

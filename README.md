@@ -1,4 +1,4 @@
-# AI Agents & Chat for Amazon Bedrock
+# AI Chatbot & Agents for Amazon Bedrock
 
 Product direction and acceptance milestones: [Roadmap](ROADMAP.md).
 

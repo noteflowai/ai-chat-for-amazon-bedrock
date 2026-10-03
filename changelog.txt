@@ -1,7 +1,14 @@
-AI Agents & Chat for Amazon Bedrock
+AI Chatbot & Agents for Amazon Bedrock
 Full changelog. The readme lists the latest releases only.
 
 == Changelog ==
+
+= 1.63.0 =
+* Amazon Bedrock now appears under Settings > Connectors on WordPress 7.1 and later. On AWS it shows as connected with nothing entered, because the IAM role is used. Elsewhere, paste an Amazon Bedrock API key there: it is checked with Bedrock before it is kept, and stored encrypted. A key in the plugin settings or `wp-config.php` still takes precedence.
+* Fixed: a key entered for Bedrock on Settings > Connectors could not be checked by WordPress and was discarded, because the connector declared that it stored no credential.
+* Renamed AI Chatbot & Agents for Amazon Bedrock. Nothing changes on existing sites.
+* Diagnostics and the Plugins screen link to the support forum, and the FAQ is shorter, with the longer answers on GitHub.
+* Once the chat has answered at least 20 questions over more than a week, administrators see one request for a review on the plugin's own screens. Closing it or following a link ends it for good, and the `ai_chat_bedrock_review_prompt` filter turns it off.
 
 = 1.62.0 =
 * Business insights, under Answer grounding and off by default: a screen with figures over a period. Content published, chat questions, unanswered and unhelpful answers, AI requests, tokens and failures and, with WooCommerce, orders, net sales, items sold and average order value from WooCommerce Analytics. Compare with the previous period or a year earlier, split by day, week or month, break down by product, category, content type, language or model, and download the figure as CSV.
