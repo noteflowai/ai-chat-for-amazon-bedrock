@@ -75,6 +75,8 @@ aicfab_live(
  */
 $aicfab_had_abilities = get_option( 'ai_chat_bedrock_site_abilities', false );
 update_option( 'ai_chat_bedrock_site_abilities', 1 );
+// The site description is switched on through its filter, so no setting is written.
+add_filter( 'ai_chat_bedrock_ontology_enabled', '__return_true' );
 
 if ( ! function_exists( 'wp_get_abilities' ) ) {
 	aicfab_note( 'skipped: this WordPress has no Abilities API' );
@@ -144,7 +146,40 @@ if ( ! function_exists( 'wp_get_abilities' ) ) {
 		'the draft ability is the only one that declares it writes',
 		$aicfab_writers ? implode( ', ', $aicfab_writers ) : 'none declared'
 	);
+	aicfab_live( isset( $aicfab_ours['ai-chat-bedrock/describe-site'] ), 'the site description registers as an ability' );
 }
+
+// --- The site description, against the real post types and counts ---------------
+
+$aicfab_site  = AI_Chat_Bedrock_Ontology::describe();
+$aicfab_types = is_array( $aicfab_site ) && isset( $aicfab_site['types'] ) ? array_column( $aicfab_site['types'], null, 'name' ) : array();
+aicfab_live(
+	isset( $aicfab_types['Article'] ) && (int) wp_count_posts( 'post' )->publish === $aicfab_types['Article']['count'],
+	'the site description counts published posts as WordPress does',
+	isset( $aicfab_types['Article'] ) ? (string) $aicfab_types['Article']['count'] : 'no Article type'
+);
+aicfab_live(
+	class_exists( 'WooCommerce' ) === isset( $aicfab_types['Product'] ),
+	'products are described exactly when WooCommerce is active',
+	implode( ', ', array_keys( $aicfab_types ) )
+);
+$aicfab_claimed = array();
+foreach ( $aicfab_types as $aicfab_type ) {
+	foreach ( isset( $aicfab_type['post_types'] ) ? $aicfab_type['post_types'] : array() as $aicfab_post_type ) {
+		$aicfab_claimed[] = $aicfab_post_type;
+	}
+}
+$aicfab_public = array_diff( get_post_types( array( 'public' => true ) ), array( 'attachment' ) );
+aicfab_live(
+	array() === array_diff( $aicfab_public, $aicfab_claimed ) && count( $aicfab_claimed ) === count( array_unique( $aicfab_claimed ) ),
+	'every public post type is described exactly once',
+	implode( ', ', $aicfab_claimed )
+);
+aicfab_live(
+	5 === has_filter( 'ai_chat_bedrock_retrieved_passages', array( 'AI_Chat_Bedrock_Ontology', 'annotate_passages' ) ),
+	'retrieved passages are labelled before other filters see them'
+);
+remove_filter( 'ai_chat_bedrock_ontology_enabled', '__return_true' );
 
 if ( false === $aicfab_had_abilities ) {
 	delete_option( 'ai_chat_bedrock_site_abilities' );

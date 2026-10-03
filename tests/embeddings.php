@@ -279,6 +279,7 @@ $hits = AI_Chat_Bedrock_Embeddings::search( 'refund window', 3 );
 check_emb( ! empty( $hits ), 'A semantic search returns hits.' );
 check_emb( 'Refund & returns policy' === $hits[0]['title'], 'The closest passage ranks first: ' . ( isset( $hits[0]['title'] ) ? $hits[0]['title'] : 'none' ) );
 check_emb( 'semantic' === $hits[0]['source'], 'Hits are labelled as semantic.' );
+check_emb( 1 === $hits[0]['post_id'], 'A hit names the post it came from.' );
 check_emb( isset( $hits[0]['score'] ) && $hits[0]['score'] > 0.9, 'The score reflects similarity.' );
 check_emb( false === strpos( wp_json_encode_compat( $hits ), 'not published' ), 'Draft content never appears in results.' );
 check_emb( false === strpos( wp_json_encode_compat( $hits ), 'behind a password' ), 'Protected content never appears in results.' );

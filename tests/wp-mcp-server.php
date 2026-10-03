@@ -87,6 +87,23 @@ check_server( in_array( 'suggest_seo_meta', $names2, true ), 'SEO suggestions mu
 check_server( ! in_array( 'delete_post', $names2, true ) && ! in_array( 'update_post', $names2, true ), 'No destructive tools may ever be exposed.' );
 $GLOBALS['aicfab_options']['ai_chat_bedrock_site_abilities'] = false;
 
+// The site description is a tool, and the server points to it, only once the site turns it on.
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-ontology.php';
+$list3  = $call( array( 'jsonrpc' => '2.0', 'id' => 40, 'method' => 'tools/list' ) );
+$names3 = array_map( function ( $tool ) { return $tool['name']; }, $list3['result']['tools'] );
+check_server( ! in_array( 'describe_site', $names3, true ), 'describe_site stays hidden while the site description is off.' );
+check_server( false === strpos( $init['result']['instructions'], 'describe_site' ), 'The instructions do not mention a hidden tool.' );
+$off = $call( array( 'jsonrpc' => '2.0', 'id' => 41, 'method' => 'tools/call', 'params' => array( 'name' => 'describe_site' ) ) );
+check_server( -32602 === $off['error']['code'], 'describe_site cannot be called while it is off.' );
+$GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] = array( 'site_ontology' => true );
+$list4  = $call( array( 'jsonrpc' => '2.0', 'id' => 42, 'method' => 'tools/list' ) );
+$names4 = array_map( function ( $tool ) { return $tool['name']; }, $list4['result']['tools'] );
+check_server( in_array( 'describe_site', $names4, true ), 'describe_site is listed once the site description is on.' );
+$discover = $call( array( 'jsonrpc' => '2.0', 'id' => 43, 'method' => 'server/discover' ) );
+$init2    = $call( array( 'jsonrpc' => '2.0', 'id' => 44, 'method' => 'initialize', 'params' => array( 'protocolVersion' => '2025-11-25' ) ) );
+check_server( false !== strpos( $discover['result']['instructions'], 'Call describe_site first' ) && false !== strpos( $init2['result']['instructions'], 'Call describe_site first' ), 'The instructions point to describe_site.' );
+unset( $GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] );
+
 // Unknown methods and unknown tools are rejected with JSON-RPC errors.
 $unknown = $call( array( 'jsonrpc' => '2.0', 'id' => 5, 'method' => 'tools/destroy' ) );
 check_server( -32601 === $unknown['error']['code'], 'Unknown methods must return -32601.' );

@@ -919,6 +919,7 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'rerank_model_id', __( 'Reranking', 'ai-chat-for-amazon-bedrock' ), 'rerank_model_render', 'aicfab_knowledge' );
 		$this->field( 'abilities_tools', __( 'WordPress abilities as tools', 'ai-chat-for-amazon-bedrock' ), 'abilities_tools_render', 'aicfab_knowledge' );
 		$this->field( 'site_abilities', __( 'Site content abilities', 'ai-chat-for-amazon-bedrock' ), 'site_abilities_render', 'aicfab_knowledge' );
+		$this->field( 'site_ontology', __( 'Site description', 'ai-chat-for-amazon-bedrock' ), 'site_ontology_render', 'aicfab_knowledge' );
 		$this->field( 'editor_assistant', __( 'Editor assistant', 'ai-chat-for-amazon-bedrock' ), 'editor_assistant_render', 'aicfab_knowledge' );
 		$this->field( 'log_conversations', __( 'Conversation log', 'ai-chat-for-amazon-bedrock' ), 'log_conversations_render', 'aicfab_knowledge' );
 		$this->field( 'media_assistant', __( 'Media helpers', 'ai-chat-for-amazon-bedrock' ), 'media_assistant_render', 'aicfab_knowledge' );
@@ -1103,6 +1104,11 @@ class AI_Chat_Bedrock_Admin {
 		} else {
 			echo '<p class="description">' . esc_html__( 'Requires the WordPress Abilities API.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 		}
+	}
+	public function site_ontology_render() {
+		$checked = ! empty( $this->option( 'site_ontology', false ) );
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[site_ontology]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Describe the site to agents and label passages with their type and language', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Adds a read-only describe-site ability and MCP tool. It lists what the site holds as schema.org types, with counts per language, how they relate and which data an AI may see, using the same IDs as Yoast SEO and WooCommerce. Passages given to the model also say whether they come from a post, page or product, and in which language. Only published, public content is described.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function editor_assistant_render() {
 		$checked = ! empty( $this->option( 'editor_assistant', false ) );
@@ -1608,6 +1614,7 @@ class AI_Chat_Bedrock_Admin {
 		$output['show_sources']        = ! empty( $input['show_sources'] );
 		$output['abilities_tools']     = ! empty( $input['abilities_tools'] );
 		$output['site_abilities']      = ! empty( $input['site_abilities'] );
+		$output['site_ontology']       = ! empty( $input['site_ontology'] );
 		$output['editor_assistant']    = ! empty( $input['editor_assistant'] );
 		$output['log_conversations']   = ! empty( $input['log_conversations'] );
 		$output['media_assistant']     = ! empty( $input['media_assistant'] );
@@ -1794,6 +1801,7 @@ class AI_Chat_Bedrock_Admin {
 		'media_assistant',
 		'popup_site_wide',
 		'site_abilities',
+		'site_ontology',
 		'show_sources',
 		'speech_replies',
 		'speech_posts',
