@@ -69,7 +69,11 @@ $color_scheme = AI_Chat_Bedrock_Chat_Request::color_scheme( isset( $options['cha
 				<textarea id="<?php echo esc_attr( $message_id ); ?>" class="ai-chat-bedrock-textarea" placeholder="<?php echo esc_attr( $atts['placeholder'] ); ?>" rows="2" maxlength="4000"></textarea>
 				<div class="ai-chat-bedrock-buttons">
 					<button type="button" class="ai-chat-bedrock-clear button button-secondary"><?php echo esc_html( $atts['clear_text'] ); ?></button>
-					<button type="submit" class="ai-chat-bedrock-submit button button-primary"><?php echo esc_html( $atts['button_text'] ); ?></button>
+					<?php
+					// Not a submit button: pressed before the chat script has run, as when an
+					// optimizer delays it, a submit button sent the form and reloaded the page.
+					?>
+					<button type="button" class="ai-chat-bedrock-submit button button-primary"><?php echo esc_html( $atts['button_text'] ); ?></button>
 					<button type="button" class="ai-chat-bedrock-stop button button-secondary" hidden><?php esc_html_e( 'Stop', 'ai-chat-for-amazon-bedrock' ); ?></button>
 				</div>
 			</form>

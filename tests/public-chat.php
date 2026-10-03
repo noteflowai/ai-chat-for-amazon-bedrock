@@ -190,6 +190,11 @@ function wp_enqueue_script( $handle, $src = '', $deps = array(), ...$rest ) {
 function wp_enqueue_style( $handle, $src = '', $deps = array(), ...$rest ) {
 	aicfab_asset_enqueue( 'style', $handle, $src, $deps );
 }
+$GLOBALS['aicfab_inline'] = array();
+function wp_add_inline_script( $handle, $code, $position = 'after' ) {
+	$GLOBALS['aicfab_inline'][] = array( $handle, $code );
+	return true;
+}
 function wp_localize_script( $handle, $name, $data ) {
 	$GLOBALS['aicfab_localized'][ $name ]    = $data;
 	$GLOBALS['aicfab_localized_on'][ $name ] = $handle;
@@ -597,6 +602,32 @@ $aicfab_public->enqueue_scripts();
 $aicfab_params = $GLOBALS['aicfab_localized']['ai_chat_bedrock_params'];
 check_pub( 'tab' === $aicfab_params['memory'] && '' === $aicfab_params['history_url'], 'Tab memory stores nothing on the site, so there is nothing to fetch.' );
 
+// --- Taps before the chat script runs -------------------------------------------
+
+/*
+ * Optimizers that delay scripts until the first tap would swallow that tap. A small inline
+ * script notes it, so it has to come before the chat script, once, and be left alone by them.
+ */
+$aicfab_early = isset( $GLOBALS['aicfab_assets']['script']['ai-chat-bedrock-early'] ) ? $GLOBALS['aicfab_assets']['script']['ai-chat-bedrock-early'] : null;
+check_pub( is_array( $aicfab_early ) && false === $aicfab_early['src'], 'The early script is registered inline, with no file to request.' );
+check_pub( in_array( 'ai-chat-bedrock-early', $GLOBALS['aicfab_assets']['script']['ai-chat-for-amazon-bedrock']['deps'], true ) && in_array( 'jquery', $GLOBALS['aicfab_assets']['script']['ai-chat-for-amazon-bedrock']['deps'], true ), 'The chat script depends on it, so it is printed first wherever the chat is.' );
+$aicfab_early_code = array_values( array_filter( $GLOBALS['aicfab_inline'], function ( $entry ) { return 'ai-chat-bedrock-early' === $entry[0]; } ) );
+check_pub( 1 === count( $aicfab_early_code ) && false !== strpos( $aicfab_early_code[0][1], 'window.aiChatBedrockEarly' ), 'Its code is added once, however often the assets are set up.' );
+
+$aicfab_tag = $aicfab_public->early_script_attributes( array( 'id' => 'ai-chat-bedrock-early-js-after' ) );
+check_pub( '1' === $aicfab_tag['data-no-defer'] && '1' === $aicfab_tag['data-no-optimize'], 'LiteSpeed Cache is told not to defer, delay or combine it.' );
+check_pub( true === $aicfab_tag['nowprocket'], 'WP Rocket is told not to delay it.' );
+check_pub( 'false' === $aicfab_tag['data-cfasync'], 'Cloudflare Rocket Loader is told not to defer it.' );
+$aicfab_other = array( 'id' => 'ai-chat-for-amazon-bedrock-js-extra' );
+check_pub( $aicfab_other === $aicfab_public->early_script_attributes( $aicfab_other ), 'Every other script is left to the site\'s optimizer settings.' );
+$aicfab_excluded = $aicfab_public->perfmatters_delay_exclusions( array( 'jquery.min.js' ) );
+check_pub( array( 'jquery.min.js', 'aiChatBedrockEarly' ) === $aicfab_excluded && false !== strpos( $aicfab_early_code[0][1], 'aiChatBedrockEarly' ), 'Perfmatters keeps its own exclusions and skips the early script by a string in it.' );
+check_pub( array( 'aiChatBedrockEarly' ) === $aicfab_public->perfmatters_delay_exclusions( '' ), 'A missing exclusion list does not break Perfmatters.' );
+
+$aicfab_main_src = (string) file_get_contents( dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock.php' );
+check_pub( false !== strpos( $aicfab_main_src, "add_filter( 'wp_inline_script_attributes', \$public, 'early_script_attributes' )" ), 'The attributes filter is hooked.' );
+check_pub( false !== strpos( $aicfab_main_src, "add_filter( 'perfmatters_delay_js_exclusions', \$public, 'perfmatters_delay_exclusions' )" ), 'The Perfmatters exclusion is hooked.' );
+
 // --- Shortcode attributes are bounded -----------------------------------------
 
 aicfab_reset_pub( array( 'allow_public_chat' => true, 'chat_title' => 'Ask us' ) );
@@ -604,6 +635,7 @@ $aicfab_markup = $aicfab_public->display_chat_interface( array( 'height' => '600
 check_pub( is_string( $aicfab_markup ) && '' !== $aicfab_markup, 'The shortcode renders something.' );
 check_pub( false === strpos( $aicfab_markup, AICFAB_PROMPT ), 'The rendered markup does not contain the system prompt.' );
 check_pub( false === strpos( $aicfab_markup, AICFAB_SECRET ), 'The rendered markup does not contain a credential.' );
+check_pub( 1 === preg_match( '/<button type="button" class="ai-chat-bedrock-submit /', $aicfab_markup ) && false === strpos( $aicfab_markup, 'type="submit"' ), 'Send is not a submit button, so pressing it before the chat script runs does not reload the page.' );
 
 /*
  * Both dimensions land inside a style attribute. esc_attr is not enough there: it escapes quotes

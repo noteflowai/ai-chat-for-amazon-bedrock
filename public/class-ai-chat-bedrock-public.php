@@ -10,12 +10,59 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class AI_Chat_Bedrock_Public {
+	// Notes taps on the chat made before its script runs; see js/ai-chat-bedrock-early.js.
+	const EARLY_HANDLE = 'ai-chat-bedrock-early';
+
 	private $plugin_name;
 	private $version;
 
 	public function __construct( $plugin_name, $version ) {
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
+	}
+
+	/**
+	 * The script that notes early taps, printed inline so it costs no request of its own.
+	 *
+	 * @return string
+	 */
+	private static function early_script() {
+		$path = plugin_dir_path( __FILE__ ) . 'js/ai-chat-bedrock-early.js';
+		return is_readable( $path ) ? trim( (string) file_get_contents( $path ) ) : ''; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+	}
+
+	/**
+	 * Mark the early script so script optimizers run it at once.
+	 *
+	 * It has to run before the visitor's first tap, which is exactly what delaying scripts
+	 * until an interaction prevents. LiteSpeed Cache skips a script marked data-no-defer and
+	 * data-no-optimize, WP Rocket one marked nowprocket, and Cloudflare Rocket Loader one
+	 * marked data-cfasync="false". Every other script, the chat's own included, is left to
+	 * the site's settings.
+	 *
+	 * @param array $attributes Attributes of an inline script tag.
+	 * @return array
+	 */
+	public function early_script_attributes( $attributes ) {
+		if ( is_array( $attributes ) && isset( $attributes['id'] ) && self::EARLY_HANDLE . '-js-after' === $attributes['id'] ) {
+			$attributes['data-no-defer']    = '1';
+			$attributes['data-no-optimize'] = '1';
+			$attributes['data-cfasync']     = 'false';
+			$attributes['nowprocket']       = true;
+		}
+		return $attributes;
+	}
+
+	/**
+	 * Keep Perfmatters from delaying the early script, which it matches by a piece of its text.
+	 *
+	 * @param array $exclusions Strings that keep a script from being delayed.
+	 * @return array
+	 */
+	public function perfmatters_delay_exclusions( $exclusions ) {
+		$exclusions   = is_array( $exclusions ) ? $exclusions : array();
+		$exclusions[] = 'aiChatBedrockEarly';
+		return $exclusions;
 	}
 
 	public function enqueue_styles() {
@@ -32,7 +79,12 @@ class AI_Chat_Bedrock_Public {
 			// The chat shares the player, also where wp_enqueue_scripts does not run, as in the admin Test Chat.
 			AI_Chat_Bedrock_Speech::register_assets();
 		}
-		wp_register_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-public.js', $speech ? array( 'jquery', 'ai-chat-bedrock-speech' ) : array( 'jquery' ), $this->version, true );
+		// Inline, in the head where it can be, so it is in place before the chat can be tapped.
+		if ( wp_register_script( self::EARLY_HANDLE, false, array(), $this->version, false ) ) {
+			wp_add_inline_script( self::EARLY_HANDLE, self::early_script() );
+		}
+		$deps = $speech ? array( 'jquery', 'ai-chat-bedrock-speech' ) : array( 'jquery' );
+		wp_register_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-public.js', array_merge( $deps, array( self::EARLY_HANDLE ) ), $this->version, true );
 		$text = AI_Chat_Bedrock_Translation::presentation( $options );
 		wp_localize_script(
 			$this->plugin_name,

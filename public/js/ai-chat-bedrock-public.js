@@ -1452,4 +1452,22 @@
             });
         }
     });
+
+    /*
+     * Taps on the chat made while an optimizer held this script back, as noted by
+     * ai-chat-bedrock-early.js. They are repeated now that the chat can answer them. A tap on
+     * the chat button is skipped when the chat is already open, since remembering an open
+     * chat may have opened it, and repeating the tap would close it again.
+     */
+    const early = window.aiChatBedrockEarly;
+    if (early) {
+        early.ready = true;
+        early.taps.splice(0).forEach(function (element) {
+            if (!document.documentElement.contains(element) || 'true' === element.getAttribute('aria-expanded')) {
+                return;
+            }
+            element.click();
+            early.repeated.push({ element: element, at: Date.now() });
+        });
+    }
 })(jQuery);

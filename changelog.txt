@@ -10,6 +10,7 @@ Full changelog. The readme lists the latest releases only.
 * Fixed: the failures of a model's first use in an AWS account now say what to do. Bedrock no longer has a Model access page; a missing AWS Marketplace permission, payment method or Anthropic use case form each get their own fix instead of "HTTP 404" or a generic permission message, and a fallback model is used meanwhile.
 * The last setup step creates a draft page with the chat on it, rather than opening an empty page.
 * Demo mode, for the Live Preview on WordPress.org: when `AI_CHAT_BEDROCK_DEMO` is defined and no AWS credentials are found, the chat quotes the passage of the site's pages that best matches each question and says that no AI model was called.
+* Fixed: with LiteSpeed Cache, WP Rocket or Perfmatters delaying scripts until the first interaction, that first tap on the chat button or Send did nothing, notably on phones, and Send could reload the page. The tap is now kept and acted on once the chat has loaded. The chat's own script is still delayed as the site has set it.
 
 = 1.63.0 =
 * Amazon Bedrock now appears under Settings > Connectors on WordPress 7.1 and later. On AWS it shows as connected with nothing entered, because the IAM role is used. Elsewhere, paste an Amazon Bedrock API key there: it is checked with Bedrock before it is kept, and stored encrypted. A key in the plugin settings or `wp-config.php` still takes precedence.

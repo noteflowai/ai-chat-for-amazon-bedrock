@@ -152,6 +152,8 @@ class AI_Chat_Bedrock {
 		$public = new AI_Chat_Bedrock_Public( $this->plugin_name, $this->version );
 		$this->loader->add_action( 'wp_enqueue_scripts', $public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $public, 'enqueue_scripts' );
+		$this->loader->add_filter( 'wp_inline_script_attributes', $public, 'early_script_attributes' );
+		$this->loader->add_filter( 'perfmatters_delay_js_exclusions', $public, 'perfmatters_delay_exclusions' );
 		$this->loader->add_shortcode( 'ai_chat_bedrock', $public, 'display_chat_interface' );
 		$this->loader->add_action( 'init', $public, 'register_blocks' );
 		$this->loader->add_action( 'wp_footer', $public, 'render_site_wide_popup', 5 );
