@@ -229,6 +229,20 @@ class AI_Chat_Bedrock_Setup_Steps {
 			);
 		}
 
+		// Other plugins can answer with their own live data, through the abilities they register.
+		$sources = isset( $context['ability_sources'] ) ? array_filter( (array) $context['ability_sources'], 'is_string' ) : array();
+		if ( ! empty( $sources ) && ( empty( $options['abilities_tools'] ) || ! get_option( 'ai_chat_bedrock_enable_mcp', false ) ) ) {
+			$next[] = array(
+				'label' => __( 'Let the chat use your plugins\' abilities', 'ai-chat-for-amazon-bedrock' ),
+				'help'  => sprintf(
+					/* translators: %s: names of plugins. */
+					__( '%s register abilities with WordPress. Signed-in users can then get answers from their live data. Read-only abilities are offered, and ones that change data stay off until you allow them.', 'ai-chat-for-amazon-bedrock' ),
+					AI_Chat_Bedrock_Translation::items( array_slice( $sources, 0, 4 ) )
+				),
+				'url'   => $settings . '&tab=knowledge',
+			);
+		}
+
 		// Guest chat spends money for anyone who visits, so the limit matters more.
 		if ( ! empty( $options['allow_public_chat'] ) ) {
 			$overrides = class_exists( 'AI_Chat_Bedrock_Rate_Limits' ) ? AI_Chat_Bedrock_Rate_Limits::all() : array();

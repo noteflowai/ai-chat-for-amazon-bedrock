@@ -259,6 +259,22 @@ class AI_Chat_Bedrock_MCP_Integration {
 	}
 
 	/**
+	 * A list of short names posted by the tool policy form.
+	 *
+	 * @param string $key Field name.
+	 * @return string[]
+	 */
+	private function posted_list( $key ) {
+		$values = array();
+		if ( isset( $_POST[ $key ] ) && is_array( $_POST[ $key ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- the caller checks the nonce.
+			foreach ( wp_unslash( $_POST[ $key ] ) as $value ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Missing -- each value is sanitized below; the caller checks the nonce.
+				$values[] = sanitize_text_field( (string) $value );
+			}
+		}
+		return $values;
+	}
+
+	/**
 	 * Save the MCP tool policy submitted from the MCP settings screen.
 	 */
 	public function handle_save_tool_policy() {
@@ -274,15 +290,37 @@ class AI_Chat_Bedrock_MCP_Integration {
 			}
 		}
 
-		$policy = array();
+		$mcp_tools = array();
 		foreach ( $this->mcp_client->get_all_tools() as $tool ) {
-			if ( empty( $tool['name'] ) ) {
-				continue;
+			if ( ! empty( $tool['name'] ) ) {
+				$mcp_tools[] = (string) $tool['name'];
 			}
-			$name            = (string) $tool['name'];
-			$policy[ $name ] = in_array( $name, $allowed, true ) ? 'allow' : 'deny';
 		}
-		AI_Chat_Bedrock_Tool_Policy::save_policy( $policy );
+
+		// Abilities and their plugins, as the server sees them now rather than as the form claims.
+		$ability_defaults = array();
+		$sources_shown    = array();
+		$abilities_shown  = $this->posted_list( 'ability_shown' );
+		$sources_posted   = $this->posted_list( 'ability_sources_shown' );
+		$catalog          = AI_Chat_Bedrock_Abilities::available() ? ( new AI_Chat_Bedrock_Abilities() )->catalog() : array();
+		foreach ( $catalog as $source => $group ) {
+			if ( in_array( $source, $sources_posted, true ) ) {
+				$sources_shown[] = $source;
+			}
+			foreach ( $group['abilities'] as $ability ) {
+				if ( in_array( $ability['tool'], $abilities_shown, true ) ) {
+					$ability_defaults[ $ability['tool'] ] = (bool) $ability['readonly'];
+				}
+			}
+		}
+
+		AI_Chat_Bedrock_Tool_Policy::save_policy( AI_Chat_Bedrock_Tool_Policy::merge_form( AI_Chat_Bedrock_Tool_Policy::policy(), $mcp_tools, $ability_defaults, $allowed ) );
+
+		if ( ! empty( $sources_shown ) ) {
+			$sources_on = $this->posted_list( 'ability_sources_on' );
+			$disabled   = array_diff( AI_Chat_Bedrock_Abilities::disabled_sources(), $sources_shown );
+			AI_Chat_Bedrock_Abilities::save_disabled_sources( array_merge( $disabled, array_diff( $sources_shown, $sources_on ) ) );
+		}
 
 		$capability   = isset( $_POST['mcp_capability'] ) ? sanitize_key( wp_unslash( $_POST['mcp_capability'] ) ) : AI_Chat_Bedrock_Tool_Policy::DEFAULT_CAPABILITY; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified in authorize_admin_request().
 		$capabilities = array( 'read', 'edit_posts', 'edit_others_posts', 'manage_options' );

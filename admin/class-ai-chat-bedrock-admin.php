@@ -1215,6 +1215,19 @@ class AI_Chat_Bedrock_Admin {
 		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[abilities_tools]" value="1" ' . checked( $checked, true, false ) . ' ' . disabled( $available, false, false ) . '> ' . esc_html__( 'Offer abilities registered by other plugins to the chat model', 'ai-chat-for-amazon-bedrock' ) . '</label>';
 		if ( $available ) {
 			echo '<p class="description">' . esc_html__( 'Abilities follow the same tool policy: a capability is required, permission callbacks are honored, and abilities that change data need explicit approval.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+			$sources = ( new AI_Chat_Bedrock_Abilities() )->source_labels();
+			$policy  = '<a href="' . esc_url( admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-mcp#aicfab-mcp-policy' ) ) . '">' . esc_html__( 'MCP > Tool policy', 'ai-chat-for-amazon-bedrock' ) . '</a>';
+			if ( ! empty( $sources ) ) {
+				echo '<p class="description">' . sprintf(
+					/* translators: 1: names of plugins, 2: link to the tool policy. */
+					esc_html__( 'Found on this site: %1$s. Choose plugins and abilities under %2$s.', 'ai-chat-for-amazon-bedrock' ),
+					esc_html( AI_Chat_Bedrock_Translation::items( $sources ) ),
+					$policy // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts above.
+				) . '</p>';
+			}
+			if ( ! get_option( 'ai_chat_bedrock_enable_mcp', false ) ) {
+				echo '<p class="description">' . esc_html__( 'Tools in chat are switched off on the MCP screen, so no ability is offered until they are switched on there.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+			}
 		} else {
 			echo '<p class="description">' . esc_html__( 'The WordPress Abilities API is not available on this site, so this option is inactive.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 		}

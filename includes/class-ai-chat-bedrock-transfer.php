@@ -50,20 +50,21 @@ class AI_Chat_Bedrock_Transfer {
 	 */
 	public static function options() {
 		return array(
-			'ai_chat_bedrock_settings'           => 'settings',
-			'ai_chat_bedrock_profiles'           => 'profiles',
-			'ai_chat_bedrock_role_limits'        => 'role_limits',
-			'ai_chat_bedrock_mcp_servers'        => 'mcp_servers',
-			'ai_chat_bedrock_enable_mcp'         => 'flag',
-			'ai_chat_bedrock_mcp_public_access'  => 'flag',
-			'ai_chat_bedrock_mcp_log_enabled'    => 'flag',
-			'ai_chat_bedrock_mcp_capability'     => 'text',
-			'ai_chat_bedrock_mcp_max_rounds'     => 'number',
-			'ai_chat_bedrock_mcp_tool_policy'    => 'policy',
-			'ai_chat_bedrock_site_abilities'     => 'flag',
-			'ai_chat_bedrock_log_conversations'  => 'flag',
-			'ai_chat_bedrock_log_retention_days' => 'number',
-			'ai_chat_bedrock_oauth_enabled'      => 'flag',
+			'ai_chat_bedrock_settings'            => 'settings',
+			'ai_chat_bedrock_profiles'            => 'profiles',
+			'ai_chat_bedrock_role_limits'         => 'role_limits',
+			'ai_chat_bedrock_mcp_servers'         => 'mcp_servers',
+			'ai_chat_bedrock_enable_mcp'          => 'flag',
+			'ai_chat_bedrock_mcp_public_access'   => 'flag',
+			'ai_chat_bedrock_mcp_log_enabled'     => 'flag',
+			'ai_chat_bedrock_mcp_capability'      => 'text',
+			'ai_chat_bedrock_mcp_max_rounds'      => 'number',
+			'ai_chat_bedrock_mcp_tool_policy'     => 'policy',
+			'ai_chat_bedrock_ability_sources_off' => 'keys',
+			'ai_chat_bedrock_site_abilities'      => 'flag',
+			'ai_chat_bedrock_log_conversations'   => 'flag',
+			'ai_chat_bedrock_log_retention_days'  => 'number',
+			'ai_chat_bedrock_oauth_enabled'       => 'flag',
 		);
 	}
 
@@ -260,6 +261,13 @@ class AI_Chat_Bedrock_Transfer {
 					}
 				}
 				update_option( $option, $policy );
+				return true;
+
+			case 'keys':
+				if ( ! is_array( $value ) ) {
+					return false;
+				}
+				update_option( $option, array_slice( array_values( array_unique( array_filter( array_map( 'sanitize_key', $value ) ) ) ), 0, 200 ), false );
 				return true;
 
 			case 'flag':

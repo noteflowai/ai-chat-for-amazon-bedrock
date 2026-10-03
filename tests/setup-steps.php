@@ -84,6 +84,12 @@ class AI_Chat_Bedrock_Rate_Limits {
 	}
 }
 
+class AI_Chat_Bedrock_Translation {
+	public static function items( $items ) {
+		return implode( ', ', (array) $items );
+	}
+}
+
 require_once __DIR__ . '/../includes/class-ai-chat-bedrock-setup-steps.php';
 
 $failures = array();
@@ -290,6 +296,40 @@ $labels = array_column(
 	'label'
 );
 check_step( ! in_array( 'Set a limit for visitors who are not signed in', $labels, true ), 'a guest limit clears the suggestion' );
+
+// Plugins that register abilities are worth connecting while the chat cannot use them.
+$aicfab_done    = array(
+	'enable_site_context' => 1,
+	'fallback_model_id'   => 'other-model',
+);
+$aicfab_ability = "Let the chat use your plugins' abilities";
+reset_state();
+AI_Chat_Bedrock_Conversations::$on = true;
+$next = AI_Chat_Bedrock_Setup_Steps::next(
+	array(
+		'options'         => $aicfab_done,
+		'ability_sources' => array( 'WooCommerce', 'Rank Math' ),
+	)
+);
+$hit  = array_values( array_filter( $next, function ( $step ) use ( $aicfab_ability ) {
+	return $aicfab_ability === $step['label'];
+} ) );
+check_step( 1 === count( $hit ), 'abilities found on the site, unused, are suggested' );
+check_step( isset( $hit[0] ) && false !== strpos( $hit[0]['help'], 'WooCommerce, Rank Math' ), 'the suggestion names the plugins' );
+check_step( isset( $hit[0] ) && false !== strpos( $hit[0]['url'], 'tab=knowledge' ), 'the suggestion leads to the setting' );
+
+$aicfab_on                                         = $aicfab_done + array( 'abilities_tools' => 1 );
+$GLOBALS['aicfab_options']['ai_chat_bedrock_enable_mcp'] = false;
+$labels = array_column( AI_Chat_Bedrock_Setup_Steps::next( array( 'options' => $aicfab_on, 'ability_sources' => array( 'WooCommerce' ) ) ), 'label' );
+check_step( in_array( $aicfab_ability, $labels, true ), 'abilities switched on while tools in chat are off are still suggested' );
+
+$GLOBALS['aicfab_options']['ai_chat_bedrock_enable_mcp'] = true;
+$labels = array_column( AI_Chat_Bedrock_Setup_Steps::next( array( 'options' => $aicfab_on, 'ability_sources' => array( 'WooCommerce' ) ) ), 'label' );
+check_step( ! in_array( $aicfab_ability, $labels, true ), 'once the chat can use them the suggestion goes' );
+
+$labels = array_column( AI_Chat_Bedrock_Setup_Steps::next( array( 'options' => $aicfab_done ) ), 'label' );
+check_step( ! in_array( $aicfab_ability, $labels, true ), 'a site without such plugins is not told about abilities' );
+unset( $GLOBALS['aicfab_options']['ai_chat_bedrock_enable_mcp'] );
 
 // --- Progress ----------------------------------------------------------------
 
