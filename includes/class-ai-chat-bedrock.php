@@ -60,6 +60,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-tool-policy.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-tool-log.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-tool-runner.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-demo.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-conversations.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-chat-history.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-speech.php';
@@ -105,6 +106,7 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_delete_profile', $admin, 'handle_delete_profile' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_generate_content', $admin, 'handle_generate_content' );
 		$this->loader->add_action( 'admin_notices', $admin, 'render_setup_notice' );
+		$this->loader->add_action( 'admin_notices', $admin, 'render_demo_notice' );
 		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_dismiss_setup_notice', $admin, 'ajax_dismiss_setup_notice' );
 		$this->loader->add_action( 'admin_notices', $admin, 'render_review_prompt' );
 		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_dismiss_review_prompt', 'AI_Chat_Bedrock_Review_Prompt', 'ajax_dismiss' );

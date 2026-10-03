@@ -773,7 +773,7 @@ class AI_Chat_Bedrock_Admin {
 		}
 
 		$status = AI_Chat_Bedrock_AWS_Credentials::describe();
-		if ( ! empty( $status['configured'] ) ) {
+		if ( ! empty( $status['configured'] ) || AI_Chat_Bedrock_Demo::enabled() ) {
 			return;
 		}
 
@@ -794,6 +794,30 @@ class AI_Chat_Bedrock_Admin {
 				'jQuery( document ).on( "click", ".aicfab-setup-notice .notice-dismiss", function () { jQuery.post( ajaxurl, { action: "ai_chat_bedrock_dismiss_setup_notice", _ajax_nonce: %s } ); } );',
 				wp_json_encode( wp_create_nonce( 'ai_chat_bedrock_dismiss_setup_notice' ) )
 			)
+		);
+	}
+
+	/**
+	 * Say on the plugin's own screens that the chat is answering in demo mode.
+	 *
+	 * The Live Preview turns demo mode on, and whoever tries it there should know that the
+	 * replies quote the site's pages rather than come from a model. It goes away by itself
+	 * once credentials are found, so there is nothing to dismiss.
+	 */
+	public function render_demo_notice() {
+		if ( ! current_user_can( 'manage_options' ) || ! AI_Chat_Bedrock_Demo::active() ) {
+			return;
+		}
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $screen || false === strpos( (string) $screen->id, $this->plugin_name ) ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-info aicfab-demo-notice"><p>%1$s <a href="%2$s">%3$s</a></p></div>',
+			esc_html__( 'Demo mode: the chat replies with the passage of this site\'s pages that best matches each question, and no AI model is called. Connect Amazon Bedrock to get written answers, which ends demo mode.', 'ai-chat-for-amazon-bedrock' ),
+			esc_url( admin_url( 'admin.php?page=' . $this->plugin_name . '-settings' ) ),
+			esc_html__( 'Connect Amazon Bedrock', 'ai-chat-for-amazon-bedrock' )
 		);
 	}
 

@@ -26,6 +26,11 @@ class AI_Chat_Bedrock_Tool_Runner {
 	 * @return array Final response array, including a metadata-only step trace.
 	 */
 	public static function run( $aws, $messages, $message, $on_delta = null, $on_round = null ) {
+		// The Live Preview has no AWS account, so the chat shows what it would draw on instead.
+		if ( class_exists( 'AI_Chat_Bedrock_Demo' ) && AI_Chat_Bedrock_Demo::active( $aws ) ) {
+			return AI_Chat_Bedrock_Demo::reply( $message, $on_delta );
+		}
+
 		$max_rounds = class_exists( 'AI_Chat_Bedrock_Tool_Policy' ) ? AI_Chat_Bedrock_Tool_Policy::max_rounds() : 1;
 		$payload    = apply_filters( 'ai_chat_bedrock_message_payload', array( 'messages' => $messages ), $message );
 		$response   = self::invoke( $aws, $payload, $on_delta );

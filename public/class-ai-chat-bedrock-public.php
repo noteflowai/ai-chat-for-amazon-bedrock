@@ -185,7 +185,7 @@ class AI_Chat_Bedrock_Public {
 		}
 
 		$aws = new AI_Chat_Bedrock_AWS();
-		if ( ! $aws->has_credentials() ) {
+		if ( ! $aws->has_credentials() && ! AI_Chat_Bedrock_Demo::enabled() ) {
 			return false;
 		}
 

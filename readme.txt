@@ -221,6 +221,10 @@ Run **AI Chat Bedrock > Diagnostics** first: most problems are a missing IAM per
 
 No. Model requests use Amazon Bedrock and your AWS credentials. Availability, model access, pricing, and data handling are governed by your AWS account and Region.
 
+= Can I try it without an AWS account? =
+
+Yes, in the Live Preview on the plugin's WordPress.org page, which runs WordPress in your browser with demo mode on. The chat then quotes the passage of the site's pages that best matches each question, and says that no AI model was called. Demo mode is off unless `AI_CHAT_BEDROCK_DEMO` is defined, and ends once AWS credentials are found.
+
 = Which Bedrock models are supported? =
 
 Claude, Amazon Nova and Titan, Meta Llama, Mistral, DeepSeek and the other chat models your Region offers, including Claude Sonnet 5, Claude Opus 5.5 and Claude Haiku 4.5; Stability AI models for images; Cohere Rerank 3.5 and Amazon Rerank 1.0 for reranking. The settings screen lists what your account offers, and a new installation starts on Amazon Nova Lite. [Regions, inference profiles and image models](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#which-bedrock-models-are-supported).
@@ -462,6 +466,7 @@ what a good answer says.
 * Fixed: saving the tool policy forgot the decisions for MCP servers that were offline while the form was open.
 * Fixed: the failures of a model's first use in an AWS account now say what to do. Bedrock no longer has a Model access page; a missing AWS Marketplace permission, payment method or Anthropic use case form each get their own fix instead of "HTTP 404" or a generic permission message, and a fallback model is used meanwhile.
 * The last setup step creates a draft page with the chat on it, rather than opening an empty page.
+* Demo mode, for the Live Preview on WordPress.org: when `AI_CHAT_BEDROCK_DEMO` is defined and no AWS credentials are found, the chat quotes the passage of the site's pages that best matches each question and says that no AI model was called.
 
 = 1.63.0 =
 * Amazon Bedrock now appears under Settings > Connectors on WordPress 7.1 and later. On AWS it shows as connected with nothing entered, because the IAM role is used. Elsewhere, paste an Amazon Bedrock API key there: it is checked with Bedrock before it is kept, and stored encrypted. A key in the plugin settings or `wp-config.php` still takes precedence.
@@ -479,10 +484,6 @@ what a good answer says.
 = 1.61.0 =
 * Site description, under Answer grounding and off by default: a read-only describe-site ability and MCP tool that tell an agent what the site holds, as schema.org types with published counts per language, how the types relate, and which data an AI may see. IDs match the ones Yoast SEO and WooCommerce print. With a post ID it describes one published item with its terms, offer and published translations.
 * With the site description on, passages given to the chat model say whether they come from a post, page or product, and in which language, and the MCP server points agents to describe_site.
-
-= 1.60.0 =
-* Read aloud, under Chat and off by default: a Listen button under chat answers and a Listen to this post button on posts, read by Amazon Polly in a voice for the language. Only answers the chat gave to that visitor can be read. Post audio is made from the text a signed-out visitor sees, saved in the uploads folder, and made again when the post changes. Choose the neural or generative engine and a daily character limit (100,000 by default); the dashboard shows the characters read.
-* The IAM policy in Diagnostics includes `polly:SynthesizeSpeech` when reading aloud is on, and the suggested privacy policy text covers it.
 
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
