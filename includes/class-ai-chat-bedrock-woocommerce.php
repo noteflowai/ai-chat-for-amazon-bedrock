@@ -1413,6 +1413,9 @@ class AI_Chat_Bedrock_WooCommerce {
 				$paragraphs[] = __( 'A copy of each contact request is emailed to the site\'s staff.', 'ai-chat-for-amazon-bedrock' );
 			}
 		}
+		if ( class_exists( 'AI_Chat_Bedrock_Analytics' ) && AI_Chat_Bedrock_Analytics::enabled() ) {
+			$paragraphs[] = __( 'This site\'s analytics records when you open the chat, ask a question and get an answer, follow a link or product in an answer, rate an answer or send a contact request. The text of your messages and your contact details are not included.', 'ai-chat-for-amazon-bedrock' );
+		}
 		if ( self::active() ) {
 			$paragraphs[] = __( 'When you ask about products, the product details shown in the shop, such as prices and stock, are sent to Amazon Bedrock with your question.', 'ai-chat-for-amazon-bedrock' );
 			$paragraphs[] = __( 'If the store lets customers ask about their orders and you are signed in, a question about orders or delivery sends your recent orders to Amazon Bedrock: the order number, dates, status, items, total, shipping method and tracking number. Your address, email address, phone number and payment details are never sent.', 'ai-chat-for-amazon-bedrock' );

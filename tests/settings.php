@@ -259,6 +259,17 @@ check_set( '' === $saved['chat_memory'] && AI_Chat_Bedrock_Chat_History::DEFAULT
 $saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'tab', 'chat_memory_days' => '14' ) );
 check_set( 'tab' === $saved['chat_memory'] && 14 === $saved['chat_memory_days'], 'Tab memory is saved.' );
 
+// --- Analytics events ------------------------------------------------------------
+
+$saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' ) );
+check_set( empty( $saved['analytics_events'] ), 'Analytics events are off by default.' );
+$saved = save_tab( $admin, array( 'analytics_events' ), array( 'analytics_events' => '1' ) );
+check_set( true === $saved['analytics_events'], 'Analytics events can be turned on.' );
+$saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'light' ) );
+check_set( true === $saved['analytics_events'], 'Another tab keeps them on.' );
+$saved = save_tab( $admin, array( 'analytics_events' ), array() );
+check_set( false === $saved['analytics_events'], 'An unticked box turns them off.' );
+
 // --- Reading aloud -------------------------------------------------------------
 
 $saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' ) );

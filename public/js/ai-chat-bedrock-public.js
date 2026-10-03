@@ -36,6 +36,55 @@
     }
 
     /**
+     * Report what the chat did, never what was written in it.
+     *
+     * A DOM event on document always carries it, for a site's own code. When the site has
+     * turned analytics events on, it also goes to the analytics tag on the page: a Google Tag
+     * Manager container gets it in its data layer, Google Analytics otherwise through gtag
+     * (MonsterInsights names its copy __gtagTracker), and Matomo and Plausible through their
+     * queues. With a consent plugin on the WP Consent API, it waits for consent to statistics.
+     */
+    function track(name, details) {
+        const data = {};
+        Object.keys(details || {}).forEach(function (key) {
+            if (null != details[key] && '' !== details[key]) {
+                data[key] = details[key];
+            }
+        });
+        try {
+            document.dispatchEvent(new CustomEvent('ai-chat-bedrock:event', { detail: { name: name, data: Object.assign({}, data) } }));
+        } catch (error) {
+            // A browser without CustomEvent still gets the analytics below.
+        }
+        if (!params.analytics || ('function' === typeof window.wp_has_consent && !window.wp_has_consent('statistics'))) {
+            return;
+        }
+        try {
+            const layer = window[window.gtm4wp_datalayer_name || 'dataLayer'];
+            const gtm = window.google_tag_manager && Object.keys(window.google_tag_manager).some(function (key) {
+                return 0 === key.indexOf('GTM-');
+            });
+            const gtag = 'function' === typeof window.gtag ? window.gtag : ('function' === typeof window.__gtagTracker ? window.__gtagTracker : null);
+            if (gtm && Array.isArray(layer)) {
+                layer.push(Object.assign({ event: name }, data));
+            } else if (gtag) {
+                gtag('event', name, Object.assign({}, data));
+            } else if (Array.isArray(layer)) {
+                // A tag manager that has not finished loading reads the layer when it does.
+                layer.push(Object.assign({ event: name }, data));
+            }
+            if (window._paq && 'function' === typeof window._paq.push) {
+                window._paq.push(['trackEvent', 'AI chat', name, String(data.rating || data.product_action || data.question_source || data.link_url || '')]);
+            }
+            if ('function' === typeof window.plausible) {
+                window.plausible(name, { props: Object.assign({}, data) });
+            }
+        } catch (error) {
+            // An analytics tag that fails must not break the chat.
+        }
+    }
+
+    /**
      * Whether a refused request was refused only for a stale nonce.
      *
      * A cached page carries the nonces it was rendered with, which stop verifying after a
@@ -184,6 +233,9 @@
             const open = 'open' !== $popup.attr('data-state');
             setOpen(open);
             remember(open);
+            if (open) {
+                track('ai_chat_open', { chat_profile: String($panel.find('.ai-chat-bedrock-container').attr('data-profile') || '') });
+            }
         });
 
         // Keep the panel open while the visitor browses other pages in this tab.
@@ -483,6 +535,7 @@
                     headers: params.rest_nonce ? { 'X-WP-Nonce': params.rest_nonce } : {},
                     data: JSON.stringify({ entry: entryId, rating: value, profile: profile })
                 }).done(function () {
+                    track('ai_chat_feedback', { chat_profile: profile, rating: value });
                     $wrap.empty().append($('<span>', { 'class': 'ai-chat-bedrock-feedback-label' }).text(params.i18n.feedback_thanks || ''));
                     // An answer that did not help is where a person can.
                     if ('down' === value && contact) {
@@ -693,6 +746,7 @@
                     lang: params.language || '',
                     profile: profile
                 }).then(function () {
+                    track('ai_chat_contact', { chat_profile: profile });
                     const thanks = i18n.contact_sent || '';
                     bubble.content.empty().text(thanks);
                     announce(thanks);
@@ -705,6 +759,26 @@
         }
 
         $container.find('.ai-chat-bedrock-contact-open').on('click', openContact);
+
+        function answered(data) {
+            track('ai_chat_answer', {
+                chat_profile: profile,
+                sources: Array.isArray(data.sources) ? Math.min(5, data.sources.length) : 0,
+                products: Array.isArray(data.products) ? Math.min(8, data.products.length) : 0
+            });
+        }
+
+        $messages.on('click', '.ai-chat-bedrock-sources a', function () {
+            track('ai_chat_source_click', { chat_profile: profile, link_url: String($(this).attr('href') || '') });
+        });
+        $messages.on('click', '.ai-chat-bedrock-product a', function () {
+            const $link = $(this);
+            track('ai_chat_product_click', {
+                chat_profile: profile,
+                link_url: String($link.attr('href') || ''),
+                product_action: $link.hasClass('ai-chat-bedrock-product-cart') ? 'add_to_cart' : 'view'
+            });
+        });
 
         function appendBubble(isUser, seconds) {
             hideSuggestions();
@@ -1035,6 +1109,7 @@
                     attachSpeech(bubble, response.data.message, response.data.speech);
                     attachFeedback(bubble, response.data.entry);
                     showUsage(response.usage);
+                    answered(response.data);
                 } else {
                     showError(
                         response && response.data && response.data.message ? response.data.message : params.i18n.generic_error,
@@ -1140,6 +1215,7 @@
                     attachProducts(state.bubble, payload.products);
                     attachSpeech(state.bubble, payload.message, payload.speech);
                     attachFeedback(state.bubble, payload.entry);
+                    answered(payload);
                 }
                 showUsage(payload.usage);
                 // The rendered text, not the raw reply: announcing markdown makes a screen
@@ -1342,7 +1418,7 @@
             };
         }
 
-        function submitMessage(event) {
+        function submitMessage(event, suggested) {
             if (event) {
                 event.preventDefault();
             }
@@ -1358,6 +1434,7 @@
                 return;
             }
 
+            track('ai_chat_question', { chat_profile: profile, question_source: true === suggested ? 'suggestion' : 'typed' });
             const requestHistory = historyForRequest();
             sentSinceLoad = true;
             addMessage(message, true);
@@ -1392,7 +1469,7 @@
             }
             $textarea.val(text);
             autoGrow();
-            submitMessage();
+            submitMessage(null, true);
         });
 
         $form.on('submit', submitMessage);

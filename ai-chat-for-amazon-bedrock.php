@@ -86,6 +86,9 @@ function ai_chat_bedrock_declare_woocommerce_compatibility() {
 }
 add_action( 'before_woocommerce_init', 'ai_chat_bedrock_declare_woocommerce_compatibility' );
 
+// The plugin follows the WP Consent API: what it stores is described and analytics wait for consent.
+add_filter( 'wp_consent_api_registered_' . plugin_basename( __FILE__ ), '__return_true' );
+
 require AI_CHAT_BEDROCK_PLUGIN_DIR . 'includes/class-ai-chat-bedrock.php';
 
 function ai_chat_bedrock_run_plugin() {

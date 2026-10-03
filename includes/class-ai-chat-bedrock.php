@@ -70,6 +70,8 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-media-assistant.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-feedback.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-leads.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-analytics.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-consent.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-review-prompt.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-sse.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-stream.php';
@@ -138,6 +140,7 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( AI_Chat_Bedrock_Chat_History::CRON_HOOK, 'AI_Chat_Bedrock_Chat_History', 'prune_expired' );
 		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_Leads', 'register_post_type' );
 		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_Leads', 'schedule' );
+		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_Consent', 'describe_storage' );
 		$this->loader->add_action( 'update_option_ai_chat_bedrock_settings', 'AI_Chat_Bedrock_Leads', 'schedule' );
 		$this->loader->add_action( AI_Chat_Bedrock_Leads::CRON_HOOK, 'AI_Chat_Bedrock_Leads', 'prune_expired' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_lead', 'AI_Chat_Bedrock_Leads', 'handle_admin_action' );

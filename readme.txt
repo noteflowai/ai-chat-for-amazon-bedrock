@@ -343,6 +343,10 @@ Yes, with Amazon Polly, off by default: a Listen button under chat answers and o
 
 Yes, under Chat > Contact requests, off by default. A Contact a person button below the chat opens a short form, and the assistant points to it when it cannot help. Requests need consent and are listed under Contact requests; Akismet, Flamingo and Joinchat are used when present. [Spam checks, email and hooks](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-a-visitor-ask-for-a-person).
 
+= Can I see what the chat does in Google Analytics? =
+
+Yes, under Chat > Analytics events, off by default. Opens, questions, answers, followed sources and products, ratings and contact requests go to Site Kit, MonsterInsights, Google Tag Manager, Matomo or Plausible, without message text, and wait for statistics consent where the WP Consent API is used. [Events and parameters](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-i-see-what-the-chat-does-in-google-analytics).
+
 = Can the chat float instead of sitting in the page? =
 
 Any chat can render as a floating button instead of an inline panel:
@@ -467,6 +471,8 @@ what a good answer says.
 * Fixed: the failures of a model's first use in an AWS account now say what to do. Bedrock no longer has a Model access page; a missing AWS Marketplace permission, payment method or Anthropic use case form each get their own fix instead of "HTTP 404" or a generic permission message, and a fallback model is used meanwhile.
 * The last setup step creates a draft page with the chat on it, rather than opening an empty page.
 * Demo mode, for the Live Preview on WordPress.org: when `AI_CHAT_BEDROCK_DEMO` is defined and no AWS credentials are found, the chat quotes the passage of the site's pages that best matches each question and says that no AI model was called.
+* Analytics events, under Chat and off by default: opening the chat, questions, answers, followed sources and products, ratings and contact requests go to Google Analytics (Site Kit, MonsterInsights), Google Tag Manager, Matomo or Plausible, with no message text. Mark `ai_chat_contact` as a key event to count contact requests as conversions.
+* Works with the WP Consent API, used by Complianz, CookieYes and others: what the chat keeps in session storage is listed in their cookie policy as functional, and analytics events wait for consent to statistics.
 * Fixed: with LiteSpeed Cache, WP Rocket or Perfmatters delaying scripts until the first interaction, that first tap on the chat button or Send did nothing, notably on phones, and Send could reload the page. The tap is now kept and acted on once the chat has loaded. The chat's own script is still delayed as the site has set it.
 
 = 1.63.0 =
@@ -481,12 +487,6 @@ what a good answer says.
 * Ask in words: Amazon Bedrock turns a question such as "net sales by week this quarter" into one of these queries, which is shown so you can see how it was read. Bedrock never sees a figure.
 * A read-only query-metrics ability and MCP tool give agents the same figures within the site description's data rules. Figures about visitors' questions stay on the screen, store figures need the WooCommerce reports capability, and anything counted from fewer than five orders or questions is withheld.
 * Suggested privacy policy text covers business insights when they are on.
-
-= 1.61.0 =
-* Site description, under Answer grounding and off by default: a read-only describe-site ability and MCP tool that tell an agent what the site holds, as schema.org types with published counts per language, how the types relate, and which data an AI may see. IDs match the ones Yoast SEO and WooCommerce print. With a post ID it describes one published item with its terms, offer and published translations.
-* With the site description on, passages given to the chat model say whether they come from a post, page or product, and in which language, and the MCP server points agents to describe_site.
-
-Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
 

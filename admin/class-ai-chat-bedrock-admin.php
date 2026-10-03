@@ -1086,6 +1086,7 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'chat_memory', __( 'Conversation memory', 'ai-chat-for-amazon-bedrock' ), 'chat_memory_render', 'aicfab_chat' );
 		$this->field( 'speech_replies', __( 'Read aloud', 'ai-chat-for-amazon-bedrock' ), 'speech_render', 'aicfab_chat' );
 		$this->field( 'leads_enabled', __( 'Contact requests', 'ai-chat-for-amazon-bedrock' ), 'leads_render', 'aicfab_chat' );
+		$this->field( 'analytics_events', __( 'Analytics events', 'ai-chat-for-amazon-bedrock' ), 'analytics_events_render', 'aicfab_chat' );
 		$this->field( 'allow_public_chat', __( 'Guest access', 'ai-chat-for-amazon-bedrock' ), 'allow_public_chat_render', 'aicfab_chat' );
 		$this->field( 'rate_limit_per_minute', __( 'Requests per visitor per minute', 'ai-chat-for-amazon-bedrock' ), 'rate_limit_render', 'aicfab_chat' );
 		$this->field( 'role_limits', __( 'Per-role limits', 'ai-chat-for-amazon-bedrock' ), 'role_limits_render', 'aicfab_chat' );
@@ -1340,6 +1341,15 @@ class AI_Chat_Bedrock_Admin {
 		echo '<label for="aicfab_field_speech_daily_chars">' . esc_html__( 'Characters read per day, across the site', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="number" id="aicfab_field_speech_daily_chars" class="regular-text" name="ai_chat_bedrock_settings[speech_daily_chars]" value="' . esc_attr( AI_Chat_Bedrock_Speech::daily_characters( $options ) ) . '" min="0" max="' . esc_attr( AI_Chat_Bedrock_Speech::MAX_DAILY_CHARACTERS ) . '" step="1000">';
 		echo '</fieldset>';
 		echo '<p class="description">' . esc_html__( 'Off by default. Amazon Polly reads the text aloud, in a voice for its language, and is billed per character; 0 removes the daily limit. Only answers this chat gave can be read, by the visitor they were given to. A post is read as a signed-out visitor sees it, so members-only content is never sent; its audio is saved in the uploads folder and made again when the post changes. The AWS identity needs polly:SynthesizeSpeech.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+	public function analytics_events_render() {
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[analytics_events]" value="1" ' . checked( AI_Chat_Bedrock_Analytics::enabled(), true, false ) . '> ' . esc_html__( 'Report chat activity to the analytics already on this site', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Off by default. The chat tells the site\'s analytics tag when it is opened, a question is asked or answered, a source or product in an answer is followed, an answer is rated and a contact request is sent, with no message text or contact details. Google Analytics (through Site Kit, MonsterInsights or a gtag snippet), Google Tag Manager, Matomo and Plausible receive the events; mark ai_chat_contact as a key event to count contact requests as conversions. With a consent plugin that uses the WP Consent API, events wait until the visitor allows statistics.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		$tools = AI_Chat_Bedrock_Analytics::tools();
+		if ( $tools ) {
+			/* translators: %s: comma separated names of analytics plugins. */
+			echo '<p class="description">' . esc_html( sprintf( __( 'Found on this site: %s.', 'ai-chat-for-amazon-bedrock' ), implode( ', ', $tools ) ) ) . '</p>';
+		}
 	}
 	public function leads_render() {
 		$options  = get_option( 'ai_chat_bedrock_settings', array() );
@@ -1888,6 +1898,8 @@ class AI_Chat_Bedrock_Admin {
 		$output['speech_engine']      = AI_Chat_Bedrock_Speech::engine( $input );
 		$output['speech_daily_chars'] = AI_Chat_Bedrock_Speech::daily_characters( $input );
 
+		$output['analytics_events'] = ! empty( $input['analytics_events'] );
+
 		$output['leads_enabled'] = ! empty( $input['leads_enabled'] );
 		$output['leads_notify']  = ! empty( $input['leads_notify'] );
 		$output['leads_days']    = AI_Chat_Bedrock_Leads::retention_days( array( 'leads_days' => isset( $input['leads_days'] ) ? $input['leads_days'] : 0 ) );
@@ -2025,6 +2037,7 @@ class AI_Chat_Bedrock_Admin {
 		'speech_posts',
 		'leads_enabled',
 		'leads_notify',
+		'analytics_events',
 		'github_read_scope',
 		'social_only_registration',
 		'organization_author',

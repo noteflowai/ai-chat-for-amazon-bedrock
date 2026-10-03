@@ -51,6 +51,39 @@ Requests are kept on this site as a private post type with no screens of its own
 
 A hidden field, three requests per visitor in ten minutes and a hundred per site per day keep floods out. With Akismet set up each request is checked as a contact form; spam is kept to be checked, and marking it not spam passes it on. A request is passed on by email to the administration address when that is on (Reply-To is the visitor; the site needs working mail), to Flamingo's inbox when Flamingo is active, and to the `ai_chat_bedrock_lead_captured` action for a CRM. With Joinchat active, its WhatsApp number is offered beside the form unless you set another link, which may be a web, `mailto:` or `tel:` address. Filters: `ai_chat_bedrock_leads_enabled`, `ai_chat_bedrock_leads_email`, `ai_chat_bedrock_leads_daily_limit`, `ai_chat_bedrock_leads_akismet` and `ai_chat_bedrock_leads_flamingo`. Add the suggested text from Settings > Privacy to your privacy policy before turning it on.
 
+## Can I see what the chat does in Google Analytics?
+
+Yes, under Chat > Analytics events, which is off by default. The chat then reports what it did to the analytics tag already on the site, never what was written: no message text, no answers and no contact details.
+
+| Event | When | Parameters |
+| --- | --- | --- |
+| `ai_chat_open` | The floating chat is opened | `chat_profile` |
+| `ai_chat_question` | A question is sent | `chat_profile`, `question_source` (`typed` or `suggestion`) |
+| `ai_chat_answer` | An answer arrives | `chat_profile`, `sources`, `products` (how many were shown) |
+| `ai_chat_source_click` | A source under an answer is followed | `chat_profile`, `link_url` |
+| `ai_chat_product_click` | A product card is followed | `chat_profile`, `link_url`, `product_action` (`view` or `add_to_cart`) |
+| `ai_chat_feedback` | An answer is rated | `chat_profile`, `rating` (`up` or `down`) |
+| `ai_chat_contact` | A contact request is sent | `chat_profile` |
+
+`chat_profile` is left out for the default profile. Where the events go:
+
+- **Google Tag Manager** (a container on the page, as GTM4WP and Site Kit add): pushed to the data layer as `{ event: 'ai_chat_answer', sources: 2, ... }`, GTM4WP's own layer name included, to use as Custom Event triggers.
+- **Google Analytics** without a container (Site Kit, MonsterInsights or a gtag snippet): sent with `gtag('event', ...)`. Mark `ai_chat_contact` as a key event to count contact requests as conversions, and register the parameters as custom dimensions to report on them.
+- **Matomo**: an event in the category *AI chat*, labelled with the rating, product action, question source or link.
+- **Plausible**: a custom event with its properties; add a goal for each event you want to see.
+
+With a consent plugin that uses the WP Consent API, such as Complianz, CookieYes, Cookiebot or Real Cookie Banner, events wait until the visitor allows statistics. Without one, the tag's own consent settings, such as Google Consent Mode, decide what is sent. The plugin also tells such consent plugins what it keeps in the browser: whether the floating chat is open, and the conversation while conversation memory is on. Both are in session storage, are needed for what the visitor asked for and are listed as functional.
+
+For other tools, listen for the `ai-chat-bedrock:event` DOM event on `document`. It is dispatched for every event, whether or not the setting is on, with `detail.name` and `detail.data`:
+
+```js
+document.addEventListener( 'ai-chat-bedrock:event', ( event ) => {
+	window.clarity && window.clarity( 'event', event.detail.name );
+} );
+```
+
+Add the suggested text from Settings > Privacy to your privacy policy before turning the setting on.
+
 ## Which Bedrock models are supported?
 
 Text models in the Anthropic Claude, Amazon Nova, Amazon Titan, Meta Llama, Mistral and DeepSeek families that your Region offers, including Claude Sonnet 5, Claude Opus 5.5 and Claude Haiku 4.5, and the other chat models Bedrock serves, such as OpenAI gpt-oss, Qwen3, Llama 4, Mistral Large, DeepSeek R1 and Kimi. Models other than Claude, Nova and Titan are called through the Bedrock Converse API, which applies each model's own chat format; when a model refuses a setting such as temperature or a system prompt, the plugin retries once without it and remembers that for the model. The settings screen lists the models your account offers in that Region, and "Refresh model list" updates it. A new installation starts on Amazon Nova Lite because it answers with nothing enabled beyond an IAM role. Newer Claude models such as Sonnet 5 and Opus 5.5 are called through a cross-region inference profile, an ID beginning with `us.`, `eu.` or `global.`, and they reject the temperature setting, so the plugin does not send it to them. A specific model may still need a supported Region and suitable IAM permissions.

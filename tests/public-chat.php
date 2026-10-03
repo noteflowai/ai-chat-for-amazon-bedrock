@@ -370,6 +370,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-history.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-woocommerce.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-speech.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-leads.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-analytics.php';
 require dirname( __DIR__ ) . '/public/class-ai-chat-bedrock-public.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 
@@ -583,6 +584,13 @@ check_pub(
 
 // With conversation logging off, no feedback endpoint is advertised.
 check_pub( '' === $aicfab_params['feedback_url'], 'No feedback url is given when logging is off.' );
+check_pub( false === $aicfab_params['analytics'], 'Analytics events are off unless the site turns them on.' );
+aicfab_reset_pub( array( 'analytics_events' => true ) );
+$aicfab_public->enqueue_scripts();
+check_pub( true === $GLOBALS['aicfab_localized']['ai_chat_bedrock_params']['analytics'], 'The browser is told when they are on.' );
+aicfab_reset_pub();
+$aicfab_public->enqueue_scripts();
+$aicfab_params = $GLOBALS['aicfab_localized']['ai_chat_bedrock_params'];
 
 // --- Conversation memory --------------------------------------------------------
 

@@ -109,6 +109,8 @@ class AI_Chat_Bedrock_Public {
 				'speech'            => $speech,
 				// Contact requests, when visitors can leave their details for a person.
 				'contact'           => AI_Chat_Bedrock_Leads::client_config( $options ),
+				// Whether chat events go to the site's analytics tag.
+				'analytics'         => AI_Chat_Bedrock_Analytics::enabled( $options ),
 				'i18n'              => AI_Chat_Bedrock_Leads::strings() + array(
 					'generic_error'     => __( 'The request could not be completed. Please try again.', 'ai-chat-for-amazon-bedrock' ),
 					'stopped'           => __( 'Answer stopped.', 'ai-chat-for-amazon-bedrock' ),
