@@ -1,14 +1,14 @@
-=== AI Agents & Chat for Amazon Bedrock – MCP Server, Claude, AWS ===
+=== AI Chatbot & Agents for Amazon Bedrock ===
 Contributors: glay, glayguo
-Tags: amazon bedrock, claude, ai-chatbot, chatbot, mcp-server
+Tags: ai, chatbot, ai-agent, mcp, connector
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.62.0
+Stable tag: 1.63.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI chat, agents, an MCP server and the WordPress AI Client provider for Amazon Bedrock, with Claude, Nova and Stability AI images.
+AI chatbot with cited answers from your site and WooCommerce store, AI agents, an MCP server and the WordPress AI provider for Amazon Bedrock.
 
 == Description ==
 
@@ -177,7 +177,7 @@ Before starting, enable access to the model in the selected AWS Region and creat
 = Quickest start: an Amazon Bedrock API key =
 
 1. In the Amazon Bedrock console, in the same Region you chose in the plugin, open **API keys** and generate a long-term key. Give it an expiry.
-2. Paste it into **AI Chat Bedrock > Settings > AWS authentication > Amazon Bedrock API key** and save. It is stored encrypted and never shown again.
+2. Paste it into **AI Chat Bedrock > Settings > AWS authentication > Amazon Bedrock API key** and save. It is stored encrypted and never shown again. On WordPress 7.1 and later it can be pasted under **Settings > Connectors > Amazon Bedrock** instead, where it is checked with Bedrock before it is kept.
 3. Run **Diagnostics**. It sends one short question to the model and reports the answer.
 
 To keep the key out of the database, define it in `wp-config.php` instead:
@@ -213,17 +213,17 @@ Credentials saved through the settings screen are encrypted with authenticated e
 
 == Frequently Asked Questions ==
 
+= Where do I get help? =
+
+Run **AI Chat Bedrock > Diagnostics** first: most problems are a missing IAM permission or model access, and it names which. Then ask in the [support forum](https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock/), without posting keys. Longer answers are in the [detailed FAQ](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md).
+
 = Do I need an OpenAI API key? =
 
 No. Model requests use Amazon Bedrock and your AWS credentials. Availability, model access, pricing, and data handling are governed by your AWS account and Region.
 
 = Which Bedrock models are supported? =
 
-Text models in the Anthropic Claude, Amazon Nova, Amazon Titan, Meta Llama, Mistral and DeepSeek families that your Region offers, including Claude Sonnet 5, Claude Opus 5.5 and Claude Haiku 4.5, and the other chat models Bedrock serves, such as OpenAI gpt-oss, Qwen3, Llama 4, Mistral Large, DeepSeek R1 and Kimi. Models other than Claude, Nova and Titan are called through the Bedrock Converse API, which applies each model's own chat format; when a model refuses a setting such as temperature or a system prompt, the plugin retries once without it and remembers that for the model. The settings screen lists the models your account offers in that Region, and "Refresh model list" updates it. A new installation starts on Amazon Nova Lite because it answers with nothing enabled beyond an IAM role. Newer Claude models such as Sonnet 5 and Opus 5.5 are called through a cross-region inference profile, an ID beginning with `us.`, `eu.` or `global.`, and they reject the temperature setting, so the plugin does not send it to them. A specific model may still need a supported Region and suitable IAM permissions.
-
-For images: Stability AI Stable Image Core, Stable Diffusion 3.5 Large and Stable Image Ultra, plus Stable Image Remove Background and Stable Fast Upscale for the Media Library. Image models run in US West (Oregon) whatever region the chat uses; the `ai_chat_bedrock_image_region` filter moves them to another region that offers them.
-
-For reranking: Cohere Rerank 3.5 and Amazon Rerank 1.0. US East (N. Virginia) offers only Cohere Rerank 3.5.
+Claude, Amazon Nova and Titan, Meta Llama, Mistral, DeepSeek and the other chat models your Region offers, including Claude Sonnet 5, Claude Opus 5.5 and Claude Haiku 4.5; Stability AI models for images; Cohere Rerank 3.5 and Amazon Rerank 1.0 for reranking. The settings screen lists what your account offers, and a new installation starts on Amazon Nova Lite. [Regions, inference profiles and image models](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#which-bedrock-models-are-supported).
 
 = What is an Amazon Bedrock API key, and should I use one? =
 
@@ -287,38 +287,23 @@ No. Amazon Bedrock and AWS are trademarks of Amazon.com, Inc. or its affiliates.
 
 = How does streaming work, and where do credentials come from? =
 
-Streaming is on by default. Each message sends one authenticated POST request to a plugin REST route, and Bedrock response events are relayed to the browser with Server-Sent Events. Conversation content never appears in a URL, and one visitor message still results in exactly one Bedrock invocation. Streaming needs the PHP cURL extension; when it is unavailable, disabled or interrupted, the chat falls back to a single buffered request so answers are still delivered.
-
-An Amazon Bedrock API key, when one is configured, is used for Bedrock and Bedrock Runtime requests. Signing credentials are resolved in this order: `wp-config.php` constants, encrypted WordPress settings, environment variables, an ECS or EKS task role, then an EC2 instance role using IMDSv2. The last three let a site on AWS run with no long-lived keys in WordPress at all. Role credentials are cached encrypted and refreshed before expiry, role lookups can be disabled with the `ai_chat_bedrock_use_role_credentials` filter, and the active source is shown in the settings without revealing secrets.
+Each message is one authenticated POST to a plugin REST route, relayed to the browser with Server-Sent Events, with a buffered fallback when PHP cURL is unavailable. Credentials come from an API key, `wp-config.php` constants, encrypted settings, environment variables, an ECS or EKS task role, or an EC2 instance role, in that order; Diagnostics shows which one is used. [The full order and caching](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#how-does-streaming-work-and-where-do-credentials-come-from).
 
 = What can the agent do with tools, and what stops it? =
 
-An authenticated conversation can call tools from an administrator-configured MCP server. Tool calls execute on the WordPress server and their results go back to Bedrock for the final answer, always framed as untrusted data.
-
-Tool use is governed by a policy layer:
-
-* A capability is required to use tools at all, defaulting to `edit_posts`.
-* Tools that appear to change data are blocked until an administrator allows them, and stay administrator-only.
-* Up to five calls run per round, rounds are configurable from 1 to 5, and the final round answers without tools so a conversation always terminates.
-* Every call is audited with the tool, round, outcome, duration and parameter key names. Values, output and chat content are never stored.
-
-While the agent works, the chat names the tools it is running. The finished answer carries a collapsible list of every call, its round and whether it succeeded, showing metadata only. If the round limit is reached, the answer says so instead of quietly stopping.
+An authenticated conversation can call tools from an MCP server an administrator configured. A capability is required (`edit_posts` by default), tools that change data stay blocked until allowed, rounds are capped, and every call is audited without its values. [How the policy works](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#what-can-the-agent-do-with-tools-and-what-stops-it).
 
 = Can I keep the system prompt in AWS instead of in WordPress? =
 
-Point the chat at a prompt in Bedrock Prompt Management and its text replaces the local system prompt, so one prompt can be reviewed and versioned in AWS and reused by every site. Pin a version for stability or follow the draft to pick up edits. `{{site_name}}`, `{{site_description}}`, `{{site_url}}` and `{{current_date}}` are filled in; anything else is sent exactly as written. The prompt must live in the same region as the chat, the text is cached briefly, and if it cannot be read the local system prompt is used instead rather than sending an empty one.
+Yes. Point the chat at a prompt in Bedrock Prompt Management, pinned to a version or following the draft; the local prompt is used if it cannot be read. [Placeholders and caching](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-i-keep-the-system-prompt-in-aws-instead-of-in-wordpress).
 
 = How does semantic search differ from keyword search? =
 
-Keyword search only finds passages sharing words with the question, so "when will my parcel arrive" misses "Getting parcels to you". Choose an embedding model and the plugin indexes published content, then matches questions by meaning. Indexing runs in small batches from the settings screen, unattended through WP-Cron, or with `wp ai-chat-bedrock index`. Editing a post marks it for re-indexing, and keyword search runs when nothing relevant is found. Questions the site does not cover return no context.
-
-By default one vector per post is kept in the WordPress database and a question is compared with the 500 most recent items. For a larger site, choose Amazon S3 Vectors under Answer grounding: every post is split into overlapping passages, each passage gets its own vector in a vector bucket in your AWS account, and every one of them is searched. Create the bucket in the Amazon S3 console, then check or create the index from the settings screen or with `wp ai-chat-bedrock index --create-index`. S3 Vectors needs an IAM role or access keys, not a Bedrock API key; Diagnostics lists the `s3vectors` actions to allow. Several sites can share one index, and each only reads and deletes its own vectors. Each query asks S3 Vectors to filter by site, language and post type before the similarity search, so a selective filter still returns a full set of matches. Return `CLASSIC` from the `ai_chat_bedrock_s3_vectors_query_mode` filter to filter during the search instead.
-
-Only published, public content is indexed, as a signed-out visitor sees it: sections that a membership or visibility plugin hides from guests are left out, and every result is checked against the live post again before it is quoted. Blocks with Block Visibility rules are left out whoever they are shown to, since that plugin applies its rules only on front-end pages; to leave out blocks that another plugin restricts, return true from the `ai_chat_bedrock_block_is_restricted` filter. With Polylang, a question is answered from pages in the visitor's language first. With Polylang or WPML, the model is also asked to reply in the language of the page; change or remove that instruction with the `ai_chat_bedrock_language_instruction` filter.
+Choose an embedding model and questions are matched by meaning, not shared words, over published content as a signed-out visitor sees it. Vectors live in the WordPress database or, for a larger site, in Amazon S3 Vectors in your AWS account. [Indexing, S3 Vectors, filters and languages](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#how-does-semantic-search-differ-from-keyword-search).
 
 = What does reranking do? =
 
-Without it, the closest few passages from site content and from the knowledge base are each passed to the model. Choose a reranking model under Answer grounding and up to eight passages from each are gathered, then the reranking model scores them all against the question and only the best are kept, up to the number of passages set. It is one extra request per question, billed per query rather than per token, and shown apart from chat requests on the dashboard. If reranking fails the passages are used as before, and a refused request pauses it for an hour. The IAM policy in Diagnostics adds `bedrock:Rerank`. To drop passages that score below a threshold, return it, between 0 and 1, from the `ai_chat_bedrock_rerank_floor` filter; the best passage is always kept.
+A reranking model scores up to eight passages from site content and the knowledge base against the question and keeps only the best. It is one extra request per question, shown apart on the dashboard, and the passages are used as before if it fails. [Thresholds and IAM](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#what-does-reranking-do).
 
 = Can the chat show where an answer came from? =
 
@@ -348,7 +333,7 @@ Yes, under Chat > Conversation memory, which is off by default so every page sta
 
 = Can answers and posts be read aloud? =
 
-Yes, under Chat > Read aloud, which is off by default. **Add a Listen button to chat answers** puts Listen next to Copy under each answer, and **Add a Listen to this post button to posts** puts one above the text of each post. Amazon Polly reads in a voice for the language, chosen from the page or from the answer itself: Mandarin for Chinese, Japanese, Korean, the main European languages and more. The chat only reads answers it gave to that visitor, so the site cannot be used as a free text-to-speech service. A post is read as a signed-out visitor sees it, so member-only sections are never read; each part is saved in the uploads folder the first time it is played, so later listeners cost nothing, and changing the post makes new audio. Polly is priced per character, and the generative voices cost about twice as much as the neural ones. The dashboard counts the characters read, and reading stops for the day at the limit you set (100,000 by default). The AWS identity needs `polly:SynthesizeSpeech`, which the IAM policy in Diagnostics includes. Change the voice with the `ai_chat_bedrock_speech_voice` filter, the post types with `ai_chat_bedrock_speech_post_types`, the Region with `ai_chat_bedrock_speech_region` and the length read with `ai_chat_bedrock_speech_max_chars`. Add the suggested text from Settings > Privacy to your privacy policy before turning it on.
+Yes, with Amazon Polly, off by default: a Listen button under chat answers and one above posts, in a voice for the page's language. Post audio is saved once and reused, and a daily character limit applies. [Voices, costs and filters](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-answers-and-posts-be-read-aloud).
 
 = Can the chat float instead of sitting in the page? =
 
@@ -379,20 +364,11 @@ All content tools are optional, require the capability to edit the item, and are
 
 = Does it work with the AI features in WordPress core? =
 
-On WordPress 7.0 and later, Bedrock is registered with core's AI Client, so
-`wp_ai_client_prompt()` reaches it from any plugin that knows nothing about AWS.
-Those calls use this plugin's request path, so the guardrail, model, region, token ceiling,
-daily limit and usage accounting configured here apply to them.
+On WordPress 7.0 and later, Bedrock is registered with core's AI Client, so `wp_ai_client_prompt()` reaches it from any plugin that knows nothing about AWS. Those calls use this plugin's request path, so the guardrail, model, region, token ceiling, daily limit and usage accounting configured here apply to them.
 
-On 7.1 it also joins the connector registry, declared as storing no credential: Bedrock signs
-with IAM, not a key this site must keep. The Settings > Connectors screen lists only
-connectors with a credential to manage, so Bedrock is absent there.
+On 7.1 and later, Amazon Bedrock also appears under Settings > Connectors. On AWS it shows as connected with nothing entered, because the IAM role is used. Elsewhere, paste an Amazon Bedrock API key there: it is checked with Bedrock before it is kept, and stored encrypted. A key in the plugin settings or `wp-config.php` takes precedence.
 
-Core asks for a model by what it must do, and the plugin describes each Bedrock model truthfully:
-image input only on models that read images, top P only where the model accepts it, image
-generation only on the Stability models and only once an image model is chosen, and embeddings
-only on WordPress 7.2 and later. JSON answers are checked and, when a model returns something
-else, asked for once more before an error is returned.
+Core asks for a model by what it must do, and the plugin describes each Bedrock model truthfully: image input only on models that read images, image generation only on the Stability models, and embeddings only on WordPress 7.2 and later. [More on model capabilities](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#does-it-work-with-the-ai-features-in-wordpress-core).
 
 = Can it generate or edit images? =
 
@@ -406,16 +382,7 @@ you turned on.
 
 = How do I connect Claude Code, Cursor or another AI client to this site? =
 
-The plugin exposes this WordPress site as an MCP server, so clients such as Claude Code, Cursor, VS Code or an agent framework can read it.
-
-* Endpoint: `https://example.com/wp-json/ai-chat-bedrock/v1/mcp`
-* Transport: JSON-RPC 2.0 over Streamable HTTP on protocol revision 2026-07-28, with `server/discover`, `tools/list` and `tools/call`. Clients on 2025-11-25 and 2025-06-18 are still answered
-* Authentication: a WordPress Application Password works out of the box, over HTTPS
-* Tools: five read-only content tools, plus SEO suggestions, WooCommerce lookup and draft creation when site abilities are on. Every call is capability-checked and audited.
-
-Clients can connect with OAuth 2.1 instead of copying tokens: paste the endpoint, sign in to WordPress and approve, and no WordPress password reaches the client. Discovery uses `/.well-known/oauth-authorization-server` and `/.well-known/oauth-protected-resource`, client registration is dynamic, PKCE with S256 is mandatory, redirect targets must be HTTPS or loopback, authorization codes are single use, access tokens last an hour, and refresh tokens rotate so reusing one revokes the connection. Tokens are stored only as hashes. Each connection inherits the approving account's permissions and can be revoked at any time.
-
-Anonymous access and OAuth are both disabled by default. If the endpoint returns 404, open Settings > Permalinks and save once so WordPress registers pretty REST routes.
+Point the client at `https://example.com/wp-json/ai-chat-bedrock/v1/mcp` and sign in with a WordPress Application Password over HTTPS, or turn on OAuth 2.1 so the client connects by signing in and approving, with no password copied. Every tool call is capability-checked and audited; anonymous access and OAuth are off by default. [Protocol revisions, tools and OAuth details](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#how-do-i-connect-claude-code-cursor-or-another-ai-client-to-this-site).
 
 = How do I connect an external MCP server or an AgentCore Gateway? =
 
@@ -437,32 +404,11 @@ Only products any visitor can see are described: published, without a password, 
 
 = What can an agent read from and write to my site? =
 
-Narrow abilities can be registered for agents and other plugins: search published posts and pages, read one published post or page, suggest an SEO title and meta description without saving, look up published WooCommerce products, and create a draft post.
-
-Reads never return draft, private or password-protected content. The only write operation creates a new draft: nothing is published, updated or deleted, and these abilities never expose WooCommerce orders or customers. Draft creation requires `edit_posts`, reads require the capability configured for MCP tools, and the feature is disabled by default.
-
-These register into WordPress's own Abilities registry, so anything that reads it sees them,
-including the core REST routes under `/wp-abilities/v1/` and the official WordPress MCP adapter.
-Checked against that adapter rather than assumed: an MCP client that connects to it discovers these
-abilities alongside the core ones, reads each one's schema and behaviour before calling it, and can
-execute them, which was confirmed by searching this site's content and by creating a draft through
-the protocol.
-
-Each ability declares what it does in a form a client can check rather than a sentence it has to
-trust, and WordPress enforces the declaration: the read-only ones are refused over POST, and draft
-creation, marked as updating but not destructive, is refused over GET. Text generation is
-deliberately not marked read-only even though it changes nothing here, because it spends money on a
-model request, and a client treating read-only as safe to call unattended would find that out by
-billing the account. Listing and running abilities needs authentication; an anonymous request is
-refused.
+With site abilities on (off by default), agents can search and read published posts and pages, get SEO suggestions without saving, look up published products and create a draft. Nothing is published, updated or deleted, and orders and customers are never exposed. The abilities are in WordPress's own registry, so the official MCP adapter and `/wp-abilities/v1/` see them too. [How the declared behaviour is enforced](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#what-can-an-agent-read-from-and-write-to-my-site).
 
 = What does the site description tell an agent? =
 
-Turn on Site description under Answer grounding, and agents get a describe-site ability and an MCP tool of the same name. It lists what the site holds as schema.org types, such as posts as Article, pages as WebPage and WooCommerce products as Product, with published counts per language and how the types relate.
-
-Each property has a sensitivity class, with a rule for each use: public content may be quoted, members-only sections never reach a model or an index, personal data such as orders goes only to the signed-in person it is about, and store figures only as totals. Entity IDs are the ones Yoast SEO and WooCommerce print in the page, so an agent and a search engine see the same nodes.
-
-Given a post ID, it describes one published item with its terms and published translations. Passages given to the chat model also say whether they come from a post, page or product, and in which language. Nothing is stored, and drafts, private and password-protected posts are never described.
+Turn on Site description and agents get a describe-site ability listing what the site holds as schema.org types, with counts per language, how the types relate and a sensitivity class for each property. IDs match the ones Yoast SEO and WooCommerce print in the page. [Sensitivity rules and single-item descriptions](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#what-does-the-site-description-tell-an-agent).
 
 = What do business insights show, and to whom? =
 
@@ -506,6 +452,13 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.63.0 =
+* Amazon Bedrock now appears under Settings > Connectors on WordPress 7.1 and later. On AWS it shows as connected with nothing entered, because the IAM role is used. Elsewhere, paste an Amazon Bedrock API key there: it is checked with Bedrock before it is kept, and stored encrypted. A key in the plugin settings or `wp-config.php` still takes precedence.
+* Fixed: a key entered for Bedrock on Settings > Connectors could not be checked by WordPress and was discarded, because the connector declared that it stored no credential.
+* Renamed AI Chatbot & Agents for Amazon Bedrock. Nothing changes on existing sites.
+* Diagnostics and the Plugins screen link to the support forum, and the FAQ is shorter, with the longer answers on GitHub.
+* Once the chat has answered at least 20 questions over more than a week, administrators see one request for a review on the plugin's own screens. Closing it or following a link ends it for good, and the `ai_chat_bedrock_review_prompt` filter turns it off.
+
 = 1.62.0 =
 * Business insights, under Answer grounding and off by default: a screen with figures over a period. Content published, chat questions, unanswered and unhelpful answers, AI requests, tokens and failures and, with WooCommerce, orders, net sales, items sold and average order value from WooCommerce Analytics. Compare with the previous period or a year earlier, split by day, week or month, break down by product, category, content type, language or model, and download the figure as CSV.
 * Ask in words: Amazon Bedrock turns a question such as "net sales by week this quarter" into one of these queries, which is shown so you can see how it was read. Bedrock never sees a figure.
@@ -525,14 +478,12 @@ what a good answer says.
 * Long conversations, especially in Chinese or Japanese, no longer fail with "Conversation history is too large": the earlier messages sent with a question are kept within the size the server accepts.
 * Suggested privacy policy text covers conversation memory when it is on.
 
-= 1.58.0 =
-* Reranking: choose Cohere Rerank 3.5 or Amazon Rerank 1.0 under Answer grounding, and more passages are gathered from site content and the knowledge base, then reranked against the question so only the best are passed to the model. Off by default. One rerank request per question is counted apart on the dashboard and not against the daily limit. If reranking fails the passages are used in their original order, and a refused request pauses it for an hour or until the settings are saved.
-* Amazon S3 Vectors: queries ask for the metadata filter to be applied before the similarity search, so a site sharing an index, or one language of a multilingual site, gets a full set of matches. Passages of a post type removed from the search are filtered out too. An index that refuses the setting is queried as before. Diagnostics says when an index is CLASSIC.
-* The IAM policy in Diagnostics includes `bedrock:Rerank` and the reranking model when reranking is on.
-
 Earlier releases are listed in changelog.txt, which ships with the plugin.
 
 == Upgrade Notice ==
+
+= 1.63.0 =
+Amazon Bedrock appears under Settings > Connectors: connected through the IAM role, or with an API key that is checked and stored encrypted. Renamed AI Chatbot & Agents for Amazon Bedrock.
 
 = 1.62.0 =
 Optional business insights: content, chat, AI usage and WooCommerce figures over a period, asked in words or queried by agents, with small counts withheld. Off until enabled.

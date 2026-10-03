@@ -1,4 +1,4 @@
-# AI Chat for Amazon Bedrock roadmap
+# AI Chatbot & Agents for Amazon Bedrock roadmap
 
 Updated: 2026-09-29 · Owner: NoteFlowAI maintainer · Review: weekly; monthly operator-value review.
 

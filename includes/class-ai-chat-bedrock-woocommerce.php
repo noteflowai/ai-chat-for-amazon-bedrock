@@ -1409,6 +1409,6 @@ class AI_Chat_Bedrock_WooCommerce {
 		foreach ( $paragraphs as $paragraph ) {
 			$content .= '<p>' . esc_html( $paragraph ) . '</p>';
 		}
-		wp_add_privacy_policy_content( __( 'AI Agents & Chat for Amazon Bedrock', 'ai-chat-for-amazon-bedrock' ), wp_kses_post( $content ) );
+		wp_add_privacy_policy_content( __( 'AI Chatbot & Agents for Amazon Bedrock', 'ai-chat-for-amazon-bedrock' ), wp_kses_post( $content ) );
 	}
 }

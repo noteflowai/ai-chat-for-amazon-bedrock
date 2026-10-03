@@ -165,7 +165,7 @@ class AI_Chat_Bedrock_Admin {
 	}
 
 	public function add_plugin_admin_menu() {
-		add_menu_page( __( 'AI Chat for Amazon Bedrock', 'ai-chat-for-amazon-bedrock' ), __( 'AI Chat Bedrock', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name, array( $this, 'display_plugin_admin_page' ), 'dashicons-format-chat', 100 );
+		add_menu_page( __( 'AI Chatbot & Agents for Amazon Bedrock', 'ai-chat-for-amazon-bedrock' ), __( 'AI Chat Bedrock', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name, array( $this, 'display_plugin_admin_page' ), 'dashicons-format-chat', 100 );
 		add_submenu_page( $this->plugin_name, __( 'Settings', 'ai-chat-for-amazon-bedrock' ), __( 'Settings', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-settings', array( $this, 'display_plugin_admin_settings_page' ) );
 		add_submenu_page( $this->plugin_name, __( 'Test Chat', 'ai-chat-for-amazon-bedrock' ), __( 'Test Chat', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-test', array( $this, 'display_plugin_admin_test_page' ) );
 		add_submenu_page( $this->plugin_name, __( 'MCP Settings', 'ai-chat-for-amazon-bedrock' ), __( 'MCP Settings', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-mcp', array( $this, 'display_plugin_admin_mcp_page' ) );
@@ -766,7 +766,7 @@ class AI_Chat_Bedrock_Admin {
 
 		printf(
 			'<div class="notice notice-warning is-dismissible aicfab-setup-notice"><p><strong>%1$s</strong> %2$s <a href="%3$s">%4$s</a></p></div>',
-			esc_html__( 'AI Chat for Amazon Bedrock:', 'ai-chat-for-amazon-bedrock' ),
+			esc_html__( 'AI Chatbot & Agents for Amazon Bedrock:', 'ai-chat-for-amazon-bedrock' ),
 			esc_html__( 'no usable AWS credentials were found, so the chat cannot answer yet. An Amazon Bedrock API key is the quickest way to connect.', 'ai-chat-for-amazon-bedrock' ),
 			esc_url( admin_url( 'admin.php?page=' . $this->plugin_name . '-settings' ) ),
 			esc_html__( 'Finish setup', 'ai-chat-for-amazon-bedrock' )
@@ -782,6 +782,13 @@ class AI_Chat_Bedrock_Admin {
 				wp_json_encode( wp_create_nonce( 'ai_chat_bedrock_dismiss_setup_notice' ) )
 			)
 		);
+	}
+
+	/**
+	 * Ask once for a review, on the plugin's own screens, after the chat has proved itself.
+	 */
+	public function render_review_prompt() {
+		AI_Chat_Bedrock_Review_Prompt::render( $this->plugin_name );
 	}
 
 	/**
@@ -1098,6 +1105,15 @@ class AI_Chat_Bedrock_Admin {
 	public function bedrock_api_key_render() {
 		$this->credential_input( 'bedrock_api_key', true );
 		echo '<p class="description">' . esc_html__( 'The quickest way to connect: create a long-term API key in the Amazon Bedrock console under API keys, choose the same Region as above, and paste it here. It is used for chat, the model list and embeddings. Knowledge Bases, Prompt Management and AgentCore still need access keys or an IAM role.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		if ( AI_Chat_Bedrock_Core_AI::connectors_available() ) {
+			echo '<p class="description">' . wp_kses_post(
+				sprintf(
+					/* translators: %s: link to the Settings > Connectors screen. */
+					__( 'A key can also be entered under %s, where it is checked with Amazon Bedrock before it is kept. A key here takes precedence.', 'ai-chat-for-amazon-bedrock' ),
+					'<a href="' . esc_url( admin_url( 'options-connectors.php' ) ) . '">' . esc_html__( 'Settings > Connectors', 'ai-chat-for-amazon-bedrock' ) . '</a>'
+				)
+			) . '</p>';
+		}
 		if ( '' !== $this->option( 'bedrock_api_key', '' ) ) {
 			echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[bedrock_api_key_clear]" value="1"> ' . esc_html__( 'Remove the stored API key', 'ai-chat-for-amazon-bedrock' ) . '</label>';
 		}

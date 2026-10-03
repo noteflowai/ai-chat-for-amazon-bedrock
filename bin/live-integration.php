@@ -399,6 +399,14 @@ if ( ! class_exists( 'AI_Chat_Bedrock_Core_AI' ) ) {
 
 if ( function_exists( 'wp_is_connector_registered' ) ) {
 	aicfab_live( wp_is_connector_registered( 'amazon-bedrock' ), 'the connector is registered' );
+	$aicfab_connector = wp_get_connector( 'amazon-bedrock' );
+	aicfab_live( isset( $aicfab_connector['authentication']['method'] ) && 'api_key' === $aicfab_connector['authentication']['method'], 'the connector offers a key, so Settings > Connectors shows it' );
+	aicfab_live( isset( get_registered_settings()[ AI_Chat_Bedrock_Core_AI::CONNECTOR_SETTING ] ), 'core registered the setting the key is saved in' );
+	// Saving goes through core's check, which hands the key to the provider; this must not throw.
+	if ( class_exists( '\WordPress\AiClient\AiClient' ) && function_exists( '_wp_connectors_is_ai_api_key_valid' ) ) {
+		$aicfab_verdict = _wp_connectors_is_ai_api_key_valid( 'not-a-bedrock-key-but-long-enough', 'amazon-bedrock' );
+		aicfab_live( false === $aicfab_verdict, 'core asks Bedrock about a pasted key, and a bad one is refused', var_export( $aicfab_verdict, true ) );
+	}
 }
 
 $aicfab_tally = aicfab_live();

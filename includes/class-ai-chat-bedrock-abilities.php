@@ -71,7 +71,7 @@ class AI_Chat_Bedrock_Abilities {
 		wp_register_ability_category(
 			self::CATEGORY,
 			array(
-				'label'       => __( 'AI Chat for Amazon Bedrock', 'ai-chat-for-amazon-bedrock' ),
+				'label'       => __( 'AI Chatbot & Agents for Amazon Bedrock', 'ai-chat-for-amazon-bedrock' ),
 				'description' => __( 'Read-only lookups over published content and site figures, plus one additive action that creates a draft.', 'ai-chat-for-amazon-bedrock' ),
 			)
 		);

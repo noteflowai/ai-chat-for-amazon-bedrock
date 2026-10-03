@@ -110,41 +110,70 @@ check_core_ai(
 
 // --- What the connector declares ------------------------------------------------
 
-// Bedrock signs with IAM, so core must be told it holds no credential. Declaring an API
-// key would put a secret field in front of site owners for a secret that should not exist.
-check_core_ai(
-	1 === preg_match( "/'authentication'\s*=>\s*array\(\s*'method'\s*=>\s*'none'/", $source ),
-	'The connector must declare that WordPress stores no credential for Bedrock.'
-);
-check_core_ai(
-	false === strpos( $source, "'method' => 'api_key'" ),
-	'The connector must not claim API key authentication.'
-);
+/*
+ * 1.30.0 to 1.62.0 declared `none`, and the WordPress 7.1 Connectors screen renders only
+ * connectors with a credential to manage, so Bedrock was in the registry and never on the
+ * screen. It now declares an API key, which Bedrock accepts, without making one necessary:
+ * an IAM role still answers availability. Exercised against a stand-in registry below.
+ */
 check_core_ai(
 	false !== strpos( $source, 'wp_is_connector_registered' ),
 	'Registration must not collide with an existing connector of the same id.'
 );
 
-/*
- * A credential-free connector is registered but not rendered on the WordPress 7.1
- * Settings -> Connectors screen. Measured, not assumed: two registrations of the same
- * shape, one declaring api_key and one none, produced a card for the first only. 1.30.0
- * shipped a readme claiming the card appears, so the claim is pinned here.
- */
-$readme = file_get_contents( dirname( __DIR__ ) . '/readme.txt' );
-check_core_ai(
-	1 !== preg_match( '/(appears|appear|shown|listed) in Settings > Connectors/i', $readme ),
-	'The readme must not claim Bedrock appears on the Connectors screen; a credential-free connector is not rendered.'
-);
-check_core_ai(
-	false !== strpos( $source, 'It does not appear on the Settings' ),
-	'The code must record that the connector is registered for the registry, not the screen.'
-);
-// Adding a plugin entry does not change it either, and was tried.
-check_core_ai(
-	false === strpos( $source, "'plugin'" ),
-	'No plugin entry: it was added to force the card to render, and it did not.'
-);
+if ( true ) {
+	// Defined here, after the inert checks above, so that those still see WordPress 6.x.
+	function wp_get_connectors() {
+		return array();
+	}
+	function plugin_basename( $file ) {
+		return basename( dirname( $file ) ) . '/' . basename( $file );
+	}
+	class WP_Connector_Registry {
+		public $registered = array();
+		public function register( $id, $args ) {
+			$this->registered[ $id ] = $args;
+		}
+	}
+	/** Stands in for the plugin's secret envelope. */
+	class AI_Chat_Bedrock_Security {
+		public static function encrypt_secret( $value ) {
+			return '' === (string) $value ? '' : 'enc:' . strrev( (string) $value );
+		}
+		public static function decrypt_secret( $value ) {
+			return self::is_encrypted( $value ) ? strrev( substr( (string) $value, 4 ) ) : (string) $value;
+		}
+		public static function is_encrypted( $value ) {
+			return 0 === strpos( (string) $value, 'enc:' );
+		}
+	}
+}
+define( 'AI_CHAT_BEDROCK_PLUGIN_FILE', dirname( __DIR__ ) . '/ai-chat-for-amazon-bedrock.php' );
+
+$GLOBALS['aicfab_filters'] = array();
+AI_Chat_Bedrock_Core_AI::init();
+check_core_ai( in_array( 'pre_update_option_connectors_ai_amazon_bedrock_api_key', $GLOBALS['aicfab_filters'], true ) && in_array( 'option_connectors_ai_amazon_bedrock_api_key', $GLOBALS['aicfab_filters'], true ), 'With Connectors present, the stored key is encrypted on write and decrypted on read.' );
+
+$aicfab_registry = new WP_Connector_Registry();
+AI_Chat_Bedrock_Core_AI::register_connector( $aicfab_registry );
+$aicfab_connector = isset( $aicfab_registry->registered['amazon-bedrock'] ) ? $aicfab_registry->registered['amazon-bedrock'] : array();
+$aicfab_auth      = isset( $aicfab_connector['authentication'] ) ? $aicfab_connector['authentication'] : array();
+check_core_ai( 'ai_provider' === ( $aicfab_connector['type'] ?? '' ), 'Bedrock registers as an AI provider.' );
+check_core_ai( 'api_key' === ( $aicfab_auth['method'] ?? '' ), 'The connector declares an API key, so the Connectors screen shows it.' );
+check_core_ai( 'connectors_ai_amazon_bedrock_api_key' === ( $aicfab_auth['setting_name'] ?? '' ), 'The key is stored under the name core gives the providers it discovers.' );
+check_core_ai( 'AI_CHAT_BEDROCK_API_KEY' === ( $aicfab_auth['constant_name'] ?? '' ) && 'AWS_BEARER_TOKEN_BEDROCK' === ( $aicfab_auth['env_var_name'] ?? '' ), 'The screen reports the constant and environment variable the plugin already reads.' );
+check_core_ai( 0 === strpos( (string) ( $aicfab_auth['credentials_url'] ?? '' ), 'https://console.aws.amazon.com/bedrock/' ), 'The screen links to where a Bedrock key is created.' );
+check_core_ai( '/ai-chat-for-amazon-bedrock.php' === substr( (string) ( $aicfab_connector['plugin']['file'] ?? '' ), -31 ), 'The connector names the plugin that provides it.' );
+check_core_ai( false !== stripos( (string) ( $aicfab_connector['description'] ?? '' ), 'IAM role' ), 'The description says an IAM role needs no key.' );
+
+$aicfab_stored = AI_Chat_Bedrock_Core_AI::encrypt_connector_key( 'ABSKexampleKey000000000000' );
+check_core_ai( 'ABSKexampleKey000000000000' !== $aicfab_stored && AI_Chat_Bedrock_Security::is_encrypted( $aicfab_stored ), 'The key is not stored as entered.' );
+check_core_ai( 'ABSKexampleKey000000000000' === AI_Chat_Bedrock_Core_AI::decrypt_connector_key( $aicfab_stored ), 'Core reads back the key that was entered.' );
+check_core_ai( '' === AI_Chat_Bedrock_Core_AI::encrypt_connector_key( '' ), 'Clearing the key stores nothing.' );
+$GLOBALS['aicfab_options']['connectors_ai_amazon_bedrock_api_key'] = $aicfab_stored;
+check_core_ai( 'ABSKexampleKey000000000000' === AI_Chat_Bedrock_Core_AI::connector_api_key(), 'The plugin reads the connector key, decrypted.' );
+unset( $GLOBALS['aicfab_options']['connectors_ai_amazon_bedrock_api_key'] );
+check_core_ai( '' === AI_Chat_Bedrock_Core_AI::connector_api_key(), 'No connector key reads as empty.' );
 
 // --- Declared options must match honoured ones ----------------------------------
 
@@ -251,6 +280,7 @@ foreach (
 		'TextGenerationModelInterface',
 		'ModelMetadataDirectoryInterface',
 		'ProviderAvailabilityInterface',
+		'WithRequestAuthenticationInterface',
 	) as $aicfab_needed
 ) {
 	check_core_ai(

@@ -1,6 +1,6 @@
 # Export content gaps for editorial planning
 
-Open **AI Chat for Amazon Bedrock → Conversations** as an administrator and select
+Open **AI Chatbot & Agents for Amazon Bedrock → Conversations** as an administrator and select
 **Download content gaps CSV** in the Content gaps panel. Use the download to plan
 articles, for example explanations of missing robot evaluation results or experiment
 procedures. Downloading does not create posts, collect additional data, or call Bedrock.

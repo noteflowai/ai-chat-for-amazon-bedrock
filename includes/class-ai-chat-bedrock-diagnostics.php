@@ -19,7 +19,7 @@ class AI_Chat_Bedrock_Diagnostics {
 	 */
 	public function register_site_health_tests( $tests ) {
 		$tests['direct']['ai_chat_bedrock_configuration'] = array(
-			'label' => __( 'AI Chat for Amazon Bedrock configuration', 'ai-chat-for-amazon-bedrock' ),
+			'label' => __( 'AI Chatbot & Agents for Amazon Bedrock configuration', 'ai-chat-for-amazon-bedrock' ),
 			'test'  => array( $this, 'site_health_configuration' ),
 		);
 		return $tests;

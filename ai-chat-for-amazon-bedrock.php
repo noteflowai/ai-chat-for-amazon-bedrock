@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: AI Agents & Chat for Amazon Bedrock
+ * Plugin Name: AI Chatbot & Agents for Amazon Bedrock
  * Plugin URI: https://github.com/noteflowai/ai-chat-for-amazon-bedrock
  * Description: Streaming chat and governed tool-using agents on Amazon Bedrock, with IAM role credentials, a standards-compliant MCP server and client, and security-first defaults.
- * Version: 1.62.0
+ * Version: 1.63.0
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * WC requires at least: 8.0
@@ -22,7 +22,7 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-define( 'AI_CHAT_BEDROCK_VERSION', '1.62.0' );
+define( 'AI_CHAT_BEDROCK_VERSION', '1.63.0' );
 define( 'AI_CHAT_BEDROCK_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AI_CHAT_BEDROCK_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'AI_CHAT_BEDROCK_PLUGIN_FILE', __FILE__ );
@@ -59,6 +59,21 @@ function ai_chat_bedrock_action_links( $links ) {
 	return array_merge( $own, (array) $links );
 }
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'ai_chat_bedrock_action_links' );
+
+/**
+ * Link to the support forum beside the plugin's description on the Plugins screen.
+ *
+ * @param array  $links Links under the description.
+ * @param string $file  Plugin the row is for.
+ * @return array
+ */
+function ai_chat_bedrock_row_meta( $links, $file ) {
+	if ( plugin_basename( __FILE__ ) === $file ) {
+		$links[] = '<a href="' . esc_url( 'https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock/' ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Support', 'ai-chat-for-amazon-bedrock' ) . '</a>';
+	}
+	return $links;
+}
+add_filter( 'plugin_row_meta', 'ai_chat_bedrock_row_meta', 10, 2 );
 
 /**
  * Declare WooCommerce feature compatibility. WooCommerce asks before it loads, so this cannot

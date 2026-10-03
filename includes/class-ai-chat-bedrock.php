@@ -68,6 +68,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-generator-stream.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-media-assistant.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-feedback.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-review-prompt.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-sse.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-stream.php';
 		require_once $base . 'admin/class-ai-chat-bedrock-admin.php';
@@ -103,6 +104,8 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_generate_content', $admin, 'handle_generate_content' );
 		$this->loader->add_action( 'admin_notices', $admin, 'render_setup_notice' );
 		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_dismiss_setup_notice', $admin, 'ajax_dismiss_setup_notice' );
+		$this->loader->add_action( 'admin_notices', $admin, 'render_review_prompt' );
+		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_dismiss_review_prompt', 'AI_Chat_Bedrock_Review_Prompt', 'ajax_dismiss' );
 		$this->loader->add_filter( 'media_row_actions', $admin, 'add_media_row_action', 10, 2 );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_alt_text', $admin, 'handle_alt_text_action' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_edit_image', $admin, 'handle_edit_image_action' );
