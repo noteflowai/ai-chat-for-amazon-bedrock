@@ -150,7 +150,12 @@ because reading that from the harness disagreed with a simpler direct check.
 
 1. Update the version in the plugin header, the `AI_CHAT_BEDROCK_VERSION` constant and
    the readme stable tag, and add a changelog entry and an upgrade notice.
-2. Rebuild `languages/ai-chat-for-amazon-bedrock.pot`.
+2. Rebuild `languages/ai-chat-for-amazon-bedrock.pot` from the changed code with
+   `wp i18n make-pot`. Update both the `zh_CN` and `ja` `.po` files, preserving
+   translation contexts, plural forms and numbered placeholders, then regenerate
+   their `.mo` and `.l10n.php` files with `wp i18n make-mo languages/` and
+   `wp i18n make-php languages/`. The full gate compares the template with the code
+   and checks the bundled translations; passing the PHP-only jobs is not enough.
 3. Run `bin/prerelease.sh` with everything enabled. Fix anything it reports.
 4. `bin/build-package.py` and check the file count and checksum it prints.
 5. Copy the package contents into the SVN working copy, commit trunk, then tag.

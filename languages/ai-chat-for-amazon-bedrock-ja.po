@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Agents & Chat for Amazon Bedrock 1.56.0\n"
+"Project-Id-Version: AI Chatbot & Agents for Amazon Bedrock 1.65.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "Last-Translator: \n"
 "Language-Team: Japanese\n"
@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-10-01T23:43:58+00:00\n"
-"PO-Revision-Date: 2026-10-01T23:43:58+00:00\n"
+"PO-Revision-Date: 2026-10-04T16:18:41+00:00\n"
 "Language: ja\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -6270,3 +6270,49 @@ msgstr "検索エンジンにインデックスさせない（noindex）ペー�
 #: admin/class-ai-chat-bedrock-admin.php:1241
 msgid "Off by default. A page kept out of search engines, such as a thank-you page with a download or a campaign landing page, is usually kept out for a reason, so the chat and agents leave it out too. The noindex settings of Yoast SEO, Rank Math and SEOPress are read for each page and post type; All in One SEO for each page. Reading a post aloud is not affected."
 msgstr "既定ではオフです。検索エンジンから除外したページ（ダウンロード付きのサンクスページやキャンペーンのランディングページなど）には通常理由があるため、チャットとエージェントもそれらを使いません。Yoast SEO、Rank Math、SEOPress はページごととコンテンツタイプごとの noindex 設定を、All in One SEO はページごとの設定を読み取ります。記事の読み上げには影響しません。"
+
+#: admin/partials/ai-chat-bedrock-admin-display.php:302
+msgctxt "time to first text range"
+msgid "under 1 s"
+msgstr "1 秒未満"
+
+#: admin/partials/ai-chat-bedrock-admin-display.php:303
+msgctxt "time to first text range"
+msgid "1 to 2 s"
+msgstr "1～2 秒"
+
+#: admin/partials/ai-chat-bedrock-admin-display.php:304
+msgctxt "time to first text range"
+msgid "2 to 5 s"
+msgstr "2～5 秒"
+
+#: admin/partials/ai-chat-bedrock-admin-display.php:305
+msgctxt "time to first text range"
+msgid "5 to 10 s"
+msgstr "5～10 秒"
+
+#: admin/partials/ai-chat-bedrock-admin-display.php:306
+msgctxt "time to first text range"
+msgid "10 s or more"
+msgstr "10 秒以上"
+
+#: admin/partials/ai-chat-bedrock-admin-display.php:310
+msgid "unknown"
+msgstr "不明"
+
+#. translators: 1: average milliseconds to the first streamed text, 2: number of streamed answers, 3: time range holding the median.
+#: admin/partials/ai-chat-bedrock-admin-display.php:314
+#, php-format
+msgid ""
+"Time to first text (streamed, 7 days): average %1$s ms over %2$s answer, "
+"median %3$s."
+msgid_plural ""
+"Time to first text (streamed, 7 days): average %1$s ms over %2$s answers, "
+"median %3$s."
+msgstr[0] "最初のテキストまでの待ち時間（ストリーミング、過去 7 日）：%2$s 件の回答の平均は %1$s ミリ秒、中央値の区間は %3$s です。"
+
+#: admin/partials/ai-chat-bedrock-admin-display.php:321
+msgid ""
+"Time to first text (streamed, 7 days): unknown, no streamed answers recorded "
+"yet."
+msgstr "最初のテキストまでの待ち時間（ストリーミング、過去 7 日）：不明。ストリーミングの回答はまだ記録されていません。"
