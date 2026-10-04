@@ -26,6 +26,7 @@ $today       = AI_Chat_Bedrock_Usage::today_totals();
 $week        = AI_Chat_Bedrock_Usage::totals( 7 );
 $failed_day  = AI_Chat_Bedrock_Usage::failure_totals( 1 );
 $failed_week = AI_Chat_Bedrock_Usage::failure_totals( 7 );
+$first_token = AI_Chat_Bedrock_Usage::first_token_summary( 7 );
 $daily_limit = AI_Chat_Bedrock_Usage::daily_limit( $options );
 $series      = AI_Chat_Bedrock_Usage::daily_series( 7 );
 $by_model    = AI_Chat_Bedrock_Usage::by_model( 7 );
@@ -290,6 +291,34 @@ $aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 						)
 					);
 				}
+			}
+			?>
+		</p>
+
+		<p class="aicfab-card-detail aicfab-usage-failures">
+			<?php
+			if ( 'measured' === $first_token['status'] ) {
+				$aicfab_bucket_labels = array(
+					'lt1s'   => _x( 'under 1 s', 'time to first text range', 'ai-chat-for-amazon-bedrock' ),
+					'1to2s'  => _x( '1 to 2 s', 'time to first text range', 'ai-chat-for-amazon-bedrock' ),
+					'2to5s'  => _x( '2 to 5 s', 'time to first text range', 'ai-chat-for-amazon-bedrock' ),
+					'5to10s' => _x( '5 to 10 s', 'time to first text range', 'ai-chat-for-amazon-bedrock' ),
+					'gte10s' => _x( '10 s or more', 'time to first text range', 'ai-chat-for-amazon-bedrock' ),
+				);
+
+				$aicfab_median_key   = (string) $first_token['median_bucket'];
+				$aicfab_median_label = isset( $aicfab_bucket_labels[ $aicfab_median_key ] ) ? $aicfab_bucket_labels[ $aicfab_median_key ] : __( 'unknown', 'ai-chat-for-amazon-bedrock' );
+				echo esc_html(
+					sprintf(
+						/* translators: 1: average milliseconds to the first streamed text, 2: number of streamed answers, 3: time range holding the median. */
+						_n( 'Time to first text (streamed, 7 days): average %1$s ms over %2$s answer, median %3$s.', 'Time to first text (streamed, 7 days): average %1$s ms over %2$s answers, median %3$s.', (int) $first_token['samples'], 'ai-chat-for-amazon-bedrock' ),
+						number_format_i18n( (int) $first_token['average_ms'] ),
+						number_format_i18n( (int) $first_token['samples'] ),
+						$aicfab_median_label
+					)
+				);
+			} else {
+				esc_html_e( 'Time to first text (streamed, 7 days): unknown, no streamed answers recorded yet.', 'ai-chat-for-amazon-bedrock' );
 			}
 			?>
 		</p>

@@ -25,6 +25,18 @@ class AI_Chat_Bedrock_Usage {
 	const FAILURE_CATEGORIES = array( 'throttled', 'access_denied', 'validation', 'unavailable', 'network', 'other' );
 
 	/**
+	 * Time-to-first-text buckets for streamed answers, in display order.
+	 *
+	 * Ranges: lt1s under 1000 ms, 1to2s 1000..1999, 2to5s 2000..4999, 5to10s 5000..9999, gte10s 10000 and above.
+	 */
+	const FIRST_TOKEN_BUCKETS = array( 'lt1s', '1to2s', '2to5s', '5to10s', 'gte10s' );
+
+	/**
+	 * Largest stored time to first text, in milliseconds. Longer waits are counted as this.
+	 */
+	const FIRST_TOKEN_MAX_MS = 600000;
+
+	/**
 	 * Record one completed Bedrock invocation.
 	 *
 	 * Embeddings are counted apart from answers. Indexing a site makes one per passage, and
@@ -406,6 +418,182 @@ class AI_Chat_Bedrock_Usage {
 	}
 
 	/**
+	 * Wrap a streaming observer so the time to the first streamed text is recorded once.
+	 *
+	 * The first non-empty delta is timed without touching the database, handed to the inner
+	 * observer, and only then recorded, so the sample never delays the first text. The inner
+	 * observer's return value is passed back unchanged, so returning false still stops the
+	 * stream. Only the elapsed milliseconds are stored; never the delta.
+	 *
+	 * @param callable      $inner   Observer that forwards deltas to the visitor.
+	 * @param float         $started microtime( true ) taken before the first Bedrock attempt.
+	 * @param callable|null $clock   Returns the current time in seconds. Defaults to microtime( true ).
+	 * @return callable
+	 */
+	public static function first_token_observer( callable $inner, $started, $clock = null ) {
+		$started = is_numeric( $started ) ? (float) $started : 0.0;
+		if ( ! is_callable( $clock ) ) {
+			$clock = static function () {
+				return microtime( true );
+			};
+		}
+		$done = false;
+
+		return static function ( $delta ) use ( $inner, $started, $clock, &$done ) {
+			$is_text = is_scalar( $delta ) ? '' !== (string) $delta : false;
+			if ( $done || ! $is_text ) {
+				return call_user_func( $inner, $delta );
+			}
+			$done    = true;
+			$now     = call_user_func( $clock );
+			$elapsed = is_numeric( $now ) ? round( ( (float) $now - $started ) * 1000 ) : 0;
+			$result  = call_user_func( $inner, $delta );
+			self::record_first_token( $elapsed );
+			return $result;
+		};
+	}
+
+	/**
+	 * Count one streamed answer's time to first text.
+	 *
+	 * Only integer counters change: count, sum_ms and one bucket under today's UTC day.
+	 * Requests, tokens, models, failures and the daily cap are left alone.
+	 *
+	 * @param mixed $milliseconds Elapsed milliseconds. Clamped to 0..FIRST_TOKEN_MAX_MS.
+	 * @return void
+	 */
+	public static function record_first_token( $milliseconds ) {
+		$ms = 0;
+		if ( is_numeric( $milliseconds ) ) {
+			$value = (float) $milliseconds;
+			if ( is_nan( $value ) || $value < 0 ) {
+				$ms = 0;
+			} elseif ( $value > self::FIRST_TOKEN_MAX_MS ) {
+				$ms = self::FIRST_TOKEN_MAX_MS;
+			} else {
+				$ms = (int) round( $value );
+			}
+		}
+
+		$today  = self::today();
+		$totals = self::all();
+		if ( ! isset( $totals[ $today ] ) || ! is_array( $totals[ $today ] ) ) {
+			$totals[ $today ] = array(
+				'requests'      => 0,
+				'input_tokens'  => 0,
+				'output_tokens' => 0,
+				'models'        => array(),
+			);
+		}
+
+		$map    = self::clean_first_token( isset( $totals[ $today ]['first_token'] ) ? $totals[ $today ]['first_token'] : array() );
+		$bucket = self::first_token_bucket( $ms );
+
+		$map['count']   = ( isset( $map['count'] ) ? $map['count'] : 0 ) + 1;
+		$map['sum_ms']  = ( isset( $map['sum_ms'] ) ? $map['sum_ms'] : 0 ) + $ms;
+		$map[ $bucket ] = ( isset( $map[ $bucket ] ) ? $map[ $bucket ] : 0 ) + 1;
+
+		$totals[ $today ]['first_token'] = $map;
+
+		update_option( self::OPTION, self::prune( $totals ), false );
+	}
+
+	/**
+	 * Time to first streamed text over a number of days.
+	 *
+	 * With no samples the status is unknown and the average and median are null, never 0 ms.
+	 *
+	 * @param int $days Days to include, including today. Clamped to 1..RETENTION_DAYS.
+	 * @return array samples, average_ms, buckets, median_bucket and status (measured or unknown).
+	 */
+	public static function first_token_summary( $days = 7 ) {
+		$days    = max( 1, min( self::RETENTION_DAYS, absint( $days ) ) );
+		$totals  = self::all();
+		$buckets = array_fill_keys( self::FIRST_TOKEN_BUCKETS, 0 );
+		$samples = 0;
+		$sum     = 0;
+
+		for ( $offset = 0; $offset < $days; $offset++ ) {
+			$day = gmdate( 'Y-m-d', time() - ( $offset * DAY_IN_SECONDS ) );
+			if ( ! isset( $totals[ $day ]['first_token'] ) ) {
+				continue;
+			}
+			$map = self::clean_first_token( $totals[ $day ]['first_token'] );
+			if ( empty( $map ) ) {
+				continue;
+			}
+			$samples += $map['count'];
+			$sum     += isset( $map['sum_ms'] ) ? $map['sum_ms'] : 0;
+			foreach ( self::FIRST_TOKEN_BUCKETS as $bucket ) {
+				$buckets[ $bucket ] += isset( $map[ $bucket ] ) ? $map[ $bucket ] : 0;
+			}
+		}
+
+		// Lower median: the bucket holding the sample at index floor( ( n - 1 ) / 2 ).
+		$median = null;
+		if ( $samples > 0 ) {
+			$target = (int) floor( ( $samples - 1 ) / 2 );
+			$seen   = 0;
+			foreach ( $buckets as $bucket => $count ) {
+				$seen += $count;
+				if ( $seen > $target ) {
+					$median = $bucket;
+					break;
+				}
+			}
+		}
+
+		return array(
+			'samples'       => $samples,
+			'average_ms'    => $samples > 0 ? (int) round( $sum / $samples ) : null,
+			'buckets'       => $buckets,
+			'median_bucket' => $median,
+			'status'        => $samples > 0 ? 'measured' : 'unknown',
+		);
+	}
+
+	/**
+	 * Bucket key for a clamped number of milliseconds.
+	 *
+	 * @param int $ms Milliseconds.
+	 * @return string One of FIRST_TOKEN_BUCKETS.
+	 */
+	private static function first_token_bucket( $ms ) {
+		if ( $ms < 1000 ) {
+			return 'lt1s';
+		}
+		if ( $ms < 2000 ) {
+			return '1to2s';
+		}
+		if ( $ms < 5000 ) {
+			return '2to5s';
+		}
+		if ( $ms < 10000 ) {
+			return '5to10s';
+		}
+		return 'gte10s';
+	}
+
+	/**
+	 * Keep only known first-token counters with positive integer values.
+	 *
+	 * @param mixed $map Stored first_token map.
+	 * @return array Empty unless a positive count is stored.
+	 */
+	private static function clean_first_token( $map ) {
+		if ( ! is_array( $map ) ) {
+			return array();
+		}
+		$clean = array();
+		foreach ( array_merge( array( 'count', 'sum_ms' ), self::FIRST_TOKEN_BUCKETS ) as $key ) {
+			if ( isset( $map[ $key ] ) ? ( is_numeric( $map[ $key ] ) ? (int) $map[ $key ] > 0 : false ) : false ) {
+				$clean[ $key ] = (int) $map[ $key ];
+			}
+		}
+		return isset( $clean['count'] ) ? $clean : array();
+	}
+
+	/**
 	 * Delete all usage counters.
 	 */
 	public static function reset() {
@@ -463,6 +651,10 @@ class AI_Chat_Bedrock_Usage {
 			$failures = self::clean_failures( isset( $entry['failures'] ) ? $entry['failures'] : array() );
 			if ( ! empty( $failures ) ) {
 				$clean[ $day ]['failures'] = $failures;
+			}
+			$first_token = self::clean_first_token( isset( $entry['first_token'] ) ? $entry['first_token'] : array() );
+			if ( ! empty( $first_token ) ) {
+				$clean[ $day ]['first_token'] = $first_token;
 			}
 		}
 		return $clean;
