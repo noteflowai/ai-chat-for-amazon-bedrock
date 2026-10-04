@@ -153,9 +153,14 @@ because reading that from the harness disagreed with a simpler direct check.
 2. Rebuild `languages/ai-chat-for-amazon-bedrock.pot` from the changed code with
    `wp i18n make-pot`. Update both the `zh_CN` and `ja` `.po` files, preserving
    translation contexts, plural forms and numbered placeholders, then regenerate
-   their `.mo` and `.l10n.php` files with `wp i18n make-mo languages/` and
-   `wp i18n make-php languages/`. The full gate compares the template with the code
-   and checks the bundled translations; passing the PHP-only jobs is not enough.
+   their `.mo` files with GNU gettext's `msgfmt --check --check-format --no-hash`
+   and their `.l10n.php` files with `wp i18n make-php languages/`. For example:
+   `msgfmt --check --check-format --no-hash -o languages/ai-chat-for-amazon-bedrock-ja.mo languages/ai-chat-for-amazon-bedrock-ja.po`.
+   Use the same command for `zh_CN`. Some `wp i18n make-mo` versions omit the
+   plural source string in single-form locales; the translation suite verifies
+   the compiled catalogs' contexts, plural sources and translations. The full
+   gate also compares the template with the code; passing the PHP-only jobs is
+   not enough.
 3. Run `bin/prerelease.sh` with everything enabled. Fix anything it reports.
 4. `bin/build-package.py` and check the file count and checksum it prints.
 5. Copy the package contents into the SVN working copy, commit trunk, then tag.
