@@ -756,6 +756,14 @@ class AI_Chat_Bedrock_AWS {
 			return true;
 		};
 
+		/*
+		 * Time to first streamed text, measured once from before the first attempt, so a
+		 * fallback answer counts the whole wait. The sample is written only after the first
+		 * text has been handed on, and holds no text.
+		 */
+		$started  = microtime( true );
+		$observer = AI_Chat_Bedrock_Usage::first_token_observer( $observer, $started );
+
 		$response = $this->stream_once( $observer, $prepared );
 		if ( $emitted || ! $this->should_fall_back( $response ) ) {
 			return $this->record_chat_outcome( $response );

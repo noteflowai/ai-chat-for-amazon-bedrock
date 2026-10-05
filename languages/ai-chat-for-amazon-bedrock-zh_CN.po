@@ -530,8 +530,8 @@ msgstr "IAM 角色凭证"
 #: admin/class-ai-chat-bedrock-admin.php:1053
 #: admin/class-ai-chat-bedrock-admin.php:1054
 #: admin/class-ai-chat-bedrock-admin.php:2164
-#: admin/partials/ai-chat-bedrock-admin-display.php:66
-#: admin/partials/ai-chat-bedrock-admin-display.php:216
+#: admin/partials/ai-chat-bedrock-admin-display.php:67
+#: admin/partials/ai-chat-bedrock-admin-display.php:217
 #: admin/partials/ai-chat-bedrock-admin-eval.php:97
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:64
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:114
@@ -788,7 +788,7 @@ msgstr[0] "今日：%1$s 次请求，%2$s 个输入 Token，%3$s 个输出 Token
 
 #. translators: %s: requests in the last seven days.
 #: admin/class-ai-chat-bedrock-admin.php:1209
-#: admin/partials/ai-chat-bedrock-admin-display.php:115
+#: admin/partials/ai-chat-bedrock-admin-display.php:116
 #, php-format
 msgid "Last 7 days: %s request."
 msgid_plural "Last 7 days: %s requests."
@@ -1259,7 +1259,7 @@ msgid "Conversation logging is disabled, so no chat content is stored. Enable it
 msgstr "对话记录已停用，因此不会存储任何对话内容。如需审阅回答以把控质量或进行内容审核，请在设置中启用。"
 
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:97
-#: admin/partials/ai-chat-bedrock-admin-display.php:329
+#: admin/partials/ai-chat-bedrock-admin-display.php:358
 #: admin/partials/ai-chat-bedrock-admin-leads.php:92
 msgid "Open settings"
 msgstr "打开设置"
@@ -1362,12 +1362,12 @@ msgid "entries"
 msgstr "条记录"
 
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:227
-#: admin/partials/ai-chat-bedrock-admin-display.php:96
+#: admin/partials/ai-chat-bedrock-admin-display.php:97
 msgid "input tokens"
 msgstr "输入 Token"
 
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:228
-#: admin/partials/ai-chat-bedrock-admin-display.php:97
+#: admin/partials/ai-chat-bedrock-admin-display.php:98
 msgid "output tokens"
 msgstr "输出 Token"
 
@@ -1582,64 +1582,64 @@ msgstr "已配置护栏：除模型权限外，还需要对该护栏授予 bedro
 msgid "Credentials not found: define wp-config.php constants or allow the server IAM role."
 msgstr "找不到凭证：请定义 wp-config.php 常量，或允许使用服务器 IAM 角色。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:54
+#: admin/partials/ai-chat-bedrock-admin-display.php:55
 msgid "Connect WordPress to Amazon Bedrock with your own AWS account. Streaming answers, least-privilege credentials, and optional MCP tools."
 msgstr "用你自己的 AWS 账户将 WordPress 连接到 Amazon Bedrock。支持流式回答、最小权限凭证和可选的 MCP 工具。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:58
+#: admin/partials/ai-chat-bedrock-admin-display.php:59
 msgid "Credentials"
 msgstr "凭证"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:60
+#: admin/partials/ai-chat-bedrock-admin-display.php:61
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:141
 msgid "Connected"
 msgstr "已连接"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:60
+#: admin/partials/ai-chat-bedrock-admin-display.php:61
 msgid "Not configured"
 msgstr "未配置"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:68
+#: admin/partials/ai-chat-bedrock-admin-display.php:69
 msgid "Selected"
 msgstr "已选择"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:68
+#: admin/partials/ai-chat-bedrock-admin-display.php:69
 msgid "Not selected"
 msgstr "未选择"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:70
+#: admin/partials/ai-chat-bedrock-admin-display.php:71
 msgid "Choose a Bedrock model in the settings."
 msgstr "请在设置中选择一个 Bedrock 模型。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:71
+#: admin/partials/ai-chat-bedrock-admin-display.php:72
 msgid "No region selected"
 msgstr "未选择区域"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:75
+#: admin/partials/ai-chat-bedrock-admin-display.php:76
 #: includes/class-ai-chat-bedrock-diagnostics.php:180
 #: includes/class-ai-chat-bedrock-diagnostics.php:183
 #: includes/class-ai-chat-bedrock-diagnostics.php:185
 msgid "Streaming"
 msgstr "流式回答"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:77
-#: admin/partials/ai-chat-bedrock-admin-display.php:87
+#: admin/partials/ai-chat-bedrock-admin-display.php:78
+#: admin/partials/ai-chat-bedrock-admin-display.php:88
 msgid "Enabled"
 msgstr "已启用"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:77
+#: admin/partials/ai-chat-bedrock-admin-display.php:78
 msgid "Buffered"
 msgstr "缓冲输出"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:80
+#: admin/partials/ai-chat-bedrock-admin-display.php:81
 msgid "Answers appear as they are generated."
 msgstr "回答会在生成过程中逐步显示。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:80
+#: admin/partials/ai-chat-bedrock-admin-display.php:81
 msgid "Answers appear when generation finishes."
 msgstr "回答会在生成完成后显示。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:85
+#: admin/partials/ai-chat-bedrock-admin-display.php:86
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:93
 #: includes/class-ai-chat-bedrock-diagnostics.php:399
 #: includes/class-ai-chat-bedrock-diagnostics.php:402
@@ -1647,241 +1647,241 @@ msgstr "回答会在生成完成后显示。"
 msgid "MCP tools"
 msgstr "MCP 工具"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:87
+#: admin/partials/ai-chat-bedrock-admin-display.php:88
 msgid "Disabled"
 msgstr "已停用"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:89
+#: admin/partials/ai-chat-bedrock-admin-display.php:90
 msgid "Server-side tool execution with per-tool policy and an audit log."
 msgstr "在服务器端执行工具，支持按工具设置策略并记录审计日志。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:93
+#: admin/partials/ai-chat-bedrock-admin-display.php:94
 msgid "Usage today"
 msgstr "今日用量"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:95
+#: admin/partials/ai-chat-bedrock-admin-display.php:96
 msgid "requests"
 msgstr "请求"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:98
+#: admin/partials/ai-chat-bedrock-admin-display.php:99
 msgid "failed requests"
 msgstr "失败请求"
 
 #. translators: 1: requests today, 2: daily request limit.
-#: admin/partials/ai-chat-bedrock-admin-display.php:105
+#: admin/partials/ai-chat-bedrock-admin-display.php:106
 #, php-format
 msgid "Daily limit: %1$s of %2$s used."
 msgstr "每日上限：已使用 %1$s / %2$s。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:109
+#: admin/partials/ai-chat-bedrock-admin-display.php:110
 msgid "No plugin-side daily limit."
 msgstr "插件未设置每日上限。"
 
 #. translators: 1: embedding requests in the last seven days, 2: tokens they read.
-#: admin/partials/ai-chat-bedrock-admin-display.php:128
+#: admin/partials/ai-chat-bedrock-admin-display.php:129
 #, php-format
 msgid "Search and indexing, last 7 days: %1$s embedding request, %2$s tokens. They are not counted above or against the daily limit."
 msgid_plural "Search and indexing, last 7 days: %1$s embedding requests, %2$s tokens. They are not counted above or against the daily limit."
 msgstr[0] "搜索和索引（过去 7 天）：%1$s 次嵌入请求，%2$s 个 Token。这些不计入上方的统计，也不计入每日上限。"
 
 #. translators: %s: number of input tokens read from the Claude prompt cache in the last seven days.
-#: admin/partials/ai-chat-bedrock-admin-display.php:169
+#: admin/partials/ai-chat-bedrock-admin-display.php:170
 #, php-format
 msgid "Prompt cache, last 7 days: %s input token reused at a tenth of the input price."
 msgid_plural "Prompt cache, last 7 days: %s input tokens reused at a tenth of the input price."
 msgstr[0] "提示词缓存（过去 7 天）：%s 个输入 Token 被复用，按输入价格的十分之一计费。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:180
+#: admin/partials/ai-chat-bedrock-admin-display.php:181
 msgid "Usage over the last seven days"
 msgstr "过去 7 天的用量"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:183
+#: admin/partials/ai-chat-bedrock-admin-display.php:184
 msgid "No Bedrock requests recorded yet."
 msgstr "尚未记录任何 Bedrock 请求。"
 
 #. translators: 1: request count, 2: input tokens, 3: output tokens.
-#: admin/partials/ai-chat-bedrock-admin-display.php:200
+#: admin/partials/ai-chat-bedrock-admin-display.php:201
 #, php-format
 msgid "%1$s request · %2$s in / %3$s out"
 msgid_plural "%1$s requests · %2$s in / %3$s out"
 msgstr[0] "%1$s 次请求 · 输入 %2$s / 输出 %3$s"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:217
+#: admin/partials/ai-chat-bedrock-admin-display.php:218
 msgid "Requests"
 msgstr "请求数"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:218
+#: admin/partials/ai-chat-bedrock-admin-display.php:219
 msgid "Input tokens"
 msgstr "输入 Token"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:219
+#: admin/partials/ai-chat-bedrock-admin-display.php:220
 msgid "Output tokens"
 msgstr "输出 Token"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:236
+#: admin/partials/ai-chat-bedrock-admin-display.php:237
 msgid "Counters only, kept for 30 days. Token counts are what Amazon Bedrock reported and are not a price estimate; check AWS Cost Explorer for billing."
 msgstr "仅保存计数，保留 30 天。Token 数为 Amazon Bedrock 报告的数值，并非费用估算；账单请查看 AWS Cost Explorer。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:243
+#: admin/partials/ai-chat-bedrock-admin-display.php:244
 msgid "No failed chat requests recorded in the last 7 days."
 msgstr "过去 7 天内没有失败的对话请求记录。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:247
+#: admin/partials/ai-chat-bedrock-admin-display.php:248
 msgctxt "failure category, starting a sentence"
 msgid "Throttled"
 msgstr "被限流"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:248
+#: admin/partials/ai-chat-bedrock-admin-display.php:249
 msgctxt "failure category, starting a sentence"
 msgid "Access denied"
 msgstr "拒绝访问"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:249
+#: admin/partials/ai-chat-bedrock-admin-display.php:250
 msgctxt "failure category, starting a sentence"
 msgid "Rejected request"
 msgstr "请求被拒绝"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:250
+#: admin/partials/ai-chat-bedrock-admin-display.php:251
 msgctxt "failure category, starting a sentence"
 msgid "Service unavailable"
 msgstr "服务不可用"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:251
+#: admin/partials/ai-chat-bedrock-admin-display.php:252
 msgctxt "failure category, starting a sentence"
 msgid "Network"
 msgstr "网络"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:252
+#: admin/partials/ai-chat-bedrock-admin-display.php:253
 msgctxt "failure category, starting a sentence"
 msgid "Other"
 msgstr "其他"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:255
+#: admin/partials/ai-chat-bedrock-admin-display.php:256
 msgctxt "failure category, inside a list"
 msgid "throttled"
 msgstr "被限流"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:256
+#: admin/partials/ai-chat-bedrock-admin-display.php:257
 msgctxt "failure category, inside a list"
 msgid "access denied"
 msgstr "拒绝访问"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:257
+#: admin/partials/ai-chat-bedrock-admin-display.php:258
 msgctxt "failure category, inside a list"
 msgid "rejected request"
 msgstr "请求被拒绝"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:258
+#: admin/partials/ai-chat-bedrock-admin-display.php:259
 msgctxt "failure category, inside a list"
 msgid "service unavailable"
 msgstr "服务不可用"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:259
+#: admin/partials/ai-chat-bedrock-admin-display.php:260
 msgctxt "failure category, inside a list"
 msgid "network"
 msgstr "网络"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:260
+#: admin/partials/ai-chat-bedrock-admin-display.php:261
 msgctxt "failure category, inside a list"
 msgid "other"
 msgstr "其他"
 
 #. translators: 1: failure category name, 2: number of failed chat requests in that category.
-#: admin/partials/ai-chat-bedrock-admin-display.php:263
+#: admin/partials/ai-chat-bedrock-admin-display.php:264
 #, php-format
 msgctxt "failure category and count"
 msgid "%1$s %2$s"
 msgstr "%1$s %2$s 次"
 
 #. translators: %s: chat requests that reached Amazon Bedrock and failed in the last seven days.
-#: admin/partials/ai-chat-bedrock-admin-display.php:273
+#: admin/partials/ai-chat-bedrock-admin-display.php:274
 #, php-format
 msgid "Failed chat requests, last 7 days: %s."
 msgstr "过去 7 天失败的对话请求：%s 次。"
 
 #. translators: %s: failure categories with their counts, joined by the list separator.
-#: admin/partials/ai-chat-bedrock-admin-display.php:281
+#: admin/partials/ai-chat-bedrock-admin-display.php:282
 #, php-format
 msgctxt "sentence listing failure categories"
 msgid "%s."
 msgstr "%s。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:282
+#: admin/partials/ai-chat-bedrock-admin-display.php:283
 msgctxt "failure category list separator"
 msgid ", "
 msgstr "、"
 
 #. translators: 1: sentence with the failed request total, 2: sentence listing the failure categories.
-#: admin/partials/ai-chat-bedrock-admin-display.php:287
+#: admin/partials/ai-chat-bedrock-admin-display.php:288
 #, php-format
 msgctxt "failed request total then category list"
 msgid "%1$s %2$s"
 msgstr "%1$s%2$s"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:300
+#: admin/partials/ai-chat-bedrock-admin-display.php:329
 msgid "Quick start"
 msgstr "快速入门"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:303
+#: admin/partials/ai-chat-bedrock-admin-display.php:332
 msgid "Setup is complete. The chat is live on this site."
 msgstr "设置已完成。对话已在此站点上线。"
 
 #. translators: 1: steps completed, 2: steps in total.
-#: admin/partials/ai-chat-bedrock-admin-display.php:309
+#: admin/partials/ai-chat-bedrock-admin-display.php:338
 #, php-format
 msgid "%1$s of %2$s step done."
 msgid_plural "%1$s of %2$s steps done."
 msgstr[0] "已完成 %1$s / %2$s 个步骤。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:330
+#: admin/partials/ai-chat-bedrock-admin-display.php:359
 msgid "Run diagnostics"
 msgstr "运行诊断"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:331
+#: admin/partials/ai-chat-bedrock-admin-display.php:360
 msgid "Test chat"
 msgstr "测试对话"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:335
+#: admin/partials/ai-chat-bedrock-admin-display.php:364
 msgid "Worth doing next"
 msgstr "建议接下来完成"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:345
+#: admin/partials/ai-chat-bedrock-admin-display.php:374
 msgid "Grounding, logging, a fallback model and request limits are all configured."
 msgstr "回答依据、日志记录、备用模型和请求限制均已配置。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:350
+#: admin/partials/ai-chat-bedrock-admin-display.php:379
 msgid "Add the chat to a page"
 msgstr "将对话添加到页面"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:351
+#: admin/partials/ai-chat-bedrock-admin-display.php:380
 msgid "Insert the Amazon Bedrock Chat block in the editor, or paste this shortcode:"
 msgstr "在编辑器中插入 Amazon Bedrock Chat 区块，或粘贴以下简码："
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:353
+#: admin/partials/ai-chat-bedrock-admin-display.php:382
 msgid "Optional attributes: title, placeholder, width, height."
 msgstr "可选属性：title、placeholder、width、height。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:354
+#: admin/partials/ai-chat-bedrock-admin-display.php:383
 msgid "Security defaults"
 msgstr "默认安全设置"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:356
+#: admin/partials/ai-chat-bedrock-admin-display.php:385
 msgid "Guest chat stays disabled until you enable it."
 msgstr "在你启用之前，访客对话始终处于停用状态。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:357
+#: admin/partials/ai-chat-bedrock-admin-display.php:386
 msgid "Requests are rate limited per visitor."
 msgstr "请求按访客进行频率限制。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:358
+#: admin/partials/ai-chat-bedrock-admin-display.php:387
 msgid "MCP tools run on the server; browsers cannot forge results."
 msgstr "MCP 工具在服务器上运行，浏览器无法伪造结果。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:359
+#: admin/partials/ai-chat-bedrock-admin-display.php:388
 msgid "Tools that change data need explicit approval."
 msgstr "会更改数据的工具需要明确批准。"
 
-#: admin/partials/ai-chat-bedrock-admin-display.php:361
+#: admin/partials/ai-chat-bedrock-admin-display.php:390
 msgid "Manage MCP tools"
 msgstr "管理 MCP 工具"
 
@@ -2743,7 +2743,7 @@ msgstr "Abilities API 不可用。"
 #: includes/class-ai-chat-bedrock-aws.php:443
 #: includes/class-ai-chat-bedrock-aws.php:487
 #: includes/class-ai-chat-bedrock-aws.php:658
-#: includes/class-ai-chat-bedrock-aws.php:1855
+#: includes/class-ai-chat-bedrock-aws.php:1863
 msgid "Amazon Bedrock credentials are not configured."
 msgstr "尚未配置 Amazon Bedrock 凭证。"
 
@@ -2824,18 +2824,18 @@ msgstr "Amazon Bedrock 未返回嵌入。"
 
 #: includes/class-ai-chat-bedrock-aws.php:447
 #: includes/class-ai-chat-bedrock-aws.php:662
-#: includes/class-ai-chat-bedrock-aws.php:1934
-#: includes/class-ai-chat-bedrock-aws.php:2006
-#: includes/class-ai-chat-bedrock-aws.php:2117
-#: includes/class-ai-chat-bedrock-aws.php:2199
-#: includes/class-ai-chat-bedrock-aws.php:2300
-#: includes/class-ai-chat-bedrock-aws.php:2364
-#: includes/class-ai-chat-bedrock-aws.php:2428
+#: includes/class-ai-chat-bedrock-aws.php:1942
+#: includes/class-ai-chat-bedrock-aws.php:2014
+#: includes/class-ai-chat-bedrock-aws.php:2125
+#: includes/class-ai-chat-bedrock-aws.php:2207
+#: includes/class-ai-chat-bedrock-aws.php:2308
+#: includes/class-ai-chat-bedrock-aws.php:2372
+#: includes/class-ai-chat-bedrock-aws.php:2436
 msgid "The configured AWS region is invalid."
 msgstr "配置的 AWS 区域无效。"
 
 #: includes/class-ai-chat-bedrock-aws.php:675
-#: includes/class-ai-chat-bedrock-aws.php:1864
+#: includes/class-ai-chat-bedrock-aws.php:1872
 msgid "The configured model ID is invalid."
 msgstr "配置的模型 ID 无效。"
 
@@ -2844,113 +2844,113 @@ msgid "Streaming is not available on this server."
 msgstr "此服务器不支持流式回答。"
 
 #: includes/class-ai-chat-bedrock-aws.php:500
-#: includes/class-ai-chat-bedrock-aws.php:801
-#: includes/class-ai-chat-bedrock-aws.php:1601
+#: includes/class-ai-chat-bedrock-aws.php:809
+#: includes/class-ai-chat-bedrock-aws.php:1609
 msgid "The Bedrock request could not be encoded."
 msgstr "无法编码 Bedrock 请求。"
 
-#: includes/class-ai-chat-bedrock-aws.php:952
+#: includes/class-ai-chat-bedrock-aws.php:960
 msgid "The Bedrock response stream was interrupted."
 msgstr "Bedrock 响应流已中断。"
 
-#: includes/class-ai-chat-bedrock-aws.php:973
-#: includes/class-ai-chat-bedrock-aws.php:2651
+#: includes/class-ai-chat-bedrock-aws.php:981
+#: includes/class-ai-chat-bedrock-aws.php:2659
 msgid "Amazon Bedrock returned no usable content."
 msgstr "Amazon Bedrock 未返回可用内容。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1180
+#: includes/class-ai-chat-bedrock-aws.php:1188
 msgid "No valid chat messages were supplied."
 msgstr "未提供有效的对话消息。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1633
-#: includes/class-ai-chat-bedrock-aws.php:1895
-#: includes/class-ai-chat-bedrock-aws.php:2383
+#: includes/class-ai-chat-bedrock-aws.php:1641
+#: includes/class-ai-chat-bedrock-aws.php:1903
+#: includes/class-ai-chat-bedrock-aws.php:2391
 msgid "Amazon Bedrock could not be reached."
 msgstr "无法连接到 Amazon Bedrock。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1666
-#: includes/class-ai-chat-bedrock-aws.php:2396
+#: includes/class-ai-chat-bedrock-aws.php:1674
+#: includes/class-ai-chat-bedrock-aws.php:2404
 msgid "Amazon Bedrock returned an invalid response."
 msgstr "Amazon Bedrock 返回了无效的响应。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1903
+#: includes/class-ai-chat-bedrock-aws.php:1911
 msgid "Amazon Bedrock responded successfully."
 msgstr "Amazon Bedrock 已成功响应。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1928
+#: includes/class-ai-chat-bedrock-aws.php:1936
 msgid "The knowledge base ID is invalid."
 msgstr "知识库 ID 无效。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1931
-#: includes/class-ai-chat-bedrock-aws.php:2003
+#: includes/class-ai-chat-bedrock-aws.php:1939
+#: includes/class-ai-chat-bedrock-aws.php:2011
 msgid "A search query is required."
 msgstr "需要提供搜索查询。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1946
+#: includes/class-ai-chat-bedrock-aws.php:1954
 msgid "The retrieval request could not be encoded."
 msgstr "无法编码检索请求。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1963
+#: includes/class-ai-chat-bedrock-aws.php:1971
 msgid "The Amazon Bedrock knowledge base could not be reached."
 msgstr "无法连接到 Amazon Bedrock 知识库。"
 
 #. translators: %d: HTTP status code returned by Amazon Bedrock.
-#: includes/class-ai-chat-bedrock-aws.php:1969
+#: includes/class-ai-chat-bedrock-aws.php:1977
 #, php-format
 msgid "The knowledge base returned HTTP %d."
 msgstr "知识库返回了 HTTP %d。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1974
+#: includes/class-ai-chat-bedrock-aws.php:1982
 msgid "The knowledge base returned an invalid response."
 msgstr "知识库返回了无效的响应。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2189
+#: includes/class-ai-chat-bedrock-aws.php:2197
 msgid "That S3 Vectors operation is not supported."
 msgstr "不支持该 S3 Vectors 操作。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2209
+#: includes/class-ai-chat-bedrock-aws.php:2217
 msgid "The S3 Vectors request could not be encoded."
 msgstr "无法编码 S3 Vectors 请求。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2232
+#: includes/class-ai-chat-bedrock-aws.php:2240
 msgid "Amazon S3 Vectors could not be reached."
 msgstr "无法连接到 Amazon S3 Vectors。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2261
+#: includes/class-ai-chat-bedrock-aws.php:2269
 msgid "The AWS identity is not authorized for this S3 Vectors operation. Add the s3vectors actions from the IAM policy on the Diagnostics screen."
 msgstr "该 AWS 身份无权执行此 S3 Vectors 操作。请从“诊断”页面上的 IAM 策略中添加 s3vectors 相关操作。"
 
 #. translators: %d: HTTP status code returned by Amazon S3 Vectors.
-#: includes/class-ai-chat-bedrock-aws.php:2264
+#: includes/class-ai-chat-bedrock-aws.php:2272
 #, php-format
 msgid "Amazon S3 Vectors returned HTTP %d."
 msgstr "Amazon S3 Vectors 返回了 HTTP %d。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2323
+#: includes/class-ai-chat-bedrock-aws.php:2331
 msgid "AWS Security Token Service could not be reached."
 msgstr "无法连接到 AWS Security Token Service。"
 
 #. translators: %d: HTTP status code returned by AWS STS.
-#: includes/class-ai-chat-bedrock-aws.php:2331
+#: includes/class-ai-chat-bedrock-aws.php:2339
 #, php-format
 msgid "AWS Security Token Service returned HTTP %d."
 msgstr "AWS Security Token Service 返回了 HTTP %d。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2347
+#: includes/class-ai-chat-bedrock-aws.php:2355
 msgid "AWS Security Token Service returned an unexpected response."
 msgstr "AWS Security Token Service 返回了意外的响应。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2387
+#: includes/class-ai-chat-bedrock-aws.php:2395
 msgid "The AWS identity is not authorized for this Amazon Bedrock operation."
 msgstr "该 AWS 身份无权执行此 Amazon Bedrock 操作。"
 
 #. translators: %d: HTTP status code returned by Amazon Bedrock.
-#: includes/class-ai-chat-bedrock-aws.php:2391
+#: includes/class-ai-chat-bedrock-aws.php:2399
 #, php-format
 msgid "Amazon Bedrock returned HTTP %d."
 msgstr "Amazon Bedrock 返回了 HTTP %d。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2418
+#: includes/class-ai-chat-bedrock-aws.php:2426
 msgid "The AWS service name is invalid."
 msgstr "AWS 服务名称无效。"
 
@@ -4746,7 +4746,7 @@ msgid "The image request failed."
 msgstr "图片请求失败。"
 
 #: includes/class-ai-chat-bedrock-aws.php:462
-#: includes/class-ai-chat-bedrock-aws.php:2593
+#: includes/class-ai-chat-bedrock-aws.php:2601
 #: includes/class-ai-chat-bedrock-images.php:431
 msgid "Amazon Bedrock returned no image."
 msgstr "Amazon Bedrock 未返回图片。"
@@ -4763,7 +4763,7 @@ msgstr "护栏返回了无效响应，因此未发送请求。"
 msgid "The request was blocked by the site guardrail."
 msgstr "该请求被站点护栏拦截。"
 
-#: includes/class-ai-chat-bedrock-aws.php:1291
+#: includes/class-ai-chat-bedrock-aws.php:1299
 msgid "The selected model does not accept images."
 msgstr "所选模型不支持图片输入。"
 
@@ -4888,31 +4888,31 @@ msgid "That reranking model is not supported; reranking was left off."
 msgstr "不支持该重排序模型，重排序保持关闭。"
 
 #. translators: %s: rerank requests in the last seven days.
-#: admin/partials/ai-chat-bedrock-admin-display.php:142
+#: admin/partials/ai-chat-bedrock-admin-display.php:143
 #, php-format
 msgid "Reranking, last 7 days: %s request. It is not counted above or against the daily limit."
 msgid_plural "Reranking, last 7 days: %s requests. They are not counted above or against the daily limit."
 msgstr[0] "重排序（过去 7 天）：%s 次请求。这些不计入上方的统计，也不计入每日上限。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2000
+#: includes/class-ai-chat-bedrock-aws.php:2008
 msgid "The reranking model ID is invalid."
 msgstr "重排序模型 ID 无效。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2038
+#: includes/class-ai-chat-bedrock-aws.php:2046
 msgid "The reranking request could not be encoded."
 msgstr "无法编码重排序请求。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2055
+#: includes/class-ai-chat-bedrock-aws.php:2063
 msgid "The Amazon Bedrock reranking model could not be reached."
 msgstr "无法连接 Amazon Bedrock 重排序模型。"
 
 #. translators: %d: HTTP status code returned by Amazon Bedrock.
-#: includes/class-ai-chat-bedrock-aws.php:2067
+#: includes/class-ai-chat-bedrock-aws.php:2075
 #, php-format
 msgid "The reranking model returned HTTP %d."
 msgstr "重排序模型返回了 HTTP %d。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2079
+#: includes/class-ai-chat-bedrock-aws.php:2087
 msgid "The reranking model returned no scores."
 msgstr "重排序模型未返回评分。"
 
@@ -5008,35 +5008,35 @@ msgid "Off by default. Amazon Polly reads the text aloud, in a voice for its lan
 msgstr "默认关闭。Amazon Polly 以适合文本语言的语音朗读，按字符计费；设为 0 则取消每日上限。只能朗读本聊天给出的回答，且只限收到该回答的访客。文章按未登录访客看到的内容朗读，因此绝不会发送会员专享内容；其音频保存在上传文件夹中，文章变更后会重新生成。AWS 身份需要 polly:SynthesizeSpeech 权限。"
 
 #. translators: 1: Amazon Polly requests in the last seven days, 2: characters read aloud.
-#: admin/partials/ai-chat-bedrock-admin-display.php:155
+#: admin/partials/ai-chat-bedrock-admin-display.php:156
 #, php-format
 msgid "Read aloud, last 7 days: %1$s Amazon Polly request, %2$s characters. They are not counted above or against the daily limit."
 msgid_plural "Read aloud, last 7 days: %1$s Amazon Polly requests, %2$s characters. They are not counted above or against the daily limit."
 msgstr[0] "朗读，最近 7 天：%1$s 次 Amazon Polly 请求，%2$s 个字符。不计入上方统计，也不计入每日上限。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2111
+#: includes/class-ai-chat-bedrock-aws.php:2119
 msgid "The text to read aloud is empty or too long."
 msgstr "要朗读的文本为空或过长。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2114
+#: includes/class-ai-chat-bedrock-aws.php:2122
 msgid "The Amazon Polly voice is invalid."
 msgstr "Amazon Polly 语音无效。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2133
+#: includes/class-ai-chat-bedrock-aws.php:2141
 msgid "The speech request could not be encoded."
 msgstr "无法编码语音请求。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2149
+#: includes/class-ai-chat-bedrock-aws.php:2157
 msgid "Amazon Polly could not be reached."
 msgstr "无法连接 Amazon Polly。"
 
 #. translators: %d: HTTP status code returned by Amazon Polly.
-#: includes/class-ai-chat-bedrock-aws.php:2162
+#: includes/class-ai-chat-bedrock-aws.php:2170
 #, php-format
 msgid "Amazon Polly returned HTTP %d."
 msgstr "Amazon Polly 返回了 HTTP %d。"
 
-#: includes/class-ai-chat-bedrock-aws.php:2167
+#: includes/class-ai-chat-bedrock-aws.php:2175
 msgid "Amazon Polly returned no audio."
 msgstr "Amazon Polly 没有返回音频。"
 
@@ -6406,3 +6406,43 @@ msgstr "收到了一条来自微信的已签名消息"
 #, php-format
 msgid "Last contact %1$s ago: %2$s."
 msgstr "最近一次联系在 %1$s前：%2$s。"
+
+#: admin/partials/ai-chat-bedrock-admin-display.php:302
+msgctxt "time to first text range"
+msgid "under 1 s"
+msgstr "不到 1 秒"
+
+#: admin/partials/ai-chat-bedrock-admin-display.php:303
+msgctxt "time to first text range"
+msgid "1 to 2 s"
+msgstr "1～2 秒"
+
+#: admin/partials/ai-chat-bedrock-admin-display.php:304
+msgctxt "time to first text range"
+msgid "2 to 5 s"
+msgstr "2～5 秒"
+
+#: admin/partials/ai-chat-bedrock-admin-display.php:305
+msgctxt "time to first text range"
+msgid "5 to 10 s"
+msgstr "5～10 秒"
+
+#: admin/partials/ai-chat-bedrock-admin-display.php:306
+msgctxt "time to first text range"
+msgid "10 s or more"
+msgstr "10 秒或更长"
+
+#: admin/partials/ai-chat-bedrock-admin-display.php:310
+msgid "unknown"
+msgstr "未知"
+
+#. translators: 1: average milliseconds to the first streamed text, 2: number of streamed answers, 3: time range holding the median.
+#: admin/partials/ai-chat-bedrock-admin-display.php:314
+#, php-format
+msgid "Time to first text (streamed, 7 days): average %1$s ms over %2$s answer, median %3$s."
+msgid_plural "Time to first text (streamed, 7 days): average %1$s ms over %2$s answers, median %3$s."
+msgstr[0] "首段文本等待时间（流式回答，近 7 天）：%2$s 次回答平均 %1$s 毫秒，中位数所在区间为 %3$s。"
+
+#: admin/partials/ai-chat-bedrock-admin-display.php:321
+msgid "Time to first text (streamed, 7 days): unknown, no streamed answers recorded yet."
+msgstr "首段文本等待时间（流式回答，近 7 天）：未知，尚未记录流式回答。"

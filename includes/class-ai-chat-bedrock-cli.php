@@ -224,13 +224,19 @@ class AI_Chat_Bedrock_CLI {
 	/**
 	 * Show Bedrock usage recorded by this plugin.
 	 *
+	 * The default per-day mode ends with a Time to first text line for streamed answers: how
+	 * many were measured, their average in ms and the median band. Data that is missing or was
+	 * not measured reads unknown, never 0 ms.
+	 *
 	 * ## OPTIONS
 	 *
 	 * [--days=<number>]
-	 * : Days to include, including today. Defaults to 7.
+	 * : Days to include, including today. Defaults to 7. The Time to first text line covers at
+	 * most 30 days, the retention period.
 	 *
 	 * [--by-model]
-	 * : Break the totals down per model instead of per day.
+	 * : Break the totals down per model instead of per day. This mode leaves out the Time to
+	 * first text line, because latency is not recorded per model.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -281,6 +287,51 @@ class AI_Chat_Bedrock_CLI {
 		if ( ! empty( $totals['cache_read_tokens'] ) || ! empty( $totals['cache_write_tokens'] ) ) {
 			WP_CLI::log( sprintf( 'Prompt cache: %d input tokens read, %d written.', (int) $totals['cache_read_tokens'], (int) $totals['cache_write_tokens'] ) );
 		}
+
+		// Latency counters are kept for the retention period only, so the window is capped there.
+		$window = min( AI_Chat_Bedrock_Usage::RETENTION_DAYS, $days );
+		WP_CLI::log( self::first_token_line( AI_Chat_Bedrock_Usage::first_token_summary( $window ), $window ) );
+	}
+
+	/**
+	 * One plain line describing streamed time to first text, from first_token_summary().
+	 *
+	 * Data that is missing or was not measured reads unknown, never 0 ms or an empty band.
+	 *
+	 * @param mixed $summary Result of AI_Chat_Bedrock_Usage::first_token_summary().
+	 * @param int   $window  Days the summary covers, 1..RETENTION_DAYS.
+	 * @return string
+	 */
+	private static function first_token_line( $summary, $window ) {
+		$summary = is_array( $summary ) ? $summary : array();
+		$window  = (int) $window;
+		$prefix  = sprintf( 'Time to first text (streamed, %s): ', 1 === $window ? '1 day' : $window . ' days' );
+		$samples = isset( $summary['samples'] ) && is_numeric( $summary['samples'] ) ? (int) $summary['samples'] : 0;
+		$status  = isset( $summary['status'] ) ? $summary['status'] : '';
+
+		if ( 'measured' !== $status || $samples < 1 ) {
+			return $prefix . 'unknown, no streamed answers recorded.';
+		}
+
+		// Same bands as the dashboard.
+		$labels = array(
+			'lt1s'   => 'under 1 s',
+			'1to2s'  => '1 to 2 s',
+			'2to5s'  => '2 to 5 s',
+			'5to10s' => '5 to 10 s',
+			'gte10s' => '10 s and over',
+		);
+
+		// A sum dropped as invalid averages to 0, which is not a credible measurement.
+		$average = isset( $summary['average_ms'] ) && is_int( $summary['average_ms'] ) && $summary['average_ms'] > 0
+			? sprintf( 'average %d ms', $summary['average_ms'] )
+			: 'average unknown';
+
+		// Band counters dropped as invalid can leave a measured count without a median band.
+		$bucket = isset( $summary['median_bucket'] ) && is_string( $summary['median_bucket'] ) ? $summary['median_bucket'] : '';
+		$median = isset( $labels[ $bucket ] ) ? 'median ' . $labels[ $bucket ] : 'median unknown';
+
+		return $prefix . sprintf( '%s, %s, %s.', 1 === $samples ? '1 answer' : $samples . ' answers', $average, $median );
 	}
 
 	/**

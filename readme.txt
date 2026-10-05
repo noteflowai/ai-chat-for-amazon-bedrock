@@ -157,6 +157,9 @@ invalid region or the daily cap, are not counted, and a request rescued by the f
 not a failure. Diagnostics model tests are counted too. These are counters only: no message,
 error text or identity is kept, and they measure what this site saw, not AWS service health.
 
+The "Time to first text (streamed, 7 days)" line under the usage panel shows how long streamed
+answers took to start. The FAQ explains how it is measured.
+
 = The rest =
 
 Streaming, reading answers and posts aloud with Amazon Polly, managed prompts from Bedrock Prompt Management, a fallback model, multiple chats with
@@ -237,6 +240,14 @@ It is a single credential created in the Amazon Bedrock console and sent as a be
 = Does the plugin use prompt caching? =
 
 Yes, on Claude 3.5 Haiku, Claude 3.7 Sonnet and newer Claude models, which Bedrock supports it for. The site's system prompt and tool definitions are the same for every visitor, so they are marked for Bedrock's prompt cache; a later request that starts the same way reads them at a fraction of the input price. Writing to the cache costs slightly more than a normal input token, and a prompt shorter than the model's minimum is simply not cached, so a site with a short prompt pays what it paid before. The dashboard and `wp ai-chat-bedrock usage` show cache reads and writes. The `ai_chat_bedrock_prompt_caching` filter turns it off.
+
+= What does "Time to first text" on the dashboard mean? =
+
+The "Time to first text (streamed, 7 days)" line under the usage panel shows how long visitors waited for a streamed answer to start: the number of answers measured, the average in milliseconds and the median band (under 1 s, 1 to 2 s, 2 to 5 s, 5 to 10 s, or 10 s and over). It covers streamed answers only. It is measured on the server, from the moment the plugin starts the Bedrock request to the moment the first text arrives, so it does not include page load or network time in the visitor's browser. When the primary model sends no text and the fallback model answers, the wait is counted from the first attempt. Requests that fail before any text, setup errors and empty answers are not measured.
+
+"Unknown, no streamed answers recorded yet" means no streamed answer has been measured in the last seven days, for example on a new installation, right after an upgrade or reset, or when streaming is off. It never reports 0 ms for an empty period. Only a count, a sum of milliseconds and five band counters are kept for each day, with no prompt, answer, visitor or request ID. They follow the same 30-day retention as the other usage counters and are cleared when usage is reset.
+
+From a terminal or a scheduled report, `wp ai-chat-bedrock usage` prints the same figure as its last line, for example `Time to first text (streamed, 7 days): 12 answers, average 1840 ms, median 1 to 2 s.` It covers the days asked for, up to the 30 that are kept, reads `average unknown` or `median unknown` when a stored figure is missing or invalid, and exits zero when nothing was measured. `--by-model` leaves the line out, because latency is not recorded per model.
 
 = Why do I receive AccessDeniedException or a model access error? =
 
@@ -473,6 +484,8 @@ what a good answer says.
 * WeChat Official Account, under Chat and off by default: followers' text messages are answered from the site's pages in plain text with sources and a note that AI wrote them, in plaintext, compatible or safe mode, optionally by a faster model than the site's. WeChat's retries give an answer about fifteen seconds; a slower one is kept until the follower sends 1. Works with unverified personal subscription accounts, needs no AppSecret, and limits each follower per hour.
 * Faster on hosts outside AWS before credentials are entered: when no IAM role answers, the plugin no longer waits for the instance metadata service to time out on every page, admin screen and cron run. It asks again after five minutes, when the settings are saved or when Diagnostics runs its checks.
 * Ready for PHP 8.5: streamed answers no longer call a function PHP 8.5 deprecates, which could write a notice into the reply, and the conversation log export no longer relies on a CSV default PHP 8.4 deprecates. The release checks now run on PHP 7.4, 8.3 and 8.5 and fail on any PHP notice.
+* The dashboard shows how long visitors wait for the first text of a streamed answer: the number of answers, the average and the median range over the last 7 days, or unknown before any streamed answer. The time is taken on the server, from the start of the Bedrock request to the first text, and is recorded after that text has been sent. Only counters are kept, for 30 days, with no message text.
+* `wp ai-chat-bedrock usage` ends with streamed time to first text: count, average ms and median band, up to 30 days, or unknown, never 0 ms. Output is otherwise unchanged.
 
 = 1.64.0 =
 * Contact requests, under Chat and off by default: a Contact a person button below the chat, also offered after a thumbs-down. Visitors leave an email address or phone number and a message, and can include the conversation; nothing is stored without their consent. Requests are listed under Contact requests, exported as CSV, deleted after the days you set (180 by default) and covered by personal data export and erasure. Akismet checks them when set up, Flamingo files a copy, an email can go to the site, and `ai_chat_bedrock_lead_captured` passes them on. Joinchat's WhatsApp number is offered as another way to reach the site.
@@ -491,7 +504,7 @@ what a good answer says.
 == Upgrade Notice ==
 
 = 1.65.0 =
-Optional answers for a WeChat Official Account, faster pages on hosts outside AWS before credentials are set, and PHP 8.5 support.
+Optional answers for a WeChat Official Account, streamed time to first text on the dashboard and in WP-CLI, faster pages on hosts outside AWS before credentials are set, and PHP 8.5 support.
 
 = 1.64.0 =
 Pages your SEO plugin marks noindex are no longer used for answers; Answer grounding can include them again. Optional contact requests and analytics events, WP Consent API support, and fairer read-aloud limits.
