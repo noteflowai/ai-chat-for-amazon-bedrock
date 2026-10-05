@@ -154,6 +154,8 @@ The dashboard also counts chat requests that reached Amazon Bedrock and still fa
 fallback model, today and for the last seven days, grouped as throttled, access denied, rejected,
 unavailable, network or other. These are counters only: no message, error text or identity is kept.
 
+The usage panel also shows how long streamed answers take to start.
+
 = The rest =
 
 Streaming, reading answers and posts aloud with Amazon Polly, managed prompts from Bedrock Prompt Management, a fallback model, multiple chats with
@@ -234,6 +236,14 @@ It is a single credential created in the Amazon Bedrock console and sent as a be
 = Does the plugin use prompt caching? =
 
 Yes, on Claude 3.5 Haiku, Claude 3.7 Sonnet and newer Claude models, which Bedrock supports it for. The site's system prompt and tool definitions are the same for every visitor, so they are marked for Bedrock's prompt cache; a later request that starts the same way reads them at a fraction of the input price. Writing to the cache costs slightly more than a normal input token, and a prompt shorter than the model's minimum is simply not cached, so a site with a short prompt pays what it paid before. The dashboard and `wp ai-chat-bedrock usage` show cache reads and writes. The `ai_chat_bedrock_prompt_caching` filter turns it off.
+
+= What does "Time to first text" on the dashboard mean? =
+
+The "Time to first text (streamed, 7 days)" line under the usage panel shows how long visitors waited for a streamed answer to start: the number of answers measured, the average in milliseconds and the median band (under 1 s, 1 to 2 s, 2 to 5 s, 5 to 10 s, or 10 s and over). It covers streamed answers only. It is measured on the server, from the moment the plugin starts the Bedrock request to the moment the first text arrives, so it does not include page load or network time in the visitor's browser. When the primary model sends no text and the fallback model answers, the wait is counted from the first attempt. Requests that fail before any text, setup errors and empty answers are not measured.
+
+"Unknown, no streamed answers recorded yet" means no streamed answer has been measured in the last seven days, for example on a new installation, right after an upgrade or reset, or when streaming is off. It never reports 0 ms for an empty period. Only a count, a sum of milliseconds and five band counters are kept for each day, with no prompt, answer, visitor or request ID. They follow the same 30-day retention as the other usage counters and are cleared when usage is reset.
+
+From a terminal or a scheduled report, `wp ai-chat-bedrock usage` prints the same figure as its last line, for example `Time to first text (streamed, 7 days): 12 answers, average 1840 ms, median 1 to 2 s.` It covers the days asked for, up to the 30 that are kept, reads `average unknown` or `median unknown` when a stored figure is missing or invalid, and exits zero when nothing was measured. `--by-model` leaves the line out, because latency is not recorded per model.
 
 = Why do I receive AccessDeniedException or a model access error? =
 
@@ -484,6 +494,8 @@ what a good answer says.
 * WeChat Official Account, under Chat and off by default: followers' text messages are answered from the site's pages in plain text with sources and a note that AI wrote them, in plaintext, compatible or safe mode, optionally by a faster model than the site's. WeChat's retries give an answer about fifteen seconds; a slower one is kept until the follower sends 1. Works with unverified personal subscription accounts, needs no AppSecret, and limits each follower per hour.
 * Faster on hosts outside AWS before credentials are entered: when no IAM role answers, the plugin no longer waits for the instance metadata service to time out on every page, admin screen and cron run. It asks again after five minutes, when the settings are saved or when Diagnostics runs its checks.
 * Ready for PHP 8.5: streamed answers no longer call a function PHP 8.5 deprecates, which could write a notice into the reply, and the conversation log export no longer relies on a CSV default PHP 8.4 deprecates. The release checks now run on PHP 7.4, 8.3 and 8.5 and fail on any PHP notice.
+* The dashboard shows how long visitors wait for the first text of a streamed answer: the number of answers, the average and the median range over the last 7 days, or unknown before any streamed answer. The time is taken on the server, from the start of the Bedrock request to the first text, and is recorded after that text has been sent. Only counters are kept, for 30 days, with no message text.
+* `wp ai-chat-bedrock usage` ends with streamed time to first text: count, average ms and median band, up to 30 days, or unknown, never 0 ms. Output is otherwise unchanged.
 
 == Upgrade Notice ==
 
@@ -491,7 +503,7 @@ what a good answer says.
 Optional record of where posts are published on Bilibili, YouTube and Xiaohongshu, kept by your agents, Bilibili embeds, uploads to YouTube, and customer service with daily counts for a WeChat mini game.
 
 = 1.65.0 =
-Optional answers for a WeChat Official Account, faster pages on hosts outside AWS before credentials are set, and PHP 8.5 support.
+Optional answers for a WeChat Official Account, streamed time to first text on the dashboard and in WP-CLI, faster pages on hosts outside AWS before credentials are set, and PHP 8.5 support.
 
 = 1.64.0 =
 Pages your SEO plugin marks noindex are no longer used for answers; Answer grounding can include them again. Optional contact requests and analytics events, WP Consent API support, and fairer read-aloud limits.
@@ -756,6 +768,6 @@ The plugin creates no custom database tables; the optional log is kept in a Word
 
 On a WooCommerce store with Product answers on, the public details of matching products are sent to Amazon Bedrock with each question. With Order questions on, a signed-in customer's question about orders sends their recent orders' number, dates, status, items, total, shipping method and tracking number to Amazon Bedrock; addresses, email, phone and payment details are not sent. The product assistant sends the product's own details, or its approved review texts without reviewer names, when an editor asks for a draft.
 
-With WeChat answers on, followers' text messages, passed on by WeChat (Tencent), go to Amazon Bedrock with up to three earlier exchanges, kept 30 minutes under a hash of the OpenID. Embedded Bilibili players load from Bilibili, which receives the visitor's IP address and can set cookies. YouTube uploads, off until a channel is connected with its owner's consent, send the chosen video file, title, description and tags to the YouTube Data API, under the [Google Privacy Policy](https://policies.google.com/privacy) and the [YouTube Terms of Service](https://www.youtube.com/t/terms). The publishing record stays in post meta and is sent nowhere. A WeChat mini game's customer service messages arrive through WeChat; set answers return through WeChat's API, nothing goes to Bedrock, and only daily totals are kept.
+With WeChat answers on, followers' text messages, passed on by WeChat (Tencent), go to Amazon Bedrock with up to three earlier exchanges, kept 30 minutes under a hash of the OpenID. Embedded Bilibili players load from Bilibili, which receives the visitor's IP address and can set cookies. YouTube uploads, off until a channel is connected with its owner's consent, send the chosen video file, title, description and tags to the YouTube Data API, under the [Google Privacy Policy](https://policies.google.com/privacy) and the [YouTube Terms of Service](https://www.youtube.com/t/terms). A WeChat mini game's customer service messages arrive through WeChat; set answers return through WeChat's API, nothing goes to Bedrock, and only daily totals are kept.
 
 When an image model is chosen, image prompts, and any image supplied for editing, are sent to Stability AI models on Amazon Bedrock in US West (Oregon) unless the site moves them to another region. The prompt is first checked with the site's guardrail in its own region. With the media helpers on, Remove background and Upscale send the selected image when an editor asks. Requests from other plugins through the WordPress AI Client send what those plugins put in the prompt, including any images.

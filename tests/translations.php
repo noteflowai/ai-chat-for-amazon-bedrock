@@ -120,6 +120,29 @@ foreach ( array( 'zh_CN', 'ja' ) as $locale ) {
 	$count = strlen( $mo ) >= 12 ? unpack( 'V', substr( $mo, 8, 4 ) ) : array( 1 => 0 );
 	check_l10n( "\xde\x12\x04\x95" === substr( $mo, 0, 4 ) && count( $po ) + 1 === $count[1], "$locale: the .mo file matches the .po file." );
 
+	// A catalog with the right entry count can still lose its plural source strings.
+	// Some compilers do that for one-form locales, making standard ngettext fall back
+	// to English. Read both string tables and compare the actual serialized entries.
+	$mo_entries = array();
+	$mo_header  = strlen( $mo ) >= 28 ? unpack( 'V7', substr( $mo, 0, 28 ) ) : array();
+	if ( isset( $mo_header[5] ) && count( $po ) + 1 === $mo_header[3]
+		&& $mo_header[4] + 8 * $mo_header[3] <= strlen( $mo )
+		&& $mo_header[5] + 8 * $mo_header[3] <= strlen( $mo ) ) {
+		for ( $i = 0; $i < $mo_header[3]; $i++ ) {
+			$original   = unpack( 'Vlength/Voffset', substr( $mo, $mo_header[4] + 8 * $i, 8 ) );
+			$translated = unpack( 'Vlength/Voffset', substr( $mo, $mo_header[5] + 8 * $i, 8 ) );
+			if ( $original['offset'] + $original['length'] <= strlen( $mo )
+				&& $translated['offset'] + $translated['length'] <= strlen( $mo ) ) {
+				$mo_entries[ substr( $mo, $original['offset'], $original['length'] ) ] =
+					substr( $mo, $translated['offset'], $translated['length'] );
+			}
+		}
+	}
+	foreach ( $po as $id => $text ) {
+		$mo_id = isset( $plurals[ $id ] ) ? $id . "\0" . $plurals[ $id ] : $id;
+		check_l10n( isset( $mo_entries[ $mo_id ] ) && $text === $mo_entries[ $mo_id ], "$locale: the compiled MO entry preserves the context, plural source and translation of \"$id\"." );
+	}
+
 	// The block editor script reads its strings from a JSON file named after its path, as WordPress looks it up.
 	$json = json_decode( (string) @file_get_contents( $languages . "$domain-$locale-" . md5( 'blocks/chat/editor.js' ) . '.json' ), true );
 	check_l10n( is_array( $json ) && ! empty( $json['locale_data']['messages'] ), "$locale: the block editor script has its translations." );
