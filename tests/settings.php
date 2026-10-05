@@ -116,6 +116,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-history.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-speech.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-leads.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat-game.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-youtube.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 
@@ -316,6 +317,16 @@ $saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_enabled' =>
 check_set( 'Tok3nForTests' === AI_Chat_Bedrock_WeChat::token( $saved ) && '' === $saved['wechat_app_id'] && isset( $GLOBALS['aicfab_notices']['wechat_token'] ), 'A malformed token is refused with a notice, and the original ID is not taken for an AppID.' );
 $saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_clear' => '1' ) );
 check_set( false === $saved['wechat_enabled'] && '' === AI_Chat_Bedrock_WeChat::token( $saved ) && '' === AI_Chat_Bedrock_WeChat::aes_key( $saved ), 'The token and key can be removed.' );
+
+// --- WeChat mini game ------------------------------------------------------------
+
+$saved = save_tab( $admin, array( 'wxgame_enabled' ), array( 'wxgame_enabled' => '1', 'wxgame_app_id' => 'wx1234567890game00', 'wxgame_token' => 'GameTok3n', 'wxgame_aes_key' => 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG', 'wxgame_app_secret' => '0123456789abcdef0123456789abcdef', 'wxgame_welcome' => "Hi!\nAsk away.", 'wxgame_answers' => "pay, 充值 = WeChat Pay handles it.\nnonsense", 'wxgame_fallback' => 'We read every message.' ) );
+check_set( true === $saved['wxgame_enabled'] && 'wx1234567890game00' === $saved['wxgame_app_id'] && 'GameTok3n' === AI_Chat_Bedrock_WeChat_Game::token( $saved ) && '0123456789abcdef0123456789abcdef' === AI_Chat_Bedrock_WeChat_Game::app_secret( $saved ) && "Hi!\nAsk away." === $saved['wxgame_welcome'] && 'pay, 充值 = WeChat Pay handles it.' === $saved['wxgame_answers'] && 'We read every message.' === $saved['wxgame_fallback'], 'The mini game\'s switch, AppID, secrets, welcome, answers and fallback are saved.' );
+check_set( false === strpos( json_encode( $saved ), 'GameTok3n' ) && false === strpos( json_encode( $saved ), '0123456789abcdef0123456789abcdef' ), 'The mini game\'s token and AppSecret are stored encrypted.' );
+$saved = save_tab( $admin, array( 'wxgame_enabled' ), array( 'wxgame_enabled' => '1', 'wxgame_app_id' => 'wx1234567890game00', 'wxgame_token' => '', 'wxgame_app_secret' => 'too short' ) );
+check_set( 'GameTok3n' === AI_Chat_Bedrock_WeChat_Game::token( $saved ) && '0123456789abcdef0123456789abcdef' === AI_Chat_Bedrock_WeChat_Game::app_secret( $saved ) && isset( $GLOBALS['aicfab_notices']['wxgame_app_secret'] ), 'Empty fields keep the saved secrets, and a malformed AppSecret is refused with a notice.' );
+$saved = save_tab( $admin, array( 'wxgame_enabled' ), array( 'wxgame_clear' => '1' ) );
+check_set( false === $saved['wxgame_enabled'] && '' === AI_Chat_Bedrock_WeChat_Game::token( $saved ) && ! AI_Chat_Bedrock_WeChat_Game::can_reply( $saved ), 'The mini game\'s secrets can be removed.' );
 
 // --- Pages hidden from search ----------------------------------------------------
 

@@ -102,6 +102,21 @@ WeChat waits five seconds for a reply and asks twice more, so an answer can take
 
 Every request must carry WeChat's signature for your token and be no more than 15 minutes old; XML with a document type is refused. Each follower may send 20 messages an hour by default, and every answer counts towards the site's daily request limit. The conversation log, when it is on, records the questions under the source WeChat, without the follower's ID. Add the suggested text from Settings > Privacy to your privacy policy before turning it on.
 
+## Can it handle my WeChat mini game's customer service?
+
+Yes, under Chat > WeChat mini game, which is off by default. A mini game sends what happens in its customer service chat to one address: a player opening the chat, from which part of the game, their messages, and their answers to subscription message prompts. The plugin takes them, answers what it can and keeps daily counts.
+
+1. Enter the game's AppID, a token of 3 to 32 letters and digits and, for safe mode, an EncodingAESKey. To send answers, also enter the AppSecret, which is stored encrypted and never exported.
+2. In the mini game's console, under Development Management > Development Settings > Message Push, enter the URL the setting shows, `https://your-site/wp-json/ai-chat-bedrock/v1/wechat-game`, the same token and key, safe mode and either JSON or XML. WeChat checks the address at once.
+3. Add the server's outgoing IP address to the game's IP whitelist; the settings screen names the address WeChat saw if it refuses an answer.
+4. In the game, open the chat with `wx.openCustomerServiceConversation({ sessionFrom: 'level-3' })`. The `sessionFrom` is counted as the scene, so you can see which screens send players to the chat.
+
+**Answers.** Write a welcome for players who open the chat, sent at most every 12 hours per player, and set answers, one per line as `keywords = answer`, keywords separated by commas or `|`, such as `recharge, payment = Payments are handled by WeChat Pay; send your order number if one is missing.` A question gets the first answer one of whose keywords it contains, or the optional reply for no match. Nothing is generated: answering with generative AI in a mini game needs an AI service category and an algorithm filing, which a personal mini game cannot have. A mini game cannot reply to WeChat's request, so answers go through WeChat's customer service API with an access token from the stable token API; WeChat allows a few answers within 48 hours of a player's message, and two within a minute of opening the chat.
+
+**Counts.** For each day of the last 90 the plugin keeps the players (each counted once a day), chats opened, the scenes they were opened from, messages by type, questions that matched an answer or not, answers sent or refused, and per subscription template how many players accepted or declined the prompt, turned it off later and received the message. The settings screen shows the last 30 days. No OpenID is kept: players are counted under a hash with a salt made for the day, and both are discarded after it. Questions go to the conversation log, when it is on, under the source WeChat mini game, so unanswered ones show as content gaps.
+
+What players do in the game itself, such as levels played or items bought, does not come through message push. Report it from the game with `wx.reportEvent` and read it in the console's data analysis. Declare what the game collects in its user privacy guide, and add the suggested text from Settings > Privacy to the site's privacy policy before turning this on.
+
 ## Can it publish to Bilibili, YouTube or Xiaohongshu?
 
 It keeps the record of where each post is published, and uploads to YouTube; under Settings > Publishing, all off by default.

@@ -53,17 +53,16 @@ image next to the original, which is never changed.
 * An internal assistant, or a public chatbot with explicit guest access
 * An agent that answers from your own content and from approved MCP tools
 * A WordPress MCP endpoint that clients such as Claude Code, Cursor or VS Code can read
-* Answers for a WeChat Official Account, from the same pages
+* Answers for a WeChat Official Account, from the same pages, and mini game customer service
 * A record of where each post is published on Bilibili, YouTube or Xiaohongshu that your agents
-  keep, Bilibili embeds, and uploads to YouTube through its API
+  keep, Bilibili embeds, and uploads to YouTube
 
-Add the chat with the `[ai_chat_bedrock]` shortcode or the chat block, or let it float on every page
-from a single setting.
+Add the chat with the `[ai_chat_bedrock]` shortcode or the chat block, or let it float on every page.
 
 = Three things this does differently =
 
 **It runs without storing AWS keys.** An instance role, a task role or environment variables are
-enough. Off AWS, one Amazon Bedrock API key from the Bedrock console is all it takes to connect. Where keys are stored, they are encrypted, and Diagnostics generates the least-privilege
+enough. Off AWS, one Bedrock API key is enough. Where keys are stored, they are encrypted, and Diagnostics generates the least-privilege
 IAM policy this site actually needs rather than asking you to attach a broad managed policy.
 
 **It assumes a public chat will be abused.** Every default below is the safe one, and each is a
@@ -350,6 +349,10 @@ Yes, under Chat > Analytics events, off by default. Opens, questions, answers, f
 
 Yes, under Chat > WeChat Official Account, off by default. Followers' text messages are answered from your pages in plain text with sources, in plaintext or safe mode, within the time WeChat waits, and a new follower gets the welcome message. It works with unverified personal subscription accounts and needs no AppSecret. [Setup and limits](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-answer-my-wechat-official-account).
 
+= Can it handle my WeChat mini game's customer service? =
+
+Yes, under Chat > WeChat mini game, off by default. Players who open the game's customer service chat are welcomed and get your set answers by keyword, without AI, and the site counts players, chats, scenes and subscription choices a day without keeping their IDs. [Setup and limits](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-handle-my-wechat-mini-games-customer-service).
+
 = Can it publish to Bilibili, YouTube or Xiaohongshu? =
 
 It keeps the record, under Settings > Publishing, off by default: your agents publish with the platforms' creator tools and record each item through abilities and MCP, since Bilibili and Xiaohongshu offer individual creators no publishing API. YouTube uploads go through its API once a channel is connected. [The record, embeds and uploads](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-publish-to-bilibili-youtube-or-xiaohongshu).
@@ -475,6 +478,7 @@ what a good answer says.
 * Publishing record, under Settings > Publishing and off by default: where each post is published on Bilibili, YouTube or Xiaohongshu, with the item's ID, address, account, language, status and the edition it replaces. Agents read a post's publishing package and record what they published through abilities and the MCP server, with their account's permissions; the record shows when editing a post and, optionally, as links under it.
 * Bilibili videos embed from their links, as YouTube's do, when turned on.
 * Uploads to YouTube through its API, after connecting a channel with Google's sign-in: resumable, in the background, added to the record and followed until YouTube says whether the video is public. Uploads default to private and are limited per day.
+* WeChat mini game customer service, under Chat and off by default: the game's message push comes to its own address, in JSON or XML, plaintext or safe mode. Players who open the chat are welcomed, and questions get the site owner's set answers, matched by keyword, through WeChat's customer service API; nothing is generated, as an AI answer in a mini game needs an AI category and an algorithm filing. Daily totals show players, chats opened by scene, messages, how many questions matched an answer and how players answered subscription prompts, without keeping any OpenID.
 
 = 1.65.0 =
 * WeChat Official Account, under Chat and off by default: followers' text messages are answered from the site's pages in plain text with sources and a note that AI wrote them, in plaintext, compatible or safe mode, optionally by a faster model than the site's. WeChat's retries give an answer about fifteen seconds; a slower one is kept until the follower sends 1. Works with unverified personal subscription accounts, needs no AppSecret, and limits each follower per hour.
@@ -484,7 +488,7 @@ what a good answer says.
 == Upgrade Notice ==
 
 = 1.66.0 =
-Optional record of where posts are published on Bilibili, YouTube and Xiaohongshu, kept by your agents, Bilibili embeds, and uploads to YouTube.
+Optional record of where posts are published on Bilibili, YouTube and Xiaohongshu, kept by your agents, Bilibili embeds, uploads to YouTube, and customer service with daily counts for a WeChat mini game.
 
 = 1.65.0 =
 Optional answers for a WeChat Official Account, faster pages on hosts outside AWS before credentials are set, and PHP 8.5 support.
@@ -736,7 +740,7 @@ Security and reliability release. Review the AWS credential settings after upgra
 
 Chat messages and the configured system prompt are sent to Amazon Bedrock. When MCP tools are enabled for authenticated users, relevant tool parameters are sent to the selected external MCP server and tool output is sent to Amazon Bedrock to complete the answer. Review AWS and each MCP provider's privacy terms before use.
 
-When semantic search is on, the text a signed-out visitor can read on each published post is sent to Amazon Bedrock to create embeddings, and each question is embedded the same way. With a reranking model chosen, the question and the passages found for it are also sent to that model on Amazon Bedrock. With Amazon S3 Vectors chosen, those passages and their vectors are stored in the vector bucket of your own AWS account, labelled with the site and post they came from. Uninstalling the plugin does not delete them; delete the index in AWS. The optional fixes for other plugins send nothing anywhere.
+When semantic search is on, the text a signed-out visitor can read on each published post is sent to Amazon Bedrock to create embeddings, and each question is embedded the same way. With a reranking model chosen, the question and the passages found for it are also sent to that model on Amazon Bedrock. With Amazon S3 Vectors chosen, those passages and their vectors are stored in the vector bucket of your own AWS account, labelled with the site and post they came from. Uninstalling the plugin does not delete them; delete the index in AWS.
 
 Conversation logging is disabled by default, and with it off no chat content is written to the database. When an administrator enables it, questions and answers are stored for the configured retention window, capped at the 200 most recent exchanges, and can be deleted per user or in full from the Conversations screen. Administrators are responsible for disclosing this recording to visitors.
 
@@ -752,6 +756,6 @@ The plugin creates no custom database tables; the optional log is kept in a Word
 
 On a WooCommerce store with Product answers on, the public details of matching products are sent to Amazon Bedrock with each question. With Order questions on, a signed-in customer's question about orders sends their recent orders' number, dates, status, items, total, shipping method and tracking number to Amazon Bedrock; addresses, email, phone and payment details are not sent. The product assistant sends the product's own details, or its approved review texts without reviewer names, when an editor asks for a draft.
 
-With WeChat answers on, followers' text messages, passed on by WeChat (Tencent), go to Amazon Bedrock with up to three earlier exchanges, kept 30 minutes under a hash of the OpenID. Embedded Bilibili players load from Bilibili, which receives the visitor's IP address and can set cookies. YouTube uploads, off until a channel is connected with its owner's consent, send the chosen video file, title, description and tags to the YouTube Data API, under the [Google Privacy Policy](https://policies.google.com/privacy) and the [YouTube Terms of Service](https://www.youtube.com/t/terms). The publishing record stays in post meta and is sent nowhere.
+With WeChat answers on, followers' text messages, passed on by WeChat (Tencent), go to Amazon Bedrock with up to three earlier exchanges, kept 30 minutes under a hash of the OpenID. Embedded Bilibili players load from Bilibili, which receives the visitor's IP address and can set cookies. YouTube uploads, off until a channel is connected with its owner's consent, send the chosen video file, title, description and tags to the YouTube Data API, under the [Google Privacy Policy](https://policies.google.com/privacy) and the [YouTube Terms of Service](https://www.youtube.com/t/terms). The publishing record stays in post meta and is sent nowhere. A WeChat mini game's customer service messages arrive through WeChat; set answers return through WeChat's API, nothing goes to Bedrock, and only daily totals are kept.
 
-When an image model is chosen, image prompts, and any image supplied for editing, are sent to Stability AI models on Amazon Bedrock in US West (Oregon) unless the site moves them to another region. The prompt is first checked with the site's guardrail in its own region. With the media helpers on, Remove background and Upscale send the selected image when an editor asks. Results are saved as new Media Library items. Requests from other plugins through the WordPress AI Client send what those plugins put in the prompt, including any images.
+When an image model is chosen, image prompts, and any image supplied for editing, are sent to Stability AI models on Amazon Bedrock in US West (Oregon) unless the site moves them to another region. The prompt is first checked with the site's guardrail in its own region. With the media helpers on, Remove background and Upscale send the selected image when an editor asks. Requests from other plugins through the WordPress AI Client send what those plugins put in the prompt, including any images.

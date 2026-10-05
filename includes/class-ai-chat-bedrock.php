@@ -73,6 +73,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-analytics.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-consent.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-wechat.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-wechat-game.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-distribution.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-bilibili.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-youtube.php';
@@ -208,6 +209,10 @@ class AI_Chat_Bedrock {
 		$wechat = new AI_Chat_Bedrock_WeChat();
 		$this->loader->add_action( 'rest_api_init', $wechat, 'register_routes' );
 		$this->loader->add_filter( 'rest_pre_serve_request', 'AI_Chat_Bedrock_WeChat', 'serve', 10, 3 );
+
+		$wechat_game = new AI_Chat_Bedrock_WeChat_Game();
+		$this->loader->add_action( 'rest_api_init', $wechat_game, 'register_routes' );
+		$this->loader->add_filter( 'rest_pre_serve_request', 'AI_Chat_Bedrock_WeChat_Game', 'serve', 10, 3 );
 
 		$chat_history = new AI_Chat_Bedrock_Chat_History();
 		$this->loader->add_action( 'rest_api_init', $chat_history, 'register_routes' );

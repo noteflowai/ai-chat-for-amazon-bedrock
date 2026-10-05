@@ -1094,6 +1094,7 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'leads_enabled', __( 'Contact requests', 'ai-chat-for-amazon-bedrock' ), 'leads_render', 'aicfab_chat' );
 		$this->field( 'analytics_events', __( 'Analytics events', 'ai-chat-for-amazon-bedrock' ), 'analytics_events_render', 'aicfab_chat' );
 		$this->field( 'wechat_enabled', __( 'WeChat Official Account', 'ai-chat-for-amazon-bedrock' ), 'wechat_render', 'aicfab_chat' );
+		$this->field( 'wxgame_enabled', __( 'WeChat mini game', 'ai-chat-for-amazon-bedrock' ), 'wxgame_render', 'aicfab_chat' );
 		$this->field( 'allow_public_chat', __( 'Guest access', 'ai-chat-for-amazon-bedrock' ), 'allow_public_chat_render', 'aicfab_chat' );
 		$this->field( 'rate_limit_per_minute', __( 'Requests per visitor per minute', 'ai-chat-for-amazon-bedrock' ), 'rate_limit_render', 'aicfab_chat' );
 		$this->field( 'role_limits', __( 'Per-role limits', 'ai-chat-for-amazon-bedrock' ), 'role_limits_render', 'aicfab_chat' );
@@ -1391,6 +1392,56 @@ class AI_Chat_Bedrock_Admin {
 		/* translators: %s: the address WeChat sends messages to. */
 		echo '<p class="description">' . esc_html( sprintf( __( 'Off by default. In the WeChat Official Accounts Platform, under Settings and Development > Basic Configuration, enable the server configuration with the URL %s and the token entered here. Plaintext mode needs only the token; compatible and safe mode also need the EncodingAESKey and AppID. No AppSecret is needed.', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_WeChat::url() ) ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'The chat answers each text message from the site\'s pages, in plain text with its sources. WeChat waits about fifteen seconds in all; a longer answer is kept and the follower is told to send 1 to see it, so choose a fast model for WeChat if the chat\'s takes longer. A new follower gets the welcome message and suggested questions. Every answer counts towards the daily request limit, and the conversation log records them when it is on.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+	public function wxgame_render() {
+		$options = get_option( 'ai_chat_bedrock_settings', array() );
+		$options = is_array( $options ) ? $options : array();
+		$saved   = __( 'Saved — enter a value to replace', 'ai-chat-for-amazon-bedrock' );
+		echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'WeChat mini game', 'ai-chat-for-amazon-bedrock' ) . '</legend>';
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[wxgame_enabled]" value="1" ' . checked( ! empty( $options['wxgame_enabled'] ), true, false ) . '> ' . esc_html__( 'Take the mini game\'s customer service messages and count what players do there', 'ai-chat-for-amazon-bedrock' ) . '</label><br>';
+		echo '<label for="aicfab_field_wxgame_app_id">' . esc_html__( 'AppID', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="text" id="aicfab_field_wxgame_app_id" class="regular-text" name="ai_chat_bedrock_settings[wxgame_app_id]" value="' . esc_attr( AI_Chat_Bedrock_WeChat_Game::app_id( $options ) ) . '" placeholder="wx…"><br>';
+		foreach ( array(
+			'wxgame_token'      => array( __( 'Token', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_WeChat_Game::token( $options ) ),
+			'wxgame_aes_key'    => array( __( 'EncodingAESKey, for safe mode', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_WeChat_Game::aes_key( $options ) ),
+			'wxgame_app_secret' => array( __( 'AppSecret, to send answers', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_WeChat_Game::app_secret( $options ) ),
+		) as $aicfab_key => $aicfab_field ) {
+			echo '<label for="aicfab_field_' . esc_attr( $aicfab_key ) . '">' . esc_html( $aicfab_field[0] ) . '</label> <input type="password" id="aicfab_field_' . esc_attr( $aicfab_key ) . '" class="regular-text" name="ai_chat_bedrock_settings[' . esc_attr( $aicfab_key ) . ']" value="" autocomplete="new-password" placeholder="' . esc_attr( '' !== $aicfab_field[1] ? $saved : '' ) . '"><br>';
+		}
+		echo '<label for="aicfab_field_wxgame_welcome">' . esc_html__( 'Welcome, when a player opens the chat', 'ai-chat-for-amazon-bedrock' ) . '</label><br><textarea id="aicfab_field_wxgame_welcome" class="large-text" rows="2" name="ai_chat_bedrock_settings[wxgame_welcome]">' . esc_textarea( isset( $options['wxgame_welcome'] ) ? (string) $options['wxgame_welcome'] : '' ) . '</textarea><br>';
+		echo '<label for="aicfab_field_wxgame_answers">' . esc_html__( 'Set answers, one per line as: keywords = answer', 'ai-chat-for-amazon-bedrock' ) . '</label><br><textarea id="aicfab_field_wxgame_answers" class="large-text code" rows="5" name="ai_chat_bedrock_settings[wxgame_answers]" placeholder="' . esc_attr__( 'recharge, payment = Payments are handled by WeChat Pay. Send your order number if one is missing.', 'ai-chat-for-amazon-bedrock' ) . '">' . esc_textarea( AI_Chat_Bedrock_WeChat_Game::clean_answers( isset( $options['wxgame_answers'] ) ? $options['wxgame_answers'] : '' ) ) . '</textarea><br>';
+		echo '<label for="aicfab_field_wxgame_fallback">' . esc_html__( 'Reply when no answer matches (optional)', 'ai-chat-for-amazon-bedrock' ) . '</label><br><textarea id="aicfab_field_wxgame_fallback" class="large-text" rows="2" name="ai_chat_bedrock_settings[wxgame_fallback]">' . esc_textarea( isset( $options['wxgame_fallback'] ) ? (string) $options['wxgame_fallback'] : '' ) . '</textarea>';
+		if ( '' !== AI_Chat_Bedrock_WeChat_Game::token( $options ) || '' !== AI_Chat_Bedrock_WeChat_Game::aes_key( $options ) || AI_Chat_Bedrock_WeChat_Game::can_reply( $options ) ) {
+			echo '<br><label><input type="checkbox" name="ai_chat_bedrock_settings[wxgame_clear]" value="1"> ' . esc_html__( 'Remove the saved token, key and AppSecret', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		}
+		echo '</fieldset>';
+		$contact = AI_Chat_Bedrock_WeChat_Game::contact_summary();
+		echo '<p><strong>' . esc_html( $contact ? implode( ' ', $contact ) : __( 'WeChat has not reached this address yet.', 'ai-chat-for-amazon-bedrock' ) ) . '</strong></p>';
+		$summary = AI_Chat_Bedrock_WeChat_Game::summary( 30 );
+		if ( $summary['sessions'] || $summary['messages'] || $summary['templates'] ) {
+			$asked = $summary['answered'] + $summary['unanswered'];
+			/* translators: 1: player-days, 2: chats opened, 3: messages, 4: share of questions answered, 5: answers sent. */
+			$line   = sprintf( __( 'Last 30 days: %1$s players (counted once a day), %2$s chats opened, %3$s messages, %4$s of questions matched a set answer, %5$s answers sent.', 'ai-chat-for-amazon-bedrock' ), number_format_i18n( $summary['players'] ), number_format_i18n( $summary['sessions'] ), number_format_i18n( $summary['messages'] ), $asked ? number_format_i18n( 100 * $summary['answered'] / $asked ) . '%' : '—', number_format_i18n( $summary['replies'] ) );
+			$scenes = array();
+			foreach ( array_slice( $summary['scenes'], 0, 3, true ) as $aicfab_scene => $aicfab_count ) {
+				$scenes[] = $aicfab_scene . ' ' . number_format_i18n( $aicfab_count );
+			}
+			if ( $scenes ) {
+				/* translators: %s: scenes, the sessionFrom the game passed, with counts. */
+				$line .= ' ' . sprintf( __( 'Opened most from: %s.', 'ai-chat-for-amazon-bedrock' ), implode( ', ', $scenes ) );
+			}
+			foreach ( array_slice( $summary['templates'], 0, 3, true ) as $aicfab_template => $aicfab_outcomes ) {
+				$accepted = isset( $aicfab_outcomes['accepted'] ) ? $aicfab_outcomes['accepted'] : 0;
+				$declined = isset( $aicfab_outcomes['declined'] ) ? $aicfab_outcomes['declined'] : 0;
+				if ( $accepted + $declined ) {
+					/* translators: 1: subscription template ID, 2: share of players who accepted, 3: how many were asked. */
+					$line .= ' ' . sprintf( __( 'Template %1$s: %2$s accepted of %3$s asked.', 'ai-chat-for-amazon-bedrock' ), $aicfab_template, number_format_i18n( 100 * $accepted / ( $accepted + $declined ) ) . '%', number_format_i18n( $accepted + $declined ) );
+				}
+			}
+			echo '<p>' . esc_html( $line ) . '</p>';
+		}
+		/* translators: %s: the address WeChat sends the game's messages to. */
+		echo '<p class="description">' . esc_html( sprintf( __( 'Off by default. In the mini game\'s console, under Development Management > Development Settings > Message Push, enter the URL %s, the token and, for safe mode, the EncodingAESKey; JSON and XML both work. The game opens the chat with wx.openCustomerServiceConversation, and the sessionFrom it passes is counted as the scene.', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_WeChat_Game::url() ) ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Questions are answered with the set answers only, matched by keyword; nothing is generated, as a mini game needs an AI category and an algorithm filing to answer with AI. Answers are sent through WeChat\'s customer service API, which needs the AppSecret and this server\'s address in the game\'s IP whitelist, and allows a few answers within 48 hours of a player\'s message. Only daily totals are kept, with players counted under a code that changes every day; questions go to the conversation log when it is on. What players do in the game itself is reported by the game with wx.reportEvent and shown in WeChat\'s own analysis.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function analytics_events_render() {
 		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[analytics_events]" value="1" ' . checked( AI_Chat_Bedrock_Analytics::enabled(), true, false ) . '> ' . esc_html__( 'Report chat activity to the analytics already on this site', 'ai-chat-for-amazon-bedrock' ) . '</label>';
@@ -2042,6 +2093,38 @@ class AI_Chat_Bedrock_Admin {
 			}
 		}
 
+		$output['wxgame_enabled']  = ! empty( $input['wxgame_enabled'] );
+		$output['wxgame_app_id']   = isset( $input['wxgame_app_id'] ) ? AI_Chat_Bedrock_WeChat::clean_app_id( $input['wxgame_app_id'] ) : '';
+		$output['wxgame_answers']  = isset( $input['wxgame_answers'] ) && is_string( $input['wxgame_answers'] ) ? AI_Chat_Bedrock_WeChat_Game::clean_answers( $input['wxgame_answers'] ) : '';
+		$output['wxgame_welcome']  = isset( $input['wxgame_welcome'] ) && is_string( $input['wxgame_welcome'] ) ? sanitize_textarea_field( $input['wxgame_welcome'] ) : '';
+		$output['wxgame_fallback'] = isset( $input['wxgame_fallback'] ) && is_string( $input['wxgame_fallback'] ) ? sanitize_textarea_field( $input['wxgame_fallback'] ) : '';
+		if ( isset( $input['wxgame_app_id'] ) && is_string( $input['wxgame_app_id'] ) && '' !== trim( $input['wxgame_app_id'] ) && '' === $output['wxgame_app_id'] ) {
+			$this->notice( 'wxgame_app_id', __( 'The mini game AppID starts with wx and has 18 characters; it was not saved.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		foreach ( array(
+			'wxgame_token'      => array( 'clean_token', __( 'The mini game token must be 3 to 32 letters and digits; it was not saved.', 'ai-chat-for-amazon-bedrock' ) ),
+			'wxgame_aes_key'    => array( 'clean_aes_key', __( 'The EncodingAESKey must be 43 letters and digits; it was not saved.', 'ai-chat-for-amazon-bedrock' ) ),
+			'wxgame_app_secret' => array( 'clean_app_secret', __( 'The AppSecret must be 32 letters and digits; it was not saved.', 'ai-chat-for-amazon-bedrock' ) ),
+		) as $aicfab_key => $aicfab_rule ) {
+			$raw   = isset( $input[ $aicfab_key ] ) && is_string( $input[ $aicfab_key ] ) ? trim( $input[ $aicfab_key ] ) : '';
+			$clean = call_user_func( array( 'AI_Chat_Bedrock_WeChat_Game', $aicfab_rule[0] ), $raw );
+			// A field left empty keeps the saved value, which is never shown again.
+			$output[ $aicfab_key ] = ! empty( $input['wxgame_clear'] ) ? '' : ( isset( $current[ $aicfab_key ] ) ? $current[ $aicfab_key ] : '' );
+			if ( '' !== $clean ) {
+				$encrypted = AI_Chat_Bedrock_Security::encrypt_secret( $clean );
+				if ( '' === $encrypted ) {
+					$this->notice( 'credential_encryption', __( 'The credential could not be encrypted; the existing value was preserved.', 'ai-chat-for-amazon-bedrock' ) );
+				} else {
+					$output[ $aicfab_key ] = $encrypted;
+				}
+			} elseif ( '' !== $raw ) {
+				$this->notice( $aicfab_key, $aicfab_rule[1] );
+			}
+		}
+		if ( ! empty( $input['wxgame_clear'] ) ) {
+			delete_transient( AI_Chat_Bedrock_WeChat_Game::ACCESS_KEY );
+		}
+
 		$output['leads_enabled'] = ! empty( $input['leads_enabled'] );
 		$output['leads_notify']  = ! empty( $input['leads_notify'] );
 		$output['leads_days']    = AI_Chat_Bedrock_Leads::retention_days( array( 'leads_days' => isset( $input['leads_days'] ) ? $input['leads_days'] : 0 ) );
@@ -2154,6 +2237,7 @@ class AI_Chat_Bedrock_Admin {
 		'speech_replies'       => array( 'speech_posts', 'speech_posts_signed_in', 'speech_engine', 'speech_daily_chars' ),
 		'leads_enabled'        => array( 'leads_notify', 'leads_days', 'leads_link' ),
 		'wechat_enabled'       => array( 'wechat_token', 'wechat_aes_key', 'wechat_app_id', 'wechat_model_id', 'wechat_hourly' ),
+		'wxgame_enabled'       => array( 'wxgame_app_id', 'wxgame_token', 'wxgame_aes_key', 'wxgame_app_secret', 'wxgame_welcome', 'wxgame_answers', 'wxgame_fallback' ),
 		'distribution_enabled' => array( 'distribution_links' ),
 		'youtube_client_id'    => array( 'youtube_client_secret', 'youtube_daily_uploads' ),
 		'popup_site_wide'      => array( 'popup_profile' ),
@@ -2185,6 +2269,7 @@ class AI_Chat_Bedrock_Admin {
 		'leads_notify',
 		'analytics_events',
 		'wechat_enabled',
+		'wxgame_enabled',
 		'github_read_scope',
 		'social_only_registration',
 		'organization_author',

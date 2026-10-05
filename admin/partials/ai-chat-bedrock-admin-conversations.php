@@ -38,6 +38,7 @@ $sources = array(
 	'editor'  => __( 'Editor tools', 'ai-chat-for-amazon-bedrock' ),
 	'ability' => __( 'Abilities API', 'ai-chat-for-amazon-bedrock' ),
 	'wechat'  => __( 'WeChat Official Account', 'ai-chat-for-amazon-bedrock' ),
+	'wxgame'  => __( 'WeChat mini game', 'ai-chat-for-amazon-bedrock' ),
 );
 $source  = isset( $sources[ $source ] ) ? $source : '';
 $rating  = in_array( $rating, array( 'up', 'down', 'none' ), true ) ? $rating : '';
