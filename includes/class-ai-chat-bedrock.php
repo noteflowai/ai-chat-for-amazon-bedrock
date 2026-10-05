@@ -73,6 +73,8 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-analytics.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-consent.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-wechat.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-distribution.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-bilibili.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-review-prompt.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-sse.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-stream.php';
@@ -254,6 +256,12 @@ class AI_Chat_Bedrock {
 
 		$site_abilities = new AI_Chat_Bedrock_Site_Abilities();
 		$this->loader->add_action( 'wp_abilities_api_init', $site_abilities, 'register' );
+
+		$distribution = new AI_Chat_Bedrock_Distribution();
+		$this->loader->add_action( 'wp_abilities_api_init', $distribution, 'register_abilities' );
+		$this->loader->add_action( 'add_meta_boxes', $distribution, 'add_meta_box' );
+		$this->loader->add_filter( 'the_content', 'AI_Chat_Bedrock_Distribution', 'add_links', 25 );
+		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_Bilibili', 'register' );
 
 		// The site description, and the type and language it adds to retrieved passages.
 		// Both check the setting when they run.

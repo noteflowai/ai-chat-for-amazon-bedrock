@@ -152,6 +152,35 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 	}
 
 	/**
+	 * The publishing record, offered when the site turns it on.
+	 *
+	 * @return array
+	 */
+	private function distribution_tools() {
+		if ( ! class_exists( 'AI_Chat_Bedrock_Distribution' ) || ! AI_Chat_Bedrock_Distribution::enabled() ) {
+			return array();
+		}
+		$schemas = AI_Chat_Bedrock_Distribution::schemas();
+		return array(
+			'get_publish_package' => array(
+				'name'        => 'get_publish_package',
+				'description' => 'Return what is needed to publish a post on another platform: title, address, plain text as a signed-out visitor reads it, excerpt, tags, image, translations, and where it is already published. Read only.',
+				'parameters'  => $schemas['get_publish_package'],
+			),
+			'record_publication'  => array(
+				'name'        => 'record_publication',
+				'description' => 'Record or update one item a post was published as on Bilibili, YouTube or Xiaohongshu, after checking it on the platform: its ID, https address, account, language and status. Pass replaces to mark the edition it replaces. Changes only this record, never the post. Requires permission to edit the post.',
+				'parameters'  => $schemas['record_publication'],
+			),
+			'list_publications'   => array(
+				'name'        => 'list_publications',
+				'description' => 'List publishing records across posts, filtered by platform, status, language or post, for example editions that are still public after being replaced. Read only.',
+				'parameters'  => $schemas['list_publications'],
+			),
+		);
+	}
+
+	/**
 	 * The site description, offered when the site turns it on.
 	 *
 	 * @return array
@@ -209,7 +238,7 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 	 * @return array
 	 */
 	private function available_tools() {
-		$tools = array_merge( $this->tools, $this->ontology_tools(), $this->metrics_tools(), $this->ability_tools() );
+		$tools = array_merge( $this->tools, $this->ontology_tools(), $this->metrics_tools(), $this->distribution_tools(), $this->ability_tools() );
 		return (array) apply_filters( 'ai_chat_bedrock_wp_mcp_tools', $tools );
 	}
 
@@ -515,6 +544,10 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 					return new WP_Error( 'tool_unavailable', __( 'This tool is not enabled on this site.', 'ai-chat-for-amazon-bedrock' ) );
 				}
 				return AI_Chat_Bedrock_Metrics::query( $arguments, 'agent' );
+			case 'get_publish_package':
+			case 'record_publication':
+			case 'list_publications':
+				return $this->distribution_call( $name, $arguments );
 		}
 
 		if ( ! class_exists( 'AI_Chat_Bedrock_Site_Abilities' ) || ! AI_Chat_Bedrock_Site_Abilities::enabled() ) {
@@ -543,6 +576,28 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 		}
 
 		return new WP_Error( 'unknown_tool', __( 'Unknown tool.', 'ai-chat-for-amazon-bedrock' ) );
+	}
+
+	/**
+	 * Run a publishing record tool, with the permissions of the signed-in account.
+	 *
+	 * @param string $name      Tool name.
+	 * @param array  $arguments Arguments.
+	 * @return array|WP_Error
+	 */
+	private function distribution_call( $name, $arguments ) {
+		if ( empty( $this->distribution_tools() ) ) {
+			return new WP_Error( 'tool_unavailable', __( 'This tool is not enabled on this site.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		$record    = new AI_Chat_Bedrock_Distribution();
+		$arguments = is_array( $arguments ) ? $arguments : array();
+		if ( 'list_publications' === $name ) {
+			return $record->can_list() ? AI_Chat_Bedrock_Distribution::search( $arguments ) : new WP_Error( 'forbidden', __( 'This account cannot read the publishing record.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		if ( ! $record->can_edit_input_post( $arguments ) ) {
+			return new WP_Error( 'forbidden', __( 'This account cannot edit that post.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		return 'record_publication' === $name ? $record->ability_record( $arguments ) : $record->ability_package( $arguments );
 	}
 
 	private function negotiate_version( $params ) {

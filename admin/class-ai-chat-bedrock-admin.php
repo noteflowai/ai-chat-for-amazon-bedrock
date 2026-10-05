@@ -1104,6 +1104,10 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'hreflang_x_default', __( 'Default language for search engines', 'ai-chat-for-amazon-bedrock' ), 'hreflang_x_default_render', 'aicfab_integrations' );
 		$this->field( 'organization_author', __( 'Article author', 'ai-chat-for-amazon-bedrock' ), 'organization_author_render', 'aicfab_integrations' );
 
+		add_settings_section( 'aicfab_publishing', __( 'Publishing on video and social platforms', 'ai-chat-for-amazon-bedrock' ), '__return_false', 'aicfab_tab_publishing' );
+		$this->field( 'distribution_enabled', __( 'Publishing record', 'ai-chat-for-amazon-bedrock' ), 'distribution_render', 'aicfab_publishing' );
+		$this->field( 'bilibili_embeds', __( 'Bilibili videos', 'ai-chat-for-amazon-bedrock' ), 'bilibili_embeds_render', 'aicfab_publishing' );
+
 		if ( AI_Chat_Bedrock_WooCommerce::active() ) {
 			add_settings_section( 'aicfab_woocommerce', __( 'WooCommerce', 'ai-chat-for-amazon-bedrock' ), array( $this, 'woocommerce_section_callback' ), 'aicfab_tab_woocommerce' );
 			$this->field( 'woo_catalog', __( 'Product answers', 'ai-chat-for-amazon-bedrock' ), 'woo_catalog_render', 'aicfab_woocommerce' );
@@ -1611,6 +1615,21 @@ class AI_Chat_Bedrock_Admin {
 		}
 		echo '<p class="description">' . esc_html( $detected['polylang'] ? __( 'Polylang lists each translation of a page for search engines but no x-default, so they guess which one to show a reader whose language the site does not have. The edition chosen here is named as the default.', 'ai-chat-for-amazon-bedrock' ) : __( 'Requires Polylang.', 'ai-chat-for-amazon-bedrock' ) ) . '</p>';
 	}
+	public function distribution_render() {
+		$options = get_option( 'ai_chat_bedrock_settings', array() );
+		$options = is_array( $options ) ? $options : array();
+		echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'Publishing record', 'ai-chat-for-amazon-bedrock' ) . '</legend>';
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[distribution_enabled]" value="1" ' . checked( ! empty( $options['distribution_enabled'] ), true, false ) . '> ' . esc_html__( 'Keep a record of where each post is published on Bilibili, YouTube or Xiaohongshu', 'ai-chat-for-amazon-bedrock' ) . '</label><br>';
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[distribution_links]" value="1" ' . checked( ! empty( $options['distribution_links'] ), true, false ) . '> ' . esc_html__( 'Link to the public ones under each post', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		echo '</fieldset>';
+		echo '<p class="description">' . esc_html__( 'Off by default. Agents read a post\'s publishing package and record what they published, with the item\'s ID, address, account, language and status, through the abilities and the MCP server, using the WordPress permissions of their account; a new edition can be marked as replacing the old one. The record shows in the Published elsewhere box when editing a post. The plugin never signs in to Bilibili or Xiaohongshu: neither has a publishing API for individual creators, so publishing there stays with the agent or person using their creator tools.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+	public function bilibili_embeds_render() {
+		$options = get_option( 'ai_chat_bedrock_settings', array() );
+		$options = is_array( $options ) ? $options : array();
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[bilibili_embeds]" value="1" ' . checked( ! empty( $options['bilibili_embeds'] ), true, false ) . '> ' . esc_html__( 'Embed Bilibili videos from their links, as WordPress does for YouTube', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Off by default. A Bilibili video address on a line of its own, or in an Embed block, shows the Bilibili player. The player is loaded from Bilibili, which can then set its own cookies, so add the suggested text from Settings > Privacy to your privacy policy before turning it on.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
 	public function organization_author_render() {
 		$this->integration_checkbox(
 			'organization_author',
@@ -1905,6 +1924,9 @@ class AI_Chat_Bedrock_Admin {
 		$output['github_read_scope']        = ! empty( $input['github_read_scope'] );
 		$output['social_only_registration'] = ! empty( $input['social_only_registration'] );
 		$output['organization_author']      = ! empty( $input['organization_author'] );
+		$output['distribution_enabled']     = ! empty( $input['distribution_enabled'] );
+		$output['distribution_links']       = ! empty( $input['distribution_links'] );
+		$output['bilibili_embeds']          = ! empty( $input['bilibili_embeds'] );
 		$output['woo_catalog']              = ! empty( $input['woo_catalog'] );
 		$output['woo_catalog_limit']        = AI_Chat_Bedrock_WooCommerce::limit( $input );
 		$output['woo_orders']               = ! empty( $input['woo_orders'] );
@@ -2073,15 +2095,16 @@ class AI_Chat_Bedrock_Admin {
 	 * Settings rendered inside another field's row, saved whenever that field's tab is.
 	 */
 	const COMPANION_FIELDS = array(
-		'log_conversations'  => array( 'log_retention_days' ),
-		'chat_memory'        => array( 'chat_memory_days' ),
-		'speech_replies'     => array( 'speech_posts', 'speech_posts_signed_in', 'speech_engine', 'speech_daily_chars' ),
-		'leads_enabled'      => array( 'leads_notify', 'leads_days', 'leads_link' ),
-		'wechat_enabled'     => array( 'wechat_token', 'wechat_aes_key', 'wechat_app_id', 'wechat_model_id', 'wechat_hourly' ),
-		'popup_site_wide'    => array( 'popup_profile' ),
-		'prompt_id'          => array( 'prompt_version' ),
-		'embedding_model_id' => array( 'embedding_background' ),
-		'vector_store'       => array( 's3_vectors_bucket', 's3_vectors_index', 's3_vectors_region' ),
+		'log_conversations'    => array( 'log_retention_days' ),
+		'chat_memory'          => array( 'chat_memory_days' ),
+		'speech_replies'       => array( 'speech_posts', 'speech_posts_signed_in', 'speech_engine', 'speech_daily_chars' ),
+		'leads_enabled'        => array( 'leads_notify', 'leads_days', 'leads_link' ),
+		'wechat_enabled'       => array( 'wechat_token', 'wechat_aes_key', 'wechat_app_id', 'wechat_model_id', 'wechat_hourly' ),
+		'distribution_enabled' => array( 'distribution_links' ),
+		'popup_site_wide'      => array( 'popup_profile' ),
+		'prompt_id'            => array( 'prompt_version' ),
+		'embedding_model_id'   => array( 'embedding_background' ),
+		'vector_store'         => array( 's3_vectors_bucket', 's3_vectors_index', 's3_vectors_region' ),
 	);
 
 	const CHECKBOX_FIELDS = array(
@@ -2110,6 +2133,8 @@ class AI_Chat_Bedrock_Admin {
 		'github_read_scope',
 		'social_only_registration',
 		'organization_author',
+		'distribution_enabled',
+		'bilibili_embeds',
 		'woo_catalog',
 		'woo_orders',
 		'woo_product_assistant',
@@ -2176,6 +2201,10 @@ class AI_Chat_Bedrock_Admin {
 			'integrations' => array(
 				'page'  => 'aicfab_tab_integrations',
 				'label' => __( 'Integrations', 'ai-chat-for-amazon-bedrock' ),
+			),
+			'publishing'   => array(
+				'page'  => 'aicfab_tab_publishing',
+				'label' => __( 'Publishing', 'ai-chat-for-amazon-bedrock' ),
 			),
 		) + ( class_exists( 'AI_Chat_Bedrock_WooCommerce' ) && AI_Chat_Bedrock_WooCommerce::active()
 			? array(
