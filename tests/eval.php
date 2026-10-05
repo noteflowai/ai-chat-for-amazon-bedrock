@@ -119,7 +119,10 @@ function eval_check( $category, $applies, $passed ) {
 	static $method = null;
 	if ( null === $method ) {
 		$method = new ReflectionMethod( 'AI_Chat_Bedrock_Eval', 'check' );
-		$method->setAccessible( true );
+		// Needed before PHP 8.1, deprecated since 8.5.
+		if ( PHP_VERSION_ID < 80100 ) {
+			$method->setAccessible( true );
+		}
 	}
 	return $method->invoke( null, $category, $applies, $passed, '' );
 }
@@ -274,7 +277,10 @@ check_eval(
 
 // Categories are a closed set: an unknown one is filed under delivery rather than invented.
 $reflect = new ReflectionMethod( 'AI_Chat_Bedrock_Eval', 'check' );
-$reflect->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$reflect->setAccessible( true );
+}
 $odd = $reflect->invoke( null, 'vibes', true, true, '' );
 check_eval( 'delivery' === $odd['category'], 'An unknown category must not enter the report under its own name.' );
 

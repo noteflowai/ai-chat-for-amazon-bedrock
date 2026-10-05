@@ -484,7 +484,9 @@ class AI_Chat_Bedrock_Admin {
 				},
 				$row
 			);
-			fputcsv( $handle, $row ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fputcsv
+			// No escape character, as in RFC 4180. Leaving it out is deprecated since PHP 8.4, and the
+			// notice would be written into the download where errors are displayed.
+			fputcsv( $handle, $row, ',', '"', '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fputcsv
 		}
 		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 		exit;

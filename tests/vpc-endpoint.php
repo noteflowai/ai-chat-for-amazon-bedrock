@@ -137,7 +137,10 @@ foreach ( array(
 
 $aws    = new AI_Chat_Bedrock_AWS();
 $remote = new ReflectionMethod( 'AI_Chat_Bedrock_AWS', 'aws_remote' );
-$remote->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$remote->setAccessible( true );
+}
 $args = array( 'reject_unsafe_urls' => true );
 
 // The runtime behind its endpoint: the request goes out, and the waiver is gone afterwards.

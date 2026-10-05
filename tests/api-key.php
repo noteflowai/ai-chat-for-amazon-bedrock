@@ -188,7 +188,10 @@ check_key( 'api_key_option' === $aws->credential_source(), 'the client reports t
 check_key( 0 === $GLOBALS['aicfab_metadata_calls'], 'a site with an API key does not probe metadata endpoints on every request' );
 
 $sign = new ReflectionMethod( $aws, 'signed_headers' );
-$sign->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$sign->setAccessible( true );
+}
 $runtime = $sign->invoke( $aws, 'https://bedrock-runtime.us-east-1.amazonaws.com/model/amazon.nova-lite-v1%3A0/converse', '{}', 'POST', 'bedrock', array( 'x-amzn-bedrock-guardrailidentifier' => 'gr-1' ) );
 check_key( 'Bearer ' . $long_term === $runtime['Authorization'], 'Bedrock Runtime requests carry the key as a bearer token' );
 check_key( ! isset( $runtime['X-Amz-Date'] ) && ! isset( $runtime['X-Amz-Security-Token'] ), 'a bearer request carries no signature headers' );
@@ -227,7 +230,10 @@ define( 'AI_CHAT_BEDROCK_AWS_SECRET_KEY', 'test-secret-value' );
 $both = new AI_Chat_Bedrock_AWS();
 check_key( true === $both->has_signing_credentials(), 'signing credentials are still found alongside an API key' );
 $both_sign = new ReflectionMethod( $both, 'signed_headers' );
-$both_sign->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$both_sign->setAccessible( true );
+}
 $kb_headers = $both_sign->invoke( $both, 'https://bedrock-agent-runtime.us-east-1.amazonaws.com/knowledgebases/KB1/retrieve', '{}' );
 check_key( 0 === strpos( $kb_headers['Authorization'], 'AWS4-HMAC-SHA256 Credential=AKIATESTACCESS/' ), 'Knowledge Base requests are signed when keys exist' );
 $runtime_both = $both_sign->invoke( $both, 'https://bedrock-runtime.us-east-1.amazonaws.com/model/x/invoke', '{}' );

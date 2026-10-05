@@ -120,7 +120,10 @@ function check_role( $condition, $message ) {
 function next_request() {
 	$GLOBALS['aicfab_requests'] = array();
 	$property = new ReflectionProperty( 'AI_Chat_Bedrock_AWS_Credentials', 'role_missed' );
-	$property->setAccessible( true );
+	// Needed before PHP 8.1, deprecated since 8.5.
+	if ( PHP_VERSION_ID < 80100 ) {
+		$property->setAccessible( true );
+	}
 	$property->setValue( null, false );
 }
 

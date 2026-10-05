@@ -109,10 +109,16 @@ $core_type = new ReflectionClass( 'AI_Chat_Bedrock' );
 $core = $core_type->newInstanceWithoutConstructor();
 $loader = new AI_Chat_Bedrock_Loader();
 $property = $core_type->getProperty( 'loader' );
-$property->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$property->setAccessible( true );
+}
 $property->setValue( $core, $loader );
 $method = $core_type->getMethod( 'define_admin_hooks' );
-$method->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$method->setAccessible( true );
+}
 $method->invoke( $core );
 $loader->run();
 

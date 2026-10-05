@@ -5,6 +5,7 @@ Full changelog. The readme lists the latest releases only.
 
 = 1.65.0 =
 * Faster on hosts outside AWS before credentials are entered: when no IAM role answers, the plugin no longer waits for the instance metadata service to time out on every page, admin screen and cron run. It asks again after five minutes, when the settings are saved or when Diagnostics runs its checks.
+* Ready for PHP 8.5: streamed answers no longer call a function PHP 8.5 deprecates, which could write a notice into the reply, and the conversation log export no longer relies on a CSV default PHP 8.4 deprecates. The release checks now run on PHP 7.4, 8.3 and 8.5 and fail on any PHP notice.
 
 = 1.64.0 =
 * Contact requests, under Chat and off by default: a Contact a person button below the chat, also offered after a thumbs-down. Visitors leave an email address or phone number and a message, and can include the conversation; nothing is stored without their consent. Requests are listed under Contact requests, exported as CSV, deleted after the days you set (180 by default) and covered by personal data export and erasure. Akismet checks them when set up, Flamingo files a copy, an email can go to the site, and `ai_chat_bedrock_lead_captured` passes them on. Joinchat's WhatsApp number is offered as another way to reach the site.
