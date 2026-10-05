@@ -430,6 +430,7 @@ check_wx( '' === AI_Chat_Bedrock_WeChat::ai_label(), 'A site can change or remov
 unset( $GLOBALS['aicfab_filters']['ai_chat_bedrock_wechat_ai_label'] );
 check_wx( false === strpos( AI_Chat_Bedrock_WeChat::format( 'See https://example.test/delivery/ for times.', array( array( 'title' => 'Delivery', 'url' => 'https://example.test/delivery/' ) ) ), 'Sources:' ), 'A source the answer already links to is not repeated.' );
 check_wx( false === strpos( AI_Chat_Bedrock_WeChat::format( "Sources:\nhttps://example.test/delivery/", array( array( 'title' => 'Delivery', 'url' => 'https://example.test/delivery/' ), array( 'title' => 'Hours', 'url' => 'https://example.test/hours/' ) ) ), 'hours' ), 'An answer that cites its sources gets no second list, even of the others.' );
+check_wx( false === strpos( AI_Chat_Bedrock_WeChat::format( "Sources: Episode 0.1\nhttps://example.test/episode-0-1/", array( array( 'title' => 'Hours', 'url' => 'https://example.test/hours/' ) ) ), 'hours' ), 'Nor does one that links to another page than those listed.' );
 $xml = AI_Chat_Bedrock_WeChat::text_xml( 'o1', 'gh', 'Tricky ]]> text' );
 check_wx( 'Tricky ]]> text' === AI_Chat_Bedrock_WeChat::parse( $xml )['Content'], 'Text that would end a CDATA section is kept intact.' );
 

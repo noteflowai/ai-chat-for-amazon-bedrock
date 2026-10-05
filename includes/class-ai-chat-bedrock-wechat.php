@@ -513,12 +513,10 @@ class AI_Chat_Bedrock_WeChat {
 		$text = preg_replace( '/\n{3,}/', "\n\n", (string) $text );
 		$text = trim( (string) $text );
 
-		// An answer that already links to its sources gets no second list of them.
+		// An answer that already links to pages, as the model is told to, gets no second list:
+		// the pages it quoted are not always the ones listed as sources.
 		$sources = array_slice( is_array( $sources ) ? array_values( array_filter( $sources, 'is_array' ) ) : array(), 0, 2 );
-		$cited   = false;
-		foreach ( $sources as $source ) {
-			$cited = $cited || ( ! empty( $source['url'] ) && false !== strpos( $text, (string) $source['url'] ) );
-		}
+		$cited   = 1 === preg_match( '#https?://#i', $text );
 		$links = '';
 		foreach ( $cited ? array() : $sources as $source ) {
 			if ( ! empty( $source['url'] ) ) {
