@@ -126,6 +126,9 @@ $GLOBALS['aicfab_options'] = array(
 		'aws_access_key'    => 'ENCRYPTED-ACCESS-KEY',
 		'aws_secret_key'    => 'ENCRYPTED-SECRET-KEY',
 		'aws_session_token' => 'ENCRYPTED-SESSION-TOKEN',
+		'wechat_token'      => 'ENCRYPTED-WECHAT-TOKEN',
+		'wechat_aes_key'    => 'ENCRYPTED-WECHAT-AES-KEY',
+		'wechat_app_id'     => 'wx1234567890abcdef',
 	),
 	'ai_chat_bedrock_mcp_servers' => array(
 		'partner' => array(
@@ -148,7 +151,7 @@ $GLOBALS['aicfab_options'] = array(
 $export = AI_Chat_Bedrock_Transfer::export();
 $json   = wp_json_encode( $export );
 
-foreach ( array( 'ENCRYPTED-ACCESS-KEY', 'ENCRYPTED-SECRET-KEY', 'ENCRYPTED-SESSION-TOKEN', 'ENCRYPTED-BEARER-TOKEN', 'CLIENT-SECRET' ) as $secret ) {
+foreach ( array( 'ENCRYPTED-ACCESS-KEY', 'ENCRYPTED-SECRET-KEY', 'ENCRYPTED-SESSION-TOKEN', 'ENCRYPTED-BEARER-TOKEN', 'CLIENT-SECRET', 'ENCRYPTED-WECHAT-TOKEN', 'ENCRYPTED-WECHAT-AES-KEY' ) as $secret ) {
 	check_transfer( false === strpos( $json, $secret ), "the file does not contain $secret" );
 }
 foreach ( AI_Chat_Bedrock_Transfer::credential_keys() as $key ) {
