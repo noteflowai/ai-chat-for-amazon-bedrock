@@ -1413,6 +1413,9 @@ class AI_Chat_Bedrock_WooCommerce {
 				$paragraphs[] = __( 'A copy of each contact request is emailed to the site\'s staff.', 'ai-chat-for-amazon-bedrock' );
 			}
 		}
+		if ( class_exists( 'AI_Chat_Bedrock_WeChat' ) && AI_Chat_Bedrock_WeChat::enabled() ) {
+			$paragraphs[] = __( 'If you write to this site\'s WeChat Official Account, WeChat, a service of Tencent, passes your messages to this site, and they are sent to Amazon Bedrock to write the answer. Your last few messages and the answers are kept on this site for 30 minutes, under a code made from your WeChat ID, so that a follow-up question can be understood. If the site keeps a conversation log, your questions are stored there too, without your WeChat ID.', 'ai-chat-for-amazon-bedrock' );
+		}
 		if ( class_exists( 'AI_Chat_Bedrock_Analytics' ) && AI_Chat_Bedrock_Analytics::enabled() ) {
 			$paragraphs[] = __( 'This site\'s analytics records when you open the chat, ask a question and get an answer, follow a link or product in an answer, rate an answer or send a contact request. The text of your messages and your contact details are not included.', 'ai-chat-for-amazon-bedrock' );
 		}

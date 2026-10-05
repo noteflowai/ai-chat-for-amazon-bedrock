@@ -88,6 +88,20 @@ document.addEventListener( 'ai-chat-bedrock:event', ( event ) => {
 
 Add the suggested text from Settings > Privacy to your privacy policy before turning the setting on.
 
+## Can it answer my WeChat Official Account?
+
+Yes, under Chat > WeChat Official Account, which is off by default. Followers who write to the account in WeChat get an answer from your pages, as visitors to the site do.
+
+1. In the WeChat Official Accounts Platform, open Settings and Development > Basic Configuration and choose a token: 3 to 32 letters and digits. Use a long random one.
+2. Enter the token in the plugin, tick **Answer messages that followers send to the account** and save.
+3. Back in WeChat, set the server URL to the address the setting shows, `https://your-site/wp-json/ai-chat-bedrock/v1/wechat`, enter the same token, choose a message encryption mode and enable the configuration. WeChat checks the address at once.
+
+Plaintext mode needs only the token. For compatible or safe mode, which WeChat recommends, also enter the EncodingAESKey and the AppID; replies are then encrypted too. No AppSecret is needed, since nothing is sent to WeChat's API: the answer is the reply to WeChat's own request. That is also why it works with an unverified personal subscription account, which cannot send customer service messages.
+
+WeChat waits five seconds for a reply and asks twice more, so an answer can take about fifteen seconds. One that takes longer is kept for ten minutes, and the follower is told to send 1 to see it. The answer is plain text, with up to two source links, cut to the 2,000 bytes WeChat shows. Each follower's last three questions and answers are kept for 30 minutes so a follow-up is understood. A new follower gets the welcome message and the suggested questions; images, voice and other messages get a note that only text can be read.
+
+Every request must carry WeChat's signature for your token and be no more than 15 minutes old; XML with a document type is refused. Each follower may send 20 messages an hour by default, and every answer counts towards the site's daily request limit. The conversation log, when it is on, records the questions under the source WeChat, without the follower's ID. Add the suggested text from Settings > Privacy to your privacy policy before turning it on.
+
 ## Which Bedrock models are supported?
 
 Text models in the Anthropic Claude, Amazon Nova, Amazon Titan, Meta Llama, Mistral and DeepSeek families that your Region offers, including Claude Sonnet 5, Claude Opus 5.5 and Claude Haiku 4.5, and the other chat models Bedrock serves, such as OpenAI gpt-oss, Qwen3, Llama 4, Mistral Large, DeepSeek R1 and Kimi. Models other than Claude, Nova and Titan are called through the Bedrock Converse API, which applies each model's own chat format; when a model refuses a setting such as temperature or a system prompt, the plugin retries once without it and remembers that for the model. The settings screen lists the models your account offers in that Region, and "Refresh model list" updates it. A new installation starts on Amazon Nova Lite because it answers with nothing enabled beyond an IAM role. Newer Claude models such as Sonnet 5 and Opus 5.5 are called through a cross-region inference profile, an ID beginning with `us.`, `eu.` or `global.`, and they reject the temperature setting, so the plugin does not send it to them. A specific model may still need a supported Region and suitable IAM permissions.

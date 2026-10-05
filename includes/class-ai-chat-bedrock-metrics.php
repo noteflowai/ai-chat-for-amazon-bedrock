@@ -1304,7 +1304,7 @@ class AI_Chat_Bedrock_Metrics {
 			$time   = (int) $entry['time'];
 			$oldest = 0 === $oldest ? $time : min( $oldest, $time );
 			$source = isset( $entry['source'] ) ? (string) $entry['source'] : 'chat';
-			if ( $time < $from || $time >= $to || ! in_array( $source, array( 'chat', 'stream' ), true ) ) {
+			if ( $time < $from || $time >= $to || ! in_array( $source, array( 'chat', 'stream', 'wechat' ), true ) ) {
 				continue;
 			}
 			$day      = ( new DateTimeImmutable( '@' . $time ) )->setTimezone( self::timezone() );

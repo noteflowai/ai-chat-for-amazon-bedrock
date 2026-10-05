@@ -173,7 +173,7 @@ class AI_Chat_Bedrock_Insights {
 
 			// Only visitor questions. A generated draft is not a question anyone asked.
 			$source = isset( $row['source'] ) ? (string) $row['source'] : 'chat';
-			if ( ! in_array( $source, array( 'chat', 'stream' ), true ) ) {
+			if ( ! in_array( $source, array( 'chat', 'stream', 'wechat' ), true ) ) {
 				continue;
 			}
 
@@ -323,7 +323,7 @@ class AI_Chat_Bedrock_Insights {
 					continue;
 				}
 				$source = isset( $row['source'] ) ? (string) $row['source'] : 'chat';
-				if ( ! in_array( $source, array( 'chat', 'stream' ), true ) ) {
+				if ( ! in_array( $source, array( 'chat', 'stream', 'wechat' ), true ) ) {
 					continue;
 				}
 				++$asked;
