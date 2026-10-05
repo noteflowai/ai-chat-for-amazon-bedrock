@@ -87,6 +87,10 @@ class AI_Chat_Bedrock_Diagnostics {
 		$options = get_option( 'ai_chat_bedrock_settings', array() );
 		$options = is_array( $options ) ? $options : array();
 		$checks  = array();
+		// Asked for a fresh look, as after attaching an IAM role, nothing remembered stands in for it.
+		if ( $include_live && class_exists( 'AI_Chat_Bedrock_AWS_Credentials' ) ) {
+			AI_Chat_Bedrock_AWS_Credentials::flush_cache();
+		}
 
 		$checks[] = $this->check_php();
 		$checks[] = $this->check_credentials( $options );
