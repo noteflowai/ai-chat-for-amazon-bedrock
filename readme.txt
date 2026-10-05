@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai, chatbot, ai-agent, mcp, connector
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.65.0
+Stable tag: 1.66.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -53,6 +53,9 @@ image next to the original, which is never changed.
 * An internal assistant, or a public chatbot with explicit guest access
 * An agent that answers from your own content and from approved MCP tools
 * A WordPress MCP endpoint that clients such as Claude Code, Cursor or VS Code can read
+* Answers for a WeChat Official Account, from the same pages
+* A record of where each post is published on Bilibili, YouTube or Xiaohongshu that your agents
+  keep, Bilibili embeds, and uploads to YouTube through its API
 
 Add the chat with the `[ai_chat_bedrock]` shortcode or the chat block, or let it float on every page
 from a single setting.
@@ -149,13 +152,8 @@ accidental usage but guarantees nothing about your bill, so review Amazon Bedroc
 AWS Budgets before opening a chat to public traffic.
 
 The dashboard also counts chat requests that reached Amazon Bedrock and still failed after any
-fallback model, today (Failed requests in Usage today) and for the last seven days (the "Failed
-chat requests" line under the usage panel). Failures are grouped as throttled, access denied,
-rejected request, service unavailable, network or other, using only the HTTP status and the
-plugin's error code. Setup problems that never send a request, such as missing credentials, an
-invalid region or the daily cap, are not counted, and a request rescued by the fallback model is
-not a failure. Diagnostics model tests are counted too. These are counters only: no message,
-error text or identity is kept, and they measure what this site saw, not AWS service health.
+fallback model, today and for the last seven days, grouped as throttled, access denied, rejected,
+unavailable, network or other. These are counters only: no message, error text or identity is kept.
 
 = The rest =
 
@@ -352,6 +350,10 @@ Yes, under Chat > Analytics events, off by default. Opens, questions, answers, f
 
 Yes, under Chat > WeChat Official Account, off by default. Followers' text messages are answered from your pages in plain text with sources, in plaintext or safe mode, within the time WeChat waits, and a new follower gets the welcome message. It works with unverified personal subscription accounts and needs no AppSecret. [Setup and limits](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-answer-my-wechat-official-account).
 
+= Can it publish to Bilibili, YouTube or Xiaohongshu? =
+
+It keeps the record, under Settings > Publishing, off by default: your agents publish with the platforms' creator tools and record each item through abilities and MCP, since Bilibili and Xiaohongshu offer individual creators no publishing API. YouTube uploads go through its API once a channel is connected. [The record, embeds and uploads](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-publish-to-bilibili-youtube-or-xiaohongshu).
+
 = Can the chat float instead of sitting in the page? =
 
 Any chat can render as a floating button instead of an inline panel:
@@ -469,26 +471,20 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.66.0 =
+* Publishing record, under Settings > Publishing and off by default: where each post is published on Bilibili, YouTube or Xiaohongshu, with the item's ID, address, account, language, status and the edition it replaces. Agents read a post's publishing package and record what they published through abilities and the MCP server, with their account's permissions; the record shows when editing a post and, optionally, as links under it.
+* Bilibili videos embed from their links, as YouTube's do, when turned on.
+* Uploads to YouTube through its API, after connecting a channel with Google's sign-in: resumable, in the background, added to the record and followed until YouTube says whether the video is public. Uploads default to private and are limited per day.
+
 = 1.65.0 =
 * WeChat Official Account, under Chat and off by default: followers' text messages are answered from the site's pages in plain text with sources and a note that AI wrote them, in plaintext, compatible or safe mode, optionally by a faster model than the site's. WeChat's retries give an answer about fifteen seconds; a slower one is kept until the follower sends 1. Works with unverified personal subscription accounts, needs no AppSecret, and limits each follower per hour.
 * Faster on hosts outside AWS before credentials are entered: when no IAM role answers, the plugin no longer waits for the instance metadata service to time out on every page, admin screen and cron run. It asks again after five minutes, when the settings are saved or when Diagnostics runs its checks.
 * Ready for PHP 8.5: streamed answers no longer call a function PHP 8.5 deprecates, which could write a notice into the reply, and the conversation log export no longer relies on a CSV default PHP 8.4 deprecates. The release checks now run on PHP 7.4, 8.3 and 8.5 and fail on any PHP notice.
 
-= 1.64.0 =
-* Contact requests, under Chat and off by default: a Contact a person button below the chat, also offered after a thumbs-down. Visitors leave an email address or phone number and a message, and can include the conversation; nothing is stored without their consent. Requests are listed under Contact requests, exported as CSV, deleted after the days you set (180 by default) and covered by personal data export and erasure. Akismet checks them when set up, Flamingo files a copy, an email can go to the site, and `ai_chat_bedrock_lead_captured` passes them on. Joinchat's WhatsApp number is offered as another way to reach the site.
-* Abilities of other plugins are offered by how well they match the question, with every plugin getting a turn, rather than the first twenty registered. MCP > Tool policy lists them by plugin, switches a plugin off as a whole, and lets an ability that changes data be allowed.
-* Fixed: saving the tool policy forgot the decisions for MCP servers that were offline while the form was open.
-* Fixed: the failures of a model's first use in an AWS account now say what to do. Bedrock no longer has a Model access page; a missing AWS Marketplace permission, payment method or Anthropic use case form each get their own fix instead of "HTTP 404" or a generic permission message, and a fallback model is used meanwhile.
-* The last setup step creates a draft page with the chat on it, rather than opening an empty page.
-* Demo mode, for the Live Preview on WordPress.org: when `AI_CHAT_BEDROCK_DEMO` is defined and no AWS credentials are found, the chat quotes the passage of the site's pages that best matches each question and says that no AI model was called.
-* Analytics events, under Chat and off by default: opening the chat, questions, answers, followed sources and products, ratings and contact requests go to Google Analytics (Site Kit, MonsterInsights), Google Tag Manager, Matomo or Plausible, with no message text. Mark `ai_chat_contact` as a key event to count contact requests as conversions.
-* Works with the WP Consent API, used by Complianz, CookieYes and others: what the chat keeps in session storage is listed in their cookie policy as functional, and analytics events wait for consent to statistics.
-* Pages that Yoast SEO, Rank Math, SEOPress or All in One SEO keep out of search engines (noindex), such as a thank-you page with a download, are no longer used for answers or by agents. Answer grounding > Pages hidden from search includes them again.
-* A heading or question, as in Yoast SEO and Rank Math FAQ blocks, now stays in the same passage as its answer. Indexed pages are processed again once.
-* Reading aloud spends money only on new audio, and that is now shared fairly: one visitor may have at most a quarter of the daily characters made (30,000 by default), crawlers and scripts cannot have posts read, and saved audio still plays for everyone. Listen to this post can be limited to signed-in visitors.
-* Fixed: with LiteSpeed Cache, WP Rocket or Perfmatters delaying scripts until the first interaction, that first tap on the chat button or Send did nothing, notably on phones, and Send could reload the page. The tap is now kept and acted on once the chat has loaded. The chat's own script is still delayed as the site has set it.
-
 == Upgrade Notice ==
+
+= 1.66.0 =
+Optional record of where posts are published on Bilibili, YouTube and Xiaohongshu, kept by your agents, Bilibili embeds, and uploads to YouTube.
 
 = 1.65.0 =
 Optional answers for a WeChat Official Account, faster pages on hosts outside AWS before credentials are set, and PHP 8.5 support.
@@ -755,5 +751,7 @@ Business insights are off by default. They are worked out on the site from conte
 The plugin creates no custom database tables; the optional log is kept in a WordPress option and is reachable through Tools > Export Personal Data and Erase Personal Data. Request limiting stores a salted hash-derived transient counter for each visitor for up to one minute, and reading aloud a count of the characters read for that visitor for a day. Debug logging is optional and records only redacted operational metadata. Administrators are responsible for disclosing these data flows and obtaining any consent required in their jurisdiction.
 
 On a WooCommerce store with Product answers on, the public details of matching products are sent to Amazon Bedrock with each question. With Order questions on, a signed-in customer's question about orders sends their recent orders' number, dates, status, items, total, shipping method and tracking number to Amazon Bedrock; addresses, email, phone and payment details are not sent. The product assistant sends the product's own details, or its approved review texts without reviewer names, when an editor asks for a draft.
+
+With WeChat answers on, followers' text messages, passed on by WeChat (Tencent), go to Amazon Bedrock with up to three earlier exchanges, kept 30 minutes under a hash of the OpenID. Embedded Bilibili players load from Bilibili, which receives the visitor's IP address and can set cookies. YouTube uploads, off until a channel is connected with its owner's consent, send the chosen video file, title, description and tags to the YouTube Data API, under the [Google Privacy Policy](https://policies.google.com/privacy) and the [YouTube Terms of Service](https://www.youtube.com/t/terms). The publishing record stays in post meta and is sent nowhere.
 
 When an image model is chosen, image prompts, and any image supplied for editing, are sent to Stability AI models on Amazon Bedrock in US West (Oregon) unless the site moves them to another region. The prompt is first checked with the site's guardrail in its own region. With the media helpers on, Remove background and Upscale send the selected image when an editor asks. Results are saved as new Media Library items. Requests from other plugins through the WordPress AI Client send what those plugins put in the prompt, including any images.

@@ -568,7 +568,7 @@ foreach ( array( "'init', 'AI_Chat_Bedrock_Leads', 'register_post_type'", 'AI_Ch
 }
 check_or( false !== strpos( $uninstall, "'post_type'      => 'aicfab_lead'" ) && false !== strpos( $uninstall, "'ai_chat_bedrock_prune_leads'" ), 'uninstall removes the requests and the schedule' );
 check_or( false !== strpos( file_get_contents( $root . '/includes/class-ai-chat-bedrock-deactivator.php' ), "'ai_chat_bedrock_prune_leads'" ), 'deactivation clears the schedule' );
-check_or( false !== strpos( $admin, "'leads_enabled'      => array( 'leads_notify', 'leads_days', 'leads_link' )" ), 'the settings save together' );
+check_or( 1 === preg_match( "/'leads_enabled'\\s+=> array\\( 'leads_notify', 'leads_days', 'leads_link' \\)/", $admin ), 'the settings save together' );
 check_or( false !== strpos( $admin, "AI_Chat_Bedrock_Leads::clean_link( \$input['leads_link'] )" ), 'the link is cleaned on save' );
 check_or( false !== strpos( $footer, "'' === \$sign_in_url && AI_Chat_Bedrock_Leads::enabled( \$options )" ), 'the button shows only when the visitor can use the chat and requests are on' );
 check_or( false !== strpos( $script, "website: \$form.find( '[name=\"website\"]' ).val()" ) || false !== strpos( $script, 'website:' ), 'the script sends the hidden field' );

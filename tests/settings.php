@@ -116,6 +116,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-history.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-speech.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-leads.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-youtube.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 
 $failures = array();
@@ -264,6 +265,41 @@ $saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'ever
 check_set( '' === $saved['chat_memory'] && AI_Chat_Bedrock_Chat_History::DEFAULT_DAYS === $saved['chat_memory_days'], 'An unknown memory mode is saved as off, and no retention as the default.' );
 $saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'tab', 'chat_memory_days' => '14' ) );
 check_set( 'tab' === $saved['chat_memory'] && 14 === $saved['chat_memory_days'], 'Tab memory is saved.' );
+
+// --- Every field shows on its section's tab ----------------------------------------
+
+$GLOBALS['aicfab_sections'] = array();
+$GLOBALS['aicfab_fields']   = array();
+if ( ! function_exists( 'register_setting' ) ) {
+	function register_setting( $group, $name, $args = array() ) {}
+	function add_settings_section( $id, $title, $callback, $page ) {
+		$GLOBALS['aicfab_sections'][ $id ] = $page;
+	}
+	function add_settings_field( $id, $title, $callback, $page, $section, $args = array() ) {
+		$GLOBALS['aicfab_fields'][ $id ] = array( $page, $section );
+	}
+}
+$admin->register_settings();
+$aicfab_misplaced = array();
+foreach ( $GLOBALS['aicfab_fields'] as $aicfab_field => $aicfab_where ) {
+	if ( ! isset( $GLOBALS['aicfab_sections'][ $aicfab_where[1] ] ) || $GLOBALS['aicfab_sections'][ $aicfab_where[1] ] !== $aicfab_where[0] ) {
+		$aicfab_misplaced[] = $aicfab_field;
+	}
+}
+check_set( count( $GLOBALS['aicfab_fields'] ) > 30 && array() === $aicfab_misplaced, 'Every settings field is on the tab of its section; misplaced: ' . implode( ', ', $aicfab_misplaced ) );
+check_set( 'aicfab_tab_publishing' === $GLOBALS['aicfab_fields']['youtube_client_id'][0], 'The YouTube settings are on the Publishing tab.' );
+
+// --- Publishing ------------------------------------------------------------------
+
+$saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' ) );
+check_set( empty( $saved['distribution_enabled'] ) && empty( $saved['distribution_links'] ) && empty( $saved['bilibili_embeds'] ) && '' === AI_Chat_Bedrock_YouTube::client( $saved )['id'], 'Publishing features are off by default.' );
+$saved = save_tab( $admin, array( 'distribution_enabled', 'bilibili_embeds', 'youtube_client_id' ), array( 'distribution_enabled' => '1', 'distribution_links' => '1', 'bilibili_embeds' => '1', 'youtube_client_id' => '123456-abcdef.apps.googleusercontent.com', 'youtube_client_secret' => 'GOCSPX-abcdefghijklmnop', 'youtube_daily_uploads' => '3' ) );
+check_set( true === $saved['distribution_enabled'] && true === $saved['distribution_links'] && true === $saved['bilibili_embeds'] && 3 === $saved['youtube_daily_uploads'], 'The record, its links, Bilibili embeds and the daily uploads are saved.' );
+check_set( 'GOCSPX-abcdefghijklmnop' === AI_Chat_Bedrock_YouTube::client( $saved )['secret'] && false === strpos( json_encode( $saved ), 'GOCSPX-abcdefghijklmnop' ), 'The client secret is stored encrypted.' );
+$saved = save_tab( $admin, array( 'distribution_enabled', 'bilibili_embeds', 'youtube_client_id' ), array( 'distribution_enabled' => '1', 'youtube_client_id' => '123456-abcdef.apps.googleusercontent.com', 'youtube_client_secret' => '' ) );
+check_set( 'GOCSPX-abcdefghijklmnop' === AI_Chat_Bedrock_YouTube::client( $saved )['secret'] && false === $saved['distribution_links'], 'An empty secret field keeps the saved secret; an unticked box turns its option off.' );
+$saved = save_tab( $admin, array( 'distribution_enabled', 'bilibili_embeds', 'youtube_client_id' ), array( 'youtube_client_id' => 'not-a-client', 'youtube_client_secret' => 'bad secret!' ) );
+check_set( '' === $saved['youtube_client_id'] && isset( $GLOBALS['aicfab_notices']['youtube_client_id'] ) && isset( $GLOBALS['aicfab_notices']['youtube_client_secret'] ) && 'GOCSPX-abcdefghijklmnop' === AI_Chat_Bedrock_YouTube::client( array( 'youtube_client_secret' => $saved['youtube_client_secret'] ) )['secret'], 'A malformed client ID or secret is refused with a notice.' );
 
 // --- WeChat Official Account -----------------------------------------------------
 

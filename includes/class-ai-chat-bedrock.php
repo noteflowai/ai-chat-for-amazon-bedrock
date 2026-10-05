@@ -75,6 +75,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-wechat.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-distribution.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-bilibili.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-youtube.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-review-prompt.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-sse.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-stream.php';
@@ -262,6 +263,13 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'add_meta_boxes', $distribution, 'add_meta_box' );
 		$this->loader->add_filter( 'the_content', 'AI_Chat_Bedrock_Distribution', 'add_links', 25 );
 		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_Bilibili', 'register' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_youtube_connect', 'AI_Chat_Bedrock_YouTube', 'handle_connect' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_youtube_callback', 'AI_Chat_Bedrock_YouTube', 'handle_callback' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_youtube_disconnect', 'AI_Chat_Bedrock_YouTube', 'handle_disconnect' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_youtube_upload', 'AI_Chat_Bedrock_YouTube', 'handle_upload' );
+		$this->loader->add_action( 'ai_chat_bedrock_youtube_upload', 'AI_Chat_Bedrock_YouTube', 'run' );
+		$this->loader->add_action( 'ai_chat_bedrock_youtube_status', 'AI_Chat_Bedrock_YouTube', 'poll' );
+		$this->loader->add_action( 'ai_chat_bedrock_distribution_box', 'AI_Chat_Bedrock_YouTube', 'render_box_section' );
 
 		// The site description, and the type and language it adds to retrieved passages.
 		// Both check the setting when they run.

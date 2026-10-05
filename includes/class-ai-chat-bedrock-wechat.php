@@ -517,7 +517,7 @@ class AI_Chat_Bedrock_WeChat {
 		// the pages it quoted are not always the ones listed as sources.
 		$sources = array_slice( is_array( $sources ) ? array_values( array_filter( $sources, 'is_array' ) ) : array(), 0, 2 );
 		$cited   = 1 === preg_match( '#https?://#i', $text );
-		$links = '';
+		$links   = '';
 		foreach ( $cited ? array() : $sources as $source ) {
 			if ( ! empty( $source['url'] ) ) {
 				$links .= "\n" . ( ! empty( $source['title'] ) ? wp_strip_all_tags( (string) $source['title'] ) . "\n" : '' ) . esc_url_raw( (string) $source['url'] );

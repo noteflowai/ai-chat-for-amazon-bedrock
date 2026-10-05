@@ -3,6 +3,11 @@ Full changelog. The readme lists the latest releases only.
 
 == Changelog ==
 
+= 1.66.0 =
+* Publishing record, under Settings > Publishing and off by default: where each post is published on Bilibili, YouTube or Xiaohongshu, with the item's ID, address, account, language, status and the edition it replaces. Agents read a post's publishing package and record what they published through abilities and the MCP server, with their account's permissions; the record shows when editing a post and, optionally, as links under it.
+* Bilibili videos embed from their links, as YouTube's do, when turned on.
+* Uploads to YouTube through its API, after connecting a channel with Google's sign-in: resumable, in the background, added to the record and followed until YouTube says whether the video is public. Uploads default to private and are limited per day.
+
 = 1.65.0 =
 * WeChat Official Account, under Chat and off by default: followers' text messages are answered from the site's pages in plain text with sources and a note that AI wrote them, in plaintext, compatible or safe mode, optionally by a faster model than the site's. WeChat's retries give an answer about fifteen seconds; a slower one is kept until the follower sends 1. Works with unverified personal subscription accounts, needs no AppSecret, and limits each follower per hour.
 * Faster on hosts outside AWS before credentials are entered: when no IAM role answers, the plugin no longer waits for the instance metadata service to time out on every page, admin screen and cron run. It asks again after five minutes, when the settings are saved or when Diagnostics runs its checks.

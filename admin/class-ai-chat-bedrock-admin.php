@@ -183,6 +183,9 @@ class AI_Chat_Bedrock_Admin {
 		if ( AI_Chat_Bedrock_Metrics::enabled() ) {
 			add_submenu_page( $this->plugin_name, __( 'Business insights', 'ai-chat-for-amazon-bedrock' ), __( 'Business insights', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_Metrics::CAPABILITY, $this->plugin_name . '-metrics', array( $this, 'display_plugin_admin_metrics_page' ) );
 		}
+		if ( class_exists( 'AI_Chat_Bedrock_YouTube' ) ) {
+			AI_Chat_Bedrock_YouTube::add_page( $this->plugin_name );
+		}
 		add_submenu_page( $this->plugin_name, __( 'Diagnostics', 'ai-chat-for-amazon-bedrock' ), __( 'Diagnostics', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-diagnostics', array( $this, 'display_plugin_admin_diagnostics_page' ) );
 	}
 
@@ -1107,6 +1110,7 @@ class AI_Chat_Bedrock_Admin {
 		add_settings_section( 'aicfab_publishing', __( 'Publishing on video and social platforms', 'ai-chat-for-amazon-bedrock' ), '__return_false', 'aicfab_tab_publishing' );
 		$this->field( 'distribution_enabled', __( 'Publishing record', 'ai-chat-for-amazon-bedrock' ), 'distribution_render', 'aicfab_publishing' );
 		$this->field( 'bilibili_embeds', __( 'Bilibili videos', 'ai-chat-for-amazon-bedrock' ), 'bilibili_embeds_render', 'aicfab_publishing' );
+		$this->field( 'youtube_client_id', __( 'YouTube uploads', 'ai-chat-for-amazon-bedrock' ), 'youtube_render', 'aicfab_publishing' );
 
 		if ( AI_Chat_Bedrock_WooCommerce::active() ) {
 			add_settings_section( 'aicfab_woocommerce', __( 'WooCommerce', 'ai-chat-for-amazon-bedrock' ), array( $this, 'woocommerce_section_callback' ), 'aicfab_tab_woocommerce' );
@@ -1624,6 +1628,39 @@ class AI_Chat_Bedrock_Admin {
 		echo '</fieldset>';
 		echo '<p class="description">' . esc_html__( 'Off by default. Agents read a post\'s publishing package and record what they published, with the item\'s ID, address, account, language and status, through the abilities and the MCP server, using the WordPress permissions of their account; a new edition can be marked as replacing the old one. The record shows in the Published elsewhere box when editing a post. The plugin never signs in to Bilibili or Xiaohongshu: neither has a publishing API for individual creators, so publishing there stays with the agent or person using their creator tools.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
+	public function youtube_render() {
+		$options = get_option( 'ai_chat_bedrock_settings', array() );
+		$options = is_array( $options ) ? $options : array();
+		$client  = AI_Chat_Bedrock_YouTube::client( $options );
+		$channel = AI_Chat_Bedrock_YouTube::channel();
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display only.
+		$notice = isset( $_GET['aicfab_youtube'] ) ? sanitize_key( wp_unslash( $_GET['aicfab_youtube'] ) ) : '';
+		$notes  = array(
+			'youtube_connected'    => __( 'The YouTube channel is connected.', 'ai-chat-for-amazon-bedrock' ),
+			'youtube_disconnected' => __( 'The YouTube channel is disconnected, and the site\'s access was revoked at Google.', 'ai-chat-for-amazon-bedrock' ),
+			'youtube_client'       => __( 'Save the OAuth client ID and secret first.', 'ai-chat-for-amazon-bedrock' ),
+			'youtube_state'        => __( 'The sign-in did not come back from the request this site made, so it was ignored. Try again.', 'ai-chat-for-amazon-bedrock' ),
+			'youtube_denied'       => __( 'Google did not grant access to the channel.', 'ai-chat-for-amazon-bedrock' ),
+			'youtube_token'        => __( 'Google did not return a lasting token. Check the client secret and the redirect URI, then try again.', 'ai-chat-for-amazon-bedrock' ),
+			'youtube_channel'      => __( 'The Google account has no YouTube channel.', 'ai-chat-for-amazon-bedrock' ),
+		);
+		if ( isset( $notes[ $notice ] ) ) {
+			echo '<p><strong>' . esc_html( $notes[ $notice ] ) . '</strong></p>';
+		}
+		echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'YouTube uploads', 'ai-chat-for-amazon-bedrock' ) . '</legend>';
+		echo '<label for="aicfab_field_youtube_client_id">' . esc_html__( 'OAuth client ID', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="text" id="aicfab_field_youtube_client_id" class="regular-text" name="ai_chat_bedrock_settings[youtube_client_id]" value="' . esc_attr( $client['id'] ) . '" placeholder="' . esc_attr__( 'Client ID from Google Cloud', 'ai-chat-for-amazon-bedrock' ) . '"><br>';
+		echo '<label for="aicfab_field_youtube_client_secret">' . esc_html__( 'OAuth client secret', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="password" id="aicfab_field_youtube_client_secret" class="regular-text" name="ai_chat_bedrock_settings[youtube_client_secret]" value="" autocomplete="new-password" placeholder="' . esc_attr( '' !== $client['secret'] ? __( 'Saved — enter a value to replace', 'ai-chat-for-amazon-bedrock' ) : '' ) . '"><br>';
+		echo '<label for="aicfab_field_youtube_daily_uploads">' . esc_html__( 'Uploads a day', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="number" id="aicfab_field_youtube_daily_uploads" class="small-text" name="ai_chat_bedrock_settings[youtube_daily_uploads]" value="' . esc_attr( AI_Chat_Bedrock_YouTube::daily_limit( $options ) ) . '" min="1" max="' . esc_attr( AI_Chat_Bedrock_YouTube::MAX_DAILY ) . '">';
+		echo '</fieldset>';
+		if ( null !== $channel ) {
+			/* translators: %s: YouTube channel name. */
+			echo '<p>' . esc_html( sprintf( __( 'Connected to the channel %s.', 'ai-chat-for-amazon-bedrock' ), $channel['title'] ) ) . ' <a class="button" href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=ai_chat_bedrock_youtube_disconnect' ), 'ai_chat_bedrock_youtube_disconnect' ) ) . '">' . esc_html__( 'Disconnect', 'ai-chat-for-amazon-bedrock' ) . '</a></p>';
+		} elseif ( '' !== $client['id'] && '' !== $client['secret'] ) {
+			echo '<p><a class="button button-secondary" href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=ai_chat_bedrock_youtube_connect' ), 'ai_chat_bedrock_youtube_connect' ) ) . '">' . esc_html__( 'Connect a YouTube channel', 'ai-chat-for-amazon-bedrock' ) . '</a></p>';
+		}
+		/* translators: %s: redirect URI to register in Google Cloud. */
+		echo '<p class="description">' . esc_html( sprintf( __( 'Off until a channel is connected. In Google Cloud, enable the YouTube Data API v3, create an OAuth client of type Web application with the authorized redirect URI %s, and enter its ID and secret here; then connect the channel. Uploads run in the background from the Published elsewhere box of a post, with the publishing record on, and are added to it. Google keeps videos uploaded from a project that has not passed YouTube\'s audit private, and each upload uses 1,600 of the 10,000 quota units a project gets a day.', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_YouTube::redirect_uri() ) ) . '</p>';
+	}
 	public function bilibili_embeds_render() {
 		$options = get_option( 'ai_chat_bedrock_settings', array() );
 		$options = is_array( $options ) ? $options : array();
@@ -1927,13 +1964,28 @@ class AI_Chat_Bedrock_Admin {
 		$output['distribution_enabled']     = ! empty( $input['distribution_enabled'] );
 		$output['distribution_links']       = ! empty( $input['distribution_links'] );
 		$output['bilibili_embeds']          = ! empty( $input['bilibili_embeds'] );
-		$output['woo_catalog']              = ! empty( $input['woo_catalog'] );
-		$output['woo_catalog_limit']        = AI_Chat_Bedrock_WooCommerce::limit( $input );
-		$output['woo_orders']               = ! empty( $input['woo_orders'] );
-		$output['woo_product_assistant']    = ! empty( $input['woo_product_assistant'] );
-		$x_default                          = isset( $input['hreflang_x_default'] ) ? sanitize_key( $input['hreflang_x_default'] ) : '';
-		$languages                          = AI_Chat_Bedrock_Integrations::languages();
-		$output['hreflang_x_default']       = '' === $x_default || empty( $languages ) || isset( $languages[ $x_default ] ) ? $x_default : '';
+		$output['youtube_client_id']        = isset( $input['youtube_client_id'] ) ? AI_Chat_Bedrock_YouTube::clean_client_id( $input['youtube_client_id'] ) : '';
+		$output['youtube_daily_uploads']    = AI_Chat_Bedrock_YouTube::daily_limit( array( 'youtube_daily_uploads' => isset( $input['youtube_daily_uploads'] ) ? $input['youtube_daily_uploads'] : '' ) );
+		$raw_youtube_secret                 = isset( $input['youtube_client_secret'] ) && is_string( $input['youtube_client_secret'] ) ? trim( $input['youtube_client_secret'] ) : '';
+		$output['youtube_client_secret']    = isset( $current['youtube_client_secret'] ) ? $current['youtube_client_secret'] : '';
+		if ( preg_match( '/^[A-Za-z0-9_-]{10,100}$/', $raw_youtube_secret ) ) {
+			$encrypted = AI_Chat_Bedrock_Security::encrypt_secret( $raw_youtube_secret );
+			if ( '' !== $encrypted ) {
+				$output['youtube_client_secret'] = $encrypted;
+			}
+		} elseif ( '' !== $raw_youtube_secret ) {
+			$this->notice( 'youtube_client_secret', __( 'That does not look like an OAuth client secret, so it was not saved.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		if ( isset( $input['youtube_client_id'] ) && '' !== trim( (string) $input['youtube_client_id'] ) && '' === $output['youtube_client_id'] ) {
+			$this->notice( 'youtube_client_id', __( 'That is not an OAuth client ID from Google Cloud, so it was not saved.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		$output['woo_catalog']           = ! empty( $input['woo_catalog'] );
+		$output['woo_catalog_limit']     = AI_Chat_Bedrock_WooCommerce::limit( $input );
+		$output['woo_orders']            = ! empty( $input['woo_orders'] );
+		$output['woo_product_assistant'] = ! empty( $input['woo_product_assistant'] );
+		$x_default                       = isset( $input['hreflang_x_default'] ) ? sanitize_key( $input['hreflang_x_default'] ) : '';
+		$languages                       = AI_Chat_Bedrock_Integrations::languages();
+		$output['hreflang_x_default']    = '' === $x_default || empty( $languages ) || isset( $languages[ $x_default ] ) ? $x_default : '';
 
 		$prompt_id = isset( $input['prompt_id'] ) ? trim( sanitize_text_field( $input['prompt_id'] ) ) : '';
 		if ( '' !== $prompt_id && ! preg_match( '#^[A-Za-z0-9:._/-]{1,2048}$#', $prompt_id ) ) {
@@ -2101,6 +2153,7 @@ class AI_Chat_Bedrock_Admin {
 		'leads_enabled'        => array( 'leads_notify', 'leads_days', 'leads_link' ),
 		'wechat_enabled'       => array( 'wechat_token', 'wechat_aes_key', 'wechat_app_id', 'wechat_model_id', 'wechat_hourly' ),
 		'distribution_enabled' => array( 'distribution_links' ),
+		'youtube_client_id'    => array( 'youtube_client_secret', 'youtube_daily_uploads' ),
 		'popup_site_wide'      => array( 'popup_profile' ),
 		'prompt_id'            => array( 'prompt_version' ),
 		'embedding_model_id'   => array( 'embedding_background' ),
@@ -2158,6 +2211,7 @@ class AI_Chat_Bedrock_Admin {
 			'aicfab_knowledge'    => 'aicfab_tab_knowledge',
 			'aicfab_chat'         => 'aicfab_tab_chat',
 			'aicfab_integrations' => 'aicfab_tab_integrations',
+			'aicfab_publishing'   => 'aicfab_tab_publishing',
 			'aicfab_woocommerce'  => 'aicfab_tab_woocommerce',
 		);
 		$page  = isset( $pages[ $section ] ) ? $pages[ $section ] : 'aicfab_tab_chat';
