@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai, chatbot, ai-agent, mcp, connector
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.66.0
+Stable tag: 1.65.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -359,6 +359,10 @@ Yes, under Chat > Contact requests, off by default. A Contact a person button be
 
 Yes, under Chat > Analytics events, off by default. Opens, questions, answers, followed sources and products, ratings and contact requests go to Site Kit, MonsterInsights, Google Tag Manager, Matomo or Plausible, without message text, and wait for statistics consent where the WP Consent API is used. [Events and parameters](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-i-see-what-the-chat-does-in-google-analytics).
 
+= Can it answer my WeChat Official Account? =
+
+Yes, under Chat > WeChat Official Account, off by default. Followers' text messages are answered from your pages in plain text with sources, in plaintext or safe mode, within the time WeChat waits, and a new follower gets the welcome message. It works with unverified personal subscription accounts and needs no AppSecret. [Setup and limits](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-answer-my-wechat-official-account).
+
 = Can the chat float instead of sitting in the page? =
 
 Any chat can render as a floating button instead of an inline panel:
@@ -476,11 +480,12 @@ what a good answer says.
 
 == Changelog ==
 
-= 1.66.0 =
-* `wp ai-chat-bedrock usage` ends with streamed time to first text: count, average ms and median band, up to 30 days, or unknown, never 0 ms. Output is otherwise unchanged.
-
 = 1.65.0 =
+* WeChat Official Account, under Chat and off by default: followers' text messages are answered from the site's pages in plain text with sources and a note that AI wrote them, in plaintext, compatible or safe mode, optionally by a faster model than the site's. WeChat's retries give an answer about fifteen seconds; a slower one is kept until the follower sends 1. Works with unverified personal subscription accounts, needs no AppSecret, and limits each follower per hour.
+* Faster on hosts outside AWS before credentials are entered: when no IAM role answers, the plugin no longer waits for the instance metadata service to time out on every page, admin screen and cron run. It asks again after five minutes, when the settings are saved or when Diagnostics runs its checks.
+* Ready for PHP 8.5: streamed answers no longer call a function PHP 8.5 deprecates, which could write a notice into the reply, and the conversation log export no longer relies on a CSV default PHP 8.4 deprecates. The release checks now run on PHP 7.4, 8.3 and 8.5 and fail on any PHP notice.
 * The dashboard shows how long visitors wait for the first text of a streamed answer: the number of answers, the average and the median range over the last 7 days, or unknown before any streamed answer. The time is taken on the server, from the start of the Bedrock request to the first text, and is recorded after that text has been sent. Only counters are kept, for 30 days, with no message text.
+* `wp ai-chat-bedrock usage` ends with streamed time to first text: count, average ms and median band, up to 30 days, or unknown, never 0 ms. Output is otherwise unchanged.
 
 = 1.64.0 =
 * Contact requests, under Chat and off by default: a Contact a person button below the chat, also offered after a thumbs-down. Visitors leave an email address or phone number and a message, and can include the conversation; nothing is stored without their consent. Requests are listed under Contact requests, exported as CSV, deleted after the days you set (180 by default) and covered by personal data export and erasure. Akismet checks them when set up, Flamingo files a copy, an email can go to the site, and `ai_chat_bedrock_lead_captured` passes them on. Joinchat's WhatsApp number is offered as another way to reach the site.
@@ -496,20 +501,10 @@ what a good answer says.
 * Reading aloud spends money only on new audio, and that is now shared fairly: one visitor may have at most a quarter of the daily characters made (30,000 by default), crawlers and scripts cannot have posts read, and saved audio still plays for everyone. Listen to this post can be limited to signed-in visitors.
 * Fixed: with LiteSpeed Cache, WP Rocket or Perfmatters delaying scripts until the first interaction, that first tap on the chat button or Send did nothing, notably on phones, and Send could reload the page. The tap is now kept and acted on once the chat has loaded. The chat's own script is still delayed as the site has set it.
 
-= 1.63.0 =
-* Amazon Bedrock now appears under Settings > Connectors on WordPress 7.1 and later. On AWS it shows as connected with nothing entered, because the IAM role is used. Elsewhere, paste an Amazon Bedrock API key there: it is checked with Bedrock before it is kept, and stored encrypted. A key in the plugin settings or `wp-config.php` still takes precedence.
-* Fixed: a key entered for Bedrock on Settings > Connectors could not be checked by WordPress and was discarded, because the connector declared that it stored no credential.
-* Renamed AI Chatbot & Agents for Amazon Bedrock. Nothing changes on existing sites.
-* Diagnostics and the Plugins screen link to the support forum, and the FAQ is shorter, with the longer answers on GitHub.
-* Once the chat has answered at least 20 questions over more than a week, administrators see one request for a review on the plugin's own screens. Closing it or following a link ends it for good, and the `ai_chat_bedrock_review_prompt` filter turns it off.
-
 == Upgrade Notice ==
 
-= 1.66.0 =
-`wp ai-chat-bedrock usage` also prints streamed time to first text, or unknown when nothing was measured. Nothing new is stored.
-
 = 1.65.0 =
-The dashboard shows the time to the first text of streamed answers over seven days. Counters only; no messages are stored.
+Optional answers for a WeChat Official Account, streamed time to first text on the dashboard and in WP-CLI, faster pages on hosts outside AWS before credentials are set, and PHP 8.5 support.
 
 = 1.64.0 =
 Pages your SEO plugin marks noindex are no longer used for answers; Answer grounding can include them again. Optional contact requests and analytics events, WP Consent API support, and fairer read-aloud limits.

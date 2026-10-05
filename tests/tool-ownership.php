@@ -120,7 +120,10 @@ function integration() {
 	$reflection = new ReflectionClass( 'AI_Chat_Bedrock_MCP_Integration' );
 	$instance   = $reflection->newInstanceWithoutConstructor();
 	$property   = $reflection->getProperty( 'mcp_client' );
-	$property->setAccessible( true );
+	// Needed before PHP 8.1, deprecated since 8.5.
+	if ( PHP_VERSION_ID < 80100 ) {
+		$property->setAccessible( true );
+	}
 	$property->setValue( $instance, new Stub_MCP_Client() );
 	return $instance;
 }

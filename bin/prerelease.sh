@@ -167,7 +167,14 @@ for suite in tests/*.php; do
 	SUITES=$((SUITES + 1))
 	# Marked so a suite that drives this script can recognise the situation and skip,
 	# instead of running the gate inside the gate.
-	if OUTPUT="$( AICFAB_GATE_SELFTEST=1 "$PHP_BIN" "$suite" 2>&1 )"; then
+	# Every error is reported, so a deprecation on a newer PHP fails the suite rather than
+	# passing unnoticed until that version removes what it warned about.
+	if OUTPUT="$( AICFAB_GATE_SELFTEST=1 "$PHP_BIN" -d error_reporting=-1 -d display_errors=1 "$suite" 2>&1 )"; then
+		if printf '%s\n' "$OUTPUT" | grep -Eq '(^|PHP )(Deprecated|Warning|Notice): '; then
+			printf '%s\n' "$OUTPUT" | grep -E '(^|PHP )(Deprecated|Warning|Notice): ' | head -4
+			bad "$(basename "$suite") reported PHP notices"
+			continue
+		fi
 		case "$OUTPUT" in
 			SKIP:*) skip "$(basename "$suite"): ${OUTPUT#SKIP: }" ;;
 			*) ok "$(basename "$suite")" ;;

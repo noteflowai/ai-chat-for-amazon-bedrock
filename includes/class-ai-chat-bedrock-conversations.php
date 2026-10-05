@@ -74,7 +74,7 @@ class AI_Chat_Bedrock_Conversations {
 			'id'            => self::new_id(),
 			'time'          => time(),
 			'user'          => get_current_user_id(),
-			'source'        => in_array( $source, array( 'chat', 'stream', 'editor', 'ability' ), true ) ? $source : 'chat',
+			'source'        => in_array( $source, array( 'chat', 'stream', 'editor', 'ability', 'wechat' ), true ) ? $source : 'chat',
 			'model'         => AI_Chat_Bedrock_Security::string_substr( $model, 0, 120 ),
 			'question'      => AI_Chat_Bedrock_Security::string_substr( wp_strip_all_tags( $question ), 0, self::MAX_TEXT ),
 			'answer'        => AI_Chat_Bedrock_Security::string_substr( wp_strip_all_tags( $answer ), 0, self::MAX_TEXT ),

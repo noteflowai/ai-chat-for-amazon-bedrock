@@ -30,6 +30,23 @@ class AI_Chat_Bedrock_AWS_Credentials {
 	const ROLE_CACHE_MAX_TTL = 900;
 	const ROLE_EXPIRY_BUFFER = 300;
 
+	/*
+	 * After no IAM role answered, how long before asking again. Off AWS, or on an instance
+	 * without a role, the metadata service never answers, and every request waited for it to
+	 * time out until credentials were entered: a front page with the chat, an admin screen,
+	 * a cron run. Saving the settings or running Diagnostics asks again at once.
+	 */
+	const ROLE_MISS_KEY = 'aicfab_role_credentials_miss';
+	const ROLE_MISS_TTL = 300;
+
+	/**
+	 * Whether no role answered earlier in this request, for sites without a persistent cache
+	 * where the transient is still read from the database each time.
+	 *
+	 * @var bool
+	 */
+	private static $role_missed = false;
+
 	/**
 	 * Resolve credentials for signing Bedrock requests.
 	 *
@@ -61,15 +78,24 @@ class AI_Chat_Bedrock_AWS_Credentials {
 			return $cached;
 		}
 
-		foreach ( array( 'from_environment', 'from_container_role', 'from_instance_role' ) as $provider ) {
-			$credentials = self::{$provider}();
-			if ( null === $credentials ) {
-				continue;
-			}
-			if ( 'from_environment' !== $provider ) {
-				self::cache_role_credentials( $credentials );
-			}
+		$credentials = self::from_environment();
+		if ( null !== $credentials ) {
 			return $credentials;
+		}
+
+		if ( ! self::$role_missed && false !== get_transient( self::ROLE_MISS_KEY ) ) {
+			self::$role_missed = true;
+		}
+		if ( ! self::$role_missed ) {
+			foreach ( array( 'from_container_role', 'from_instance_role' ) as $provider ) {
+				$credentials = self::{$provider}();
+				if ( null !== $credentials ) {
+					self::cache_role_credentials( $credentials );
+					return $credentials;
+				}
+			}
+			self::$role_missed = true;
+			set_transient( self::ROLE_MISS_KEY, 1, self::ROLE_MISS_TTL );
 		}
 
 		return new WP_Error( 'aicfab_no_credentials', __( 'Amazon Bedrock credentials are not configured.', 'ai-chat-for-amazon-bedrock' ) );
@@ -221,10 +247,13 @@ class AI_Chat_Bedrock_AWS_Credentials {
 	}
 
 	/**
-	 * Discard cached role credentials.
+	 * Discard cached role credentials, and the record that no role answered, so the next
+	 * request asks the metadata service again.
 	 */
 	public static function flush_cache() {
 		delete_transient( self::ROLE_CACHE_KEY );
+		delete_transient( self::ROLE_MISS_KEY );
+		self::$role_missed = false;
 	}
 
 	private static function from_constants() {

@@ -101,6 +101,11 @@ class AI_Chat_Bedrock_Conversations {
 	const MAX_DAYS         = 90;
 }
 
+if ( ! function_exists( 'wp_salt' ) ) {
+	function wp_salt( $scheme = 'auth' ) {
+		return 'test-salt';
+	}
+}
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-s3-vectors.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-integrations.php';
@@ -110,6 +115,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-retrieval.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-history.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-speech.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-leads.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 
 $failures = array();
@@ -258,6 +264,22 @@ $saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'ever
 check_set( '' === $saved['chat_memory'] && AI_Chat_Bedrock_Chat_History::DEFAULT_DAYS === $saved['chat_memory_days'], 'An unknown memory mode is saved as off, and no retention as the default.' );
 $saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'tab', 'chat_memory_days' => '14' ) );
 check_set( 'tab' === $saved['chat_memory'] && 14 === $saved['chat_memory_days'], 'Tab memory is saved.' );
+
+// --- WeChat Official Account -----------------------------------------------------
+
+$saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' ) );
+check_set( empty( $saved['wechat_enabled'] ) && '' === AI_Chat_Bedrock_WeChat::token( $saved ), 'WeChat is off, with no token, by default.' );
+$saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_enabled' => '1', 'wechat_token' => 'Tok3nForTests', 'wechat_aes_key' => 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG', 'wechat_app_id' => 'wx1234567890abcdef', 'wechat_hourly' => '30', 'wechat_model_id' => 'jp.anthropic.claude-haiku-4-5-20251001-v1:0' ) );
+check_set( true === $saved['wechat_enabled'] && 'Tok3nForTests' === AI_Chat_Bedrock_WeChat::token( $saved ) && 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG' === AI_Chat_Bedrock_WeChat::aes_key( $saved ) && 'wx1234567890abcdef' === $saved['wechat_app_id'] && 30 === $saved['wechat_hourly'] && 'jp.anthropic.claude-haiku-4-5-20251001-v1:0' === $saved['wechat_model_id'], 'The switch, token, key, AppID, model and limit are saved together.' );
+check_set( false === strpos( json_encode( $saved ), 'Tok3nForTests' ) && false === strpos( json_encode( $saved ), 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG' ), 'The token and key are stored encrypted.' );
+$saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_enabled' => '1', 'wechat_token' => '', 'wechat_aes_key' => '', 'wechat_app_id' => 'wx1234567890abcdef' ) );
+check_set( 'Tok3nForTests' === AI_Chat_Bedrock_WeChat::token( $saved ) && '' !== AI_Chat_Bedrock_WeChat::aes_key( $saved ), 'Empty fields keep the saved token and key, which are never shown again.' );
+$saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'light' ) );
+check_set( 'Tok3nForTests' === AI_Chat_Bedrock_WeChat::token( $saved ) && true === $saved['wechat_enabled'], 'Another tab keeps them.' );
+$saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_enabled' => '1', 'wechat_token' => 'no spaces allowed', 'wechat_app_id' => 'gh_63e00737b4da' ) );
+check_set( 'Tok3nForTests' === AI_Chat_Bedrock_WeChat::token( $saved ) && '' === $saved['wechat_app_id'] && isset( $GLOBALS['aicfab_notices']['wechat_token'] ), 'A malformed token is refused with a notice, and the original ID is not taken for an AppID.' );
+$saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_clear' => '1' ) );
+check_set( false === $saved['wechat_enabled'] && '' === AI_Chat_Bedrock_WeChat::token( $saved ) && '' === AI_Chat_Bedrock_WeChat::aes_key( $saved ), 'The token and key can be removed.' );
 
 // --- Pages hidden from search ----------------------------------------------------
 

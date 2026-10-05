@@ -456,7 +456,10 @@ foreach ( $aicfab_reflect->getProperties() as $aicfab_prop ) {
 	if ( $aicfab_prop->isStatic() || ! preg_match( '/key|secret|token/i', $aicfab_prop->getName() ) ) {
 		continue;
 	}
-	$aicfab_prop->setAccessible( true );
+	// Needed before PHP 8.1, deprecated since 8.5.
+	if ( PHP_VERSION_ID < 80100 ) {
+		$aicfab_prop->setAccessible( true );
+	}
 	if ( is_string( $aicfab_prop->getValue( $aicfab_client ) ) ) {
 		$aicfab_prop->setValue( $aicfab_client, '' );
 	}
@@ -488,9 +491,15 @@ aicfab_t_check( 0 === aicfab_u_posts() && 0 === aicfab_u_failed() && 1 === aicfa
 aicfab_t_reset();
 $aicfab_client  = new AI_Chat_Bedrock_AWS();
 $aicfab_outcome = new ReflectionMethod( 'AI_Chat_Bedrock_AWS', 'record_chat_outcome' );
-$aicfab_outcome->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$aicfab_outcome->setAccessible( true );
+}
 $aicfab_sent = new ReflectionProperty( 'AI_Chat_Bedrock_AWS', 'request_sent' );
-$aicfab_sent->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$aicfab_sent->setAccessible( true );
+}
 $aicfab_sent->setValue( $aicfab_client, true );
 $aicfab_stopped = array( 'success' => true, 'data' => array( 'stopped' => true ) );
 aicfab_t_check( $aicfab_stopped === $aicfab_outcome->invoke( $aicfab_client, $aicfab_stopped ), 'record_chat_outcome() must return its input unchanged.' );

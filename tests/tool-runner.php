@@ -77,7 +77,10 @@ require_once __DIR__ . '/../includes/class-ai-chat-bedrock-tool-runner.php';
 class AI_Chat_Bedrock_Tool_Runner_Labels {
 	public static function read( $name ) {
 		$method = new ReflectionMethod( 'AI_Chat_Bedrock_Tool_Runner', 'readable_tool' );
-		$method->setAccessible( true );
+		// Needed before PHP 8.1, deprecated since 8.5.
+		if ( PHP_VERSION_ID < 80100 ) {
+			$method->setAccessible( true );
+		}
 		return $method->invoke( null, $name );
 	}
 }

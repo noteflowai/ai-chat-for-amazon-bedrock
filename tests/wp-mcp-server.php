@@ -47,7 +47,10 @@ function check_server( $condition, $message ) { global $failures; if ( ! $condit
 
 $server   = new AI_Chat_Bedrock_WP_MCP_Server();
 $dispatch = new ReflectionMethod( $server, 'dispatch' );
-$dispatch->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$dispatch->setAccessible( true );
+}
 $call = function ( array $payload ) use ( $dispatch, $server ) {
 	return $dispatch->invoke( $server, $payload );
 };
@@ -79,7 +82,10 @@ $GLOBALS['aicfab_options']['ai_chat_bedrock_site_abilities'] = true;
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-site-abilities.php';
 $server_with_abilities = new AI_Chat_Bedrock_WP_MCP_Server();
 $dispatch2             = new ReflectionMethod( $server_with_abilities, 'dispatch' );
-$dispatch2->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$dispatch2->setAccessible( true );
+}
 $list2  = $dispatch2->invoke( $server_with_abilities, array( 'jsonrpc' => '2.0', 'id' => 4, 'method' => 'tools/list' ) );
 $names2 = array_map( function ( $tool ) { return $tool['name']; }, $list2['result']['tools'] );
 check_server( in_array( 'create_draft', $names2, true ), 'Draft creation must appear once site abilities are enabled.' );

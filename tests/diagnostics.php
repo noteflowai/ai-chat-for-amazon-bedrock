@@ -108,6 +108,10 @@ class AI_Chat_Bedrock_AWS {
 }
 
 class AI_Chat_Bedrock_AWS_Credentials {
+	public static $flushed = 0;
+	public static function flush_cache() {
+		++self::$flushed;
+	}
 	public static function describe( $options ) {
 		// Reports the source the way the real one does, including the key it found.
 		if ( ! empty( $options['aws_access_key'] ) ) {
@@ -201,10 +205,12 @@ check_diag( 2 === $GLOBALS['aicfab_listings'], 'One discovery per cold run, two 
 $GLOBALS['aicfab_listings'] = 0;
 $aicfab_diag->run( false );
 check_diag( 0 === $GLOBALS['aicfab_listings'], 'A second run is served from cache and calls AWS not at all, got ' . $GLOBALS['aicfab_listings'] );
+check_diag( 0 === AI_Chat_Bedrock_AWS_Credentials::$flushed, 'Opening the screen keeps what is known about credentials.' );
 
 $GLOBALS['aicfab_model'] = 0;
 $aicfab_live             = $aicfab_diag->run( true );
 check_diag( 1 === $GLOBALS['aicfab_model'], 'Asking for a live test invokes the model exactly once, got ' . $GLOBALS['aicfab_model'] );
+check_diag( 1 === AI_Chat_Bedrock_AWS_Credentials::$flushed, 'Running the checks looks for credentials afresh, so a role attached since is found.' );
 check_diag( count( $aicfab_live ) === count( $aicfab_checks ) + 1, 'The live test adds one check.' );
 
 $aicfab_live_ids = array();

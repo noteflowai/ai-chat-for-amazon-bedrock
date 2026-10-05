@@ -917,7 +917,12 @@ class AI_Chat_Bedrock_AWS {
 		$stopped   = ! empty( $state['stopped'] );
 		$status    = (int) curl_getinfo( $handle, CURLINFO_RESPONSE_CODE ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_getinfo
 		$errno     = curl_errno( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_errno
-		curl_close( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_close
+		// Since PHP 8.0 the handle is freed with its last reference, and curl_close() does
+		// nothing; PHP 8.5 deprecates it, which in a stream would be written into the reply.
+		if ( PHP_VERSION_ID < 80000 ) {
+			curl_close( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_close, Generic.PHP.DeprecatedFunctions.Deprecated
+		}
+		unset( $handle );
 
 		$this->log_debug(
 			'Streaming response',

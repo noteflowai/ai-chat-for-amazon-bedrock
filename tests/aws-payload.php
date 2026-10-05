@@ -56,11 +56,20 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-aws.php';
 
 $aws = new AI_Chat_Bedrock_AWS();
 $format = new ReflectionMethod( $aws, 'format_payload_for_model' );
-$format->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$format->setAccessible( true );
+}
 $parse = new ReflectionMethod( $aws, 'parse_model_response' );
-$parse->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$parse->setAccessible( true );
+}
 $sign = new ReflectionMethod( $aws, 'signed_headers' );
-$sign->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$sign->setAccessible( true );
+}
 $failures = array();
 function check_aws( $condition, $message ) { global $failures; if ( ! $condition ) { $failures[] = $message; } }
 
@@ -172,7 +181,10 @@ check_aws( isset( $claude_usage['usage']['input_tokens'] ) && 23 === $claude_usa
 
 // SigV4 canonical path must encode the already-encoded request path a second time.
 $canonical = new ReflectionMethod( $aws, 'canonical_uri' );
-$canonical->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$canonical->setAccessible( true );
+}
 $encoded_path = '/model/' . rawurlencode( 'us.anthropic.claude-haiku-4-5-20251001-v1:0' ) . '/invoke';
 check_aws( '/model/us.anthropic.claude-haiku-4-5-20251001-v1%253A0/invoke' === $canonical->invoke( $aws, $encoded_path ), 'Canonical URI must double-encode percent-encoded model identifiers.' );
 check_aws( '/foundation-models' === $canonical->invoke( $aws, '/foundation-models' ), 'Canonical URI must leave plain control-plane paths unchanged.' );
@@ -182,19 +194,28 @@ check_aws( false === strpos( $canonical->invoke( $aws, $arn_path ), 'arn:aws' ),
 
 // Guardrail headers are optional, validated and covered by the signature.
 $guard_method = new ReflectionMethod( $aws, 'guardrail_headers' );
-$guard_method->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$guard_method->setAccessible( true );
+}
 check_aws( array() === $guard_method->invoke( $aws ), 'No guardrail headers are sent when none is configured.' );
 
 $GLOBALS['aicfab_test_options']['guardrail_id']      = 'gr-abc123';
 $GLOBALS['aicfab_test_options']['guardrail_version'] = '2';
 $guarded = new AI_Chat_Bedrock_AWS();
 $guard_method2 = new ReflectionMethod( $guarded, 'guardrail_headers' );
-$guard_method2->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$guard_method2->setAccessible( true );
+}
 $extra_headers = $guard_method2->invoke( $guarded );
 check_aws( 'gr-abc123' === $extra_headers['x-amzn-bedrock-guardrailidentifier'], 'Guardrail identifier must be forwarded.' );
 
 $sign2 = new ReflectionMethod( $guarded, 'signed_headers' );
-$sign2->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$sign2->setAccessible( true );
+}
 $guarded_headers = $sign2->invoke( $guarded, 'https://bedrock-runtime.us-east-1.amazonaws.com/model/example/invoke', '{}', 'POST', 'bedrock', $extra_headers );
 check_aws( false !== strpos( $guarded_headers['Authorization'], 'x-amzn-bedrock-guardrailidentifier' ), 'Guardrail headers must be covered by SignedHeaders.' );
 check_aws( '2' === $guarded_headers['x-amzn-bedrock-guardrailversion'], 'Guardrail version header must be sent.' );
@@ -202,7 +223,10 @@ check_aws( '2' === $guarded_headers['x-amzn-bedrock-guardrailversion'], 'Guardra
 $GLOBALS['aicfab_test_options']['guardrail_id'] = 'invalid id';
 $rejected = new AI_Chat_Bedrock_AWS();
 $guard_method3 = new ReflectionMethod( $rejected, 'guardrail_headers' );
-$guard_method3->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$guard_method3->setAccessible( true );
+}
 check_aws( array() === $guard_method3->invoke( $rejected ), 'Invalid guardrail identifiers must be rejected.' );
 unset( $GLOBALS['aicfab_test_options']['guardrail_id'], $GLOBALS['aicfab_test_options']['guardrail_version'] );
 
@@ -210,13 +234,19 @@ unset( $GLOBALS['aicfab_test_options']['guardrail_id'], $GLOBALS['aicfab_test_op
 $get_headers = $sign->invoke( $aws, 'https://bedrock.us-east-1.amazonaws.com/foundation-models?byOutputModality=TEXT', '', 'GET' );
 check_aws( isset( $get_headers['Authorization'] ) && false !== strpos( $get_headers['Authorization'], 'SignedHeaders=' ), 'Control-plane GET requests must be signed.' );
 $query_method = new ReflectionMethod( $aws, 'canonical_query' );
-$query_method->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$query_method->setAccessible( true );
+}
 check_aws( 'a=1&b=2' === $query_method->invoke( $aws, 'b=2&a=1' ), 'Canonical query parameters must be sorted.' );
 check_aws( '' === $query_method->invoke( $aws, '' ), 'Empty query strings must produce an empty canonical query.' );
 
 // Fallback eligibility: only access, throttling and service faults may be retried.
 $should = new ReflectionMethod( $aws, 'should_fall_back' );
-$should->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$should->setAccessible( true );
+}
 $case = function ( $code, $status ) use ( $should, $aws ) {
 	return (bool) $should->invoke( $aws, array( 'success' => false, 'data' => array( 'code' => $code, 'status' => $status ) ) );
 };
@@ -241,7 +271,10 @@ check_aws( false === (bool) $should->invoke( $aws, array( 'success' => true, 'da
 
 // A fallback must be valid, known and different from the primary model.
 $resolve = new ReflectionMethod( $aws, 'fallback_model_id' );
-$resolve->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$resolve->setAccessible( true );
+}
 $GLOBALS['aicfab_test_options']['fallback_model_id'] = 'anthropic.claude-3-haiku-20240307-v1:0';
 check_aws( 'anthropic.claude-3-haiku-20240307-v1:0' === $resolve->invoke( $aws, 'us.amazon.nova-pro-v1:0' ), 'a configured fallback is resolved' );
 check_aws( '' === $resolve->invoke( $aws, 'anthropic.claude-3-haiku-20240307-v1:0' ), 'the fallback is refused when it equals the primary model' );
@@ -251,7 +284,10 @@ $GLOBALS['aicfab_test_options']['fallback_model_id'] = '';
 check_aws( '' === $resolve->invoke( $aws, 'us.amazon.nova-pro-v1:0' ), 'no fallback means no retry' );
 
 // A trailing slash belongs to the resource path; GetPrompt signs it.
-$canonical->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$canonical->setAccessible( true );
+}
 check_aws( '/prompts/ABC123/' === $canonical->invoke( $aws, '/prompts/ABC123/' ), 'a trailing slash is preserved when signing' );
 check_aws( '/prompts/ABC123' === $canonical->invoke( $aws, '/prompts/ABC123' ), 'a path without a trailing slash is unchanged' );
 check_aws( '/' === $canonical->invoke( $aws, '/' ), 'the root path signs as a single slash' );
@@ -435,7 +471,10 @@ check_aws( ! isset( $nova_usage['cache_read_tokens'] ), 'No cache count is inven
 // A model that refuses a field is asked once more without it, and remembered.
 // Observed on Bedrock 2026-09-25 from GPT-6 Astra, GPT-5.6, Grok 4.6 and Kimi K3.
 $invoke = new ReflectionMethod( $aws, 'invoke_model' );
-$invoke->setAccessible( true );
+// Needed before PHP 8.1, deprecated since 8.5.
+if ( PHP_VERSION_ID < 80100 ) {
+	$invoke->setAccessible( true );
+}
 $GLOBALS['aicfab_test_posts']     = array();
 $GLOBALS['aicfab_test_responses'] = array(
 	array( 'response' => array( 'code' => 400 ), 'body' => '{"message":"This model doesn\'t support the temperature field. Remove temperature and try again."}' ),
