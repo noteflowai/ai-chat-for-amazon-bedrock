@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai, chatbot, ai-agent, mcp, connector
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.65.0
+Stable tag: 1.66.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -247,6 +247,8 @@ The "Time to first text (streamed, 7 days)" line under the usage panel shows how
 
 "Unknown, no streamed answers recorded yet" means no streamed answer has been measured in the last seven days, for example on a new installation, right after an upgrade or reset, or when streaming is off. It never reports 0 ms for an empty period. Only a count, a sum of milliseconds and five band counters are kept for each day, with no prompt, answer, visitor or request ID. They follow the same 30-day retention as the other usage counters and are cleared when usage is reset.
 
+From a terminal or a scheduled report, `wp ai-chat-bedrock usage` prints the same figure as its last line, for example `Time to first text (streamed, 7 days): 12 answers, average 1840 ms, median 1 to 2 s.` It covers the days asked for, up to the 30 that are kept, reads `average unknown` or `median unknown` when a stored figure is missing or invalid, and exits zero when nothing was measured. `--by-model` leaves the line out, because latency is not recorded per model.
+
 = Why do I receive AccessDeniedException or a model access error? =
 
 Amazon Bedrock no longer has a Model access page: a model is turned on for the AWS account the first time it is called. That first call fails when the identity may not subscribe through AWS Marketplace, when the account has no payment method, or, for Anthropic models, before the one-time use case form is submitted. Opening the model once in the Bedrock console playground as an administrator settles all three, and the chat's error names which one it was. Otherwise, check the model ID, whether it needs an inference profile ID, and that the identity can call `bedrock:InvokeModel` on it.
@@ -474,6 +476,9 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.66.0 =
+* `wp ai-chat-bedrock usage` ends with streamed time to first text: count, average ms and median band, up to 30 days, or unknown, never 0 ms. Output is otherwise unchanged.
+
 = 1.65.0 =
 * The dashboard shows how long visitors wait for the first text of a streamed answer: the number of answers, the average and the median range over the last 7 days, or unknown before any streamed answer. The time is taken on the server, from the start of the Bedrock request to the first text, and is recorded after that text has been sent. Only counters are kept, for 30 days, with no message text.
 
@@ -499,6 +504,9 @@ what a good answer says.
 * Once the chat has answered at least 20 questions over more than a week, administrators see one request for a review on the plugin's own screens. Closing it or following a link ends it for good, and the `ai_chat_bedrock_review_prompt` filter turns it off.
 
 == Upgrade Notice ==
+
+= 1.66.0 =
+`wp ai-chat-bedrock usage` also prints streamed time to first text, or unknown when nothing was measured. Nothing new is stored.
 
 = 1.65.0 =
 The dashboard shows the time to the first text of streamed answers over seven days. Counters only; no messages are stored.
