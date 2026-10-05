@@ -1368,6 +1368,11 @@ class AI_Chat_Bedrock_Admin {
 		echo '<label for="aicfab_field_wechat_token">' . esc_html__( 'Token', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="password" id="aicfab_field_wechat_token" class="regular-text" name="ai_chat_bedrock_settings[wechat_token]" value="" autocomplete="new-password" placeholder="' . esc_attr( '' !== AI_Chat_Bedrock_WeChat::token( $options ) ? $saved : '' ) . '"><br>';
 		echo '<label for="aicfab_field_wechat_aes_key">' . esc_html__( 'EncodingAESKey, for safe mode', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="password" id="aicfab_field_wechat_aes_key" class="regular-text" name="ai_chat_bedrock_settings[wechat_aes_key]" value="" autocomplete="new-password" placeholder="' . esc_attr( '' !== AI_Chat_Bedrock_WeChat::aes_key( $options ) ? $saved : '' ) . '"><br>';
 		echo '<label for="aicfab_field_wechat_app_id">' . esc_html__( 'AppID, for safe mode', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="text" id="aicfab_field_wechat_app_id" class="regular-text" name="ai_chat_bedrock_settings[wechat_app_id]" value="' . esc_attr( AI_Chat_Bedrock_WeChat::app_id( $options ) ) . '" placeholder="wx…"><br>';
+		echo '<label for="aicfab_field_wechat_model_id">' . esc_html__( 'Model for WeChat', 'ai-chat-for-amazon-bedrock' ) . '</label> <select id="aicfab_field_wechat_model_id" name="ai_chat_bedrock_settings[wechat_model_id]">';
+		foreach ( array( '' => __( 'Same as the chat', 'ai-chat-for-amazon-bedrock' ) ) + AI_Chat_Bedrock_Models::options() as $value => $label ) {
+			echo '<option value="' . esc_attr( $value ) . '" ' . selected( AI_Chat_Bedrock_WeChat::model( $options ), $value, false ) . '>' . esc_html( $label ) . '</option>';
+		}
+		echo '</select><br>';
 		echo '<label for="aicfab_field_wechat_hourly">' . esc_html__( 'Messages per follower per hour', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="number" id="aicfab_field_wechat_hourly" class="small-text" name="ai_chat_bedrock_settings[wechat_hourly]" value="' . esc_attr( AI_Chat_Bedrock_WeChat::hourly_limit( $options ) ) . '" min="1" max="' . esc_attr( AI_Chat_Bedrock_WeChat::MAX_HOURLY ) . '">';
 		if ( '' !== AI_Chat_Bedrock_WeChat::token( $options ) || '' !== AI_Chat_Bedrock_WeChat::aes_key( $options ) ) {
 			echo '<br><label><input type="checkbox" name="ai_chat_bedrock_settings[wechat_clear]" value="1"> ' . esc_html__( 'Remove the saved token and key', 'ai-chat-for-amazon-bedrock' ) . '</label>';
@@ -1375,7 +1380,7 @@ class AI_Chat_Bedrock_Admin {
 		echo '</fieldset>';
 		/* translators: %s: the address WeChat sends messages to. */
 		echo '<p class="description">' . esc_html( sprintf( __( 'Off by default. In the WeChat Official Accounts Platform, under Settings and Development > Basic Configuration, enable the server configuration with the URL %s and the token entered here. Plaintext mode needs only the token; compatible and safe mode also need the EncodingAESKey and AppID. No AppSecret is needed.', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_WeChat::url() ) ) . '</p>';
-		echo '<p class="description">' . esc_html__( 'The chat answers each text message from the site\'s pages, in plain text with its sources. WeChat waits about fifteen seconds in all; a longer answer is kept and the follower is told to send 1 to see it. A new follower gets the welcome message and suggested questions. Every answer counts towards the daily request limit, and the conversation log records them when it is on.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'The chat answers each text message from the site\'s pages, in plain text with its sources. WeChat waits about fifteen seconds in all; a longer answer is kept and the follower is told to send 1 to see it, so choose a fast model for WeChat if the chat\'s takes longer. A new follower gets the welcome message and suggested questions. Every answer counts towards the daily request limit, and the conversation log records them when it is on.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function analytics_events_render() {
 		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[analytics_events]" value="1" ' . checked( AI_Chat_Bedrock_Analytics::enabled(), true, false ) . '> ' . esc_html__( 'Report chat activity to the analytics already on this site', 'ai-chat-for-amazon-bedrock' ) . '</label>';
@@ -1937,9 +1942,10 @@ class AI_Chat_Bedrock_Admin {
 
 		$output['analytics_events'] = ! empty( $input['analytics_events'] );
 
-		$output['wechat_enabled'] = ! empty( $input['wechat_enabled'] );
-		$output['wechat_app_id']  = isset( $input['wechat_app_id'] ) ? AI_Chat_Bedrock_WeChat::clean_app_id( $input['wechat_app_id'] ) : '';
-		$output['wechat_hourly']  = AI_Chat_Bedrock_WeChat::hourly_limit( array( 'wechat_hourly' => isset( $input['wechat_hourly'] ) ? $input['wechat_hourly'] : '' ) );
+		$output['wechat_enabled']  = ! empty( $input['wechat_enabled'] );
+		$output['wechat_app_id']   = isset( $input['wechat_app_id'] ) ? AI_Chat_Bedrock_WeChat::clean_app_id( $input['wechat_app_id'] ) : '';
+		$output['wechat_model_id'] = AI_Chat_Bedrock_WeChat::model( array( 'wechat_model_id' => isset( $input['wechat_model_id'] ) ? sanitize_text_field( $input['wechat_model_id'] ) : '' ) );
+		$output['wechat_hourly']   = AI_Chat_Bedrock_WeChat::hourly_limit( array( 'wechat_hourly' => isset( $input['wechat_hourly'] ) ? $input['wechat_hourly'] : '' ) );
 		foreach ( array(
 			'wechat_token'   => array( 'clean_token', __( 'The WeChat token must be 3 to 32 letters and digits, as in the Official Accounts Platform; it was not saved.', 'ai-chat-for-amazon-bedrock' ) ),
 			'wechat_aes_key' => array( 'clean_aes_key', __( 'The EncodingAESKey must be 43 letters and digits; it was not saved.', 'ai-chat-for-amazon-bedrock' ) ),
@@ -2071,7 +2077,7 @@ class AI_Chat_Bedrock_Admin {
 		'chat_memory'        => array( 'chat_memory_days' ),
 		'speech_replies'     => array( 'speech_posts', 'speech_posts_signed_in', 'speech_engine', 'speech_daily_chars' ),
 		'leads_enabled'      => array( 'leads_notify', 'leads_days', 'leads_link' ),
-		'wechat_enabled'     => array( 'wechat_token', 'wechat_aes_key', 'wechat_app_id', 'wechat_hourly' ),
+		'wechat_enabled'     => array( 'wechat_token', 'wechat_aes_key', 'wechat_app_id', 'wechat_model_id', 'wechat_hourly' ),
 		'popup_site_wide'    => array( 'popup_profile' ),
 		'prompt_id'          => array( 'prompt_version' ),
 		'embedding_model_id' => array( 'embedding_background' ),

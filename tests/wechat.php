@@ -137,7 +137,7 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 }
 class AI_Chat_Bedrock_Profiles {
 	public static function overrides_for_client( $options ) {
-		return $options;
+		return isset( $options['model_id'] ) ? array( 'model_id' => $options['model_id'] ) : array();
 	}
 }
 class AI_Chat_Bedrock_Translation {
@@ -168,7 +168,14 @@ class AI_Chat_Bedrock_Content {
 	}
 }
 class AI_Chat_Bedrock_AWS {
-	public function __construct( $options = array() ) {}
+	public function __construct( $options = array() ) {
+		$GLOBALS['aicfab_client'] = $options;
+	}
+}
+class AI_Chat_Bedrock_Models {
+	public static function is_valid_id( $id ) {
+		return 1 === preg_match( '/^[a-z0-9.:\-]+$/', (string) $id );
+	}
 }
 class AI_Chat_Bedrock_Tool_Runner {
 	public static function run( $aws, $messages, $message ) {
@@ -308,6 +315,19 @@ check_wx( wx_content( $again ) === $fields['Content'] && 1 === count( $GLOBALS['
 
 wx_post( wx_message( 'And on Mondays?', 1002 ) );
 check_wx( array( array( 'role' => 'user', 'content' => 'Do you deliver on Sundays?' ), array( 'role' => 'assistant', 'content' => 'We **deliver** on Sundays from 9 to 12.' ) ) === $GLOBALS['aicfab_built']['history'], 'A follow-up question carries the conversation so far.' );
+
+// --- A faster model for WeChat -----------------------------------------------------------------
+
+wx_reset();
+wx_settings( array( 'model_id' => 'global.slow-main-v1', 'fallback_model_id' => 'jp.fast-haiku-v1' ) );
+wx_post( wx_message( 'Hi', 1501 ) );
+check_wx( array( 'model_id' => 'global.slow-main-v1' ) === $GLOBALS['aicfab_client'], 'By default WeChat is answered by the chat\'s model.' );
+wx_settings( array( 'model_id' => 'global.slow-main-v1', 'fallback_model_id' => 'jp.fast-haiku-v1', 'wechat_model_id' => 'jp.fast-haiku-v1' ) );
+wx_post( wx_message( 'Hi again', 1502 ) );
+check_wx( array( 'model_id' => 'jp.fast-haiku-v1', 'fallback_model_id' => 'global.slow-main-v1' ) === $GLOBALS['aicfab_client'], 'A model chosen for WeChat answers there; being the fallback too, the main model stands in for it.' );
+wx_settings( array( 'model_id' => 'global.slow-main-v1', 'wechat_model_id' => 'not a model!' ) );
+check_wx( '' === AI_Chat_Bedrock_WeChat::model(), 'An invalid model is ignored.' );
+wx_settings();
 
 // --- A question that takes longer than WeChat waits -------------------------------------------
 

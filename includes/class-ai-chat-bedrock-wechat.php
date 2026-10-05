@@ -105,6 +105,21 @@ class AI_Chat_Bedrock_WeChat {
 	}
 
 	/**
+	 * The model that answers in WeChat, or an empty string for the chat's own.
+	 *
+	 * WeChat waits about fifteen seconds in all, so a site whose main model takes longer can
+	 * answer WeChat with a faster one and keep its main model for the site.
+	 *
+	 * @param array|null $options Settings.
+	 * @return string
+	 */
+	public static function model( $options = null ) {
+		$options = self::options( $options );
+		$model   = isset( $options['wechat_model_id'] ) ? trim( (string) $options['wechat_model_id'] ) : '';
+		return '' !== $model && class_exists( 'AI_Chat_Bedrock_Models' ) && AI_Chat_Bedrock_Models::is_valid_id( $model ) ? $model : '';
+	}
+
+	/**
 	 * Messages a follower may send in an hour.
 	 *
 	 * @param array|null $options Settings.
@@ -419,7 +434,16 @@ class AI_Chat_Bedrock_WeChat {
 			return 'aicfab_daily_limit' === $built->get_error_code() ? __( 'The assistant has answered as many questions as it can today. Please try again tomorrow.', 'ai-chat-for-amazon-bedrock' ) : self::sorry();
 		}
 
-		$aws      = new AI_Chat_Bedrock_AWS( AI_Chat_Bedrock_Profiles::overrides_for_client( $options ) );
+		$main      = isset( $options['model_id'] ) ? (string) $options['model_id'] : '';
+		$model     = self::model( $options );
+		$fallback  = isset( $options['fallback_model_id'] ) ? (string) $options['fallback_model_id'] : '';
+		$options   = '' !== $model ? array( 'model_id' => $model ) + $options : $options;
+		$overrides = AI_Chat_Bedrock_Profiles::overrides_for_client( $options );
+		if ( '' !== $model && $model === $fallback ) {
+			// The faster model is also the fallback: the main model then stands in for it.
+			$overrides['fallback_model_id'] = $main;
+		}
+		$aws      = new AI_Chat_Bedrock_AWS( $overrides );
 		$response = AI_Chat_Bedrock_Tool_Runner::run( $aws, $built['messages'], $built['message'] );
 		if ( empty( $response['success'] ) || empty( $response['data']['message'] ) ) {
 			return self::sorry();
