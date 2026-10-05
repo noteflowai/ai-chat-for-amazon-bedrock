@@ -389,8 +389,8 @@ class AI_Chat_Bedrock_YouTube {
 
 		$attachment = isset( $input['attachment'] ) ? absint( $input['attachment'] ) : 0;
 		$file       = $attachment ? get_attached_file( $attachment ) : '';
-		clearstatcache( true, (string) $file );
 		$mime       = $attachment ? (string) get_post_mime_type( $attachment ) : '';
+		clearstatcache( true, (string) $file );
 		if ( '' === (string) $file || 0 !== strpos( $mime, 'video/' ) || ! is_readable( $file ) ) {
 			return new WP_Error( 'aicfab_youtube_file', __( 'Choose a video in the Media Library whose file is on this server.', 'ai-chat-for-amazon-bedrock' ) );
 		}
