@@ -162,6 +162,11 @@ class AI_Chat_Bedrock_Chat_Request {
 		return isset( $options['suggested_questions'] ) ? $options['suggested_questions'] : array();
 	}
 }
+class AI_Chat_Bedrock_Content {
+	public static function request_language( $slug ) {
+		return in_array( $slug, array( 'zh', 'en', 'ja' ), true ) ? $slug : '';
+	}
+}
 class AI_Chat_Bedrock_AWS {
 	public function __construct( $options = array() ) {}
 }
@@ -211,6 +216,8 @@ function wx_message( $text, $id, $type = 'text', $extra = '' ) {
 }
 /** As the REST server does it: the permission check first, then the handler. */
 function wx_serve( $request ) {
+	// Each request starts now, as a request from WeChat would.
+	$_SERVER['REQUEST_TIME_FLOAT'] = microtime( true );
 	$handler = new AI_Chat_Bedrock_WeChat();
 	$allowed = $handler->check_permission( $request );
 	if ( true !== $allowed ) {
@@ -384,9 +391,11 @@ function restore_previous_locale() {
 wx_reset();
 wx_post( wx_message( '周日送货吗？', 7001 ) );
 check_wx( array( 'zh_CN', 'restored' ) === $GLOBALS['aicfab_locales'], 'The reply is written in the follower\'s language, and the site\'s is restored after.' );
+check_wx( 'zh' === $GLOBALS['aicfab_built']['options']['_retrieval_language'], 'A Chinese question is answered from Chinese pages first.' );
 $GLOBALS['aicfab_locales'] = array();
 wx_post( wx_message( 'Do you deliver?', 7002 ) );
 check_wx( array() === $GLOBALS['aicfab_locales'], 'An English message leaves the site\'s language alone.' );
+check_wx( ! isset( $GLOBALS['aicfab_built']['options']['_retrieval_language'] ), 'An English one is answered from pages in any language.' );
 
 // --- Formatting ------------------------------------------------------------------------------------
 
@@ -397,6 +406,7 @@ for ( $aicfab_shift = 0; $aicfab_shift < 3; $aicfab_shift++ ) {
 	check_wx( strlen( $long ) <= AI_Chat_Bedrock_WeChat::MAX_REPLY_BYTES && 1 === preg_match( '//u', $long ) && false !== strpos( $long, "…\n\nSources:\nBread\nhttps://example.test/bread/" ), 'A long answer is cut to what WeChat shows, between characters, and keeps its source (shift ' . $aicfab_shift . ').' );
 }
 check_wx( false === strpos( AI_Chat_Bedrock_WeChat::format( 'See https://example.test/delivery/ for times.', array( array( 'title' => 'Delivery', 'url' => 'https://example.test/delivery/' ) ) ), 'Sources:' ), 'A source the answer already links to is not repeated.' );
+check_wx( false === strpos( AI_Chat_Bedrock_WeChat::format( "Sources:\nhttps://example.test/delivery/", array( array( 'title' => 'Delivery', 'url' => 'https://example.test/delivery/' ), array( 'title' => 'Hours', 'url' => 'https://example.test/hours/' ) ) ), 'hours' ), 'An answer that cites its sources gets no second list, even of the others.' );
 $xml = AI_Chat_Bedrock_WeChat::text_xml( 'o1', 'gh', 'Tricky ]]> text' );
 check_wx( 'Tricky ]]> text' === AI_Chat_Bedrock_WeChat::parse( $xml )['Content'], 'Text that would end a CDATA section is kept intact.' );
 

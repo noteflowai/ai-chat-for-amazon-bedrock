@@ -28,8 +28,12 @@ class AI_Chat_Bedrock_WeChat {
 
 	const REST_ROUTE = '/wechat';
 
-	// WeChat gives up on a reply after five seconds and asks again; the answer is sent within that.
-	const WAIT_SECONDS = 4.5;
+	/*
+	 * WeChat gives up on a reply five seconds after it sent the request, and asks again. That
+	 * includes the time WordPress takes to start, which on a busy site behind a CDN is a second
+	 * or more, so the wait is counted from the start of the request, not from here.
+	 */
+	const WAIT_SECONDS = 4.0;
 
 	// WeChat asks three times in all.
 	const ATTEMPTS = 3;
@@ -351,14 +355,15 @@ class AI_Chat_Bedrock_WeChat {
 		 *
 		 * @param float $seconds Seconds.
 		 */
-		$wait = max( 0.0, (float) apply_filters( 'ai_chat_bedrock_wechat_wait', self::WAIT_SECONDS ) );
+		$wait  = max( 0.0, (float) apply_filters( 'ai_chat_bedrock_wechat_wait', self::WAIT_SECONDS ) );
+		$start = isset( $_SERVER['REQUEST_TIME_FLOAT'] ) ? (float) $_SERVER['REQUEST_TIME_FLOAT'] : microtime( true );
 
 		/*
 		 * Before the last time, an answer that is not ready must not be replied to at all: a
 		 * reply, even an empty one, tells WeChat to stop asking. Waiting past its five seconds
 		 * makes it ask once more, and that request may find the answer.
 		 */
-		$until = microtime( true ) + ( $attempt < self::ATTEMPTS ? $wait + 1.5 : $wait );
+		$until = $start + ( $attempt < self::ATTEMPTS ? $wait + 2.0 : $wait );
 		do {
 			// Read past any cache, since another request writes it.
 			if ( function_exists( 'wp_cache_delete' ) ) {
@@ -396,6 +401,15 @@ class AI_Chat_Bedrock_WeChat {
 		}
 		// There is no button in WeChat to ask for a person, so the model is not told about one.
 		$options['leads_enabled'] = false;
+		// Pages in the follower's language come first, as they do for a visitor reading the site in it.
+		$languages = array(
+			'zh_CN' => 'zh',
+			'ja'    => 'ja',
+		);
+		$locale    = self::follower_locale( $text );
+		if ( isset( $languages[ $locale ] ) && class_exists( 'AI_Chat_Bedrock_Content' ) ) {
+			$options['_retrieval_language'] = AI_Chat_Bedrock_Content::request_language( $languages[ $locale ] );
+		}
 		$options['system_prompt'] = trim( ( isset( $options['system_prompt'] ) ? (string) $options['system_prompt'] : '' ) . "\n\n" . __( 'You are replying in a WeChat Official Account chat. Reply in the language of the follower\'s latest message. Write plain text without Markdown, such as asterisks, hashes or tables, and keep the answer under 300 words. Put any web address on a line of its own.', 'ai-chat-for-amazon-bedrock' ) );
 
 		$history = get_transient( self::history_key( $follower ) );
@@ -455,9 +469,15 @@ class AI_Chat_Bedrock_WeChat {
 		$text = preg_replace( '/\n{3,}/', "\n\n", (string) $text );
 		$text = trim( (string) $text );
 
+		// An answer that already links to its sources gets no second list of them.
+		$sources = array_slice( is_array( $sources ) ? array_values( array_filter( $sources, 'is_array' ) ) : array(), 0, 2 );
+		$cited   = false;
+		foreach ( $sources as $source ) {
+			$cited = $cited || ( ! empty( $source['url'] ) && false !== strpos( $text, (string) $source['url'] ) );
+		}
 		$links = '';
-		foreach ( array_slice( is_array( $sources ) ? $sources : array(), 0, 2 ) as $source ) {
-			if ( is_array( $source ) && ! empty( $source['url'] ) && false === strpos( $text, (string) $source['url'] ) ) {
+		foreach ( $cited ? array() : $sources as $source ) {
+			if ( ! empty( $source['url'] ) ) {
 				$links .= "\n" . ( ! empty( $source['title'] ) ? wp_strip_all_tags( (string) $source['title'] ) . "\n" : '' ) . esc_url_raw( (string) $source['url'] );
 			}
 		}
