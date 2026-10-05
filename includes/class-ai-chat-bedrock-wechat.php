@@ -60,6 +60,9 @@ class AI_Chat_Bedrock_WeChat {
 	// What a follower sends to see an answer that took too long.
 	const SHOW_KEYWORD = '1';
 
+	// The last time the address was called, and how it went; see note_contact().
+	const CONTACT_OPTION = 'aicfab_wechat_contact';
+
 	/**
 	 * Whether the account is connected and answering.
 	 *
@@ -195,7 +198,9 @@ class AI_Chat_Bedrock_WeChat {
 	 */
 	public function check_permission( $request ) {
 		$options = self::options( null );
+		$method  = 'POST' === $request->get_method() ? 'POST' : 'GET';
 		if ( ! self::enabled( $options ) ) {
+			self::note_contact( 'off', $method );
 			return new WP_Error( 'aicfab_wechat_off', 'Not found', array( 'status' => 404 ) );
 		}
 		$token     = self::token( $options );
@@ -203,14 +208,68 @@ class AI_Chat_Bedrock_WeChat {
 		$nonce     = (string) $request->get_param( 'nonce' );
 		$denied    = new WP_Error( 'aicfab_wechat_signature', 'Forbidden', array( 'status' => 403 ) );
 		if ( ! ctype_digit( $timestamp ) || abs( time() - (int) $timestamp ) > self::MAX_AGE || '' === $nonce || strlen( $nonce ) > 64 ) {
+			self::note_contact( 'stale', $method );
 			return $denied;
 		}
-		if ( 'POST' === $request->get_method() && 'aes' === strtolower( (string) $request->get_param( 'encrypt_type' ) ) ) {
+		if ( 'POST' === $method && 'aes' === strtolower( (string) $request->get_param( 'encrypt_type' ) ) ) {
 			$body  = (string) $request->get_body();
 			$outer = strlen( $body ) <= self::MAX_BODY_BYTES ? self::parse( $body ) : null;
-			return null !== $outer && ! empty( $outer['Encrypt'] ) && self::signature_matches( (string) $request->get_param( 'msg_signature' ), array( $token, $timestamp, $nonce, $outer['Encrypt'] ) ) ? true : $denied;
+			$valid = null !== $outer && ! empty( $outer['Encrypt'] ) && self::signature_matches( (string) $request->get_param( 'msg_signature' ), array( $token, $timestamp, $nonce, $outer['Encrypt'] ) );
+		} else {
+			$valid = self::signature_matches( (string) $request->get_param( 'signature' ), array( $token, $timestamp, $nonce ) );
 		}
-		return self::signature_matches( (string) $request->get_param( 'signature' ), array( $token, $timestamp, $nonce ) ) ? true : $denied;
+		self::note_contact( $valid ? ( 'GET' === $method ? 'checked' : 'message' ) : 'signature', $method );
+		return $valid ? true : $denied;
+	}
+
+	/**
+	 * Remember the last time WeChat, or anyone, called the address, and how it went.
+	 *
+	 * Setting up the account happens in two places, and when nothing arrives there is no log to
+	 * read on most hosts. This tells the settings screen whether WeChat reached the site at all,
+	 * whether its signature matched the token, and when. Only that is kept: no message, no
+	 * follower. It is written at most once a minute unless the outcome changes.
+	 *
+	 * @param string $result off, stale, signature, checked or message.
+	 * @param string $method GET or POST.
+	 */
+	public static function note_contact( $result, $method ) {
+		$last = get_option( self::CONTACT_OPTION, array() );
+		$last = is_array( $last ) ? $last : array();
+		if ( isset( $last['result'], $last['time'] ) && $last['result'] === $result && time() - (int) $last['time'] < MINUTE_IN_SECONDS ) {
+			return;
+		}
+		update_option(
+			self::CONTACT_OPTION,
+			array(
+				'result' => $result,
+				'method' => $method,
+				'time'   => time(),
+			),
+			false
+		);
+	}
+
+	/**
+	 * The last contact, in words for the settings screen.
+	 *
+	 * @return string Empty when the address has never been called.
+	 */
+	public static function contact_summary() {
+		$last = get_option( self::CONTACT_OPTION, array() );
+		if ( ! is_array( $last ) || empty( $last['time'] ) || empty( $last['result'] ) ) {
+			return '';
+		}
+		$what   = array(
+			'off'       => __( 'the address was called while answering was off, so nothing was answered', 'ai-chat-for-amazon-bedrock' ),
+			'stale'     => __( 'a request came without a current timestamp, so it was refused', 'ai-chat-for-amazon-bedrock' ),
+			'signature' => __( 'the signature did not match the token, so the request was refused; enter the same token here as in WeChat', 'ai-chat-for-amazon-bedrock' ),
+			'checked'   => __( 'WeChat checked the address, and the signature matched', 'ai-chat-for-amazon-bedrock' ),
+			'message'   => __( 'a signed message arrived from WeChat', 'ai-chat-for-amazon-bedrock' ),
+		);
+		$result = isset( $what[ $last['result'] ] ) ? $what[ $last['result'] ] : (string) $last['result'];
+		/* translators: 1: how long ago, such as 5 mins, 2: what happened. */
+		return sprintf( __( 'Last contact %1$s ago: %2$s.', 'ai-chat-for-amazon-bedrock' ), human_time_diff( (int) $last['time'], time() ), $result );
 	}
 
 	/**

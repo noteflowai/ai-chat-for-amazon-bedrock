@@ -80,8 +80,21 @@ class WP_REST_Response {
 		return $this->status;
 	}
 }
+define( 'MINUTE_IN_SECONDS', 60 );
+$GLOBALS['aicfab_store'] = array();
 function get_option( $name, $fallback = false ) {
-	return 'ai_chat_bedrock_settings' === $name ? $GLOBALS['aicfab_options'] : $fallback;
+	if ( 'ai_chat_bedrock_settings' === $name ) {
+		return $GLOBALS['aicfab_options'];
+	}
+	return array_key_exists( $name, $GLOBALS['aicfab_store'] ) ? $GLOBALS['aicfab_store'][ $name ] : $fallback;
+}
+function update_option( $name, $value, $autoload = null ) {
+	$GLOBALS['aicfab_store'][ $name ] = $value;
+	$GLOBALS['aicfab_writes']         = isset( $GLOBALS['aicfab_writes'] ) ? $GLOBALS['aicfab_writes'] + 1 : 1;
+	return true;
+}
+function human_time_diff( $from, $to ) {
+	return max( 1, (int) round( ( $to - $from ) / 60 ) ) . ' mins';
 }
 function get_transient( $key ) {
 	return array_key_exists( $key, $GLOBALS['aicfab_transients'] ) ? $GLOBALS['aicfab_transients'][ $key ] : false;
@@ -291,6 +304,30 @@ $old = wx_serve( new WP_REST_Request( 'GET', array( 'signature' => sha1( implode
 check_wx( 403 === $old->get_status(), 'A request signed an hour ago is refused, so a captured one cannot be replayed.' );
 $GLOBALS['aicfab_options']['wechat_enabled'] = false;
 check_wx( 404 === wx_serve( new WP_REST_Request( 'GET', array() ) )->get_status(), 'Switched off, the address does not answer.' );
+wx_settings();
+
+// --- The last contact, for setting up ---------------------------------------------------------
+
+$GLOBALS['aicfab_store'] = array();
+check_wx( '' === AI_Chat_Bedrock_WeChat::contact_summary(), 'Before WeChat calls, there is nothing to report.' );
+wx_serve( new WP_REST_Request( 'GET', array( 'signature' => str_repeat( 'a', 40 ), 'timestamp' => (string) time(), 'nonce' => 'n1', 'echostr' => '1' ) ) );
+check_wx( 'signature' === $GLOBALS['aicfab_store']['aicfab_wechat_contact']['result'] && false !== strpos( AI_Chat_Bedrock_WeChat::contact_summary(), 'did not match the token' ), 'A wrong signature is reported, with what to fix.' );
+$timestamp = (string) time();
+$parts     = array( AICFAB_TOKEN, $timestamp, 'n2' );
+sort( $parts, SORT_STRING );
+wx_serve( new WP_REST_Request( 'GET', array( 'signature' => sha1( implode( '', $parts ) ), 'timestamp' => $timestamp, 'nonce' => 'n2', 'echostr' => '1' ) ) );
+check_wx( 'checked' === $GLOBALS['aicfab_store']['aicfab_wechat_contact']['result'] && 0 === strpos( AI_Chat_Bedrock_WeChat::contact_summary(), 'Last contact 1 mins ago: WeChat checked the address' ), 'A passed address check is reported.' );
+wx_serve( new WP_REST_Request( 'GET', array( 'timestamp' => '1', 'nonce' => 'n3' ) ) );
+check_wx( 'stale' === $GLOBALS['aicfab_store']['aicfab_wechat_contact']['result'], 'An old timestamp is reported.' );
+$GLOBALS['aicfab_writes'] = 0;
+for ( $i = 0; $i < 5; $i++ ) {
+	wx_serve( new WP_REST_Request( 'GET', array( 'timestamp' => '1', 'nonce' => 'n3' ) ) );
+}
+check_wx( 0 === $GLOBALS['aicfab_writes'], 'The same outcome is written at most once a minute, so the address cannot be used to flood the database.' );
+check_wx( false === strpos( json_encode( $GLOBALS['aicfab_store'] ), 'oFollower' ), 'Nothing about a follower is kept.' );
+$GLOBALS['aicfab_options']['wechat_enabled'] = false;
+wx_serve( new WP_REST_Request( 'GET', array() ) );
+check_wx( 'off' === $GLOBALS['aicfab_store']['aicfab_wechat_contact']['result'], 'A call while answering is off is reported too.' );
 wx_settings();
 
 // --- A question, answered in time -------------------------------------------------------------
