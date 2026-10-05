@@ -389,6 +389,7 @@ class AI_Chat_Bedrock_YouTube {
 
 		$attachment = isset( $input['attachment'] ) ? absint( $input['attachment'] ) : 0;
 		$file       = $attachment ? get_attached_file( $attachment ) : '';
+		clearstatcache( true, (string) $file );
 		$mime       = $attachment ? (string) get_post_mime_type( $attachment ) : '';
 		if ( '' === (string) $file || 0 !== strpos( $mime, 'video/' ) || ! is_readable( $file ) ) {
 			return new WP_Error( 'aicfab_youtube_file', __( 'Choose a video in the Media Library whose file is on this server.', 'ai-chat-for-amazon-bedrock' ) );
@@ -505,6 +506,8 @@ class AI_Chat_Bedrock_YouTube {
 	 */
 	public static function upload_step( $job, $post_id ) {
 		$file = get_attached_file( (int) $job['attachment'] );
+		// The size as it is now, not as PHP remembers it from earlier in the request.
+		clearstatcache( true, (string) $file );
 		if ( '' === (string) $file || ! is_readable( $file ) || (int) filesize( $file ) !== (int) $job['size'] ) {
 			return self::fail( $job, __( 'The video file is gone or has changed since the upload was queued.', 'ai-chat-for-amazon-bedrock' ) );
 		}
