@@ -168,6 +168,8 @@ class AI_Chat_Bedrock {
 		$this->loader->add_shortcode( 'ai_chat_bedrock', $public, 'display_chat_interface' );
 		$this->loader->add_action( 'init', $public, 'register_blocks' );
 		$this->loader->add_action( 'wp_footer', $public, 'render_site_wide_popup', 5 );
+		// After every chat has rendered and before wp_print_footer_scripts, at 20.
+		$this->loader->add_action( 'wp_footer', $public, 'trim_scripts', 19 );
 		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_message', $public, 'handle_chat_message' );
 		$this->loader->add_action( 'wp_ajax_nopriv_ai_chat_bedrock_message', $public, 'handle_chat_message' );
 		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_refresh_nonce', $public, 'handle_refresh_nonce' );

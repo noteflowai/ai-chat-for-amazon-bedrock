@@ -60,7 +60,8 @@ check_analytics( 5 === count( AI_Chat_Bedrock_Analytics::tools() ), 'MonsterInsi
 
 // --- What the events may carry --------------------------------------------------------
 
-$script = (string) file_get_contents( dirname( __DIR__ ) . '/public/js/ai-chat-bedrock-public.js' );
+// The chat and its popup script, which opens the panel and sends the events.
+$script = (string) file_get_contents( dirname( __DIR__ ) . '/public/js/ai-chat-bedrock-public.js' ) . (string) file_get_contents( dirname( __DIR__ ) . '/public/js/ai-chat-bedrock-popup.js' );
 preg_match_all( "/track\\('([a-z_]+)', \\{(.*?)\\}\\);/s", $script, $calls, PREG_SET_ORDER );
 $sent = array();
 foreach ( $calls as $call ) {

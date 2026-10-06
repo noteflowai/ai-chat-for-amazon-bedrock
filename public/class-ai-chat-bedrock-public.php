@@ -12,6 +12,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 class AI_Chat_Bedrock_Public {
 	// Notes taps on the chat made before its script runs; see js/ai-chat-bedrock-early.js.
 	const EARLY_HANDLE = 'ai-chat-bedrock-early';
+	const POPUP_HANDLE = 'ai-chat-bedrock-popup';
+
+	/**
+	 * Whether a chat was rendered on this page, and whether one of them can be used.
+	 *
+	 * @var bool[]
+	 */
+	private static $rendered = array(
+		'any'    => false,
+		'usable' => false,
+	);
 
 	private $plugin_name;
 	private $version;
@@ -83,8 +94,12 @@ class AI_Chat_Bedrock_Public {
 		if ( wp_register_script( self::EARLY_HANDLE, false, array(), $this->version, false ) ) {
 			wp_add_inline_script( self::EARLY_HANDLE, self::early_script() );
 		}
+		// The floating button and panel, and chat events, without jQuery: all a page loads when
+		// no chat on it can be used, as when a signed-out visitor is only asked to sign in.
+		wp_register_script( self::POPUP_HANDLE, plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-popup.js', array( self::EARLY_HANDLE ), $this->version, true );
+		wp_localize_script( self::POPUP_HANDLE, 'ai_chat_bedrock_popup', array( 'analytics' => AI_Chat_Bedrock_Analytics::enabled( $options ) ) );
 		$deps = $speech ? array( 'jquery', 'ai-chat-bedrock-speech' ) : array( 'jquery' );
-		wp_register_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-public.js', array_merge( $deps, array( self::EARLY_HANDLE ) ), $this->version, true );
+		wp_register_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-public.js', array_merge( $deps, array( self::EARLY_HANDLE, self::POPUP_HANDLE ) ), $this->version, true );
 		$text = AI_Chat_Bedrock_Translation::presentation( $options );
 		wp_localize_script(
 			$this->plugin_name,
@@ -331,6 +346,11 @@ class AI_Chat_Bedrock_Public {
 			}
 		}
 
+		self::$rendered['any'] = true;
+		if ( '' === $atts['sign_in_url'] ) {
+			self::$rendered['usable'] = true;
+		}
+
 		ob_start();
 		include plugin_dir_path( __FILE__ ) . 'partials/ai-chat-bedrock-public-display.php';
 		return ob_get_clean();
@@ -463,6 +483,23 @@ class AI_Chat_Bedrock_Public {
 			return false;
 		}
 		return ! $this->current_page_has_chat();
+	}
+
+	/**
+	 * Leave the chat script out of a page where no chat can be used.
+	 *
+	 * Runs in the footer, once every chat on the page has rendered and before scripts are
+	 * printed. A signed-out visitor who may only sign in gets the popup script alone, about a
+	 * tenth of the size, and the chat's settings are not printed at all.
+	 */
+	public function trim_scripts() {
+		if ( self::$rendered['usable'] || ! wp_script_is( $this->plugin_name, 'enqueued' ) ) {
+			return;
+		}
+		wp_dequeue_script( $this->plugin_name );
+		if ( self::$rendered['any'] ) {
+			wp_enqueue_script( self::POPUP_HANDLE );
+		}
 	}
 
 	/**

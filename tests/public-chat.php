@@ -190,6 +190,14 @@ function wp_enqueue_script( $handle, $src = '', $deps = array(), ...$rest ) {
 function wp_enqueue_style( $handle, $src = '', $deps = array(), ...$rest ) {
 	aicfab_asset_enqueue( 'style', $handle, $src, $deps );
 }
+function wp_script_is( $handle, $status = 'enqueued' ) {
+	return ! empty( $GLOBALS['aicfab_assets']['script'][ $handle ]['enqueued'] );
+}
+function wp_dequeue_script( $handle ) {
+	if ( isset( $GLOBALS['aicfab_assets']['script'][ $handle ] ) ) {
+		$GLOBALS['aicfab_assets']['script'][ $handle ]['enqueued'] = false;
+	}
+}
 $GLOBALS['aicfab_inline'] = array();
 function wp_add_inline_script( $handle, $code, $position = 'after' ) {
 	$GLOBALS['aicfab_inline'][] = array( $handle, $code );
@@ -761,7 +769,7 @@ $aicfab_profiled = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', '
 check_pub( false !== strpos( $aicfab_profiled, 'data-welcome="Support desk here."' ), 'The chat carries its profile\'s greeting for when it is cleared.' );
 $aicfab_default = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array() );
 check_pub( false !== strpos( $aicfab_default, 'data-welcome="Hello there."' ), 'Without a profile it carries the site greeting.' );
-$aicfab_script = file_get_contents( dirname( __DIR__ ) . '/public/js/ai-chat-bedrock-public.js' );
+$aicfab_script = file_get_contents( dirname( __DIR__ ) . '/public/js/ai-chat-bedrock-public.js' ) . file_get_contents( dirname( __DIR__ ) . '/public/js/ai-chat-bedrock-popup.js' );
 
 // The chat followed the visitor's device, so a phone in dark mode got a dark panel on a light theme.
 check_pub( false !== strpos( $aicfab_default, 'data-scheme="light"' ), 'The chat is light unless chosen otherwise.' );
@@ -974,6 +982,39 @@ $GLOBALS['aicfab_logged_in'] = false;
 $GLOBALS['aicfab_filtered']['ai_chat_bedrock_visitor_daily_requests'] = 0;
 check_pub( ! is_wp_error( AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]', $aicfab_share_opts ) ), 'A site can turn the share off with the filter.' );
 unset( $GLOBALS['aicfab_filtered']['ai_chat_bedrock_visitor_daily_requests'] );
+
+// --- A page where no chat can be used loads only the popup script ------------------------
+
+$aicfab_rendered = new ReflectionProperty( 'AI_Chat_Bedrock_Public', 'rendered' );
+if ( PHP_VERSION_ID < 80100 ) {
+	$aicfab_rendered->setAccessible( true );
+}
+$aicfab_page = function ( $logged_in, $mode ) use ( $aicfab_rendered ) {
+	$aicfab_rendered->setValue( null, array( 'any' => false, 'usable' => false ) );
+	aicfab_reset_pub( array() );
+	$GLOBALS['aicfab_assets']    = array();
+	$GLOBALS['aicfab_logged_in'] = $logged_in;
+	$public                      = new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' );
+	$html                        = null === $mode ? '' : $public->display_chat_interface( array( 'mode' => $mode ) );
+	$public->trim_scripts();
+	return array(
+		'html'  => $html,
+		'chat'  => wp_script_is( 'ai-chat-for-amazon-bedrock' ),
+		'popup' => wp_script_is( AI_Chat_Bedrock_Public::POPUP_HANDLE ),
+		'deps'  => isset( $GLOBALS['aicfab_assets']['script']['ai-chat-for-amazon-bedrock'] ) ? $GLOBALS['aicfab_assets']['script']['ai-chat-for-amazon-bedrock']['deps'] : array(),
+	);
+};
+$aicfab_out = $aicfab_page( false, 'popup' );
+check_pub( false !== strpos( $aicfab_out['html'], 'ai-chat-bedrock-sign-in-link' ) && ! $aicfab_out['chat'] && $aicfab_out['popup'], 'A signed-out visitor who may only sign in gets the popup script, not the chat.' );
+$aicfab_out = $aicfab_page( true, 'popup' );
+check_pub( false === strpos( $aicfab_out['html'], 'ai-chat-bedrock-sign-in-link' ) && $aicfab_out['chat'] && in_array( AI_Chat_Bedrock_Public::POPUP_HANDLE, $aicfab_out['deps'], true ), 'Where the chat can be used it loads, with the popup script before it.' );
+$aicfab_page( false, null );
+$aicfab_public = new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' );
+$aicfab_public->enqueue_scripts();
+wp_enqueue_script( 'ai-chat-for-amazon-bedrock' );
+$aicfab_public->trim_scripts();
+check_pub( ! wp_script_is( 'ai-chat-for-amazon-bedrock' ) && ! wp_script_is( AI_Chat_Bedrock_Public::POPUP_HANDLE ), 'A page that rendered no chat after all loads neither.' );
+check_pub( isset( $GLOBALS['aicfab_localized']['ai_chat_bedrock_popup']['analytics'] ) && AI_Chat_Bedrock_Public::POPUP_HANDLE === $GLOBALS['aicfab_localized_on']['ai_chat_bedrock_popup'], 'The popup script is told whether analytics events are on.' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

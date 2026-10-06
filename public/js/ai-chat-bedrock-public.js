@@ -104,52 +104,10 @@
         });
     }
 
-    /**
-     * Report what the chat did, never what was written in it.
-     *
-     * A DOM event on document always carries it, for a site's own code. When the site has
-     * turned analytics events on, it also goes to the analytics tag on the page: a Google Tag
-     * Manager container gets it in its data layer, Google Analytics otherwise through gtag
-     * (MonsterInsights names its copy __gtagTracker), and Matomo and Plausible through their
-     * queues. With a consent plugin on the WP Consent API, it waits for consent to statistics.
-     */
+    // Events go out through the popup script, which every chat loads first.
     function track(name, details) {
-        const data = {};
-        Object.keys(details || {}).forEach(function (key) {
-            if (null != details[key] && '' !== details[key]) {
-                data[key] = details[key];
-            }
-        });
-        try {
-            document.dispatchEvent(new CustomEvent('ai-chat-bedrock:event', { detail: { name: name, data: Object.assign({}, data) } }));
-        } catch (error) {
-            // A browser without CustomEvent still gets the analytics below.
-        }
-        if (!params.analytics || ('function' === typeof window.wp_has_consent && !window.wp_has_consent('statistics'))) {
-            return;
-        }
-        try {
-            const layer = window[window.gtm4wp_datalayer_name || 'dataLayer'];
-            const gtm = window.google_tag_manager && Object.keys(window.google_tag_manager).some(function (key) {
-                return 0 === key.indexOf('GTM-');
-            });
-            const gtag = 'function' === typeof window.gtag ? window.gtag : ('function' === typeof window.__gtagTracker ? window.__gtagTracker : null);
-            if (gtm && Array.isArray(layer)) {
-                layer.push(Object.assign({ event: name }, data));
-            } else if (gtag) {
-                gtag('event', name, Object.assign({}, data));
-            } else if (Array.isArray(layer)) {
-                // A tag manager that has not finished loading reads the layer when it does.
-                layer.push(Object.assign({ event: name }, data));
-            }
-            if (window._paq && 'function' === typeof window._paq.push) {
-                window._paq.push(['trackEvent', 'AI chat', name, String(data.rating || data.product_action || data.question_source || data.link_url || '')]);
-            }
-            if ('function' === typeof window.plausible) {
-                window.plausible(name, { props: Object.assign({}, data) });
-            }
-        } catch (error) {
-            // An analytics tag that fails must not break the chat.
+        if ('function' === typeof window.aiChatBedrockTrack) {
+            window.aiChatBedrockTrack(name, details);
         }
     }
 
@@ -278,102 +236,7 @@
         );
     }
 
-    $('.ai-chat-bedrock-popup').each(function () {
-        const $popup = $(this);
-        const $launcher = $popup.find('.ai-chat-bedrock-launcher');
-        const $panel = $popup.find('.ai-chat-bedrock-popup-panel');
-
-        const stateKey = 'aicfabPopupOpen';
-
-        function remember(open) {
-            try {
-                window.sessionStorage.setItem(stateKey, open ? '1' : '0');
-            } catch (error) {
-                // Session storage is unavailable; the state simply is not remembered.
-            }
-        }
-
-        // On a phone the open chat covers the page, so it is modal there: the page behind is
-        // held still and Tab stays in the chat. On a wider screen it sits beside the page.
-        const phone = window.matchMedia ? window.matchMedia('(max-width: 600px)') : null;
-
-        function modal() {
-            return !!(phone && phone.matches) && 'open' === $popup.attr('data-state') && !$popup.hasClass('is-signed-out');
-        }
-
-        function setOpen(open, focus) {
-            $popup.attr('data-state', open ? 'open' : 'closed');
-            $launcher.attr('aria-expanded', open ? 'true' : 'false');
-            $panel.prop('hidden', !open);
-            $panel.attr('aria-modal', modal() ? 'true' : null);
-            $(document.documentElement).toggleClass('aicfab-chat-open', modal());
-            if (open && false !== focus) {
-                /*
-                 * Focus goes into the panel either way. On a touch screen it goes to the panel
-                 * itself rather than the message box, whose keyboard would cover the welcome
-                 * and the suggested questions the moment the chat opened.
-                 */
-                const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-                const $target = $panel.find(touch ? '.ai-chat-bedrock-sign-in-link' : '.ai-chat-bedrock-textarea, .ai-chat-bedrock-sign-in-link').first();
-                ($target.length ? $target : $panel).trigger('focus');
-            }
-        }
-
-        $launcher.on('click', function () {
-            const open = 'open' !== $popup.attr('data-state');
-            setOpen(open);
-            remember(open);
-            if (open) {
-                track('ai_chat_open', { chat_profile: String($panel.find('.ai-chat-bedrock-container').attr('data-profile') || '') });
-            }
-        });
-
-        // Keep the panel open while the visitor browses other pages in this tab, beside the
-        // page. On a phone it would cover each new page whole, so there it waits to be opened.
-        try {
-            if ('1' === window.sessionStorage.getItem(stateKey) && !(phone && phone.matches && !$popup.hasClass('is-signed-out'))) {
-                setOpen(true, false);
-            }
-        } catch (error) {
-            // Ignore storage failures.
-        }
-
-        function close() {
-            setOpen(false);
-            remember(false);
-            $launcher.trigger('focus');
-        }
-
-        $popup.find('.ai-chat-bedrock-close').on('click', close);
-
-        // Only while focus is in the chat, so Escape still closes a theme's menu or dialog
-        // without closing the chat behind it.
-        $(document).on('keydown', function (event) {
-            if ('Escape' === event.key && 'open' === $popup.attr('data-state') && $popup[0].contains(document.activeElement)) {
-                close();
-                return;
-            }
-            if ('Tab' === event.key && modal()) {
-                const $focusable = $panel.find('a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex="0"]').filter(':visible');
-                const index = $focusable.index(document.activeElement);
-                if ($focusable.length && event.shiftKey && index <= 0) {
-                    event.preventDefault();
-                    $focusable.last().trigger('focus');
-                } else if ($focusable.length && !event.shiftKey && (-1 === index || index === $focusable.length - 1)) {
-                    event.preventDefault();
-                    $focusable.first().trigger('focus');
-                }
-            }
-        });
-
-        // Turning a phone, or resizing a window across the breakpoint, changes whether it is modal.
-        if (phone && phone.addEventListener) {
-            phone.addEventListener('change', function () {
-                $panel.attr('aria-modal', modal() ? 'true' : null);
-                $(document.documentElement).toggleClass('aicfab-chat-open', modal());
-            });
-        }
-    });
+    // The floating chat's button and panel are run by ai-chat-bedrock-popup.js.
 
     $('.ai-chat-bedrock-container').each(function () {
         const $container = $(this);
@@ -1708,21 +1571,9 @@
         }
     });
 
-    /*
-     * Taps on the chat made while an optimizer held this script back, as noted by
-     * ai-chat-bedrock-early.js. They are repeated now that the chat can answer them. A tap on
-     * the chat button is skipped when the chat is already open, since remembering an open
-     * chat may have opened it, and repeating the tap would close it again.
-     */
-    const early = window.aiChatBedrockEarly;
-    if (early) {
-        early.ready = true;
-        early.taps.splice(0).forEach(function (element) {
-            if (!document.documentElement.contains(element) || 'true' === element.getAttribute('aria-expanded')) {
-                return;
-            }
-            element.click();
-            early.repeated.push({ element: element, at: Date.now() });
-        });
+    // Taps made while an optimizer held the scripts back are repeated now that the chat can
+    // answer them, by the popup script that noted where they belong.
+    if ('function' === typeof window.aiChatBedrockReplay) {
+        window.aiChatBedrockReplay();
     }
 })(jQuery);

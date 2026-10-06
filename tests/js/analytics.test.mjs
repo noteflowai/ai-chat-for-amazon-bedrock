@@ -15,7 +15,8 @@ import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const chat = readFileSync(join(here, '../../public/js/ai-chat-bedrock-public.js'), 'utf8');
+// track() lives in the popup script, which every chat loads first.
+const chat = readFileSync(join(here, '../../public/js/ai-chat-bedrock-popup.js'), 'utf8');
 const failures = [];
 
 function check(condition, message) {

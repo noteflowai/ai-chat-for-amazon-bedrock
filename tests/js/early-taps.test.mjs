@@ -2,7 +2,7 @@
  * Behavior checks for taps made before the chat script runs.
  *
  * ai-chat-bedrock-early.js runs in a VM context with a small fake document, and the part of
- * ai-chat-bedrock-public.js that repeats the taps is taken from that file and run after it,
+ * ai-chat-bedrock-popup.js that repeats the taps is taken from that file and run after it,
  * as a page with a script-delaying optimizer would run them.
  *
  * Run: node tests/js/early-taps.test.mjs
@@ -15,7 +15,7 @@ import vm from 'node:vm';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const early = readFileSync(join(here, '../../public/js/ai-chat-bedrock-early.js'), 'utf8');
-const chat = readFileSync(join(here, '../../public/js/ai-chat-bedrock-public.js'), 'utf8');
+const chat = readFileSync(join(here, '../../public/js/ai-chat-bedrock-popup.js'), 'utf8');
 const failures = [];
 
 function check(condition, message) {
@@ -24,11 +24,11 @@ function check(condition, message) {
     }
 }
 
-const start = chat.indexOf('const early = window.aiChatBedrockEarly;');
+const start = chat.indexOf('    function replayEarlyTaps() {');
 const end = chat.indexOf('\n    }\n', start);
-check(start > 0 && end > start, 'The chat script repeats the early taps.');
-// In a block of its own, as it is inside the chat script, so it can run more than once.
-const repeat = '{' + chat.slice(start, end + 6) + '}';
+check(start > 0 && end > start, 'The popup script repeats the early taps.');
+// Declared and called in a block of its own, so it can run more than once.
+const repeat = '{' + chat.slice(start, end + 6) + '\nreplayEarlyTaps();}';
 
 let now = 1000;
 const FakeDate = { now: () => now };
