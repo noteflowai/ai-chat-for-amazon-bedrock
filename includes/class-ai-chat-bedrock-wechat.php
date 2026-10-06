@@ -254,15 +254,19 @@ class AI_Chat_Bedrock_WeChat {
 		if ( isset( $last['result'], $last['time'] ) && time() - (int) $last['time'] < MINUTE_IN_SECONDS && ( $last['result'] === $result || ( in_array( $last['result'], $refused, true ) && in_array( $result, $refused, true ) ) ) ) {
 			return;
 		}
-		update_option(
-			self::CONTACT_OPTION,
-			array(
-				'result' => $result,
-				'method' => $method,
-				'time'   => time(),
-			),
-			false
+		$next = array(
+			'result' => $result,
+			'method' => $method,
+			'time'   => time(),
 		);
+		// The last signed contact is kept apart, so that anyone sending the address junk can not
+		// hide that WeChat reaches it.
+		if ( in_array( $result, array( 'checked', 'message' ), true ) ) {
+			$next['ok'] = time();
+		} elseif ( ! empty( $last['ok'] ) ) {
+			$next['ok'] = (int) $last['ok'];
+		}
+		update_option( self::CONTACT_OPTION, $next, false );
 	}
 
 	/**
@@ -286,7 +290,12 @@ class AI_Chat_Bedrock_WeChat {
 		);
 		$result = isset( $what[ $last['result'] ] ) ? $what[ $last['result'] ] : (string) $last['result'];
 		/* translators: 1: how long ago, such as 5 mins, 2: what happened. */
-		return sprintf( __( 'Last contact %1$s ago: %2$s.', 'ai-chat-for-amazon-bedrock' ), human_time_diff( (int) $last['time'], time() ), $result );
+		$summary = sprintf( __( 'Last contact %1$s ago: %2$s.', 'ai-chat-for-amazon-bedrock' ), human_time_diff( (int) $last['time'], time() ), $result );
+		if ( ! empty( $last['ok'] ) && ! in_array( $last['result'], array( 'checked', 'message' ), true ) ) {
+			/* translators: %s: how long ago, such as 5 mins. */
+			$summary = AI_Chat_Bedrock_Translation::sentences( $summary, sprintf( __( 'The last signed request from WeChat came %s ago.', 'ai-chat-for-amazon-bedrock' ), human_time_diff( (int) $last['ok'], time() ) ) );
+		}
+		return $summary;
 	}
 
 	/**

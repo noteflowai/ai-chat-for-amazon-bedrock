@@ -599,6 +599,10 @@ class AI_Chat_Bedrock_WeChat_Game {
 		}
 		$last['result'] = $result;
 		$last['time']   = time();
+		// The last signed contact is kept apart, so junk sent to the address cannot hide it.
+		if ( in_array( $result, array( 'checked', 'message' ), true ) ) {
+			$last['ok'] = time();
+		}
 		update_option( self::CONTACT_OPTION, $last, false );
 	}
 
@@ -657,6 +661,10 @@ class AI_Chat_Bedrock_WeChat_Game {
 			$result = isset( $what[ $last['result'] ] ) ? $what[ $last['result'] ] : (string) $last['result'];
 			/* translators: 1: how long ago, such as 5 mins, 2: what happened. */
 			$lines[] = sprintf( __( 'Last contact %1$s ago: %2$s.', 'ai-chat-for-amazon-bedrock' ), human_time_diff( (int) $last['time'], time() ), $result );
+			if ( ! empty( $last['ok'] ) && ! in_array( $last['result'], array( 'checked', 'message' ), true ) ) {
+				/* translators: %s: how long ago, such as 5 mins. */
+				$lines[] = sprintf( __( 'The last signed request from WeChat came %s ago.', 'ai-chat-for-amazon-bedrock' ), human_time_diff( (int) $last['ok'], time() ) );
+			}
 		}
 		if ( ! empty( $last['error']['time'] ) ) {
 			$error = $last['error'];

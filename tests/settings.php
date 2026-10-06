@@ -432,6 +432,7 @@ $aicfab_pill = function ( $last, $lines = array( 'What happened.' ) ) use ( $aic
 check_set( false !== strpos( $aicfab_pill( array(), array() ), 'is-warn' ) && false !== strpos( $aicfab_pill( array(), array() ), 'WeChat has not reached this address yet.' ), 'An address WeChat never reached is a warning that says so.' );
 check_set( false !== strpos( $aicfab_pill( array( 'time' => 100, 'result' => 'message' ) ), 'is-good' ), 'A signed message is shown as connected.' );
 check_set( false !== strpos( $aicfab_pill( array( 'time' => 100, 'result' => 'signature' ) ), 'is-bad' ), 'A refused signature needs attention.' );
+check_set( false !== strpos( $aicfab_pill( array( 'time' => 100, 'result' => 'stale', 'ok' => 90 ) ), 'is-warn' ), 'A request refused after WeChat has reached the address is worth a look, not an alarm.' );
 check_set( false !== strpos( $aicfab_pill( array( 'time' => 100, 'result' => 'message', 'error' => array( 'time' => 120 ) ) ), 'is-bad' ), 'An answer that could not be sent after the last message needs attention.' );
 check_set( false !== strpos( $aicfab_pill( array( 'time' => 200, 'result' => 'message', 'error' => array( 'time' => 120 ) ) ), 'is-good' ), 'A send error older than the last message is past.' );
 check_set( false !== strpos( $aicfab_pill( array( 'time' => 100, 'result' => 'checked' ), array( '<b>x</b>' ) ), '&lt;b&gt;' ), 'The words are escaped.' );

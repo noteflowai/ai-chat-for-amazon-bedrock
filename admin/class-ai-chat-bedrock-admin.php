@@ -1384,15 +1384,20 @@ class AI_Chat_Bedrock_Admin {
 	/**
 	 * Whether WeChat reaches a channel's address, as a status above its fields.
 	 *
-	 * @param mixed    $last  The channel's last contact: time, result, and for the mini game the last send error.
+	 * @param mixed    $last  The channel's last contact: time, result, the last signed contact, and for the mini game the last send error.
 	 * @param string[] $lines What happened, in words.
 	 */
 	private static function contact_status( $last, $lines ) {
 		$last    = is_array( $last ) ? $last : array();
 		$result  = isset( $last['result'] ) ? (string) $last['result'] : '';
 		$errored = ! empty( $last['error']['time'] ) && (int) $last['error']['time'] >= ( isset( $last['time'] ) ? (int) $last['time'] : 0 );
-		if ( $errored || in_array( $result, array( 'signature', 'plaintext', 'replay', 'stale' ), true ) ) {
+		$refused = in_array( $result, array( 'signature', 'plaintext', 'replay', 'stale' ), true );
+		if ( $errored || ( $refused && empty( $last['ok'] ) ) ) {
 			$pill = array( 'is-bad', __( 'Needs attention', 'ai-chat-for-amazon-bedrock' ) );
+		} elseif ( $refused ) {
+			// WeChat has reached it, and something since was refused: anyone can send the
+			// address a bad request, so this is worth a look rather than an alarm.
+			$pill = array( 'is-warn', __( 'Review', 'ai-chat-for-amazon-bedrock' ) );
 		} elseif ( in_array( $result, array( 'checked', 'message' ), true ) ) {
 			$pill = array( 'is-good', __( 'Connected', 'ai-chat-for-amazon-bedrock' ) );
 		} elseif ( 'off' === $result ) {
