@@ -138,6 +138,7 @@ class AI_Chat_Bedrock_Admin {
 					'ajax_error'            => __( 'The request could not be completed.', 'ai-chat-for-amazon-bedrock' ),
 					'testing'               => __( 'Testing…', 'ai-chat-for-amazon-bedrock' ),
 					'status_pass'           => __( 'Pass', 'ai-chat-for-amazon-bedrock' ),
+					'status_off'            => __( 'Not in use', 'ai-chat-for-amazon-bedrock' ),
 					'status_warn'           => __( 'Review', 'ai-chat-for-amazon-bedrock' ),
 					'status_fail'           => __( 'Action required', 'ai-chat-for-amazon-bedrock' ),
 					'no_servers'            => __( 'No MCP servers registered.', 'ai-chat-for-amazon-bedrock' ),
@@ -1381,10 +1382,39 @@ class AI_Chat_Bedrock_Admin {
 				: __( 'Saved audio plays for everyone at no cost. Crawlers and scripts cannot have posts read. Without a daily limit for the site, visitors have none either.', 'ai-chat-for-amazon-bedrock' )
 		) . '</p>';
 	}
+	/**
+	 * Whether WeChat reaches a channel's address, as a status above its fields.
+	 *
+	 * @param mixed    $last  The channel's last contact: time, result, the last signed contact, and for the mini game the last send error.
+	 * @param string[] $lines What happened, in words.
+	 */
+	private static function contact_status( $last, $lines ) {
+		$last    = is_array( $last ) ? $last : array();
+		$result  = isset( $last['result'] ) ? (string) $last['result'] : '';
+		$errored = ! empty( $last['error']['time'] ) && (int) $last['error']['time'] >= ( isset( $last['time'] ) ? (int) $last['time'] : 0 );
+		$refused = in_array( $result, array( 'signature', 'plaintext', 'replay', 'stale' ), true );
+		if ( $errored || ( $refused && empty( $last['ok'] ) ) ) {
+			$pill = array( 'is-bad', __( 'Needs attention', 'ai-chat-for-amazon-bedrock' ) );
+		} elseif ( $refused ) {
+			// WeChat has reached it, and something since was refused: anyone can send the
+			// address a bad request, so this is worth a look rather than an alarm.
+			$pill = array( 'is-warn', __( 'Review', 'ai-chat-for-amazon-bedrock' ) );
+		} elseif ( in_array( $result, array( 'checked', 'message' ), true ) ) {
+			$pill = array( 'is-good', __( 'Connected', 'ai-chat-for-amazon-bedrock' ) );
+		} elseif ( 'off' === $result ) {
+			$pill = array( 'is-neutral', __( 'Off', 'ai-chat-for-amazon-bedrock' ) );
+		} else {
+			$pill = array( 'is-warn', __( 'Not connected yet', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		echo '<p class="aicfab-contact-status"><span class="aicfab-pill ' . esc_attr( $pill[0] ) . '">' . esc_html( $pill[1] ) . '</span> ' . esc_html( $lines ? implode( ' ', $lines ) : __( 'WeChat has not reached this address yet.', 'ai-chat-for-amazon-bedrock' ) ) . '</p>';
+	}
+
 	public function wechat_render() {
 		$options = get_option( 'ai_chat_bedrock_settings', array() );
 		$options = is_array( $options ) ? $options : array();
 		$saved   = __( 'Saved — enter a value to replace', 'ai-chat-for-amazon-bedrock' );
+		$contact = AI_Chat_Bedrock_WeChat::contact_summary();
+		self::contact_status( get_option( AI_Chat_Bedrock_WeChat::CONTACT_OPTION, array() ), '' !== $contact ? array( $contact ) : array() );
 		echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'WeChat Official Account', 'ai-chat-for-amazon-bedrock' ) . '</legend>';
 		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[wechat_enabled]" value="1" ' . checked( ! empty( $options['wechat_enabled'] ), true, false ) . '> ' . esc_html__( 'Answer messages that followers send to the account', 'ai-chat-for-amazon-bedrock' ) . '</label><br>';
 		echo '<label for="aicfab_field_wechat_token">' . esc_html__( 'Token', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="password" id="aicfab_field_wechat_token" class="regular-text" name="ai_chat_bedrock_settings[wechat_token]" value="" autocomplete="new-password" placeholder="' . esc_attr( '' !== AI_Chat_Bedrock_WeChat::token( $options ) ? $saved : '' ) . '"><br>';
@@ -1401,12 +1431,10 @@ class AI_Chat_Bedrock_Admin {
 			echo '<br><label><input type="checkbox" name="ai_chat_bedrock_settings[wechat_clear]" value="1"> ' . esc_html__( 'Remove the saved token and key', 'ai-chat-for-amazon-bedrock' ) . '</label>';
 		}
 		echo '</fieldset>';
-		$contact = AI_Chat_Bedrock_WeChat::contact_summary();
-		echo '<p><strong>' . esc_html( '' !== $contact ? $contact : __( 'WeChat has not reached this address yet.', 'ai-chat-for-amazon-bedrock' ) ) . '</strong></p>';
 		/* translators: %s: the address WeChat sends messages to. */
 		echo '<p class="description">' . esc_html( sprintf( __( 'Off by default. In the WeChat Official Accounts Platform, under Settings and Development > Basic Configuration, enable the server configuration with the URL %s and the token entered here. Plaintext mode needs only the token; compatible and safe mode also need the EncodingAESKey and AppID. No AppSecret is needed.', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_WeChat::url() ) ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'With message push on, WeChat turns off the menu set in its console, and an account that is not verified cannot set one through its API, so followers write a word instead: 菜单 gets the menu above, and 精选 or 最新 the newest featured posts (the category chosen for WeChat drafts below) with their addresses. Neither calls the model.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
-		echo '<p class="description">' . esc_html__( 'The chat answers each text message from the site\'s pages, in plain text with its sources. WeChat waits about fifteen seconds in all; a longer answer is kept and the follower is told to send 1 to see it, so choose a fast model for WeChat if the chat\'s takes longer. A new follower gets the welcome message and suggested questions. Every answer counts towards the daily request limit, and the conversation log records them when it is on.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'The chat answers each text message from the site\'s pages, in plain text with its sources. WeChat waits about fifteen seconds in all; a longer answer is kept and the follower is told to send 1 to see it, so choose a fast model for WeChat if the chat\'s model takes longer. A new follower gets the welcome message and suggested questions. Every answer counts towards the daily request limit, and the conversation log records them when it is on.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function publish_kit_render() {
 		$options = get_option( 'ai_chat_bedrock_settings', array() );
@@ -1462,6 +1490,7 @@ class AI_Chat_Bedrock_Admin {
 		$options = get_option( 'ai_chat_bedrock_settings', array() );
 		$options = is_array( $options ) ? $options : array();
 		$saved   = __( 'Saved — enter a value to replace', 'ai-chat-for-amazon-bedrock' );
+		self::contact_status( get_option( AI_Chat_Bedrock_WeChat_Game::CONTACT_OPTION, array() ), AI_Chat_Bedrock_WeChat_Game::contact_summary() );
 		echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'WeChat mini game', 'ai-chat-for-amazon-bedrock' ) . '</legend>';
 		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[wxgame_enabled]" value="1" ' . checked( ! empty( $options['wxgame_enabled'] ), true, false ) . '> ' . esc_html__( 'Take the mini game\'s customer service messages and count what players do there', 'ai-chat-for-amazon-bedrock' ) . '</label><br>';
 		echo '<label for="aicfab_field_wxgame_app_id">' . esc_html__( 'AppID', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="text" id="aicfab_field_wxgame_app_id" class="regular-text" name="ai_chat_bedrock_settings[wxgame_app_id]" value="' . esc_attr( AI_Chat_Bedrock_WeChat_Game::app_id( $options ) ) . '" placeholder="wx…"><br>';
@@ -1479,8 +1508,6 @@ class AI_Chat_Bedrock_Admin {
 			echo '<br><label><input type="checkbox" name="ai_chat_bedrock_settings[wxgame_clear]" value="1"> ' . esc_html__( 'Remove the saved token, key and AppSecret', 'ai-chat-for-amazon-bedrock' ) . '</label>';
 		}
 		echo '</fieldset>';
-		$contact = AI_Chat_Bedrock_WeChat_Game::contact_summary();
-		echo '<p><strong>' . esc_html( $contact ? implode( ' ', $contact ) : __( 'WeChat has not reached this address yet.', 'ai-chat-for-amazon-bedrock' ) ) . '</strong></p>';
 		$summary = AI_Chat_Bedrock_WeChat_Game::summary( 30 );
 		if ( $summary['sessions'] || $summary['messages'] || $summary['templates'] ) {
 			$asked = $summary['answered'] + $summary['unanswered'];

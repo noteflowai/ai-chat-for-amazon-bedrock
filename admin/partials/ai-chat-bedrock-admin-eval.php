@@ -101,7 +101,7 @@ $aicfab_runs  = AI_Chat_Bedrock_Eval::runs();
 			<tbody>
 				<?php foreach ( array_reverse( $aicfab_runs ) as $aicfab_run ) : ?>
 					<tr>
-						<td><?php echo esc_html( $aicfab_run['time'] ); ?></td>
+						<td><?php echo esc_html( false !== strtotime( (string) $aicfab_run['time'] ) ? wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( (string) $aicfab_run['time'] ) ) : $aicfab_run['time'] ); ?></td>
 						<td><code><?php echo esc_html( $aicfab_run['model'] ); ?></code></td>
 						<td><?php echo esc_html( $aicfab_run['passed'] . ' / ' . $aicfab_run['cases'] ); ?></td>
 					</tr>

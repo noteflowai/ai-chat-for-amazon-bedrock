@@ -363,9 +363,42 @@
 
 .aicfab-usage-models code {
     font-size: 11px;
+    overflow-wrap: anywhere;
+}
+
+/* Whether WeChat reaches a channel, above its fields. */
+.aicfab-contact-status {
+    margin-top: 0;
+    max-width: 70ch;
+}
+
+.aicfab-contact-status .aicfab-pill {
+    margin-right: 6px;
+}
+
+/* Help under a field reads as a paragraph, not a line across a wide screen. */
+.wrap .form-table .description {
+    max-width: 70ch;
+}
+
+.wrap .form-table select {
+    max-width: 100%;
 }
 
 @media screen and (max-width: 782px) {
+    /* Settings tabs scroll sideways on a phone instead of wrapping into rows. */
+    .wrap .aicfab-settings-tabs.nav-tab-wrapper {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .wrap .aicfab-settings-tabs .nav-tab {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
     .aicfab-usage-series li {
         grid-template-columns: 52px 1fr;
     }

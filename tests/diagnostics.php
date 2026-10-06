@@ -221,10 +221,10 @@ check_diag( in_array( 'invocation', $aicfab_live_ids, true ), 'The live test rep
 
 // --- Every check has the shape the screen renders ------------------------------
 
-$aicfab_allowed_status = array( 'pass', 'warn', 'fail' );
+$aicfab_allowed_status = array( 'pass', 'off', 'warn', 'fail' );
 foreach ( $aicfab_live as $aicfab_check ) {
 	check_diag( isset( $aicfab_check['id'], $aicfab_check['label'], $aicfab_check['status'], $aicfab_check['message'] ), 'Each check carries id, label, status and message.' );
-	check_diag( in_array( $aicfab_check['status'], $aicfab_allowed_status, true ), 'Status is one of pass, warn or fail, got ' . $aicfab_check['status'] );
+	check_diag( in_array( $aicfab_check['status'], $aicfab_allowed_status, true ), 'Status is one of pass, off, warn or fail, got ' . $aicfab_check['status'] );
 	check_diag( '' !== trim( (string) $aicfab_check['message'] ), 'No check is reported without saying anything, at ' . $aicfab_check['id'] );
 	// Every id in this class is a literal that is already a key, so asserting that they
 	// survive sanitize_key would pass with the call removed. Shape is what is checked here.
@@ -252,6 +252,16 @@ foreach ( $aicfab_private as $aicfab_check ) {
 		check_diag( 'pass' === $aicfab_check['status'], 'An authenticated MCP endpoint passes.' );
 	}
 }
+
+// A feature nobody set up is neither a pass nor a problem, so it says so rather than going green.
+$GLOBALS['aicfab_opts']['ai_chat_bedrock_enable_mcp'] = false;
+$aicfab_unused                                        = array();
+foreach ( $aicfab_diag->run( false ) as $aicfab_check ) {
+	$aicfab_unused[ $aicfab_check['id'] ] = $aicfab_check['status'];
+}
+check_diag( 'off' === $aicfab_unused['mcp'], 'Disabled MCP tools are not in use, not a pass.' );
+check_diag( 'off' === $aicfab_unused['guardrail'] && 'off' === $aicfab_unused['knowledge_base'], 'An unconfigured guardrail or knowledge base is not in use, not a pass.' );
+$GLOBALS['aicfab_opts']['ai_chat_bedrock_enable_mcp'] = true;
 
 // --- An IAM role is the better posture, and says so ---------------------------
 

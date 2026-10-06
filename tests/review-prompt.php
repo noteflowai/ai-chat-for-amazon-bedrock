@@ -91,6 +91,8 @@ check_review( ! AI_Chat_Bedrock_Review_Prompt::should_show( 'ai-chat-for-amazon-
 $GLOBALS['aicfab_screen'] = null;
 check_review( ! AI_Chat_Bedrock_Review_Prompt::should_show( 'ai-chat-for-amazon-bedrock' ), 'never where the screen is unknown' );
 $GLOBALS['aicfab_screen'] = 'ai-chat-bedrock_page_ai-chat-for-amazon-bedrock-settings';
+check_review( ! AI_Chat_Bedrock_Review_Prompt::should_show( 'ai-chat-for-amazon-bedrock' ), 'not above the work on other plugin screens' );
+$GLOBALS['aicfab_screen'] = 'toplevel_page_ai-chat-for-amazon-bedrock';
 
 $GLOBALS['aicfab_can'] = false;
 check_review( ! AI_Chat_Bedrock_Review_Prompt::should_show( 'ai-chat-for-amazon-bedrock' ), 'never to someone who cannot manage options' );

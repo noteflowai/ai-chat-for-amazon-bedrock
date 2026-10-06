@@ -408,6 +408,35 @@ check_set( 'cohere.rerank-v3-5:0' === $saved['rerank_model_id'], 'Another tab ke
 $saved = save_tab( $admin, array( 'knowledge_base_id', 'rerank_model_id' ), array( 'knowledge_base_id' => 'KB123', 'rerank_model_id' => 'cohere.rerank-v9:0' ) );
 check_set( '' === $saved['rerank_model_id'] && isset( $GLOBALS['aicfab_notices']['rerank_model_id'] ), 'An unsupported reranking model leaves reranking off, with a notice.' );
 
+// --- Whether WeChat reaches a channel, as a status ----------------------------------------
+
+if ( ! function_exists( 'esc_attr' ) ) {
+	function esc_attr( $text ) {
+		return htmlspecialchars( (string) $text, ENT_QUOTES );
+	}
+}
+if ( ! function_exists( 'esc_html' ) ) {
+	function esc_html( $text ) {
+		return htmlspecialchars( (string) $text, ENT_QUOTES );
+	}
+}
+$aicfab_status = new ReflectionMethod( 'AI_Chat_Bedrock_Admin', 'contact_status' );
+if ( PHP_VERSION_ID < 80100 ) {
+	$aicfab_status->setAccessible( true );
+}
+$aicfab_pill = function ( $last, $lines = array( 'What happened.' ) ) use ( $aicfab_status ) {
+	ob_start();
+	$aicfab_status->invoke( null, $last, $lines );
+	return ob_get_clean();
+};
+check_set( false !== strpos( $aicfab_pill( array(), array() ), 'is-warn' ) && false !== strpos( $aicfab_pill( array(), array() ), 'WeChat has not reached this address yet.' ), 'An address WeChat never reached is a warning that says so.' );
+check_set( false !== strpos( $aicfab_pill( array( 'time' => 100, 'result' => 'message' ) ), 'is-good' ), 'A signed message is shown as connected.' );
+check_set( false !== strpos( $aicfab_pill( array( 'time' => 100, 'result' => 'signature' ) ), 'is-bad' ), 'A refused signature needs attention.' );
+check_set( false !== strpos( $aicfab_pill( array( 'time' => 100, 'result' => 'stale', 'ok' => 90 ) ), 'is-warn' ), 'A request refused after WeChat has reached the address is worth a look, not an alarm.' );
+check_set( false !== strpos( $aicfab_pill( array( 'time' => 100, 'result' => 'message', 'error' => array( 'time' => 120 ) ) ), 'is-bad' ), 'An answer that could not be sent after the last message needs attention.' );
+check_set( false !== strpos( $aicfab_pill( array( 'time' => 200, 'result' => 'message', 'error' => array( 'time' => 120 ) ) ), 'is-good' ), 'A send error older than the last message is past.' );
+check_set( false !== strpos( $aicfab_pill( array( 'time' => 100, 'result' => 'checked' ), array( '<b>x</b>' ) ), '&lt;b&gt;' ), 'The words are escaped.' );
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

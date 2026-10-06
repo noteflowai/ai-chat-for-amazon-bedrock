@@ -157,6 +157,9 @@ class AI_Chat_Bedrock_Translation {
 	public static function presentation( $options ) {
 		return $options;
 	}
+	public static function sentences( ...$parts ) {
+		return implode( ' ', $parts );
+	}
 }
 class AI_Chat_Bedrock_Chat_Request {
 	public static function build( $message, $history, $options ) {
@@ -335,6 +338,7 @@ wx_serve( new WP_REST_Request( 'GET', array( 'signature' => sha1( implode( '', $
 check_wx( 'checked' === $GLOBALS['aicfab_store']['aicfab_wechat_contact']['result'] && 0 === strpos( AI_Chat_Bedrock_WeChat::contact_summary(), 'Last contact 1 mins ago: WeChat checked the address' ), 'A passed address check is reported.' );
 wx_serve( new WP_REST_Request( 'GET', array( 'timestamp' => '1', 'nonce' => 'n3' ) ) );
 check_wx( 'stale' === $GLOBALS['aicfab_store']['aicfab_wechat_contact']['result'], 'An old timestamp is reported.' );
+check_wx( ! empty( $GLOBALS['aicfab_store']['aicfab_wechat_contact']['ok'] ) && false !== strpos( AI_Chat_Bedrock_WeChat::contact_summary(), 'The last signed request from WeChat came' ), 'A refused request does not hide that WeChat reached the address.' );
 $GLOBALS['aicfab_writes'] = 0;
 for ( $i = 0; $i < 5; $i++ ) {
 	wx_serve( new WP_REST_Request( 'GET', array( 'timestamp' => '1', 'nonce' => 'n3' ) ) );

@@ -448,6 +448,15 @@ check_conv(
 	'An oversized tool result is truncated before it reaches the model.'
 );
 
+// --- Plain text for the list ------------------------------------------------------------
+
+check_conv(
+	'The 6-DOF Robot Arm Kit ships in 3 days. See the guide.' === AI_Chat_Bedrock_Conversations::plain( "The **6-DOF Robot Arm Kit** ships in 3 days [P2].\n\n- See [the guide](https://example.com/guide/).[1, 3]" ),
+	'The list shows answers without Markdown or citation markers.'
+);
+check_conv( 'Use wp eval and keep 2 * 3 = 6 as it is.' === AI_Chat_Bedrock_Conversations::plain( "## Use `wp eval`\nand keep 2 * 3 = 6 as it is." ), 'Headings and code lose their marks, and a lone asterisk stays.' );
+check_conv( '质量很好，见第 [A] 节。' === AI_Chat_Bedrock_Conversations::plain( '**质量很好**，见第 [A] 节。' ), 'Chinese emphasis is removed; bracketed words that are not citations stay.' );
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );
