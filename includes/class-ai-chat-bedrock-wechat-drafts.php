@@ -32,6 +32,16 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	const IMAGES_META = '_aicfab_wechat_images';
 	const COVER_META  = '_aicfab_wechat_cover';
 
+	// WeChat's answers for a draft it no longer has: an unknown media_id, or one already sent.
+	const DRAFT_GONE = array( 'wx_40007', 'wx_53403', 'wx_53404' );
+
+	// WeChat's limits for a title and a digest, in characters.
+	const TITLE_CHARS  = 32;
+	const DIGEST_CHARS = 120;
+
+	// Characters of public text, without spaces, a post needs to be sent on the schedule.
+	const MIN_TEXT = 600;
+
 	// WeChat takes up to eight articles in a draft.
 	const MAX_ARTICLES  = 8;
 	const DEFAULT_COUNT = 3;
@@ -155,12 +165,99 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			if ( count( $found ) >= $limit ) {
 				break;
 			}
-			// An article needs a cover, so a post without any image is passed over.
-			if ( self::sendable( $post ) && ! self::sent( $post->ID ) && ( get_post_thumbnail_id( $post ) || false !== stripos( (string) $post->post_content, '<img' ) ) ) {
+			// Only a post that makes a full article; see shortfall().
+			if ( ! self::sent( $post->ID ) && '' === self::shortfall( $post ) ) {
 				$found[] = (int) $post->ID;
 			}
 		}
 		return $found;
+	}
+
+	/**
+	 * Delete a post's older drafts in WeChat and mark them removed in its record.
+	 *
+	 * Only drafts, never a published article, which is no longer a draft; and only a draft no
+	 * other post was sent in.
+	 *
+	 * @param int    $post_id Post ID.
+	 * @param string $current The draft the post is in now.
+	 * @param array  $options Settings.
+	 * @return int Drafts deleted.
+	 */
+	public static function retire( $post_id, $current, $options ) {
+		$deleted = 0;
+		foreach ( AI_Chat_Bedrock_Distribution::entries( $post_id ) as $entry ) {
+			if ( ! isset( $entry['platform'], $entry['status'], $entry['item_id'] ) || 'wechat' !== $entry['platform'] || 'planned' !== $entry['status'] || $current === $entry['item_id'] ) {
+				continue;
+			}
+			if ( self::shared( $entry['item_id'], $post_id ) ) {
+				continue;
+			}
+			$gone = AI_Chat_Bedrock_WeChat_API::call( 'draft/delete', wp_json_encode( array( 'media_id' => $entry['item_id'] ) ), self::account( $options ), 10 );
+			if ( is_wp_error( $gone ) && ! in_array( $gone->get_error_code(), self::DRAFT_GONE, true ) ) {
+				continue;
+			}
+			AI_Chat_Bedrock_Distribution::record(
+				$post_id,
+				array(
+					'platform' => 'wechat',
+					'item_id'  => $entry['item_id'],
+					'status'   => 'removed',
+					'note'     => __( 'An older draft of this post, deleted when it was sent again.', 'ai-chat-for-amazon-bedrock' ),
+				),
+				'wechat'
+			);
+			++$deleted;
+		}
+		return $deleted;
+	}
+
+	/**
+	 * Whether another post was sent in a draft.
+	 *
+	 * @param string $media_id Draft.
+	 * @param int    $post_id  The post asking.
+	 * @return bool
+	 */
+	private static function shared( $media_id, $post_id ) {
+		$others = get_posts(
+			array(
+				'post_type'      => 'any',
+				'post_status'    => 'any',
+				'posts_per_page' => 2,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- only when a post is sent again.
+					array(
+						'key'     => AI_Chat_Bedrock_Distribution::META,
+						'value'   => $media_id,
+						'compare' => 'LIKE',
+					),
+				),
+			)
+		);
+		return (bool) array_diff( array_map( 'intval', (array) $others ), array( (int) $post_id ) );
+	}
+
+	/**
+	 * The draft a post was last sent to, while it is still a draft.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return array|null media_id and the article's index in it.
+	 */
+	public static function draft_of( $post_id ) {
+		foreach ( AI_Chat_Bedrock_Distribution::entries( $post_id ) as $entry ) {
+			if ( isset( $entry['platform'], $entry['status'], $entry['item_id'] ) && 'wechat' === $entry['platform'] ) {
+				if ( 'planned' !== $entry['status'] ) {
+					return null;
+				}
+				return array(
+					'media_id' => (string) $entry['item_id'],
+					'index'    => isset( $entry['version'] ) && preg_match( '/^idx:(\d)$/', (string) $entry['version'], $found ) ? (int) $found[1] : 0,
+				);
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -229,21 +326,51 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			$error = new WP_Error( 'wx_nothing', __( 'No post could be made into an article.', 'ai-chat-for-amazon-bedrock' ), array( 'skipped' => $skipped ) );
 			return self::note( $error, $source, $skipped );
 		}
-		$result = AI_Chat_Bedrock_WeChat_API::call( 'draft/add', wp_json_encode( array( 'articles' => $articles ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ), self::account( $options ), 30 );
-		if ( is_wp_error( $result ) ) {
-			return self::note( $result, $source, $skipped );
+		// A post sent again replaces its article in the draft it is still in, rather than making
+		// a second draft; a draft already published or deleted is made anew.
+		$media_id = '';
+		$earlier  = 1 === count( $posts ) ? self::draft_of( $posts[0]->ID ) : null;
+		if ( null !== $earlier ) {
+			$updated = AI_Chat_Bedrock_WeChat_API::call(
+				'draft/update',
+				wp_json_encode(
+					array(
+						'media_id' => $earlier['media_id'],
+						'index'    => $earlier['index'],
+						'articles' => $articles[0],
+					),
+					JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+				),
+				self::account( $options ),
+				30
+			);
+			// Only a draft WeChat no longer has, published or deleted, is made anew; any other
+			// refusal is reported, so a post is never left in two drafts.
+			if ( is_wp_error( $updated ) && ! in_array( $updated->get_error_code(), self::DRAFT_GONE, true ) ) {
+				return self::note( $updated, $source, $skipped );
+			}
+			$media_id = is_wp_error( $updated ) ? '' : $earlier['media_id'];
 		}
-		$media_id = isset( $result['media_id'] ) ? (string) $result['media_id'] : '';
+		if ( '' === $media_id ) {
+			$result = AI_Chat_Bedrock_WeChat_API::call( 'draft/add', wp_json_encode( array( 'articles' => $articles ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ), self::account( $options ), 30 );
+			if ( is_wp_error( $result ) ) {
+				return self::note( $result, $source, $skipped );
+			}
+			$media_id = isset( $result['media_id'] ) ? (string) $result['media_id'] : '';
+			$earlier  = null;
+		}
 		if ( '' === $media_id ) {
 			return self::note( new WP_Error( 'wx_http', 'No media_id' ), $source, $skipped );
 		}
-		foreach ( $posts as $post ) {
+		foreach ( $posts as $index => $post ) {
 			AI_Chat_Bedrock_Distribution::record(
 				$post->ID,
 				array(
 					'platform' => 'wechat',
 					'item_id'  => $media_id,
 					'status'   => 'planned',
+					// Where the article sits in the draft, to replace it there later.
+					'version'  => 'idx:' . ( null !== $earlier ? $earlier['index'] : $index ),
 					'title'    => get_the_title( $post ),
 					'language' => AI_Chat_Bedrock_Content::language( $post ),
 					'note'     => __( 'In the WeChat Official Account\'s draft box; publish it from the Official Accounts Platform.', 'ai-chat-for-amazon-bedrock' ),
@@ -251,7 +378,13 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				'wechat'
 			);
 		}
+		// Older drafts of a post sent on its own are stale copies: they go, unless another post
+		// shares them.
+		if ( 1 === count( $posts ) ) {
+			self::retire( $posts[0]->ID, $media_id, $options );
+		}
 		$done = array(
+			'updated'  => null !== $earlier,
 			'media_id' => $media_id,
 			'posts'    => wp_list_pluck( $posts, 'ID' ),
 			'skipped'  => $skipped,
@@ -273,18 +406,104 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( is_wp_error( $cover ) ) {
 			return $cover;
 		}
-		$excerpt = html_entity_decode( AI_Chat_Bedrock_Distribution::public_excerpt( $post, 120 ), ENT_QUOTES, 'UTF-8' );
+		$content = self::content( $post, $account );
 		return array(
 			'article_type'          => 'news',
-			'title'                 => self::cut( html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ), 32 ),
+			'title'                 => self::title( html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ) ),
 			'author'                => self::author( $options ),
-			'digest'                => self::cut( $excerpt, 120 ),
-			'content'               => self::content( $post, $account ),
+			'digest'                => self::digest( $post, $content ),
+			'content'               => $content,
 			'content_source_url'    => (string) get_permalink( $post ),
 			'thumb_media_id'        => $cover,
 			'need_open_comment'     => 0,
 			'only_fans_can_comment' => 0,
 		);
+	}
+
+	/**
+	 * A title within WeChat's 32 characters: a longer one ends at its last break, such as the
+	 * colon after a series name, that leaves a title of some length, so it is not cut mid-phrase.
+	 *
+	 * @param string $title Title.
+	 * @return string
+	 */
+	public static function title( $title ) {
+		$title = trim( preg_replace( '/\s+/u', ' ', (string) $title ) );
+		if ( AI_Chat_Bedrock_Security::string_length( $title ) <= self::TITLE_CHARS ) {
+			return $title;
+		}
+		$head = AI_Chat_Bedrock_Security::string_substr( $title, 0, self::TITLE_CHARS );
+		if ( preg_match_all( '/[，,：:；;、｜|—]/u', $head, $breaks, PREG_OFFSET_CAPTURE ) ) {
+			foreach ( array_reverse( $breaks[0] ) as $break ) {
+				$kept = rtrim( substr( $head, 0, $break[1] ) );
+				if ( AI_Chat_Bedrock_Security::string_length( $kept ) >= 12 ) {
+					return $kept;
+				}
+			}
+		}
+		return AI_Chat_Bedrock_Security::string_substr( $title, 0, self::TITLE_CHARS - 1 ) . '…';
+	}
+
+	/**
+	 * The digest: a written excerpt, or else the first paragraph of the article that says
+	 * something, ended at a sentence within WeChat's 120 characters.
+	 *
+	 * Lessons often open with a video and a credit line, which make a poor digest.
+	 *
+	 * @param WP_Post $post    Post.
+	 * @param string  $content The article's HTML.
+	 * @return string
+	 */
+	public static function digest( $post, $content ) {
+		$text = '' !== trim( (string) $post->post_excerpt ) ? trim( wp_strip_all_tags( (string) $post->post_excerpt ) ) : '';
+		if ( '' === $text && preg_match_all( '#<p\b[^>]*>(.*?)</p>#s', (string) $content, $paragraphs ) ) {
+			foreach ( $paragraphs[1] as $paragraph ) {
+				$candidate = trim( html_entity_decode( wp_strip_all_tags( $paragraph ), ENT_QUOTES, 'UTF-8' ) );
+				if ( AI_Chat_Bedrock_Security::string_length( $candidate ) >= 40 && false === strpos( $candidate, '▶' ) ) {
+					$text = $candidate;
+					break;
+				}
+			}
+		}
+		if ( '' === $text ) {
+			$text = html_entity_decode( AI_Chat_Bedrock_Distribution::public_excerpt( $post, 120 ), ENT_QUOTES, 'UTF-8' );
+		}
+		if ( AI_Chat_Bedrock_Security::string_length( $text ) <= self::DIGEST_CHARS ) {
+			return $text;
+		}
+		$head = AI_Chat_Bedrock_Security::string_substr( $text, 0, self::DIGEST_CHARS );
+		$end  = max( (int) mb_strrpos( $head, '。' ), (int) mb_strrpos( $head, '？' ), (int) mb_strrpos( $head, '！' ), (int) mb_strrpos( $head, '. ' ) );
+		return $end >= 20 ? AI_Chat_Bedrock_Security::string_substr( $head, 0, $end + 1 ) : AI_Chat_Bedrock_Security::string_substr( $text, 0, self::DIGEST_CHARS - 1 ) . '…';
+	}
+
+	/**
+	 * Why a post is not good enough to send on a schedule, or an empty string.
+	 *
+	 * A person checks every draft before it is published, and a post sent by hand is the
+	 * sender's choice; the schedule, which nobody watches, sends only posts that make a full
+	 * article: published and public, with a cover image, and enough text a guest can read.
+	 *
+	 * @param WP_Post $post Post.
+	 * @return string The reason, or an empty string.
+	 */
+	public static function shortfall( $post ) {
+		if ( ! self::sendable( $post ) ) {
+			return 'not_public';
+		}
+		if ( ! get_post_thumbnail_id( $post ) ) {
+			return 'no_cover';
+		}
+		$text = AI_Chat_Bedrock_Content::public_text( $post );
+		if ( AI_Chat_Bedrock_Security::string_length( preg_replace( '/\s+/u', '', (string) $text ) ) < self::MIN_TEXT ) {
+			return 'too_short';
+		}
+		/**
+		 * Why a post should not go to the WeChat draft box on the schedule.
+		 *
+		 * @param string  $reason An empty string, or the reason found so far.
+		 * @param WP_Post $post   Post.
+		 */
+		return (string) apply_filters( 'ai_chat_bedrock_wechat_drafts_shortfall', '', $post );
 	}
 
 	/**
@@ -296,7 +515,20 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * @return string
 	 */
 	public static function content( $post, $account ) {
-		$html = self::clean_html( AI_Chat_Bedrock_Content::render_as_guest( $post ) );
+		// The plugin's own lines are in the post's language, which may not be the site's.
+		$locales  = array(
+			'zh' => 'zh_CN',
+			'ja' => 'ja',
+			'en' => 'en_US',
+		);
+		$language = AI_Chat_Bedrock_Content::language( $post );
+		$switched = isset( $locales[ $language ] ) && function_exists( 'switch_to_locale' ) && switch_to_locale( $locales[ $language ] );
+		$html     = self::clean_html( self::without_players( AI_Chat_Bedrock_Content::render_as_guest( $post ) ) );
+		$more     = self::style( '<p>' . esc_html__( 'Tap "Read more" for the full article on the site.', 'ai-chat-for-amazon-bedrock' ) . '</p>' );
+		if ( $switched ) {
+			restore_previous_locale();
+		}
+
 		$left = self::MAX_IMAGES;
 		$html = preg_replace_callback(
 			'#<img\b[^>]*>#i',
@@ -311,24 +543,40 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				}
 				--$left;
 				$alt = preg_match( '#\salt="([^"]*)"#i', $tag[0], $found ) ? $found[1] : '';
-				return '<img src="' . esc_url( $url ) . '" alt="' . esc_attr( html_entity_decode( $alt, ENT_QUOTES, 'UTF-8' ) ) . '">';
+				return '<img src="' . esc_url( $url ) . '" alt="' . esc_attr( html_entity_decode( $alt, ENT_QUOTES, 'UTF-8' ) ) . '" style="' . self::STYLES['img'] . '">';
 			},
 			$html
 		);
+		// An image that could not be used leaves nothing behind.
+		$html = self::without_empty( $html );
+		return self::fit( self::style( $html ), $more );
+	}
 
-		// In the post's language, which may not be the site's.
-		$locales  = array(
-			'zh' => 'zh_CN',
-			'ja' => 'ja',
-			'en' => 'en_US',
+	/**
+	 * Videos and embedded players as a note where they were.
+	 *
+	 * WeChat shows no player from elsewhere, and its API takes videos of at most 10 MB and
+	 * cannot place one in an article, so a video is inserted in the Official Accounts Platform's
+	 * editor. The note marks the place, under the video's poster when it has one.
+	 *
+	 * @param string $html Post HTML.
+	 * @return string
+	 */
+	public static function without_players( $html ) {
+		$note = function ( $poster ) {
+			$image = '' !== $poster ? '<p><img src="' . esc_url( $poster ) . '" alt=""></p>' : '';
+			return $image . '<blockquote><p>' . esc_html__( '▶ This lesson has a video. Insert it here in the Official Accounts Platform\'s editor (upload the MP4 to the material library first), or tap "Read more" to watch it on the site.', 'ai-chat-for-amazon-bedrock' ) . '</p></blockquote>';
+		};
+		// A video block, with its caption, or a video on its own.
+		$html = preg_replace_callback(
+			'#<figure\b[^>]*wp-block-(?:video|embed)[^>]*>.*?</figure>|<video\b.*?</video>|<iframe\b.*?</iframe>#is',
+			function ( $player ) use ( $note ) {
+				$poster = preg_match( '#\sposter="([^"]+)"#i', $player[0], $found ) ? html_entity_decode( $found[1], ENT_QUOTES, 'UTF-8' ) : '';
+				return $note( $poster );
+			},
+			(string) $html
 		);
-		$language = AI_Chat_Bedrock_Content::language( $post );
-		$switched = isset( $locales[ $language ] ) && function_exists( 'switch_to_locale' ) && switch_to_locale( $locales[ $language ] );
-		$more     = '<p>' . esc_html__( 'Tap "Read more" for the full article on the site.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
-		if ( $switched ) {
-			restore_previous_locale();
-		}
-		return self::fit( $html, $more );
+		return $html;
 	}
 
 	/**
@@ -373,8 +621,21 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * @return string
 	 */
 	public static function clean_html( $html ) {
-		$html = preg_replace( '#<(script|style|iframe|noscript|form)\b[^>]*>.*?</\1>#is', '', (string) $html );
+		$html = preg_replace( '#<(script|style|iframe|noscript|form|video|audio|svg|button|nav)\b[^>]*>.*?</\1>#is', '', (string) $html );
 		$html = preg_replace( '#<!--.*?-->#s', '', $html );
+		// A folded section is shown open: its toggle's label goes when a heading saying the same
+		// follows, and is a bold line otherwise.
+		$html = preg_replace_callback(
+			'#<summary\b[^>]*>(.*?)</summary>\s*(<h[1-6]\b[^>]*>(.*?)</h[1-6]>)?#is',
+			function ( $found ) {
+				$label   = trim( wp_strip_all_tags( $found[1] ) );
+				$heading = isset( $found[3] ) ? trim( wp_strip_all_tags( $found[3] ) ) : '';
+				return ( $label === $heading || '' === $label ? '' : '<p><strong>' . esc_html( $label ) . '</strong></p>' ) . ( isset( $found[2] ) ? $found[2] : '' );
+			},
+			$html
+		);
+		// A button, such as signing in with Google, does nothing in WeChat and goes whole.
+		$html = preg_replace( '#<a\b(?=[^>]*(?:wp-login\.php|class="[^"]*(?:\bbtn\b|_btn\b|-btn\b|\bbutton\b|button__link|wp-element-button)))[^>]*>.*?</a>#is', '', $html );
 		// WeChat does not open links outside it, so their text stays and the link goes.
 		$html    = preg_replace( '#<a\b[^>]*>(.*?)</a>#is', '$1', $html );
 		$plain   = array();
@@ -393,8 +654,100 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			'h1' => array(),
 		);
 		$html     = wp_kses( $html, $allowed );
-		$html     = preg_replace( '#<(p|figure|li)>\s*</\1>#', '', $html );
-		return trim( preg_replace( "/\n{3,}/", "\n\n", $html ) );
+
+		// Code keeps its spacing; everything else loses the white space between tags, which
+		// WeChat shows as empty list items and stray blank lines.
+		$code = array();
+		$html = preg_replace_callback(
+			'#<pre>.*?</pre>#s',
+			function ( $block ) use ( &$code ) {
+				$code[] = $block[0];
+				return "\x1A" . ( count( $code ) - 1 ) . "\x1A";
+			},
+			$html
+		);
+		$html = preg_replace( '#>\s+<#u', '><', $html );
+		$html = preg_replace( '#\s{2,}#u', ' ', $html );
+		$html = preg_replace( '#<(p|li|h2|h3|h4|blockquote|td|th|figcaption)>\s+#u', '<$1>', $html );
+		$html = preg_replace( '#\s+</(p|li|h2|h3|h4|blockquote|td|th|figcaption)>#u', '</$1>', $html );
+		$html = preg_replace( '#(<br\s*/?>\s*){2,}#i', '<br>', $html );
+		$html = preg_replace( '#<(p|li)><br\s*/?>|<br\s*/?></(p|li)>#i', '<$1$2>', $html );
+		$html = str_replace( array( '<h1>', '</h1>' ), array( '<h2>', '</h2>' ), $html );
+		// A figure is its image and caption; WeChat has no figure.
+		$html = str_replace( array( '<figure>', '</figure>', '<figcaption>', '</figcaption>' ), array( '', '', '<p class="aicfab-caption">', '</p>' ), $html );
+		// Text left between blocks, as from a removed wrapper, becomes a paragraph of its own.
+		$blocks = 'p|h2|h3|h4|ul|ol|blockquote|pre|table|hr|img|figure';
+		$html   = preg_replace_callback(
+			'#(^|</(?:' . $blocks . ')>|<hr>|<img\b[^>]*>)([^<\x1A]*[^\s<\x1A][^<\x1A]*)(?=<(?:' . $blocks . ')\b|\x1A|$)#u',
+			function ( $found ) {
+				return $found[1] . '<p>' . trim( $found[2] ) . '</p>';
+			},
+			$html
+		);
+		$html   = preg_replace_callback(
+			"#\x1A(\d+)\x1A#",
+			function ( $found ) use ( $code ) {
+				return isset( $code[ (int) $found[1] ] ) ? $code[ (int) $found[1] ] : '';
+			},
+			$html
+		);
+		return trim( self::without_empty( $html ) );
+	}
+
+	/**
+	 * HTML without empty paragraphs, list items, lists and headings, however deep.
+	 *
+	 * @param string $html HTML.
+	 * @return string
+	 */
+	private static function without_empty( $html ) {
+		do {
+			$before = $html;
+			$html   = preg_replace( '#<(p|li|h2|h3|h4|blockquote|strong|b|em|i|u|ul|ol)(?:\s[^>]*)?>(?:\s|&nbsp;|\xC2\xA0|<br\s*/?>)*</\1>#u', '', $html );
+		} while ( $html !== $before );
+		return $html;
+	}
+
+	/**
+	 * Inline styles, as WeChat takes no style sheet: readable text at WeChat's usual size, with
+	 * spacing, and code, quotes and tables set apart.
+	 */
+	const STYLES = array(
+		'p'          => 'margin:0 0 16px;line-height:1.75;font-size:16px;color:#333;',
+		'caption'    => 'margin:-8px 0 16px;line-height:1.5;font-size:13px;color:#888;text-align:center;',
+		'h2'         => 'margin:32px 0 16px;font-size:20px;font-weight:bold;line-height:1.4;color:#222;',
+		'h3'         => 'margin:24px 0 12px;font-size:18px;font-weight:bold;line-height:1.4;color:#222;',
+		'h4'         => 'margin:20px 0 10px;font-size:16px;font-weight:bold;line-height:1.4;color:#222;',
+		'ul'         => 'margin:0 0 16px;padding-left:24px;',
+		'ol'         => 'margin:0 0 16px;padding-left:24px;',
+		'li'         => 'margin:0 0 8px;line-height:1.75;font-size:16px;color:#333;',
+		'blockquote' => 'margin:0 0 16px;padding:10px 14px;border-left:3px solid #07c160;background:#f7f7f7;color:#555;',
+		'pre'        => 'margin:0 0 16px;padding:12px;background:#f6f8fa;border-radius:4px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;font-size:13px;line-height:1.6;',
+		'code'       => 'font-family:Menlo,Consolas,monospace;font-size:14px;background:#f3f3f3;padding:0 4px;border-radius:3px;',
+		'pre_code'   => 'font-family:Menlo,Consolas,monospace;font-size:13px;background:none;padding:0;',
+		'table'      => 'margin:0 0 16px;border-collapse:collapse;width:100%;font-size:14px;',
+		'th'         => 'border:1px solid #ddd;padding:6px 8px;background:#f6f8fa;font-weight:bold;',
+		'td'         => 'border:1px solid #ddd;padding:6px 8px;',
+		'hr'         => 'margin:24px 0;border:none;border-top:1px solid #eee;',
+		'img'        => 'display:block;max-width:100%;height:auto;margin:0 auto 16px;',
+	);
+
+	/**
+	 * Add the inline styles to the article's tags.
+	 *
+	 * @param string $html Clean HTML.
+	 * @return string
+	 */
+	public static function style( $html ) {
+		$html = str_replace( '<p class="aicfab-caption">', '<p style="' . self::STYLES['caption'] . '">', $html );
+		$html = str_replace( '<pre><code>', '<pre style="' . self::STYLES['pre'] . '"><code style="' . self::STYLES['pre_code'] . '">', $html );
+		return preg_replace_callback(
+			'#<(p|h2|h3|h4|ul|ol|li|blockquote|pre|code|table|th|td|hr)(\s+colspan="\d+")?>#',
+			function ( $tag ) {
+				return '<' . $tag[1] . ( isset( $tag[2] ) ? $tag[2] : '' ) . ' style="' . self::STYLES[ $tag[1] ] . '">';
+			},
+			$html
+		);
 	}
 
 	/**
@@ -406,13 +759,10 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * @return string Address, or an empty string when the image cannot be used.
 	 */
 	private static function upload_image( $src, $account, $post_id ) {
-		$file = self::local_image( $src, self::IMAGE_BYTES );
-		if ( null === $file ) {
-			return '';
-		}
 		$seen = get_post_meta( $post_id, self::IMAGES_META, true );
 		$seen = is_array( $seen ) ? $seen : array();
-		$key  = md5( $account['app_id'] . '|' . $file['path'] . '|' . filemtime( $file['path'] ) );
+		$file = self::local_image( $src, self::IMAGE_BYTES );
+		$key  = md5( $account['app_id'] . '|' . ( null !== $file ? $file['path'] . '|' . filemtime( $file['path'] ) : 'url|' . $src ) );
 		if ( isset( $seen[ $key ] ) ) {
 			return (string) $seen[ $key ];
 		}
@@ -420,9 +770,14 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( self::$images_left < 1 || ( self::$images_until && microtime( true ) > self::$images_until ) ) {
 			return '';
 		}
+		$file = null !== $file ? $file : self::remote_image( $src, self::IMAGE_BYTES );
+		if ( null === $file ) {
+			return '';
+		}
 		--self::$images_left;
 		$form = AI_Chat_Bedrock_WeChat_API::multipart( $file['path'], $file['mime'] );
 		$sent = null === $form ? null : AI_Chat_Bedrock_WeChat_API::call( 'media/uploadimg', $form['body'], $account, 20, $form['type'] );
+		self::done_with( $file );
 		if ( ! is_array( $sent ) || empty( $sent['url'] ) ) {
 			return '';
 		}
@@ -444,17 +799,21 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		$src  = $id ? (string) wp_get_attachment_url( $id ) : '';
 		$file = '' !== $src ? self::local_image( $src, self::COVER_BYTES ) : null;
 		if ( null === $file && preg_match( '#<img\b[^>]*\ssrc="([^"]+)"#i', (string) $post->post_content, $found ) ) {
-			$file = self::local_image( html_entity_decode( $found[1], ENT_QUOTES, 'UTF-8' ), self::COVER_BYTES );
+			$src  = html_entity_decode( $found[1], ENT_QUOTES, 'UTF-8' );
+			$file = self::local_image( $src, self::COVER_BYTES );
 		}
+		$key   = md5( $account['app_id'] . '|' . ( null !== $file ? $file['path'] . '|' . filemtime( $file['path'] ) : 'url|' . $src ) );
+		$saved = get_post_meta( $post->ID, self::COVER_META, true );
+		if ( '' !== $src && is_array( $saved ) && isset( $saved['key'], $saved['media_id'] ) && $key === $saved['key'] ) {
+			return (string) $saved['media_id'];
+		}
+		// An image offloaded to a CDN is fetched from there.
+		$file = null === $file && '' !== $src ? self::remote_image( $src, self::COVER_BYTES ) : $file;
 		if ( null === $file ) {
 			return new WP_Error( 'no_cover', __( 'The post needs a featured image in JPEG or PNG for the cover.', 'ai-chat-for-amazon-bedrock' ) );
 		}
-		$key   = md5( $account['app_id'] . '|' . $file['path'] . '|' . filemtime( $file['path'] ) );
-		$saved = get_post_meta( $post->ID, self::COVER_META, true );
-		if ( is_array( $saved ) && isset( $saved['key'], $saved['media_id'] ) && $key === $saved['key'] ) {
-			return (string) $saved['media_id'];
-		}
 		$form = AI_Chat_Bedrock_WeChat_API::multipart( $file['path'], $file['mime'] );
+		self::done_with( $file );
 		if ( null === $form ) {
 			return new WP_Error( 'no_cover', __( 'The post needs a featured image in JPEG or PNG for the cover.', 'ai-chat-for-amazon-bedrock' ) );
 		}
@@ -474,6 +833,54 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			)
 		);
 		return (string) $sent['media_id'];
+	}
+
+	/**
+	 * An image from another host, such as a CDN the site's media is offloaded to, fetched into a
+	 * temporary file: https only, through WordPress's safe HTTP API, which refuses addresses on
+	 * the server's own network, and only when it is a JPEG or PNG within the size.
+	 *
+	 * @param string $src   Image address.
+	 * @param int    $bytes Largest size.
+	 * @return array|null path, mime, and temp to delete it after.
+	 */
+	public static function remote_image( $src, $bytes ) {
+		$src = esc_url_raw( (string) $src, array( 'https' ) );
+		if ( '' === $src || ! function_exists( 'wp_tempnam' ) ) {
+			return null;
+		}
+		$response = wp_safe_remote_get(
+			$src,
+			array(
+				'timeout'             => 15,
+				'redirection'         => 2,
+				'limit_response_size' => $bytes + 1,
+			)
+		);
+		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+			return null;
+		}
+		$data = (string) wp_remote_retrieve_body( $response );
+		$info = '' !== $data && strlen( $data ) <= $bytes && function_exists( 'getimagesizefromstring' ) ? getimagesizefromstring( $data ) : false;
+		$mime = is_array( $info ) && in_array( $info['mime'], array( 'image/jpeg', 'image/png' ), true ) ? $info['mime'] : '';
+		if ( '' === $mime ) {
+			return null;
+		}
+		$path = wp_tempnam( 'aicfab-wechat' );
+		if ( ! $path || false === file_put_contents( $path, $data ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- a temporary file, deleted after the upload.
+			return null;
+		}
+		return array(
+			'path' => $path,
+			'mime' => $mime,
+			'temp' => true,
+		);
+	}
+
+	private static function done_with( $file ) {
+		if ( ! empty( $file['temp'] ) && is_file( $file['path'] ) ) {
+			wp_delete_file( $file['path'] );
+		}
 	}
 
 	/**
@@ -593,7 +1000,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			wp_die( esc_html__( 'You cannot send this post.', 'ai-chat-for-amazon-bedrock' ), 403 );
 		}
 		$done = self::create( array( $post_id ), null, 'manual' );
-		set_transient( 'aicfab_wechat_draft_notice_' . get_current_user_id(), is_wp_error( $done ) ? self::describe( $done ) : __( 'The post is in the WeChat draft box. Publish it from the Official Accounts Platform.', 'ai-chat-for-amazon-bedrock' ), 300 );
+		set_transient( 'aicfab_wechat_draft_notice_' . get_current_user_id(), is_wp_error( $done ) ? self::describe( $done ) : ( ! empty( $done['updated'] ) ? __( 'The post\'s article in the WeChat draft box was replaced with the current version.', 'ai-chat-for-amazon-bedrock' ) : __( 'The post is in the WeChat draft box. Publish it from the Official Accounts Platform.', 'ai-chat-for-amazon-bedrock' ) ), 300 );
 		wp_safe_redirect( (string) get_edit_post_link( $post_id, 'url' ) );
 		exit;
 	}
@@ -618,6 +1025,9 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		}
 		$label = self::sent( $post->ID ) ? __( 'Send to the WeChat draft box again', 'ai-chat-for-amazon-bedrock' ) : __( 'Send to the WeChat draft box', 'ai-chat-for-amazon-bedrock' );
 		echo '<p><a class="button" href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=ai_chat_bedrock_wechat_draft&post=' . (int) $post->ID ), 'aicfab_wechat_draft_' . (int) $post->ID ) ) . '">' . esc_html( $label ) . '</a></p>';
+		if ( null !== self::draft_of( $post->ID ) ) {
+			echo '<p class="description">' . esc_html__( 'Its draft is replaced with the current version, including any changes made to it in WeChat, such as an inserted video.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		}
 	}
 
 	/**
@@ -737,6 +1147,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			'wx_45009'   => __( 'The account reached WeChat\'s daily limit for this interface. Try again tomorrow.', 'ai-chat-for-amazon-bedrock' ),
 			'no_cover'   => __( 'The post needs a featured image in JPEG or PNG for the cover.', 'ai-chat-for-amazon-bedrock' ),
 			'not_public' => __( 'Only published posts that anyone can read are sent.', 'ai-chat-for-amazon-bedrock' ),
+			'too_short'  => __( 'The post has too little public text for an article.', 'ai-chat-for-amazon-bedrock' ),
 			'wx_nothing' => __( 'No post could be made into an article; each needs a featured image in JPEG or PNG.', 'ai-chat-for-amazon-bedrock' ),
 		);
 		if ( isset( $known[ $code ] ) ) {
