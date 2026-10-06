@@ -66,6 +66,35 @@ check('<p>2 * 3 * 4 = 24</p>' === md.renderMarkdown('2 * 3 * 4 = 24'), 'Arithmet
 check('<pre><code>- not a list</code></pre><p>after</p>' === md.renderMarkdown('```\n- not a list\n```\nafter'), 'Code keeps its text as written.');
 check('<p>退货政策：<strong>30 天</strong>内可退。</p>' === md.renderMarkdown('退货政策：**30 天**内可退。'), 'Chinese bold works without spaces around it.');
 
+// --- Streaming paints once a frame ---------------------------------------------------------
+
+const frames = [];
+let painted = 0;
+let scrolled = 0;
+const paints = vm.createContext({
+    window: {
+        requestAnimationFrame: function (fn) { frames.push(fn); return frames.length; },
+        cancelAnimationFrame: function (id) { frames[id - 1] = null; }
+    },
+    formatMessage: function (text) { return text; },
+    scrollToBottom: function () { scrolled++; }
+});
+vm.runInContext([extract('schedulePaint'), extract('paint'), extract('settle')].join('\n'), paints);
+const streamed = { text: '', frame: 0, bubble: { content: { html: function (html) { painted++; this.last = html; } } } };
+for (const piece of ['Hel', 'lo', ' wor', 'ld']) {
+    streamed.text += piece;
+    paints.schedulePaint(streamed);
+}
+check(0 === painted && 1 === frames.length, 'Chunks arriving within a frame are not each rendered.');
+frames[0]();
+check(1 === painted && 'Hello world' === streamed.bubble.content.last && 1 === scrolled, 'The frame renders everything that arrived, once.');
+streamed.text += '!';
+paints.schedulePaint(streamed);
+paints.settle(streamed);
+check(2 === painted && 'Hello world!' === streamed.bubble.content.last && null === frames[1] && 0 === streamed.frame, 'Settling shows what was waiting and cancels its frame, so it is not rendered twice.');
+paints.settle(streamed);
+check(2 === painted, 'Settling with nothing waiting renders nothing.');
+
 // --- Sending with Enter ------------------------------------------------------------------
 
 check(context.isSendKey({ key: 'Enter', keyCode: 13 }), 'Enter sends.');

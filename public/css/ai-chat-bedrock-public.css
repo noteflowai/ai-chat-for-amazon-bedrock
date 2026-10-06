@@ -422,6 +422,8 @@
 .ai-chat-bedrock-container .ai-chat-bedrock-buttons .ai-chat-bedrock-submit:hover:not(:disabled) {
 	background: #1740b4;
 	border-color: #1740b4;
+	background: color-mix(in srgb, var(--aicfab-accent) 85%, #000);
+	border-color: color-mix(in srgb, var(--aicfab-accent) 85%, #000);
 }
 
 .ai-chat-bedrock-container .ai-chat-bedrock-buttons .ai-chat-bedrock-clear,
@@ -480,6 +482,7 @@
 .ai-chat-bedrock-container .ai-chat-bedrock-sign-in-link:focus {
 	color: var(--aicfab-accent-contrast);
 	background: #1740b4;
+	background: color-mix(in srgb, var(--aicfab-accent) 85%, #000);
 }
 
 .ai-chat-bedrock-container .ai-chat-bedrock-sign-in-link:focus-visible {
@@ -674,8 +677,8 @@
 	padding: 0 20px;
 	font: inherit;
 	font-weight: 600;
-	color: #fff;
-	background: #1d4ed8;
+	color: var(--aicfab-launcher-text, #fff);
+	background: var(--aicfab-launcher, #1d4ed8);
 	border: 0;
 	border-radius: 999px;
 	box-shadow: 0 10px 26px rgba(20, 33, 61, .26);
@@ -685,11 +688,12 @@
 
 .ai-chat-bedrock-popup .ai-chat-bedrock-launcher:hover {
 	background: #1740b4;
+	background: color-mix(in srgb, var(--aicfab-launcher, #1d4ed8) 82%, #000);
 }
 
 .ai-chat-bedrock-popup .ai-chat-bedrock-launcher:focus-visible {
 	/* A white gap and a dark ring, visible on light and dark pages alike. */
-	outline: 3px solid #1d4ed8;
+	outline: 3px solid var(--aicfab-launcher, #1d4ed8);
 	outline-offset: 2px;
 	box-shadow: 0 0 0 2px #fff;
 }
@@ -726,6 +730,8 @@
 .ai-chat-bedrock-popup[data-state="open"] .ai-chat-bedrock-launcher-icon::after { transform: rotate(-45deg); }
 
 .ai-chat-bedrock-popup-panel {
+	/* Above the launcher, which comes first in the page so Tab goes from it into the chat. */
+	order: -1;
 	width: min(380px, calc(100vw - 32px));
 	animation: aicfab-rise .16s ease-out;
 }
@@ -772,6 +778,13 @@
 	overflow-y: auto;
 }
 
+/* Signed out there is a welcome and a sign-in link: the panel fits them, not a whole conversation. */
+.ai-chat-bedrock-container.is-popup.is-signed-out .ai-chat-bedrock-messages {
+	flex: 0 1 auto;
+	height: auto !important;
+	min-height: 0;
+}
+
 @media (max-height: 520px) {
 	.ai-chat-bedrock-container.is-popup .ai-chat-bedrock-messages {
 		min-height: 64px;
@@ -783,20 +796,55 @@
 	}
 }
 
+/*
+ * On a phone the launcher is a small pill in the corner rather than a bar across every page,
+ * and the open chat takes the whole screen, above the keyboard, with the page held still.
+ */
 @media (max-width: 600px) {
 	.ai-chat-bedrock-popup {
-		right: 14px;
-		bottom: 14px;
-		left: 14px;
-		align-items: stretch;
+		right: max(14px, env(safe-area-inset-right));
+		bottom: max(14px, env(safe-area-inset-bottom));
 	}
 
 	.ai-chat-bedrock-popup .ai-chat-bedrock-launcher {
-		justify-content: center;
+		min-height: 48px;
+		padding: 0 16px;
 	}
 
-	.ai-chat-bedrock-popup-panel {
+	.ai-chat-bedrock-popup:not(.is-signed-out)[data-state="open"] {
+		inset: 0;
+		gap: 0;
+	}
+
+	.ai-chat-bedrock-popup:not(.is-signed-out)[data-state="open"] .ai-chat-bedrock-launcher {
+		display: none;
+	}
+
+	.ai-chat-bedrock-popup:not(.is-signed-out)[data-state="open"] .ai-chat-bedrock-popup-panel {
 		width: 100%;
+		height: 100vh;
+		height: 100dvh;
+		animation: none;
+	}
+
+	.ai-chat-bedrock-popup:not(.is-signed-out) .ai-chat-bedrock-container.is-popup {
+		height: 100%;
+		max-height: none;
+		border: 0;
+		border-radius: 0;
+		box-shadow: none;
+		padding-top: env(safe-area-inset-top);
+		padding-bottom: env(safe-area-inset-bottom);
+	}
+
+	.ai-chat-bedrock-popup:not(.is-signed-out) .ai-chat-bedrock-container.is-popup .ai-chat-bedrock-messages {
+		flex: 1 1 auto;
+		height: auto !important;
+	}
+
+	html.aicfab-chat-open,
+	html.aicfab-chat-open body {
+		overflow: hidden;
 	}
 }
 

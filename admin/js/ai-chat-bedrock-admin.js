@@ -168,10 +168,17 @@
         });
     }
 
+    function bindColorFields() {
+        if ($.fn.wpColorPicker) {
+            $('.aicfab-color-field').wpColorPicker();
+        }
+    }
+
     $(function () {
         bindModelRefresh();
         bindDiagnostics();
         bindConfirmations();
+        bindColorFields();
     });
 
     window.AIChatBedrockAdmin = AIChatBedrockAdmin;

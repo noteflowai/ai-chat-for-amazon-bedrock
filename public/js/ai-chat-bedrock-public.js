@@ -293,10 +293,20 @@
             }
         }
 
+        // On a phone the open chat covers the page, so it is modal there: the page behind is
+        // held still and Tab stays in the chat. On a wider screen it sits beside the page.
+        const phone = window.matchMedia ? window.matchMedia('(max-width: 600px)') : null;
+
+        function modal() {
+            return !!(phone && phone.matches) && 'open' === $popup.attr('data-state') && !$popup.hasClass('is-signed-out');
+        }
+
         function setOpen(open, focus) {
             $popup.attr('data-state', open ? 'open' : 'closed');
             $launcher.attr('aria-expanded', open ? 'true' : 'false');
             $panel.prop('hidden', !open);
+            $panel.attr('aria-modal', modal() ? 'true' : null);
+            $(document.documentElement).toggleClass('aicfab-chat-open', modal());
             if (open && false !== focus) {
                 /*
                  * Focus goes into the panel either way. On a touch screen it goes to the panel
@@ -318,9 +328,10 @@
             }
         });
 
-        // Keep the panel open while the visitor browses other pages in this tab.
+        // Keep the panel open while the visitor browses other pages in this tab, beside the
+        // page. On a phone it would cover each new page whole, so there it waits to be opened.
         try {
-            if ('1' === window.sessionStorage.getItem(stateKey)) {
+            if ('1' === window.sessionStorage.getItem(stateKey) && !(phone && phone.matches && !$popup.hasClass('is-signed-out'))) {
                 setOpen(true, false);
             }
         } catch (error) {
@@ -340,8 +351,28 @@
         $(document).on('keydown', function (event) {
             if ('Escape' === event.key && 'open' === $popup.attr('data-state') && $popup[0].contains(document.activeElement)) {
                 close();
+                return;
+            }
+            if ('Tab' === event.key && modal()) {
+                const $focusable = $panel.find('a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex="0"]').filter(':visible');
+                const index = $focusable.index(document.activeElement);
+                if ($focusable.length && event.shiftKey && index <= 0) {
+                    event.preventDefault();
+                    $focusable.last().trigger('focus');
+                } else if ($focusable.length && !event.shiftKey && (-1 === index || index === $focusable.length - 1)) {
+                    event.preventDefault();
+                    $focusable.first().trigger('focus');
+                }
             }
         });
+
+        // Turning a phone, or resizing a window across the breakpoint, changes whether it is modal.
+        if (phone && phone.addEventListener) {
+            phone.addEventListener('change', function () {
+                $panel.attr('aria-modal', modal() ? 'true' : null);
+                $(document.documentElement).toggleClass('aicfab-chat-open', modal());
+            });
+        }
     });
 
     $('.ai-chat-bedrock-container').each(function () {
@@ -368,8 +399,56 @@
         let transcript = [];
         let sentSinceLoad = false;
 
-        function scrollToBottom() {
-            $messages.scrollTop($messages.prop('scrollHeight'));
+        // The list follows a growing answer only while the reader is at the bottom. Scrolled
+        // up to read something earlier, they are not dragged back down by every chunk.
+        let follow = true;
+        $messages.on('scroll', function () {
+            follow = this.scrollHeight - this.scrollTop - this.clientHeight < 48;
+        });
+
+        function scrollToBottom(force) {
+            if (force) {
+                follow = true;
+            }
+            if (follow) {
+                $messages.scrollTop($messages.prop('scrollHeight'));
+            }
+        }
+
+        /**
+         * Render a streamed answer at most once a frame. Rendering on every chunk redid the
+         * whole growing answer dozens of times a second, which slows as the answer grows.
+         */
+        function schedulePaint(state) {
+            if (state.frame) {
+                return;
+            }
+            if (!window.requestAnimationFrame) {
+                paint(state);
+                return;
+            }
+            state.frame = window.requestAnimationFrame(function () {
+                state.frame = 0;
+                paint(state);
+            });
+        }
+
+        function paint(state) {
+            if (state.frame) {
+                window.cancelAnimationFrame(state.frame);
+                state.frame = 0;
+            }
+            if (state.bubble) {
+                state.bubble.content.html(formatMessage(state.text));
+                scrollToBottom();
+            }
+        }
+
+        // What is waiting for the next frame is shown now, before the answer is read or kept.
+        function settle(state) {
+            if (state.frame) {
+                paint(state);
+            }
         }
 
         function timeLabel(seconds) {
@@ -889,7 +968,7 @@
             $message.append(avatar(isUser), $body);
             $messages.find('.ai-chat-bedrock-welcome-message').remove();
             $messages.append($message);
-            scrollToBottom();
+            scrollToBottom(isUser);
             return { message: $message, content: $content };
         }
 
@@ -1259,12 +1338,12 @@
                 }
                 $messages.find('.ai-chat-bedrock-status').remove();
                 state.text += payload.text;
-                state.bubble.content.html(formatMessage(state.text));
-                scrollToBottom();
+                schedulePaint(state);
                 return;
             }
 
             if ('tools' === event.name) {
+                settle(state);
                 state.text = '';
                 if (state.bubble) {
                     state.bubble.content.empty();
@@ -1291,6 +1370,7 @@
             }
 
             if ('done' === event.name) {
+                settle(state);
                 state.done = true;
                 $messages.find('.ai-chat-bedrock-status').remove();
                 if (typeof payload.message === 'string' && payload.message.length) {
@@ -1362,7 +1442,7 @@
         }
 
         function sendStreaming(message, requestHistory, retried) {
-            const state = { text: '', bubble: null, error: '', done: false, fallback: false, renew: false, typing: typingIndicator() };
+            const state = { text: '', bubble: null, error: '', done: false, fallback: false, renew: false, frame: 0, typing: typingIndicator() };
             const body = new URLSearchParams();
             body.set('message', message);
             body.set('history', JSON.stringify(requestHistory));
@@ -1426,6 +1506,7 @@
                 }
                 return read();
             }).then(function () {
+                settle(state);
                 if (state.typing) {
                     state.typing.remove();
                     state.typing = null;
@@ -1472,6 +1553,7 @@
                 // Aborting rejects the fetch. That is the visitor's own doing, so it must
                 // not be reported as a failure.
                 if (stopped) {
+                    settle(state);
                     if (state.typing) {
                         state.typing.remove();
                         state.typing = null;

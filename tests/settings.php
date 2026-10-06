@@ -83,6 +83,9 @@ class AI_Chat_Bedrock_Chat_Request {
 	public static function color_scheme( $value ) {
 		return in_array( $value, array( 'light', 'dark', 'auto' ), true ) ? $value : 'light';
 	}
+	public static function accent_color( $value ) {
+		return preg_match( '/^#[0-9a-f]{6}$/', (string) $value ) ? (string) $value : '';
+	}
 }
 class AI_Chat_Bedrock_Profiles {
 	public static function sanitize_key( $value ) {
@@ -263,6 +266,10 @@ $saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'acco
 check_set( 'account' === $saved['chat_memory'] && AI_Chat_Bedrock_Chat_History::MAX_DAYS === $saved['chat_memory_days'], 'Account memory is saved with its retention, capped at a year.' );
 $saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'light' ) );
 check_set( 'account' === $saved['chat_memory'] && 365 === $saved['chat_memory_days'], 'Another tab keeps the memory setting and its retention.' );
+$saved = save_tab( $admin, array( 'chat_accent_color' ), array( 'chat_accent_color' => '#2563eb' ) );
+check_set( '#2563eb' === $saved['chat_accent_color'] && 'account' === $saved['chat_memory'], 'An accent colour is saved without touching other settings.' );
+$saved = save_tab( $admin, array( 'chat_accent_color' ), array( 'chat_accent_color' => 'red;background:url(x)' ) );
+check_set( '' === $saved['chat_accent_color'], 'Anything but a colour is saved as the default.' );
 $saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'everywhere', 'chat_memory_days' => '0' ) );
 check_set( '' === $saved['chat_memory'] && AI_Chat_Bedrock_Chat_History::DEFAULT_DAYS === $saved['chat_memory_days'], 'An unknown memory mode is saved as off, and no retention as the default.' );
 $saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'tab', 'chat_memory_days' => '14' ) );

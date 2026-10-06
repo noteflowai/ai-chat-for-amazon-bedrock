@@ -771,6 +771,16 @@ check_pub( false !== strpos( $aicfab_auto, 'data-scheme="auto"' ), 'The chat can
 aicfab_reset_pub( array( 'chat_color_scheme' => '" onmouseover="x' ) );
 $aicfab_bad = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array() );
 check_pub( false !== strpos( $aicfab_bad, 'data-scheme="light"' ), 'An unknown color scheme falls back to light.' );
+check_pub( false === strpos( $aicfab_default, '--aicfab-accent' ), 'Without an accent colour the chat keeps its own.' );
+check_pub( '#aabbcc' === AI_Chat_Bedrock_Chat_Request::accent_color( '#ABC' ) && '' === AI_Chat_Bedrock_Chat_Request::accent_color( 'red;x:y' ) && '' === AI_Chat_Bedrock_Chat_Request::accent_color( '#12345g' ), 'An accent is a hex colour or nothing.' );
+aicfab_reset_pub( array( 'chat_accent_color' => '#2563eb' ) );
+$aicfab_accented = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array() );
+check_pub( false !== strpos( $aicfab_accented, '--aicfab-accent:#2563eb;' ) && false !== strpos( $aicfab_accented, '--aicfab-accent-contrast:#ffffff;' ), 'A site\'s blue is used, with white text on it.' );
+aicfab_reset_pub( array( 'chat_accent_color' => '#facc15' ) );
+$aicfab_yellow = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array( 'mode' => 'popup' ) );
+check_pub( false !== strpos( $aicfab_yellow, '--aicfab-accent-contrast:#0b101c;' ) && 2 === substr_count( $aicfab_yellow, '--aicfab-launcher:#facc15;' ), 'A light accent gets dark text, on the chat and on its launcher.' );
+check_pub( AI_Chat_Bedrock_Chat_Request::contrast( '#facc15', '#0b101c' ) >= 4.5 && abs( AI_Chat_Bedrock_Chat_Request::contrast( '#ffffff', '#000000' ) - 21 ) < 0.01, 'Contrast is measured as WCAG does.' );
+aicfab_reset_pub( array() );
 $aicfab_css = file_get_contents( dirname( __DIR__ ) . '/public/css/ai-chat-bedrock-public.css' );
 check_pub( 1 === preg_match( '/@media \(prefers-color-scheme: dark\) \{\s*\.ai-chat-bedrock-container\[data-scheme="auto"\]/', $aicfab_css ), 'Only a chat set to follow the device turns dark with it.' );
 // A theme's textarea height pushed the send button out of the popup, which hides overflow.

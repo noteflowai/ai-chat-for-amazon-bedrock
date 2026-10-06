@@ -491,6 +491,7 @@ what a good answer says.
 = 1.67.0 =
 * Publishing kits, under Settings > Channels and off by default: from the text a signed-out visitor reads, the chat's model writes a post's Bilibili, Xiaohongshu and YouTube title, text, tags and category within each platform's limits, in the post's language, shown in the Published elsewhere box with links to each creator page and the cover. Bilibili opens its publishing API only to registered companies and Xiaohongshu has none for creators, so a person publishes there; no agent outside WordPress is needed. Agents can ask for a kit through an ability and the MCP server.
 * Record where a post was published by entering its Bilibili, YouTube, Xiaohongshu or WeChat article address in the same box; it is saved with the post.
+* On a phone the chat button is a small pill in the corner, and the open chat fills the screen above the keyboard with the page held still; signed out, it is a small card. An accent colour, under Settings > Chat, gives the button, your own messages and Send your theme's colour, with readable text. Streamed answers render once a frame and no longer pull a reader who scrolled up back down.
 
 = 1.66.0 =
 * Publishing record, under Settings > Channels and off by default: where each post is published on Bilibili, YouTube or Xiaohongshu, with the item's ID, address, account, language, status and the edition it replaces. Agents read a post's publishing package and record what they published through abilities and the MCP server, with their account's permissions; the record shows when editing a post and, optionally, as links under it.
@@ -506,7 +507,7 @@ what a good answer says.
 == Upgrade Notice ==
 
 = 1.67.0 =
-Optional publishing kits: platform copy for Bilibili, Xiaohongshu and YouTube written by your own model, and recording published addresses by hand.
+Optional publishing kits and recording published addresses by hand; a full-screen chat on phones and an accent colour for the chat.
 
 = 1.66.0 =
 Optional publishing record, Bilibili embeds and YouTube uploads; drafts and a keyword menu for a WeChat Official Account; customer service for a WeChat mini game; settings grouped by task. With a daily limit, each visitor now gets a share of it.

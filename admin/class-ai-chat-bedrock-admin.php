@@ -29,7 +29,7 @@ class AI_Chat_Bedrock_Admin {
 		if ( ! $this->is_plugin_screen( $hook_suffix ) ) {
 			return;
 		}
-		wp_enqueue_style( $this->admin_handle(), plugin_dir_url( __FILE__ ) . 'css/ai-chat-bedrock-admin.css', array(), $this->version );
+		wp_enqueue_style( $this->admin_handle(), plugin_dir_url( __FILE__ ) . 'css/ai-chat-bedrock-admin.css', array( 'wp-color-picker' ), $this->version );
 		if ( false !== strpos( $hook_suffix, $this->plugin_name . '-mcp' ) ) {
 			wp_enqueue_style( $this->plugin_name . '-mcp', plugin_dir_url( __FILE__ ) . 'css/ai-chat-bedrock-mcp.css', array(), $this->version );
 		}
@@ -39,7 +39,7 @@ class AI_Chat_Bedrock_Admin {
 		if ( ! $this->is_plugin_screen( $hook_suffix ) ) {
 			return;
 		}
-		wp_enqueue_script( $this->admin_handle(), plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-admin.js', array( 'jquery', 'common', 'wp-a11y' ), $this->version, true );
+		wp_enqueue_script( $this->admin_handle(), plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-admin.js', array( 'jquery', 'common', 'wp-a11y', 'wp-color-picker' ), $this->version, true );
 
 		if ( false !== strpos( (string) $hook_suffix, $this->plugin_name . '-eval' ) ) {
 			wp_enqueue_script( $this->plugin_name . '-eval', plugin_dir_url( __FILE__ ) . 'js/ai-chat-bedrock-eval.js', array(), $this->version, true );
@@ -1089,6 +1089,7 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'analytics_events', __( 'Analytics events', 'ai-chat-for-amazon-bedrock' ), 'analytics_events_render', 'aicfab_chat' );
 		$this->field( 'popup_site_wide', __( 'Floating chat', 'ai-chat-for-amazon-bedrock' ), 'popup_site_wide_render', 'aicfab_chat' );
 		$this->field( 'chat_color_scheme', __( 'Color scheme', 'ai-chat-for-amazon-bedrock' ), 'chat_color_scheme_render', 'aicfab_chat' );
+		$this->field( 'chat_accent_color', __( 'Accent color', 'ai-chat-for-amazon-bedrock' ), 'chat_accent_color_render', 'aicfab_chat' );
 
 		// Tools the chat and editors use, beyond answering from the site's pages.
 		add_settings_section( 'aicfab_agents', __( 'Agents and tools', 'ai-chat-for-amazon-bedrock' ), '__return_false', 'aicfab_tab_agents' );
@@ -1941,6 +1942,10 @@ class AI_Chat_Bedrock_Admin {
 		echo '</select>';
 		echo '<p class="description">' . esc_html__( 'Choose what matches your theme. Following the device turns the chat dark for visitors in dark mode, even on a light theme.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
+	public function chat_accent_color_render() {
+		echo '<input type="text" id="aicfab_field_chat_accent_color" class="aicfab-color-field" name="ai_chat_bedrock_settings[chat_accent_color]" value="' . esc_attr( AI_Chat_Bedrock_Chat_Request::accent_color( $this->option( 'chat_accent_color', '' ) ) ) . '" data-default-color="" placeholder="#1d4ed8" maxlength="7">';
+		echo '<p class="description">' . esc_html__( 'The colour of the chat button, your own messages and Send, such as your theme\'s main colour. Leave it empty for the default blue. Text on it is white or black, whichever is easier to read.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
 	public function debug_mode_render() {
 		$checked = 'on' === $this->option( 'debug_mode', 'off' );
 		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[debug_mode]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Log redacted request metadata', 'ai-chat-for-amazon-bedrock' ) . '</label>';
@@ -2056,6 +2061,7 @@ class AI_Chat_Bedrock_Admin {
 		$output['popup_site_wide']          = ! empty( $input['popup_site_wide'] );
 		$output['popup_profile']            = isset( $input['popup_profile'] ) ? AI_Chat_Bedrock_Profiles::sanitize_key( $input['popup_profile'] ) : '';
 		$output['chat_color_scheme']        = AI_Chat_Bedrock_Chat_Request::color_scheme( isset( $input['chat_color_scheme'] ) ? $input['chat_color_scheme'] : '' );
+		$output['chat_accent_color']        = AI_Chat_Bedrock_Chat_Request::accent_color( isset( $input['chat_accent_color'] ) ? $input['chat_accent_color'] : '' );
 
 		$guardrail_id           = isset( $input['guardrail_id'] ) ? trim( sanitize_text_field( $input['guardrail_id'] ) ) : '';
 		$output['guardrail_id'] = preg_match( '#^[A-Za-z0-9._:/-]{0,200}$#', $guardrail_id ) ? $guardrail_id : '';
