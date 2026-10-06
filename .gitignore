@@ -11,3 +11,4 @@
 # Built into the package only, beside the readable files.
 *.min.js
 *.min.css
+__pycache__/
