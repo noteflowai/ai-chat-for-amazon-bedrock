@@ -677,6 +677,99 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	}
 
 	/**
+	 * Find the article video IDs of the posts' videos in the material library.
+	 *
+	 * The material list gives each video's address, and WeChat's editor embeds a video by the
+	 * wxv_ ID that address carries; a post whose uploaded video has one gets it as its video
+	 * ID, so its drafts show WeChat's player. A video ID entered by hand is kept.
+	 *
+	 * @param array|null $options Settings.
+	 * @return array|WP_Error found: post to ID; waiting: posts whose video has no ID yet;
+	 *                        fields: the names of the fields WeChat gave, for diagnosis.
+	 */
+	public static function find_video_ids( $options = null ) {
+		$options = self::options( $options );
+		$posts   = get_posts(
+			array(
+				'post_type'      => 'any',
+				'post_status'    => 'any',
+				'posts_per_page' => 100,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'meta_key'       => self::MATERIAL_META, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- posts with an uploaded video.
+			)
+		);
+		$wanted  = array();
+		foreach ( (array) $posts as $id ) {
+			$material = get_post_meta( (int) $id, self::MATERIAL_META, true );
+			if ( is_array( $material ) && ! empty( $material['media_id'] ) && '' === self::video_id( (int) $id ) ) {
+				$wanted[ (string) $material['media_id'] ] = (int) $id;
+			}
+		}
+		$found  = array();
+		$fields = array();
+		for ( $offset = 0; $wanted && $offset < 200; $offset += 20 ) {
+			$page = AI_Chat_Bedrock_WeChat_API::call(
+				'material/batchget_material',
+				wp_json_encode(
+					array(
+						'type'   => 'video',
+						'offset' => $offset,
+						'count'  => 20,
+					)
+				),
+				self::account( $options ),
+				15
+			);
+			if ( is_wp_error( $page ) ) {
+				return $page;
+			}
+			$items = isset( $page['item'] ) && is_array( $page['item'] ) ? $page['item'] : array();
+			foreach ( $items as $item ) {
+				if ( ! is_array( $item ) || empty( $item['media_id'] ) ) {
+					continue;
+				}
+				$fields = array_values( array_unique( array_merge( $fields, array_keys( $item ) ) ) );
+				$vid    = self::vid_of( $item );
+				if ( '' !== $vid && isset( $wanted[ (string) $item['media_id'] ] ) ) {
+					$post_id = $wanted[ (string) $item['media_id'] ];
+					update_post_meta( $post_id, self::VIDEO_META, $vid );
+					$found[ $post_id ] = $vid;
+					unset( $wanted[ (string) $item['media_id'] ] );
+				}
+			}
+			if ( count( $items ) < 20 ) {
+				break;
+			}
+		}
+		return array(
+			'found'   => $found,
+			'waiting' => array_values( $wanted ),
+			'fields'  => $fields,
+		);
+	}
+
+	/**
+	 * A video's wxv_ ID, from the field WeChat names it or from its address.
+	 *
+	 * @param array $item Material list item.
+	 * @return string
+	 */
+	public static function vid_of( $item ) {
+		foreach ( array( 'vid', 'video_id' ) as $field ) {
+			if ( isset( $item[ $field ] ) && '' !== self::clean_video( (string) $item[ $field ] ) ) {
+				return self::clean_video( (string) $item[ $field ] );
+			}
+		}
+		foreach ( array( 'url', 'down_url' ) as $field ) {
+			if ( isset( $item[ $field ] ) && preg_match( '/(?:[?&]vid=|\b)(wxv_[0-9A-Za-z_]{6,40})/', rawurldecode( (string) $item[ $field ] ), $found ) ) {
+				return $found[1];
+			}
+		}
+		return '';
+	}
+
+	/**
 	 * Register the route that uploads a post's video.
 	 */
 	public function register_routes() {
@@ -699,6 +792,39 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				),
 			)
 		);
+		register_rest_route(
+			AI_Chat_Bedrock_WP_MCP_Server::NAMESPACE_V1,
+			self::VIDEO_ROUTE . '/ids',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'handle_video_ids' ),
+				'permission_callback' => array( $this, 'can_find_video_ids' ),
+			)
+		);
+	}
+
+	/**
+	 * Find the posts' video IDs, and refresh the drafts of those found.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function handle_video_ids() {
+		$done = self::find_video_ids();
+		if ( is_wp_error( $done ) ) {
+			return new WP_Error( $done->get_error_code(), self::describe( $done ), array( 'status' => 502 ) );
+		}
+		// Drafts of posts that just got their video ID show WeChat's player.
+		$updated = array();
+		foreach ( array_keys( $done['found'] ) as $post_id ) {
+			if ( null !== self::draft_of( $post_id ) && ! is_wp_error( self::create( array( $post_id ), null, 'manual' ) ) ) {
+				$updated[] = $post_id;
+			}
+		}
+		return rest_ensure_response( $done + array( 'drafts_updated' => $updated ) );
+	}
+
+	public function can_find_video_ids() {
+		return self::enabled() && current_user_can( 'manage_options' );
 	}
 
 	/**
@@ -1120,8 +1246,16 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( ! self::enabled( $options ) || 'off' === self::schedule( $options ) ) {
 			return;
 		}
-		$refreshed = ! empty( $options['wechat_drafts_sync'] ) ? self::refresh_changed( $options ) : 0;
-		$ids       = self::candidates( $options );
+		$refreshed = 0;
+		if ( ! empty( $options['wechat_drafts_sync'] ) ) {
+			// A video that got its ID since the last run puts WeChat's player in its draft.
+			$ids = self::find_video_ids( $options );
+			foreach ( is_array( $ids ) ? array_keys( $ids['found'] ) : array() as $post_id ) {
+				$refreshed += null !== self::draft_of( $post_id ) && ! is_wp_error( self::create( array( $post_id ), $options, 'schedule' ) ) ? 1 : 0;
+			}
+			$refreshed += self::refresh_changed( $options );
+		}
+		$ids = self::candidates( $options );
 		if ( ! $ids ) {
 			if ( ! $refreshed ) {
 				self::note( array( 'nothing' => true ), 'schedule' );

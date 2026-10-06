@@ -117,6 +117,15 @@ function get_post( $id = null ) {
 	return isset( $GLOBALS['aicfab_posts'][ (int) $id ] ) ? $GLOBALS['aicfab_posts'][ (int) $id ] : null;
 }
 function get_posts( $args ) {
+	if ( isset( $args['meta_key'] ) ) {
+		$ids = array();
+		foreach ( $GLOBALS['aicfab_meta'] as $id => $meta ) {
+			if ( isset( $meta[ $args['meta_key'] ] ) ) {
+				$ids[] = $id;
+			}
+		}
+		return $ids;
+	}
 	if ( isset( $args['meta_query'][0]['key'] ) ) {
 		$ids = array();
 		foreach ( $GLOBALS['aicfab_meta'] as $id => $meta ) {
@@ -636,6 +645,20 @@ $GLOBALS['aicfab_caps']['upload_files'] = false;
 check_drafts( ! $drafts->can_upload_video( new WP_REST_Request_Stub( array( 'post' => 6, 'attachment' => 50 ) ) ), 'And to upload files.' );
 unlink( $aicfab_small );
 unlink( $aicfab_large );
+drafts_reset();
+
+// --- Video IDs from the material list --------------------------------------------------------
+
+drafts_reset();
+check_drafts( 'wxv_1234567890123' === AI_Chat_Bedrock_WeChat_Drafts::vid_of( array( 'vid' => 'wxv_1234567890123' ) ) && 'wxv_9876543210987' === AI_Chat_Bedrock_WeChat_Drafts::vid_of( array( 'url' => 'https://mp.weixin.qq.com/mp/readtemplate?t=pages/video_player_tmpl&action=mpvideo&vid=wxv_9876543210987' ) ) && '' === AI_Chat_Bedrock_WeChat_Drafts::vid_of( array( 'url' => 'https://mp.weixin.qq.com/some/video' ) ), 'A video ID is read from its field, or from the address that carries it.' );
+$GLOBALS['aicfab_meta'][2][ AI_Chat_Bedrock_WeChat_Drafts::MATERIAL_META ] = array( 'media_id' => 'MAT_TWO', 'title' => 'Arms' );
+$GLOBALS['aicfab_meta'][3][ AI_Chat_Bedrock_WeChat_Drafts::MATERIAL_META ] = array( 'media_id' => 'MAT_THREE', 'title' => 'No pictures' );
+$GLOBALS['aicfab_meta'][4][ AI_Chat_Bedrock_WeChat_Drafts::MATERIAL_META ] = array( 'media_id' => 'MAT_FOUR', 'title' => 'Hand-set' );
+$GLOBALS['aicfab_meta'][4][ AI_Chat_Bedrock_WeChat_Drafts::VIDEO_META ]    = 'wxv_0000000000004';
+$GLOBALS['aicfab_replies']['material/batchget_material'] = array( '{"total_count":3,"item_count":3,"item":[{"media_id":"MAT_TWO","name":"Arms","update_time":1,"url":"https://mp.weixin.qq.com/mp/readtemplate?t=pages/video_player_tmpl&vid=wxv_2222222222222"},{"media_id":"MAT_THREE","name":"No pictures","update_time":1,"url":""},{"media_id":"MAT_FOUR","name":"Hand-set","vid":"wxv_4444444444444"}]}' );
+$ids = AI_Chat_Bedrock_WeChat_Drafts::find_video_ids();
+check_drafts( array( 2 => 'wxv_2222222222222' ) === $ids['found'] && array( 3 ) === $ids['waiting'] && 'wxv_2222222222222' === AI_Chat_Bedrock_WeChat_Drafts::video_id( 2 ), 'A post whose uploaded video has an ID gets it; one without waits.' );
+check_drafts( 'wxv_0000000000004' === AI_Chat_Bedrock_WeChat_Drafts::video_id( 4 ) && array( 'media_id', 'name', 'update_time', 'url', 'vid' ) === $ids['fields'], 'A video ID entered by hand is kept, and the fields WeChat gave are reported.' );
 drafts_reset();
 
 // --- When WeChat refuses --------------------------------------------------------------------
