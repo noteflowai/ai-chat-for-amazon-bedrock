@@ -74,6 +74,26 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	const DRAFT_IMAGES  = 40;
 	const IMAGE_SECONDS = 60;
 
+	// The posts the site was told about, with the change it was told of.
+	const HELD_OPTION = 'aicfab_wechat_drafts_held';
+
+	// A draft updated in WeChat this long after the plugin sent it was edited there.
+	const EDIT_SLACK = 120;
+
+	/**
+	 * Drafts' last updates in WeChat, read once a run.
+	 *
+	 * @var array|WP_Error|null
+	 */
+	private static $draft_times = null;
+
+	/**
+	 * Posts left alone in this run because their drafts hold edits made in WeChat.
+	 *
+	 * @var int[]
+	 */
+	private static $held = array();
+
 	private static $images_left  = self::DRAFT_IMAGES;
 	private static $images_until = 0;
 
@@ -829,7 +849,14 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				$updated[] = $post_id;
 			}
 		}
-		return rest_ensure_response( $done + array( 'drafts_updated' => $updated ) );
+		// How many drafts WeChat lists, which the scheduled update reads to leave edited ones alone.
+		$times = self::draft_times( self::options( null ) );
+		return rest_ensure_response(
+			$done + array(
+				'drafts_updated' => $updated,
+				'drafts_listed'  => is_wp_error( $times ) ? $times->get_error_code() : count( $times ),
+			)
+		);
 	}
 
 	public function can_find_video_ids() {
@@ -1258,14 +1285,20 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( ! self::enabled( $options ) || 'off' === self::schedule( $options ) ) {
 			return;
 		}
-		$refreshed = 0;
+		$refreshed         = 0;
+		self::$draft_times = null;
+		self::$held        = array();
 		if ( ! empty( $options['wechat_drafts_sync'] ) ) {
 			// A video that got its ID since the last run puts WeChat's player in its draft.
 			$ids = self::find_video_ids( $options );
 			foreach ( is_array( $ids ) ? array_keys( $ids['found'] ) : array() as $post_id ) {
-				$refreshed += null !== self::draft_of( $post_id ) && ! is_wp_error( self::create( array( $post_id ), $options, 'schedule' ) ) ? 1 : 0;
+				$draft = self::draft_of( $post_id );
+				if ( null !== $draft && ! self::edited_in_wechat( $draft, $options ) ) {
+					$refreshed += is_wp_error( self::create( array( $post_id ), $options, 'schedule' ) ) ? 0 : 1;
+				}
 			}
 			$refreshed += self::refresh_changed( $options );
+			self::tell_held( $options );
 		}
 		$ids = self::candidates( $options );
 		if ( ! $ids ) {
@@ -1332,6 +1365,11 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			if ( strtotime( $post->post_modified_gmt . ' UTC' ) <= $draft['updated_at'] || '' !== self::shortfall( $post ) ) {
 				continue;
 			}
+			// A draft its owner edited in WeChat, as by inserting a video, is theirs now.
+			if ( self::edited_in_wechat( $draft, $options ) ) {
+				self::$held[ $post->ID ] = $post->ID;
+				continue;
+			}
 			$result = self::create( array( $post->ID ), $options, 'schedule' );
 			// WeChat refusing the account stops the run; a post it refuses is left for later.
 			if ( is_wp_error( $result ) && 0 === strpos( (string) $result->get_error_code(), 'wx_' ) && 'wx_nothing' !== $result->get_error_code() ) {
@@ -1340,6 +1378,98 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			$done += is_wp_error( $result ) ? 0 : 1;
 		}
 		return $done;
+	}
+
+	/**
+	 * Email the site about posts that changed while their drafts hold edits made in WeChat.
+	 *
+	 * Each post is told about once for each change of the post.
+	 *
+	 * @param array $options Settings.
+	 */
+	private static function tell_held( $options ) {
+		$told   = get_option( self::HELD_OPTION, array() );
+		$told   = is_array( $told ) ? $told : array();
+		$titles = array();
+		foreach ( self::$held as $post_id ) {
+			$post    = get_post( $post_id );
+			$changed = $post instanceof WP_Post ? (string) $post->post_modified_gmt : '';
+			if ( '' === $changed || ( isset( $told[ $post_id ] ) && $told[ $post_id ] === $changed ) ) {
+				continue;
+			}
+			$told[ $post_id ] = $changed;
+			$titles[]         = '· ' . html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ) . ' — ' . get_edit_post_link( $post_id, 'url' );
+		}
+		update_option( self::HELD_OPTION, array_slice( $told, -200, null, true ), false );
+		if ( ! $titles || empty( $options['wechat_drafts_notify'] ) ) {
+			return;
+		}
+		wp_mail(
+			get_option( 'admin_email' ),
+			/* translators: %d: number of posts. */
+			sprintf( _n( '%d post changed, and its WeChat draft holds your edits', '%d posts changed, and their WeChat drafts hold your edits', count( $titles ), 'ai-chat-for-amazon-bedrock' ), count( $titles ) ),
+			implode( "\n", $titles ) . "\n\n" . __( 'These drafts were edited in WeChat, so they were not replaced. Update them in the Official Accounts Platform, or send the post again from its edit screen to replace the draft, edits included.', 'ai-chat-for-amazon-bedrock' )
+		);
+	}
+
+	/**
+	 * Whether a draft was changed in WeChat after the plugin last sent it.
+	 *
+	 * WeChat's draft list gives each draft's last update; the plugin's own update sets it
+	 * too, so only a later one, with two minutes to spare, is the owner's.
+	 *
+	 * @param array $draft   From draft_of().
+	 * @param array $options Settings.
+	 * @return bool True also when WeChat cannot say, so nothing is replaced on a guess.
+	 */
+	public static function edited_in_wechat( $draft, $options ) {
+		if ( null === self::$draft_times ) {
+			self::$draft_times = self::draft_times( $options );
+		}
+		if ( is_wp_error( self::$draft_times ) ) {
+			return true;
+		}
+		if ( ! isset( self::$draft_times[ $draft['media_id'] ] ) ) {
+			return false;
+		}
+		return self::$draft_times[ $draft['media_id'] ] > $draft['updated_at'] + self::EDIT_SLACK;
+	}
+
+	/**
+	 * The last update of each draft in the account, without its content.
+	 *
+	 * @param array $options Settings.
+	 * @return array|WP_Error media_id to time.
+	 */
+	public static function draft_times( $options ) {
+		$times = array();
+		for ( $offset = 0; $offset < 200; $offset += 20 ) {
+			$page = AI_Chat_Bedrock_WeChat_API::call(
+				'draft/batchget',
+				wp_json_encode(
+					array(
+						'offset'     => $offset,
+						'count'      => 20,
+						'no_content' => 1,
+					)
+				),
+				self::account( $options ),
+				15
+			);
+			if ( is_wp_error( $page ) ) {
+				return $page;
+			}
+			$items = isset( $page['item'] ) && is_array( $page['item'] ) ? $page['item'] : array();
+			foreach ( $items as $item ) {
+				if ( is_array( $item ) && ! empty( $item['media_id'] ) ) {
+					$times[ (string) $item['media_id'] ] = isset( $item['update_time'] ) ? (int) $item['update_time'] : 0;
+				}
+			}
+			if ( count( $items ) < 20 ) {
+				break;
+			}
+		}
+		return $times;
 	}
 
 	/**
@@ -1412,7 +1542,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		$label = self::sent( $post->ID ) ? __( 'Send to the WeChat draft box again', 'ai-chat-for-amazon-bedrock' ) : __( 'Send to the WeChat draft box', 'ai-chat-for-amazon-bedrock' );
 		echo '<p><a class="button" href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=ai_chat_bedrock_wechat_draft&post=' . (int) $post->ID ), 'aicfab_wechat_draft_' . (int) $post->ID ) ) . '">' . esc_html( $label ) . '</a></p>';
 		if ( null !== self::draft_of( $post->ID ) ) {
-			echo '<p class="description">' . esc_html__( 'Its draft is replaced with the current version, including any changes made to it in WeChat.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Sending it again replaces its draft with the current version, including any changes made to it in WeChat. The scheduled update leaves drafts edited in WeChat alone.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 		}
 		$material = get_post_meta( $post->ID, self::MATERIAL_META, true );
 		if ( is_array( $material ) && ! empty( $material['title'] ) ) {

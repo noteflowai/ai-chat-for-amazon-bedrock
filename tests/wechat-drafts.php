@@ -196,6 +196,8 @@ function wp_safe_remote_post( $url, $args ) {
 		'draft/add'             => '{"media_id":"DRAFT_MEDIA_ID_' . $n . '"}',
 		'draft/update'          => '{"errcode":0,"errmsg":"ok"}',
 		'draft/delete'          => '{"errcode":0,"errmsg":"ok"}',
+		'draft/batchget'        => '{"total_count":0,"item_count":0,"item":[]}',
+		'material/batchget_material' => '{"total_count":0,"item_count":0,"item":[]}',
 	);
 	return array( 'body' => $replies[ $path ] );
 }
@@ -612,6 +614,32 @@ check_drafts( 1 === count( $updates ) && false !== strpos( $updates[0]['body'], 
 $GLOBALS['aicfab_http'] = array();
 AI_Chat_Bedrock_WeChat_Drafts::run();
 check_drafts( array() === array_filter( $GLOBALS['aicfab_http'], function ( $c ) { return 'draft/update' === $c['path']; } ), 'An unchanged post is left alone on the next run.' );
+
+// The post changes again, but its owner has edited the draft in WeChat since.
+drafts_settings( array( 'wechat_drafts_schedule' => 'daily', 'wechat_drafts_sync' => true, 'wechat_drafts_notify' => true, 'wechat_drafts_category' => 99 ) );
+$aicfab_sent = AI_Chat_Bedrock_WeChat_Drafts::draft_of( 2 );
+$GLOBALS['aicfab_posts'][2]->post_modified_gmt = gmdate( 'Y-m-d H:i:s', $aicfab_sent['updated_at'] + 600 );
+$GLOBALS['aicfab_replies']['draft/batchget']   = array( '{"total_count":1,"item_count":1,"item":[{"media_id":"' . $aicfab_sent['media_id'] . '","update_time":' . ( $aicfab_sent['updated_at'] + 300 ) . '}]}' );
+$GLOBALS['aicfab_http']                        = array();
+$GLOBALS['aicfab_mail']                        = array();
+function get_edit_post_link( $id, $context ) {
+	return 'https://example.test/wp-admin/post.php?post=' . $id . '&action=edit';
+}
+AI_Chat_Bedrock_WeChat_Drafts::run();
+check_drafts( array() === array_filter( $GLOBALS['aicfab_http'], function ( $c ) { return 'draft/update' === $c['path']; } ), 'A draft edited in WeChat after it was sent is not replaced.' );
+check_drafts( 1 === count( $GLOBALS['aicfab_mail'] ) && false !== strpos( $GLOBALS['aicfab_mail'][0]['body'], 'post.php?post=2' ) && false !== strpos( $GLOBALS['aicfab_mail'][0]['body'], 'were not replaced' ), 'The site is emailed which posts changed while their drafts hold edits.' );
+$GLOBALS['aicfab_replies']['draft/batchget'] = array( '{"total_count":1,"item_count":1,"item":[{"media_id":"' . $aicfab_sent['media_id'] . '","update_time":' . ( $aicfab_sent['updated_at'] + 300 ) . '}]}' );
+AI_Chat_Bedrock_WeChat_Drafts::run();
+check_drafts( 1 === count( $GLOBALS['aicfab_mail'] ), 'Once for each change of the post.' );
+$GLOBALS['aicfab_replies']['draft/batchget'] = array( '{"errcode":-1,"errmsg":"system error"}' );
+$aicfab_cache = new ReflectionProperty( 'AI_Chat_Bedrock_WeChat_Drafts', 'draft_times' );
+if ( PHP_VERSION_ID < 80100 ) {
+	$aicfab_cache->setAccessible( true );
+}
+$aicfab_cache->setValue( null, null );
+check_drafts( true === AI_Chat_Bedrock_WeChat_Drafts::edited_in_wechat( $aicfab_sent, $GLOBALS['aicfab_options'] ), 'When WeChat cannot say, the draft is treated as edited, so nothing is replaced on a guess.' );
+$aicfab_cache->setValue( null, array( $aicfab_sent['media_id'] => $aicfab_sent['updated_at'] + 30 ) );
+check_drafts( false === AI_Chat_Bedrock_WeChat_Drafts::edited_in_wechat( $aicfab_sent, $GLOBALS['aicfab_options'] ), 'The update the plugin itself made is not taken for an edit.' );
 drafts_settings();
 drafts_reset();
 
