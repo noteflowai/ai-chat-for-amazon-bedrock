@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-06T05:20:29+00:00\n"
+"POT-Creation-Date: 2026-10-06T06:55:57+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -6283,7 +6283,7 @@ msgid "An older draft of this post, deleted when it was sent again."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-wechat-drafts.php:320
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:640
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:641
 msgid "Drafts for the WeChat Official Account are off, or its AppID or AppSecret is missing."
 msgstr ""
 
@@ -6299,167 +6299,174 @@ msgstr ""
 msgid "Tap \"Read more\" for the full article on the site."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:546
+#. translators: %s: the video's title in the material library.
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:547
+#, php-format
+msgid "If the video does not show, insert \"%s\" here from the material library in the Official Accounts Platform's editor, or tap \"Read more\" to watch it on the site."
+msgstr ""
+
+#. translators: %s: the video's title in the material library.
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:547
 msgid "If the video does not show, tap \"Read more\" to watch it on the site."
 msgstr ""
 
 #. translators: %s: the video's title in the material library.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:599
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:600
 #, php-format
 msgid "▶ This lesson's video is in the account's material library as \"%s\". Insert it here in the Official Accounts Platform's editor, or tap \"Read more\" to watch it on the site."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:601
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:602
 msgid "▶ This lesson has a video. Insert it here in the Official Accounts Platform's editor (upload the MP4 to the material library first), or tap \"Read more\" to watch it on the site."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:646
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:647
 msgid "Choose an MP4 of at most 10 MB in the Media Library: WeChat's API takes no larger video."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:813
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:949
 msgid "(tap \"Read more\" at the end to open it)"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:998
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1003
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1396
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1134
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1139
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1540
 msgid "The post needs a featured image in JPEG or PNG for the cover."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1010
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1146
 msgid "WeChat did not take the cover image."
 msgstr ""
 
 #. translators: %d: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1142
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1286
 #, php-format
 msgid "%d article is ready in the WeChat draft box"
 msgid_plural "%d articles are ready in the WeChat draft box"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1143
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1287
 msgid "Check them and publish in the WeChat Official Accounts Platform: https://mp.weixin.qq.com/"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1240
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1384
 msgid "You cannot send this post."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1243
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1387
 msgid "The post's article in the WeChat draft box was replaced with the current version."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1243
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1387
 msgid "The post is in the WeChat draft box. Publish it from the Official Accounts Platform."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1263
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1407
 msgid "Published posts that anyone can read can be sent to the WeChat draft box."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1266
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1410
 msgid "Send to the WeChat draft box again"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1266
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1410
 msgid "Send to the WeChat draft box"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1269
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1413
 msgid "Its draft is replaced with the current version, including any changes made to it in WeChat."
 msgstr ""
 
 #. translators: %s: the video's title in the material library.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1274
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1418
 #, php-format
 msgid "Video uploaded to the material library as \"%s\"."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1277
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1421
 msgid "WeChat video ID"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1278
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1422
 msgid "WeChat's API takes videos of at most 10 MB and cannot place one in an article. Upload the post's video in the Official Accounts Platform, enter the ID it gets, wxv_ and digits, and save the post: each draft then shows WeChat's player where the video is."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1291
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1435
 msgid "Send posts to the WeChat draft box"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1292
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1436
 msgid "Make one draft in the WeChat Official Account from up to eight published posts, in order, and note it in their publishing records. Nothing is published: the owner publishes the draft in the Official Accounts Platform."
 msgstr ""
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1387
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1531
 #, php-format
 msgid "WeChat does not accept calls from %s. Add it to the IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform."
 msgstr ""
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1387
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1531
 msgid "this server's address"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1390
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1534
 msgid "The AppID or AppSecret is missing."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1391
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1535
 msgid "WeChat did not accept the AppSecret. Reset it in the WeChat Developers Platform and enter the new one."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1392
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1536
 msgid "WeChat did not accept the AppID."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1393
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1537
 msgid "The AppSecret is frozen in the WeChat Developers Platform."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1394
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1538
 msgid "This account may not use that WeChat interface."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1395
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1539
 msgid "The account reached WeChat's daily limit for this interface. Try again tomorrow."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1397
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1541
 msgid "Only published posts that anyone can read are sent."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1398
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1542
 msgid "The post has too little public text for an article."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1399
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1543
 msgid "No post could be made into an article; each needs a featured image in JPEG or PNG."
 msgstr ""
 
 #. translators: %s: error code.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1405
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1549
 #, php-format
 msgid "WeChat refused the draft (%s)."
 msgstr ""
 
 #. translators: 1: how long ago, 2: what went wrong.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1422
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1566
 #, php-format
 msgid "Last draft %1$s ago failed: %2$s"
 msgstr ""
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1426
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1570
 #, php-format
 msgid "Last scheduled run %s ago: no new featured post to send."
 msgstr ""
 
 #. translators: 1: how long ago, 2: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1429
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1573
 #, php-format
 msgid "Last draft %1$s ago: %2$s article is in the WeChat draft box."
 msgid_plural "Last draft %1$s ago: %2$s articles are in the WeChat draft box."

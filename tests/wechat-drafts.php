@@ -651,6 +651,7 @@ drafts_reset();
 
 drafts_reset();
 check_drafts( 'wxv_1234567890123' === AI_Chat_Bedrock_WeChat_Drafts::vid_of( array( 'vid' => 'wxv_1234567890123' ) ) && 'wxv_9876543210987' === AI_Chat_Bedrock_WeChat_Drafts::vid_of( array( 'url' => 'https://mp.weixin.qq.com/mp/readtemplate?t=pages/video_player_tmpl&action=mpvideo&vid=wxv_9876543210987' ) ) && '' === AI_Chat_Bedrock_WeChat_Drafts::vid_of( array( 'url' => 'https://mp.weixin.qq.com/some/video' ) ), 'A video ID is read from its field, or from the address that carries it.' );
+check_drafts( 'apiv_1234567890123456789' === AI_Chat_Bedrock_WeChat_Drafts::vid_of( array( 'vid' => 'apiv_1234567890123456789' ) ), 'A video sent to the API has an apiv_ ID, which is taken too.' );
 $GLOBALS['aicfab_meta'][2][ AI_Chat_Bedrock_WeChat_Drafts::MATERIAL_META ] = array( 'media_id' => 'MAT_TWO', 'title' => 'Arms' );
 $GLOBALS['aicfab_meta'][3][ AI_Chat_Bedrock_WeChat_Drafts::MATERIAL_META ] = array( 'media_id' => 'MAT_THREE', 'title' => 'No pictures' );
 $GLOBALS['aicfab_meta'][4][ AI_Chat_Bedrock_WeChat_Drafts::MATERIAL_META ] = array( 'media_id' => 'MAT_FOUR', 'title' => 'Hand-set' );
