@@ -219,7 +219,7 @@ function game_serve( $request ) {
 }
 function game_signed( $method, $body = '', $params = array() ) {
 	$timestamp = (string) time();
-	$nonce     = 'n' . mt_rand( 1000, 9999 );
+	$nonce     = 'n' . uniqid( '', true );
 	$parts     = array( AICFAB_TOKEN, $timestamp, $nonce );
 	sort( $parts, SORT_STRING );
 	return game_serve(
