@@ -7072,135 +7072,135 @@ msgstr "保存した AppSecret を削除する"
 msgid "Only drafts are made: WeChat lets only verified company accounts publish through its API. Check each draft and publish it in the Official Accounts Platform."
 msgstr "作るのは下書きだけです。WeChat は API での公開を認証済みの企業アカウントにしか認めていません。下書きを確認して、公式アカウントプラットフォームで公開してください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:320
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:641
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:330
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:651
 msgid "Drafts for the WeChat Official Account are off, or its AppID or AppSecret is missing."
 msgstr "WeChat 公式アカウントの下書きがオフか、AppID または AppSecret がありません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:341
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:351
 msgid "No post could be made into an article."
 msgstr "記事にできる投稿がありませんでした。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:391
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:401
 msgid "In the WeChat Official Account's draft box; publish it from the Official Accounts Platform."
 msgstr "WeChat 公式アカウントの下書きボックスにあります。公式アカウントプラットフォームから公開してください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:545
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:555
 msgid "Tap \"Read more\" for the full article on the site."
 msgstr "サイトで全文を読むには「原文を読む」をタップしてください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1134
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1139
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1540
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1146
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1151
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1655
 msgid "The post needs a featured image in JPEG or PNG for the cover."
 msgstr "カバーには JPEG または PNG のアイキャッチ画像が必要です。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1146
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1158
 msgid "WeChat did not take the cover image."
 msgstr "WeChat がカバー画像を受け付けませんでした。"
 
 #. translators: %d: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1286
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1304
 #, php-format
 msgid "%d article is ready in the WeChat draft box"
 msgid_plural "%d articles are ready in the WeChat draft box"
 msgstr[0] "WeChat の下書きボックスに %d 件の記事があります"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1287
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1305
 msgid "Check them and publish in the WeChat Official Accounts Platform: https://mp.weixin.qq.com/"
 msgstr "確認して WeChat 公式アカウントプラットフォームで公開してください：https://mp.weixin.qq.com/"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1384
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1499
 msgid "You cannot send this post."
 msgstr "この投稿を送る権限がありません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1387
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1502
 msgid "The post is in the WeChat draft box. Publish it from the Official Accounts Platform."
 msgstr "投稿を WeChat の下書きボックスに入れました。公式アカウントプラットフォームから公開してください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1407
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1522
 msgid "Published posts that anyone can read can be sent to the WeChat draft box."
 msgstr "誰でも読める公開済みの投稿だけを WeChat の下書きボックスに送れます。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1410
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1525
 msgid "Send to the WeChat draft box again"
 msgstr "もう一度 WeChat の下書きボックスに送る"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1410
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1525
 msgid "Send to the WeChat draft box"
 msgstr "WeChat の下書きボックスに送る"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1435
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1550
 msgid "Send posts to the WeChat draft box"
 msgstr "投稿を WeChat の下書きボックスに送る"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1436
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1551
 msgid "Make one draft in the WeChat Official Account from up to eight published posts, in order, and note it in their publishing records. Nothing is published: the owner publishes the draft in the Official Accounts Platform."
 msgstr "公開済みの投稿最大 8 件から、順番どおりに WeChat 公式アカウントの下書きを 1 つ作り、各投稿の公開記録に残します。公開はしません。所有者が公式アカウントプラットフォームで公開します。"
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1531
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1646
 #, php-format
 msgid "WeChat does not accept calls from %s. Add it to the IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform."
 msgstr "WeChat は %s からの呼び出しを受け付けません。WeChat 開発者プラットフォームの「基本情報 > 開発者キー」で IP ホワイトリストに追加してください。"
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1531
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1646
 msgid "this server's address"
 msgstr "このサーバーのアドレス"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1534
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1649
 msgid "The AppID or AppSecret is missing."
 msgstr "AppID または AppSecret がありません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1535
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1650
 msgid "WeChat did not accept the AppSecret. Reset it in the WeChat Developers Platform and enter the new one."
 msgstr "WeChat が AppSecret を受け付けませんでした。WeChat 開発者プラットフォームでリセットし、新しいものを入力してください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1536
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1651
 msgid "WeChat did not accept the AppID."
 msgstr "WeChat が AppID を受け付けませんでした。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1537
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1652
 msgid "The AppSecret is frozen in the WeChat Developers Platform."
 msgstr "AppSecret が WeChat 開発者プラットフォームで凍結されています。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1538
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1653
 msgid "This account may not use that WeChat interface."
 msgstr "このアカウントはその WeChat インターフェースを使えません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1539
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1654
 msgid "The account reached WeChat's daily limit for this interface. Try again tomorrow."
 msgstr "このインターフェースの 1 日の上限に達しました。明日もう一度お試しください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1541
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1656
 msgid "Only published posts that anyone can read are sent."
 msgstr "誰でも読める公開済みの投稿だけを送ります。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1543
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1658
 msgid "No post could be made into an article; each needs a featured image in JPEG or PNG."
 msgstr "記事にできる投稿がありませんでした。それぞれ JPEG または PNG のアイキャッチ画像が必要です。"
 
 #. translators: %s: error code.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1549
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1664
 #, php-format
 msgid "WeChat refused the draft (%s)."
 msgstr "WeChat が下書きを拒否しました（%s）。"
 
 #. translators: 1: how long ago, 2: what went wrong.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1566
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1681
 #, php-format
 msgid "Last draft %1$s ago failed: %2$s"
 msgstr "%1$s前の下書きは失敗しました：%2$s"
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1570
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1685
 #, php-format
 msgid "Last scheduled run %s ago: no new featured post to send."
 msgstr "%s前の定期実行：送る新しいおすすめ記事はありませんでした。"
 
 #. translators: 1: how long ago, 2: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1573
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1688
 #, php-format
 msgid "Last draft %1$s ago: %2$s article is in the WeChat draft box."
 msgid_plural "Last draft %1$s ago: %2$s articles are in the WeChat draft box."
@@ -7281,11 +7281,11 @@ msgstr "署名済みのアドレスが別のメッセージで再利用された
 msgid "You cannot upload that video."
 msgstr "その動画はアップロードできません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:602
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:612
 msgid "▶ This lesson has a video. Insert it here in the Official Accounts Platform's editor (upload the MP4 to the material library first), or tap \"Read more\" to watch it on the site."
 msgstr "▶ このレッスンには動画があります。公式アカウントプラットフォームのエディターでここに動画を挿入してください（先に MP4 を素材ライブラリにアップロード）。「原文を読む」からサイトで見ることもできます。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1387
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1502
 msgid "The post's article in the WeChat draft box was replaced with the current version."
 msgstr "WeChat の下書きボックスの記事を現在の版に置き換えました。"
 
@@ -7293,57 +7293,68 @@ msgstr "WeChat の下書きボックスの記事を現在の版に置き換え�
 msgid "Off by default. Uses the AppID entered for the WeChat Official Account above, and the AppSecret and IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform. Each post becomes an article with its title, excerpt, the featured image as cover, the text and images a signed-out visitor sees, and the post as \"Read more\"; links in the text become plain text, as WeChat does not open them. Posts are sent from the Published elsewhere box, by an agent, or on the schedule, which takes featured posts of the last 60 days not sent before, in Chinese when the site has it, and only those with a featured image and at least 600 characters of public text."
 msgstr "初期設定ではオフです。上で WeChat 公式アカウント用に入力した AppID と、WeChat 開発者プラットフォームの「基本情報 > 開発者キー」の AppSecret と IP ホワイトリストを使います。各投稿は、タイトル、抜粋、アイキャッチ画像のカバー、ログインしていない訪問者が見る本文と画像を含む記事になり、投稿のアドレスが「原文を読む」になります。WeChat は外部リンクを開かないため、本文のリンクはテキストになります。投稿は「他の場所での公開」ボックス、エージェント、またはスケジュールから送られます。スケジュールは過去 60 日間のまだ送っていないおすすめ記事を選び、サイトに中国語があれば中国語版を使い、アイキャッチ画像があって公開本文が 600 文字以上のものだけを送ります。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1542
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1657
 msgid "The post has too little public text for an article."
 msgstr "この投稿は公開本文が少なすぎて記事になりません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:220
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:230
 msgid "An older draft of this post, deleted when it was sent again."
 msgstr "この投稿の古い下書き。もう一度送ったときに削除しました。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1439
-msgid "On each scheduled run, update drafts whose post changed since it was sent, replacing changes made to them in WeChat"
-msgstr "定期実行のたびに、送った後に投稿が変わった下書きを更新する（WeChat で加えた変更は置き換えられます）"
-
 #. translators: %s: the video's title in the material library.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:547
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:557
 msgid "If the video does not show, tap \"Read more\" to watch it on the site."
 msgstr "動画が表示されない場合は「原文を読む」からサイトでご覧ください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:949
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:961
 msgid "(tap \"Read more\" at the end to open it)"
 msgstr "（末尾の「原文を読む」から開けます）"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1413
-msgid "Its draft is replaced with the current version, including any changes made to it in WeChat."
-msgstr "下書きは現在の版で置き換えられます。WeChat で加えた変更も含みます。"
-
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1421
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1536
 msgid "WeChat video ID"
 msgstr "WeChat の動画 ID"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1422
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1537
 msgid "WeChat's API takes videos of at most 10 MB and cannot place one in an article. Upload the post's video in the Official Accounts Platform, enter the ID it gets, wxv_ and digits, and save the post: each draft then shows WeChat's player where the video is."
 msgstr "WeChat の API は 10 MB 以下の動画しか受け付けず、記事に動画を入れることもできません。公式アカウントプラットフォームで投稿の動画をアップロードし、付いた ID（wxv_ と数字）を入力して投稿を保存すると、下書きの動画の位置に WeChat のプレーヤーが入ります。"
 
 #. translators: %s: the video's title in the material library.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:600
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:610
 #, php-format
 msgid "▶ This lesson's video is in the account's material library as \"%s\". Insert it here in the Official Accounts Platform's editor, or tap \"Read more\" to watch it on the site."
 msgstr "▶ このレッスンの動画は素材ライブラリに「%s」として入っています。公式アカウントプラットフォームのエディターでここに挿入してください。「原文を読む」からサイトで見ることもできます。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:647
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:657
 msgid "Choose an MP4 of at most 10 MB in the Media Library: WeChat's API takes no larger video."
 msgstr "メディアライブラリから 10 MB 以下の MP4 を選んでください。WeChat の API はそれより大きい動画を受け付けません。"
 
 #. translators: %s: the video's title in the material library.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1418
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1533
 #, php-format
 msgid "Video uploaded to the material library as \"%s\"."
 msgstr "動画を素材ライブラリに「%s」としてアップロードしました。"
 
 #. translators: %s: the video's title in the material library.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:547
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:557
 #, php-format
 msgid "If the video does not show, insert \"%s\" here from the material library in the Official Accounts Platform's editor, or tap \"Read more\" to watch it on the site."
 msgstr "動画が表示されない場合は、公式アカウントプラットフォームのエディターで素材ライブラリから「%s」をここに挿入するか、「原文を読む」からサイトでご覧ください。"
+
+#: admin/class-ai-chat-bedrock-admin.php:1439
+msgid "On each scheduled run, update drafts whose post changed since it was sent, unless they were edited in WeChat; you are emailed about those"
+msgstr "定期実行のたびに、送った後に投稿が変わった下書きを更新する。WeChat で編集した下書きは置き換えず、メールで知らせる"
+
+#. translators: %d: number of posts.
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1393
+#, php-format
+msgid "%d post changed, and its WeChat draft holds your edits"
+msgid_plural "%d posts changed, and their WeChat drafts hold your edits"
+msgstr[0] "%d 件の投稿が更新されましたが、WeChat の下書きにはあなたの編集があります"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1394
+msgid "These drafts were edited in WeChat, so they were not replaced. Update them in the Official Accounts Platform, or send the post again from its edit screen to replace the draft, edits included."
+msgstr "これらの下書きは WeChat で編集されているため、置き換えませんでした。公式アカウントプラットフォームで更新するか、投稿の編集画面からもう一度送って下書きを置き換えてください（WeChat での変更は失われます）。"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1528
+msgid "Sending it again replaces its draft with the current version, including any changes made to it in WeChat. The scheduled update leaves drafts edited in WeChat alone."
+msgstr "ここからもう一度送ると、WeChat で加えた変更も含めて下書きが現在の版で置き換えられます。定期更新は WeChat で編集した下書きには手を付けません。"
