@@ -1244,7 +1244,7 @@ class AI_Chat_Bedrock_Admin {
 	public function daily_request_limit_render() {
 		$value = absint( $this->option( 'daily_request_limit', 0 ) );
 		echo '<input type="number" id="aicfab_field_daily_request_limit" name="ai_chat_bedrock_settings[daily_request_limit]" value="' . esc_attr( $value ) . '" min="0" max="100000" step="10">';
-		echo '<p class="description">' . esc_html__( 'Maximum Bedrock requests per day for the whole site. Use 0 for no plugin-side limit. Embeddings for search and indexing are not counted. This is not a billing guarantee; configure AWS Budgets as well.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Maximum Bedrock requests per day for the whole site. Use 0 for no plugin-side limit. With a limit, each visitor may ask a tenth of it a day, and at least 20 questions, so one account cannot use up the day for everyone; administrators are not limited. Embeddings for search and indexing are not counted. This is not a billing guarantee; configure AWS Budgets as well.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function knowledge_section_callback() {
 		echo '<p>' . esc_html__( 'Ground answers in your own content. Retrieved passages are passed to the model as reference data, never as instructions, and only published content is used.', 'ai-chat-for-amazon-bedrock' ) . '</p>';

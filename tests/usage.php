@@ -144,6 +144,10 @@ $GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] = array( 'daily_request_l
 check_usage( true === AI_Chat_Bedrock_Usage::daily_limit_reached(), 'The daily cap is enforced from the same counters.' );
 $GLOBALS['aicfab_options']['ai_chat_bedrock_settings'] = array( 'daily_request_limit' => 0 );
 check_usage( false === AI_Chat_Bedrock_Usage::daily_limit_reached(), 'Zero means unlimited.' );
+check_usage( 0 === AI_Chat_Bedrock_Usage::visitor_daily_limit(), 'Without a daily cap there is no per-visitor share either.' );
+foreach ( array( 10 => 10, 100 => 20, 1000 => 100, 5000 => 500 ) as $aicfab_site => $aicfab_share ) {
+	check_usage( $aicfab_share === AI_Chat_Bedrock_Usage::visitor_daily_limit( array( 'daily_request_limit' => $aicfab_site ) ), 'A visitor may use a tenth of a cap of ' . $aicfab_site . ', at least 20 questions and never more than the cap.' );
+}
 
 $encoded = json_encode( get_option( AI_Chat_Bedrock_Usage::OPTION, array() ) );
 foreach ( array( 'question', 'answer', 'user', 'ip', 'prompt' ) as $forbidden ) {

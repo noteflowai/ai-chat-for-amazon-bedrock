@@ -596,7 +596,10 @@ class AI_Chat_Bedrock_WeChat {
 
 		$history = get_transient( self::history_key( $follower ) );
 		$history = is_array( $history ) ? $history : array();
-		$built   = AI_Chat_Bedrock_Chat_Request::build( AI_Chat_Bedrock_Security::string_substr( $text, 0, 2000 ), $history, $options );
+		// All followers arrive from WeChat's servers, so the per-visitor share does not apply;
+		// each follower has an hourly limit instead.
+		$options['_shared_client'] = true;
+		$built                     = AI_Chat_Bedrock_Chat_Request::build( AI_Chat_Bedrock_Security::string_substr( $text, 0, 2000 ), $history, $options );
 		if ( is_wp_error( $built ) ) {
 			return 'aicfab_daily_limit' === $built->get_error_code() ? __( 'The assistant has answered as many questions as it can today. Please try again tomorrow.', 'ai-chat-for-amazon-bedrock' ) : self::sorry();
 		}

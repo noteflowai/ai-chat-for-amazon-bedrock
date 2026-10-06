@@ -109,6 +109,17 @@ class AI_Chat_Bedrock_Chat_Request {
 		if ( class_exists( 'AI_Chat_Bedrock_Usage' ) && AI_Chat_Bedrock_Usage::daily_limit_reached( $options ) ) {
 			return new WP_Error( 'aicfab_daily_limit', __( 'The daily Amazon Bedrock request limit for this site has been reached.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 429 ) );
 		}
+		// Each visitor's share of the day, so one cannot use it up for all. WeChat followers,
+		// who all arrive from WeChat's servers, have a limit of their own.
+		if ( empty( $options['_shared_client'] ) && class_exists( 'AI_Chat_Bedrock_Usage' ) && ! current_user_can( 'manage_options' ) ) {
+			$share = AI_Chat_Bedrock_Usage::visitor_daily_limit( $options );
+			if ( $share > 0 && AI_Chat_Bedrock_Security::daily_spent( 'chat' ) >= $share ) {
+				return new WP_Error( 'aicfab_visitor_daily_limit', __( 'You have asked as many questions as one visitor can today. Please come back tomorrow.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 429 ) );
+			}
+			if ( $share > 0 ) {
+				AI_Chat_Bedrock_Security::spend_daily( 'chat', 1 );
+			}
+		}
 
 		// A JSON API caller may send history as an array; accept it instead of casting it to "Array".
 		if ( is_array( $history_json ) ) {

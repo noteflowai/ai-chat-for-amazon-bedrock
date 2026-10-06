@@ -495,6 +495,7 @@ what a good answer says.
 * WeChat mini game customer service, under Settings > Channels and off by default: the game's message push comes to its own address, in JSON or XML, plaintext or safe mode. Players who open the chat are welcomed, and questions get the site owner's set answers, matched by keyword, through WeChat's customer service API; nothing is generated, as an AI answer in a mini game needs an AI category and an algorithm filing. Daily totals show players, chats opened by scene, messages, how many questions matched an answer and how players answered subscription prompts, without keeping any OpenID.
 * WeChat Official Account drafts, under Settings > Channels and off by default: featured posts become articles in the account's draft box, with cover, text, images and a Read more link to the post, sent from the editor, by an agent or on a daily or weekly schedule, which can email the site. Only verified company accounts may publish through WeChat's API, so the owner publishes them. Followers who write 菜单 get the site's menu, and 精选 the newest featured posts, without the model. Drafts are formatted for WeChat, keep titles and digests whole, update in place when a post is sent again, and, with the option on, follow changes to their posts on schedule unless edited in WeChat. A video points readers to the site through Read more, as WeChat takes no video into an article through its API.
 * Settings grouped by task: a Channels tab holds the WeChat Official Account, its drafts and the mini game beside the video platforms; Agents and tools has its own tab; guest access, rate limits, the conversation log and debug logging are under Safety and spend. The menu lists daily work first, starting with Overview. Old tab links still work.
+* With a daily request limit set, each visitor may ask a tenth of it a day, and at least 20 questions, so one visitor or script cannot use up the day for everyone; administrators, WeChat followers and evaluations are not held to it. The `ai_chat_bedrock_visitor_daily_requests` filter changes it, or 0 turns it off. On sites with a persistent object cache, rate limits count atomically.
 
 = 1.65.0 =
 * WeChat Official Account, under Chat and off by default: followers' text messages are answered from the site's pages in plain text with sources and a note that AI wrote them, in plaintext, compatible or safe mode, optionally by a faster model than the site's. WeChat's retries give an answer about fifteen seconds; a slower one is kept until the follower sends 1. Works with unverified personal subscription accounts, needs no AppSecret, and limits each follower per hour.
@@ -506,7 +507,7 @@ what a good answer says.
 == Upgrade Notice ==
 
 = 1.66.0 =
-Optional publishing record, Bilibili embeds and YouTube uploads; drafts and a keyword menu for a WeChat Official Account; customer service for a WeChat mini game; settings grouped by task.
+Optional publishing record, Bilibili embeds and YouTube uploads; drafts and a keyword menu for a WeChat Official Account; customer service for a WeChat mini game; settings grouped by task. With a daily limit, each visitor now gets a share of it.
 
 = 1.65.0 =
 Optional answers for a WeChat Official Account, streamed time to first text on the dashboard and in WP-CLI, faster pages on hosts outside AWS before credentials are set, and PHP 8.5 support.
