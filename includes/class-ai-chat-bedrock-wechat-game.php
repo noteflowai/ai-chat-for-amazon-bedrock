@@ -33,8 +33,6 @@ class AI_Chat_Bedrock_WeChat_Game {
 
 	const REST_ROUTE = '/wechat-game';
 
-	const API_URL = 'https://api.weixin.qq.com/cgi-bin/';
-
 	// Daily counts, and the last time the address was called and an answer was sent.
 	const STATS_OPTION   = 'aicfab_wxgame_stats';
 	const CONTACT_OPTION = 'aicfab_wxgame_contact';
@@ -536,7 +534,7 @@ class AI_Chat_Bedrock_WeChat_Game {
 	 * @return true|WP_Error
 	 */
 	public static function send( $player, $text, $options ) {
-		$body = wp_json_encode(
+		$body   = wp_json_encode(
 			array(
 				'touser'  => $player,
 				'msgtype' => 'text',
@@ -544,105 +542,22 @@ class AI_Chat_Bedrock_WeChat_Game {
 			),
 			JSON_UNESCAPED_UNICODE
 		);
-		foreach ( array( false, true ) as $fresh ) {
-			$token = self::access_token( $options, $fresh );
-			if ( is_wp_error( $token ) ) {
-				return self::note_error( $token );
-			}
-			$result = self::post( 'message/custom/send?access_token=' . rawurlencode( $token ), $body );
-			// An access token that expired early, or was replaced elsewhere, is fetched again once.
-			if ( is_wp_error( $result ) && in_array( $result->get_error_code(), array( 'wx_40001', 'wx_40014', 'wx_42001' ), true ) && ! $fresh ) {
-				continue;
-			}
-			if ( is_wp_error( $result ) ) {
-				return self::note_error( $result );
-			}
-			self::note_sent();
-			return true;
-		}
-		return self::note_error( new WP_Error( 'wx_token', 'No access token' ) );
-	}
-
-	/**
-	 * An access token for the game, from WeChat's stable token API.
-	 *
-	 * The stable token does not cancel tokens the game's own server holds, as the older API
-	 * would. It is kept encrypted until shortly before it expires.
-	 *
-	 * @param array $options Settings.
-	 * @param bool  $fresh   Ask WeChat for a new one.
-	 * @return string|WP_Error
-	 */
-	public static function access_token( $options, $fresh = false ) {
-		$app_id = self::app_id( $options );
-		$cached = get_transient( self::ACCESS_KEY );
-		if ( ! $fresh && is_array( $cached ) && isset( $cached['app_id'], $cached['token'] ) && $app_id === $cached['app_id'] ) {
-			$token = AI_Chat_Bedrock_Security::decrypt_secret( $cached['token'] );
-			if ( '' !== $token ) {
-				return $token;
-			}
-		}
-		$secret = self::app_secret( $options );
-		if ( '' === $secret || '' === $app_id ) {
-			return new WP_Error( 'wx_secret', 'No AppSecret' );
-		}
-		$data = self::post(
-			'stable_token',
-			wp_json_encode(
-				array(
-					'grant_type'    => 'client_credential',
-					'appid'         => $app_id,
-					'secret'        => $secret,
-					'force_refresh' => (bool) $fresh,
-				)
-			)
-		);
-		if ( is_wp_error( $data ) ) {
-			return $data;
-		}
-		if ( empty( $data['access_token'] ) || ! is_string( $data['access_token'] ) ) {
-			return new WP_Error( 'wx_token', 'No access token' );
-		}
-		$ttl = isset( $data['expires_in'] ) ? (int) $data['expires_in'] - 300 : 0;
-		set_transient(
-			self::ACCESS_KEY,
+		$result = AI_Chat_Bedrock_WeChat_API::call(
+			'message/custom/send',
+			$body,
 			array(
-				'app_id' => $app_id,
-				'token'  => AI_Chat_Bedrock_Security::encrypt_secret( $data['access_token'] ),
+				'app_id' => self::app_id( $options ),
+				'secret' => self::app_secret( $options ),
+				'cache'  => self::ACCESS_KEY,
 			),
-			max( 60, $ttl )
+			// WeChat waits five seconds for the request this answers.
+			3
 		);
-		return $data['access_token'];
-	}
-
-	/**
-	 * Post JSON to the WeChat API.
-	 *
-	 * @param string $path Path and query after cgi-bin/.
-	 * @param string $body JSON.
-	 * @return array|WP_Error The response, or an error named wx_ and WeChat's error code.
-	 */
-	private static function post( $path, $body ) {
-		$response = wp_safe_remote_post(
-			self::API_URL . $path,
-			array(
-				// WeChat waits five seconds for the request this answers.
-				'timeout' => 3,
-				'headers' => array( 'Content-Type' => 'application/json' ),
-				'body'    => $body,
-			)
-		);
-		if ( is_wp_error( $response ) ) {
-			return new WP_Error( 'wx_http', $response->get_error_message() );
+		if ( is_wp_error( $result ) ) {
+			return self::note_error( $result );
 		}
-		$data = json_decode( (string) wp_remote_retrieve_body( $response ), true );
-		if ( ! is_array( $data ) ) {
-			return new WP_Error( 'wx_http', 'HTTP ' . (int) wp_remote_retrieve_response_code( $response ) );
-		}
-		if ( ! empty( $data['errcode'] ) ) {
-			return new WP_Error( 'wx_' . (int) $data['errcode'], isset( $data['errmsg'] ) ? (string) $data['errmsg'] : '' );
-		}
-		return $data;
+		self::note_sent();
+		return true;
 	}
 
 	/**
@@ -679,7 +594,7 @@ class AI_Chat_Bedrock_WeChat_Game {
 	 */
 	private static function note_error( $error ) {
 		$last          = self::contact();
-		$ip            = preg_match( '/invalid ip ((?:\d{1,3}\.){3}\d{1,3})/', $error->get_error_message(), $found ) ? $found[1] : '';
+		$ip            = AI_Chat_Bedrock_WeChat_API::refused_ip( $error );
 		$last['error'] = array(
 			'code' => (string) $error->get_error_code(),
 			'ip'   => $ip,

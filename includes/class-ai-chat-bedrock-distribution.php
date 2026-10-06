@@ -79,6 +79,12 @@ class AI_Chat_Bedrock_Distribution {
 				'hosts' => array( 'www.xiaohongshu.com', 'xiaohongshu.com', 'xhslink.com' ),
 				'id'    => '/^[0-9a-f]{24}$/',
 			),
+			// A draft or article's media_id; the published article's address once it is out.
+			'wechat'      => array(
+				'label' => __( 'WeChat Official Account', 'ai-chat-for-amazon-bedrock' ),
+				'hosts' => array( 'mp.weixin.qq.com' ),
+				'id'    => '/^[A-Za-z0-9_-]{8,128}$/',
+			),
 		);
 
 		/**
@@ -122,7 +128,7 @@ class AI_Chat_Bedrock_Distribution {
 		if ( is_wp_error( $entry ) ) {
 			return $entry;
 		}
-		$entry['source'] = in_array( $source, array( 'agent', 'youtube', 'manual' ), true ) ? $source : 'agent';
+		$entry['source'] = in_array( $source, array( 'agent', 'youtube', 'wechat', 'manual' ), true ) ? $source : 'agent';
 
 		$entries = self::entries( $post->ID );
 		$now     = time();

@@ -157,11 +157,19 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 	 * @return array
 	 */
 	private function distribution_tools() {
+		$tools = array();
+		if ( class_exists( 'AI_Chat_Bedrock_WeChat_Drafts' ) && AI_Chat_Bedrock_WeChat_Drafts::enabled() ) {
+			$tools['create_wechat_draft'] = array(
+				'name'        => 'create_wechat_draft',
+				'description' => 'Make one draft in the site\'s WeChat Official Account from up to eight published posts, in order: title, excerpt, cover from the featured image, the text and images a signed-out visitor sees, and the post as Read more. Nothing is published; the owner publishes the draft in the Official Accounts Platform. Notes the draft in each post\'s publishing record. Requires permission to publish posts and to edit each one.',
+				'parameters'  => AI_Chat_Bedrock_WeChat_Drafts::schema(),
+			);
+		}
 		if ( ! class_exists( 'AI_Chat_Bedrock_Distribution' ) || ! AI_Chat_Bedrock_Distribution::enabled() ) {
-			return array();
+			return $tools;
 		}
 		$schemas = AI_Chat_Bedrock_Distribution::schemas();
-		return array(
+		return $tools + array(
 			'get_publish_package' => array(
 				'name'        => 'get_publish_package',
 				'description' => 'Return what is needed to publish a post on another platform: title, address, plain text as a signed-out visitor reads it, excerpt, tags, image, translations, and where it is already published. Read only.',
@@ -547,6 +555,7 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 			case 'get_publish_package':
 			case 'record_publication':
 			case 'list_publications':
+			case 'create_wechat_draft':
 				return $this->distribution_call( $name, $arguments );
 		}
 
@@ -586,11 +595,15 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 	 * @return array|WP_Error
 	 */
 	private function distribution_call( $name, $arguments ) {
-		if ( empty( $this->distribution_tools() ) ) {
+		if ( ! isset( $this->distribution_tools()[ $name ] ) ) {
 			return new WP_Error( 'tool_unavailable', __( 'This tool is not enabled on this site.', 'ai-chat-for-amazon-bedrock' ) );
 		}
-		$record    = new AI_Chat_Bedrock_Distribution();
 		$arguments = is_array( $arguments ) ? $arguments : array();
+		if ( 'create_wechat_draft' === $name ) {
+			$drafts = new AI_Chat_Bedrock_WeChat_Drafts();
+			return $drafts->can_send( $arguments ) ? $drafts->ability_create( $arguments ) : new WP_Error( 'forbidden', __( 'This account cannot send those posts.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		$record = new AI_Chat_Bedrock_Distribution();
 		if ( 'list_publications' === $name ) {
 			return $record->can_list() ? AI_Chat_Bedrock_Distribution::search( $arguments ) : new WP_Error( 'forbidden', __( 'This account cannot read the publishing record.', 'ai-chat-for-amazon-bedrock' ) );
 		}

@@ -117,6 +117,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-speech.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-leads.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat-game.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat-drafts.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-youtube.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 
@@ -318,6 +319,18 @@ check_set( 'Tok3nForTests' === AI_Chat_Bedrock_WeChat::token( $saved ) && '' ===
 $saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_clear' => '1' ) );
 check_set( false === $saved['wechat_enabled'] && '' === AI_Chat_Bedrock_WeChat::token( $saved ) && '' === AI_Chat_Bedrock_WeChat::aes_key( $saved ), 'The token and key can be removed.' );
 
+// --- WeChat menu and drafts ------------------------------------------------------
+
+$saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_enabled' => '1', 'wechat_token' => 'Tok3nForTests', 'wechat_menu' => "Courses: https://example.test/courses/\nNews" ) );
+check_set( "Courses: https://example.test/courses/\nNews" === $saved['wechat_menu'], 'The WeChat menu text is saved, line breaks kept.' );
+$saved = save_tab( $admin, array( 'wechat_drafts_enabled' ), array( 'wechat_drafts_enabled' => '1', 'wechat_app_secret' => 'fedcba9876543210fedcba9876543210', 'wechat_drafts_category' => '4', 'wechat_drafts_schedule' => 'weekly', 'wechat_drafts_count' => '12', 'wechat_drafts_author' => 'Lab', 'wechat_drafts_notify' => '1' ) );
+check_set( true === $saved['wechat_drafts_enabled'] && 'fedcba9876543210fedcba9876543210' === AI_Chat_Bedrock_WeChat_Drafts::app_secret( $saved ) && 4 === $saved['wechat_drafts_category'] && 'weekly' === $saved['wechat_drafts_schedule'] && 8 === $saved['wechat_drafts_count'] && 'Lab' === $saved['wechat_drafts_author'] && true === $saved['wechat_drafts_notify'], 'Drafts: switch, AppSecret, category, schedule, count (at most 8), author and email are saved.' );
+check_set( false === strpos( json_encode( $saved ), 'fedcba9876543210fedcba9876543210' ) && "Courses: https://example.test/courses/\nNews" === $saved['wechat_menu'], 'The AppSecret is stored encrypted, and the Chat tab keeps its menu.' );
+$saved = save_tab( $admin, array( 'wechat_drafts_enabled' ), array( 'wechat_drafts_enabled' => '1', 'wechat_app_secret' => 'nope', 'wechat_drafts_schedule' => 'hourly' ) );
+check_set( 'fedcba9876543210fedcba9876543210' === AI_Chat_Bedrock_WeChat_Drafts::app_secret( $saved ) && 'off' === $saved['wechat_drafts_schedule'] && isset( $GLOBALS['aicfab_notices']['wechat_app_secret'] ), 'A malformed AppSecret is refused and the saved one kept; an unknown schedule is off.' );
+$saved = save_tab( $admin, array( 'wechat_drafts_enabled' ), array( 'wechat_drafts_clear' => '1' ) );
+check_set( '' === AI_Chat_Bedrock_WeChat_Drafts::app_secret( $saved ) && false === $saved['wechat_drafts_enabled'], 'The AppSecret can be removed.' );
+
 // --- WeChat mini game ------------------------------------------------------------
 
 $saved = save_tab( $admin, array( 'wxgame_enabled' ), array( 'wxgame_enabled' => '1', 'wxgame_app_id' => 'wx1234567890game00', 'wxgame_token' => 'GameTok3n', 'wxgame_aes_key' => 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG', 'wxgame_app_secret' => '0123456789abcdef0123456789abcdef', 'wxgame_welcome' => "Hi!\nAsk away.", 'wxgame_answers' => "pay, 充值 = WeChat Pay handles it.\nnonsense", 'wxgame_fallback' => 'We read every message.' ) );
@@ -325,6 +338,9 @@ check_set( true === $saved['wxgame_enabled'] && 'wx1234567890game00' === $saved[
 check_set( false === strpos( json_encode( $saved ), 'GameTok3n' ) && false === strpos( json_encode( $saved ), '0123456789abcdef0123456789abcdef' ), 'The mini game\'s token and AppSecret are stored encrypted.' );
 $saved = save_tab( $admin, array( 'wxgame_enabled' ), array( 'wxgame_enabled' => '1', 'wxgame_app_id' => 'wx1234567890game00', 'wxgame_token' => '', 'wxgame_app_secret' => 'too short' ) );
 check_set( 'GameTok3n' === AI_Chat_Bedrock_WeChat_Game::token( $saved ) && '0123456789abcdef0123456789abcdef' === AI_Chat_Bedrock_WeChat_Game::app_secret( $saved ) && isset( $GLOBALS['aicfab_notices']['wxgame_app_secret'] ), 'Empty fields keep the saved secrets, and a malformed AppSecret is refused with a notice.' );
+$saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_enabled' => '1', 'wechat_token' => 'Tok3nForTests', 'wechat_app_id' => 'wx1234567890abcdef' ) );
+$saved = save_tab( $admin, array( 'wxgame_enabled' ), array( 'wxgame_enabled' => '1', 'wxgame_app_id' => 'wx1234567890abcdef', 'wxgame_token' => 'Tok3nForTests' ) );
+check_set( '' === $saved['wxgame_app_id'] && 'GameTok3n' === AI_Chat_Bedrock_WeChat_Game::token( $saved ) && isset( $GLOBALS['aicfab_notices']['wxgame_app_id'], $GLOBALS['aicfab_notices']['wxgame_token'] ) && 'Tok3nForTests' === AI_Chat_Bedrock_WeChat::token( $saved ), 'The mini game cannot take the Official Account\'s AppID or token, even from another tab; its own token is kept.' );
 $saved = save_tab( $admin, array( 'wxgame_enabled' ), array( 'wxgame_clear' => '1' ) );
 check_set( false === $saved['wxgame_enabled'] && '' === AI_Chat_Bedrock_WeChat_Game::token( $saved ) && ! AI_Chat_Bedrock_WeChat_Game::can_reply( $saved ), 'The mini game\'s secrets can be removed.' );
 

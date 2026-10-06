@@ -400,6 +400,13 @@ class AI_Chat_Bedrock_WeChat {
 			}
 		}
 
+		// The menu and the featured posts are the site's own words, not the model's.
+		$fixed = self::menu_reply( $text, $options );
+		if ( '' !== $fixed ) {
+			set_transient( $key, $fixed, self::ANSWER_TTL );
+			return $fixed;
+		}
+
 		if ( ! self::within_hourly_limit( $follower, $options ) ) {
 			$answer = __( 'You have sent a lot of questions this hour. Please try again later.', 'ai-chat-for-amazon-bedrock' );
 			set_transient( $key, $answer, self::ANSWER_TTL );
@@ -413,6 +420,90 @@ class AI_Chat_Bedrock_WeChat {
 		$answer = self::answer( $text, $follower, $options );
 		set_transient( $key, $answer, self::ANSWER_TTL );
 		return $answer;
+	}
+
+	/**
+	 * The reply to a menu word: the site's menu text, or its newest featured posts.
+	 *
+	 * With message push on, WeChat turns off the menu set in its console, and an account that
+	 * is not verified cannot set one through the API, so a follower sends 菜单 instead of
+	 * tapping one. Neither reply calls the model or counts towards the hourly limit.
+	 *
+	 * @param string $text    Follower's message.
+	 * @param array  $options Settings.
+	 * @return string The reply, or an empty string for a message that is not a menu word.
+	 */
+	public static function menu_reply( $text, $options ) {
+		$word = trim( function_exists( 'mb_strtolower' ) ? mb_strtolower( (string) $text, 'UTF-8' ) : strtolower( (string) $text ) );
+		/**
+		 * Words that ask for the menu, and for the newest featured posts.
+		 *
+		 * @param array $keywords menu and featured, each a list of words.
+		 */
+		$keywords = (array) apply_filters(
+			'ai_chat_bedrock_wechat_keywords',
+			array(
+				'menu'     => array( '菜单', '目录', 'menu', 'メニュー' ),
+				'featured' => array( '精选', '最新', 'new', 'latest', '新着' ),
+			)
+		);
+		$menu     = self::menu( $options );
+		if ( '' !== $menu && isset( $keywords['menu'] ) && in_array( $word, (array) $keywords['menu'], true ) ) {
+			return self::cut_bytes( $menu, self::MAX_REPLY_BYTES );
+		}
+		if ( isset( $keywords['featured'] ) && in_array( $word, (array) $keywords['featured'], true ) ) {
+			return self::featured( $options );
+		}
+		return '';
+	}
+
+	/**
+	 * The menu text the site set, if any.
+	 *
+	 * @param array|null $options Settings.
+	 * @return string
+	 */
+	public static function menu( $options = null ) {
+		$options = self::options( $options );
+		return isset( $options['wechat_menu'] ) ? trim( (string) $options['wechat_menu'] ) : '';
+	}
+
+	/**
+	 * The newest featured posts, with their addresses: the category chosen for drafts, in the
+	 * language drafts are sent in, or else the newest posts.
+	 *
+	 * @param array $options Settings.
+	 * @return string
+	 */
+	public static function featured( $options ) {
+		$args = array(
+			'post_type'           => 'post',
+			'post_status'         => 'publish',
+			'posts_per_page'      => 8,
+			'orderby'             => 'date',
+			'order'               => 'DESC',
+			'has_password'        => false,
+			'ignore_sticky_posts' => true,
+			'no_found_rows'       => true,
+		);
+		if ( class_exists( 'AI_Chat_Bedrock_WeChat_Drafts' ) ) {
+			if ( AI_Chat_Bedrock_WeChat_Drafts::category( $options ) ) {
+				$args['cat'] = AI_Chat_Bedrock_WeChat_Drafts::category( $options );
+			}
+			if ( '' !== AI_Chat_Bedrock_WeChat_Drafts::language() ) {
+				$args['lang'] = AI_Chat_Bedrock_WeChat_Drafts::language();
+			}
+		}
+		$lines = array();
+		foreach ( get_posts( $args ) as $post ) {
+			if ( count( $lines ) < 5 && ( ! class_exists( 'AI_Chat_Bedrock_Content' ) || AI_Chat_Bedrock_Content::is_public( $post ) ) ) {
+				$lines[] = html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ) . "\n" . get_permalink( $post );
+			}
+		}
+		if ( ! $lines ) {
+			return __( 'There are no featured articles yet.', 'ai-chat-for-amazon-bedrock' );
+		}
+		return self::cut_bytes( __( 'Featured articles:', 'ai-chat-for-amazon-bedrock' ) . "\n\n" . implode( "\n\n", $lines ), self::MAX_REPLY_BYTES );
 	}
 
 	/**
@@ -626,7 +717,8 @@ class AI_Chat_Bedrock_WeChat {
 				$hello .= "\n· " . $ask;
 			}
 		}
-		return self::format( $hello );
+		$menu = self::menu( $options );
+		return self::cut_bytes( self::format( $hello ) . ( '' !== $menu ? "\n\n" . $menu : '' ), self::MAX_REPLY_BYTES );
 	}
 
 	private static function sorry() {

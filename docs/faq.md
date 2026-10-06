@@ -112,6 +112,26 @@ WeChat waits five seconds for a reply and asks twice more, so an answer can take
 
 Every request must carry WeChat's signature for your token and be no more than 15 minutes old; XML with a document type is refused. Each follower may send 20 messages an hour by default, and every answer counts towards the site's daily request limit. The conversation log, when it is on, records the questions under the source WeChat, without the follower's ID. Add the suggested text from Settings > Privacy to your privacy policy before turning it on.
 
+## Can it post to my WeChat Official Account?
+
+It makes drafts. Under Settings > Publishing > WeChat Official Account drafts, off by default, posts become articles in the account's draft box; you look at them and publish in the Official Accounts Platform. Since July 2025 WeChat lets only verified company accounts publish or send to all followers through its API, and a personal or unverified account can still make drafts, so the plugin stops there. That also leaves a person to see each article before followers do.
+
+1. Under Chat > WeChat Official Account, enter the AppID.
+2. In the WeChat Developers Platform, under Basic Information > Developer Key, enable the AppSecret and add the server's outgoing IP address to the IP whitelist. If the address is not there, the settings screen names the one WeChat saw.
+3. Under Publishing, enter the AppSecret, tick **Send posts to the Official Account's draft box**, and choose the category of featured posts.
+
+Each post becomes an article: its title (cut to 32 characters), the excerpt as digest (120), the author you set, the featured image as cover (or else the post's first image; JPEG or PNG, uploaded once as a permanent image), the text and images a signed-out visitor sees, so members-only sections stay out, and the post's address as **Read more**. Images in the text are uploaded to WeChat, which shows no others; one over 1 MB is sent in its large size, and GIFs and images from other sites are left out. Links become plain text, since WeChat does not open links outside it, and a last line points to Read more. A long post is cut at a paragraph under WeChat's 20,000 characters.
+
+Posts reach the draft box three ways:
+
+- **From the editor.** The Published elsewhere box has **Send to the WeChat draft box**.
+- **By an agent.** The `create-wechat-draft` ability, also the MCP tool `create_wechat_draft`, makes one draft of up to eight posts in the order given. It needs permission to publish posts and to edit each one.
+- **On a schedule.** Every day at 9:00 or every week, the newest featured posts of the last 60 days that have an image and were not sent before, in Chinese when Polylang has it, are collected into one draft of up to eight articles (three by default), and the site is emailed to check and publish them.
+
+Each draft is noted in the publishing record of its posts, as planned with the draft's media ID, so a scheduled run never sends a post twice; mark it public with the article's address once it is out.
+
+**A menu without a menu.** With message push on, WeChat turns off the menu set in its console, and an unverified account cannot set one through the API. Under Chat > WeChat Official Account, write a menu text instead: followers who send 菜单, 目录 or menu get it, new followers get it after the welcome, and 精选 or 最新 lists the five newest featured posts with their addresses. Neither calls the model or counts towards the hourly limit. The `ai_chat_bedrock_wechat_keywords` filter changes the words.
+
 ## Can it handle my WeChat mini game's customer service?
 
 Yes, under Chat > WeChat mini game, which is off by default. A mini game sends what happens in its customer service chat to one address: a player opening the chat, from which part of the game, their messages, and their answers to subscription message prompts. The plugin takes them, answers what it can and keeps daily counts.

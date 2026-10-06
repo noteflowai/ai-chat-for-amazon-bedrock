@@ -1112,6 +1112,7 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'distribution_enabled', __( 'Publishing record', 'ai-chat-for-amazon-bedrock' ), 'distribution_render', 'aicfab_publishing' );
 		$this->field( 'bilibili_embeds', __( 'Bilibili videos', 'ai-chat-for-amazon-bedrock' ), 'bilibili_embeds_render', 'aicfab_publishing' );
 		$this->field( 'youtube_client_id', __( 'YouTube uploads', 'ai-chat-for-amazon-bedrock' ), 'youtube_render', 'aicfab_publishing' );
+		$this->field( 'wechat_drafts_enabled', __( 'WeChat Official Account drafts', 'ai-chat-for-amazon-bedrock' ), 'wechat_drafts_render', 'aicfab_publishing' );
 
 		if ( AI_Chat_Bedrock_WooCommerce::active() ) {
 			add_settings_section( 'aicfab_woocommerce', __( 'WooCommerce', 'ai-chat-for-amazon-bedrock' ), array( $this, 'woocommerce_section_callback' ), 'aicfab_tab_woocommerce' );
@@ -1383,6 +1384,7 @@ class AI_Chat_Bedrock_Admin {
 		}
 		echo '</select><br>';
 		echo '<label for="aicfab_field_wechat_hourly">' . esc_html__( 'Messages per follower per hour', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="number" id="aicfab_field_wechat_hourly" class="small-text" name="ai_chat_bedrock_settings[wechat_hourly]" value="' . esc_attr( AI_Chat_Bedrock_WeChat::hourly_limit( $options ) ) . '" min="1" max="' . esc_attr( AI_Chat_Bedrock_WeChat::MAX_HOURLY ) . '">';
+		echo '<br><label for="aicfab_field_wechat_menu">' . esc_html__( 'Menu, sent to followers who write 菜单, 目录 or menu, and after the welcome', 'ai-chat-for-amazon-bedrock' ) . '</label><br><textarea id="aicfab_field_wechat_menu" class="large-text" rows="4" name="ai_chat_bedrock_settings[wechat_menu]" placeholder="' . esc_attr__( "Courses: https://example.com/courses/\nNews: https://example.com/news/\nSend 精选 for the newest featured articles.", 'ai-chat-for-amazon-bedrock' ) . '">' . esc_textarea( AI_Chat_Bedrock_WeChat::menu( $options ) ) . '</textarea>';
 		if ( '' !== AI_Chat_Bedrock_WeChat::token( $options ) || '' !== AI_Chat_Bedrock_WeChat::aes_key( $options ) ) {
 			echo '<br><label><input type="checkbox" name="ai_chat_bedrock_settings[wechat_clear]" value="1"> ' . esc_html__( 'Remove the saved token and key', 'ai-chat-for-amazon-bedrock' ) . '</label>';
 		}
@@ -1391,7 +1393,48 @@ class AI_Chat_Bedrock_Admin {
 		echo '<p><strong>' . esc_html( '' !== $contact ? $contact : __( 'WeChat has not reached this address yet.', 'ai-chat-for-amazon-bedrock' ) ) . '</strong></p>';
 		/* translators: %s: the address WeChat sends messages to. */
 		echo '<p class="description">' . esc_html( sprintf( __( 'Off by default. In the WeChat Official Accounts Platform, under Settings and Development > Basic Configuration, enable the server configuration with the URL %s and the token entered here. Plaintext mode needs only the token; compatible and safe mode also need the EncodingAESKey and AppID. No AppSecret is needed.', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_WeChat::url() ) ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'With message push on, WeChat turns off the menu set in its console, and an account that is not verified cannot set one through its API, so followers write a word instead: 菜单 gets the menu above, and 精选 or 最新 the newest featured posts (the category chosen for WeChat drafts under Publishing) with their addresses. Neither calls the model.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'The chat answers each text message from the site\'s pages, in plain text with its sources. WeChat waits about fifteen seconds in all; a longer answer is kept and the follower is told to send 1 to see it, so choose a fast model for WeChat if the chat\'s takes longer. A new follower gets the welcome message and suggested questions. Every answer counts towards the daily request limit, and the conversation log records them when it is on.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+	public function wechat_drafts_render() {
+		$options = get_option( 'ai_chat_bedrock_settings', array() );
+		$options = is_array( $options ) ? $options : array();
+		echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'WeChat Official Account drafts', 'ai-chat-for-amazon-bedrock' ) . '</legend>';
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[wechat_drafts_enabled]" value="1" ' . checked( ! empty( $options['wechat_drafts_enabled'] ), true, false ) . '> ' . esc_html__( 'Send posts to the Official Account\'s draft box', 'ai-chat-for-amazon-bedrock' ) . '</label><br>';
+		echo '<label for="aicfab_field_wechat_app_secret">' . esc_html__( 'AppSecret of the Official Account', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="password" id="aicfab_field_wechat_app_secret" class="regular-text" name="ai_chat_bedrock_settings[wechat_app_secret]" value="" autocomplete="new-password" placeholder="' . esc_attr( '' !== AI_Chat_Bedrock_WeChat_Drafts::app_secret( $options ) ? __( 'Saved — enter a value to replace', 'ai-chat-for-amazon-bedrock' ) : '' ) . '"><br>';
+		echo '<label for="aicfab_field_wechat_drafts_category">' . esc_html__( 'Featured posts', 'ai-chat-for-amazon-bedrock' ) . '</label> ';
+		wp_dropdown_categories(
+			array(
+				'name'            => 'ai_chat_bedrock_settings[wechat_drafts_category]',
+				'id'              => 'aicfab_field_wechat_drafts_category',
+				'selected'        => AI_Chat_Bedrock_WeChat_Drafts::category( $options ),
+				'show_option_all' => __( 'All posts', 'ai-chat-for-amazon-bedrock' ),
+				'hide_empty'      => false,
+				'hierarchical'    => true,
+			)
+		);
+		echo '<br><label for="aicfab_field_wechat_drafts_schedule">' . esc_html__( 'Collect the newest featured posts into a draft', 'ai-chat-for-amazon-bedrock' ) . '</label> <select id="aicfab_field_wechat_drafts_schedule" name="ai_chat_bedrock_settings[wechat_drafts_schedule]">';
+		foreach ( array(
+			'off'    => __( 'Never; only when sent from a post or by an agent', 'ai-chat-for-amazon-bedrock' ),
+			'daily'  => __( 'Every day at 9:00', 'ai-chat-for-amazon-bedrock' ),
+			'weekly' => __( 'Every week', 'ai-chat-for-amazon-bedrock' ),
+		) as $aicfab_value => $aicfab_label ) {
+			echo '<option value="' . esc_attr( $aicfab_value ) . '" ' . selected( AI_Chat_Bedrock_WeChat_Drafts::schedule( $options ), $aicfab_value, false ) . '>' . esc_html( $aicfab_label ) . '</option>';
+		}
+		echo '</select><br>';
+		echo '<label for="aicfab_field_wechat_drafts_count">' . esc_html__( 'Articles a draft', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="number" id="aicfab_field_wechat_drafts_count" class="small-text" name="ai_chat_bedrock_settings[wechat_drafts_count]" value="' . esc_attr( AI_Chat_Bedrock_WeChat_Drafts::count( $options ) ) . '" min="1" max="' . esc_attr( AI_Chat_Bedrock_WeChat_Drafts::MAX_ARTICLES ) . '"><br>';
+		echo '<label for="aicfab_field_wechat_drafts_author">' . esc_html__( 'Author shown in WeChat', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="text" id="aicfab_field_wechat_drafts_author" class="regular-text" maxlength="16" name="ai_chat_bedrock_settings[wechat_drafts_author]" value="' . esc_attr( AI_Chat_Bedrock_WeChat_Drafts::author( $options ) ) . '"><br>';
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[wechat_drafts_notify]" value="1" ' . checked( ! empty( $options['wechat_drafts_notify'] ), true, false ) . '> ' . esc_html__( 'Email the site when a scheduled draft is ready', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		if ( '' !== AI_Chat_Bedrock_WeChat_Drafts::app_secret( $options ) ) {
+			echo '<br><label><input type="checkbox" name="ai_chat_bedrock_settings[wechat_drafts_clear]" value="1"> ' . esc_html__( 'Remove the saved AppSecret', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		}
+		echo '</fieldset>';
+		$status = AI_Chat_Bedrock_WeChat_Drafts::status_summary();
+		if ( '' !== $status ) {
+			echo '<p><strong>' . esc_html( $status ) . '</strong></p>';
+		}
+		echo '<p class="description">' . esc_html__( 'Off by default. Uses the AppID entered under Chat > WeChat Official Account, and the AppSecret and IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform. Each post becomes an article with its title, excerpt, the featured image as cover, the text and images a signed-out visitor sees, and the post as "Read more"; links in the text become plain text, as WeChat does not open them. Posts are sent from the Published elsewhere box, by an agent, or on the schedule, which takes featured posts of the last 60 days not sent before, in Chinese when the site has it.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Only drafts are made: WeChat lets only verified company accounts publish through its API. Check each draft and publish it in the Official Accounts Platform.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function wxgame_render() {
 		$options = get_option( 'ai_chat_bedrock_settings', array() );
@@ -2093,6 +2136,32 @@ class AI_Chat_Bedrock_Admin {
 			}
 		}
 
+		$output['wechat_menu'] = isset( $input['wechat_menu'] ) && is_string( $input['wechat_menu'] ) ? AI_Chat_Bedrock_Security::string_substr( sanitize_textarea_field( $input['wechat_menu'] ), 0, 1500 ) : '';
+
+		$output['wechat_drafts_enabled']  = ! empty( $input['wechat_drafts_enabled'] );
+		$output['wechat_drafts_notify']   = ! empty( $input['wechat_drafts_notify'] );
+		$output['wechat_drafts_schedule'] = AI_Chat_Bedrock_WeChat_Drafts::schedule( array( 'wechat_drafts_schedule' => isset( $input['wechat_drafts_schedule'] ) ? (string) $input['wechat_drafts_schedule'] : 'off' ) );
+		$output['wechat_drafts_count']    = AI_Chat_Bedrock_WeChat_Drafts::count( array( 'wechat_drafts_count' => isset( $input['wechat_drafts_count'] ) ? $input['wechat_drafts_count'] : 0 ) );
+		$output['wechat_drafts_category'] = isset( $input['wechat_drafts_category'] ) ? absint( $input['wechat_drafts_category'] ) : 0;
+		$output['wechat_drafts_author']   = AI_Chat_Bedrock_WeChat_Drafts::author( array( 'wechat_drafts_author' => isset( $input['wechat_drafts_author'] ) && is_string( $input['wechat_drafts_author'] ) ? $input['wechat_drafts_author'] : '' ) );
+		$raw                              = isset( $input['wechat_app_secret'] ) && is_string( $input['wechat_app_secret'] ) ? trim( $input['wechat_app_secret'] ) : '';
+		$clean                            = AI_Chat_Bedrock_WeChat_Game::clean_app_secret( $raw );
+		// A field left empty keeps the saved value, which is never shown again.
+		$output['wechat_app_secret'] = ! empty( $input['wechat_drafts_clear'] ) ? '' : ( isset( $current['wechat_app_secret'] ) ? $current['wechat_app_secret'] : '' );
+		if ( '' !== $clean ) {
+			$encrypted = AI_Chat_Bedrock_Security::encrypt_secret( $clean );
+			if ( '' === $encrypted ) {
+				$this->notice( 'credential_encryption', __( 'The credential could not be encrypted; the existing value was preserved.', 'ai-chat-for-amazon-bedrock' ) );
+			} else {
+				$output['wechat_app_secret'] = $encrypted;
+			}
+		} elseif ( '' !== $raw ) {
+			$this->notice( 'wechat_app_secret', __( 'The AppSecret must be 32 letters and digits; it was not saved.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		if ( ! empty( $input['wechat_drafts_clear'] ) ) {
+			delete_transient( AI_Chat_Bedrock_WeChat_Drafts::ACCESS_KEY );
+		}
+
 		$output['wxgame_enabled']  = ! empty( $input['wxgame_enabled'] );
 		$output['wxgame_app_id']   = isset( $input['wxgame_app_id'] ) ? AI_Chat_Bedrock_WeChat::clean_app_id( $input['wxgame_app_id'] ) : '';
 		$output['wxgame_answers']  = isset( $input['wxgame_answers'] ) && is_string( $input['wxgame_answers'] ) ? AI_Chat_Bedrock_WeChat_Game::clean_answers( $input['wxgame_answers'] ) : '';
@@ -2123,6 +2192,24 @@ class AI_Chat_Bedrock_Admin {
 		}
 		if ( ! empty( $input['wxgame_clear'] ) ) {
 			delete_transient( AI_Chat_Bedrock_WeChat_Game::ACCESS_KEY );
+		}
+		// The Official Account and the mini game are separate accounts, and each keeps its own
+		// AppID, token and key, so a message signed for one is never taken by the other.
+		$official_app = '' !== $output['wechat_app_id'] ? $output['wechat_app_id'] : ( isset( $current['wechat_app_id'] ) ? (string) $current['wechat_app_id'] : '' );
+		if ( '' !== $output['wxgame_app_id'] && $output['wxgame_app_id'] === $official_app ) {
+			$output['wxgame_app_id'] = '';
+			$this->notice( 'wxgame_app_id', __( 'The mini game has its own AppID, not the Official Account\'s; it was not saved.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		foreach ( array(
+			'wxgame_token'   => array( 'wechat_token', 'clean_token' ),
+			'wxgame_aes_key' => array( 'wechat_aes_key', 'clean_aes_key' ),
+		) as $aicfab_key => $aicfab_pair ) {
+			$game     = '' !== $output[ $aicfab_key ] ? call_user_func( array( 'AI_Chat_Bedrock_WeChat', $aicfab_pair[1] ), AI_Chat_Bedrock_Security::decrypt_secret( $output[ $aicfab_key ] ) ) : '';
+			$official = isset( $output[ $aicfab_pair[0] ] ) && '' !== $output[ $aicfab_pair[0] ] ? call_user_func( array( 'AI_Chat_Bedrock_WeChat', $aicfab_pair[1] ), AI_Chat_Bedrock_Security::decrypt_secret( $output[ $aicfab_pair[0] ] ) ) : '';
+			if ( '' !== $game && $game === $official ) {
+				$output[ $aicfab_key ] = isset( $current[ $aicfab_key ] ) && $current[ $aicfab_key ] !== $output[ $aicfab_key ] ? $current[ $aicfab_key ] : '';
+				$this->notice( $aicfab_key, __( 'Use a different token and EncodingAESKey for the mini game than for the Official Account; the mini game\'s was not saved.', 'ai-chat-for-amazon-bedrock' ) );
+			}
 		}
 
 		$output['leads_enabled'] = ! empty( $input['leads_enabled'] );
@@ -2232,18 +2319,19 @@ class AI_Chat_Bedrock_Admin {
 	 * Settings rendered inside another field's row, saved whenever that field's tab is.
 	 */
 	const COMPANION_FIELDS = array(
-		'log_conversations'    => array( 'log_retention_days' ),
-		'chat_memory'          => array( 'chat_memory_days' ),
-		'speech_replies'       => array( 'speech_posts', 'speech_posts_signed_in', 'speech_engine', 'speech_daily_chars' ),
-		'leads_enabled'        => array( 'leads_notify', 'leads_days', 'leads_link' ),
-		'wechat_enabled'       => array( 'wechat_token', 'wechat_aes_key', 'wechat_app_id', 'wechat_model_id', 'wechat_hourly' ),
-		'wxgame_enabled'       => array( 'wxgame_app_id', 'wxgame_token', 'wxgame_aes_key', 'wxgame_app_secret', 'wxgame_welcome', 'wxgame_answers', 'wxgame_fallback' ),
-		'distribution_enabled' => array( 'distribution_links' ),
-		'youtube_client_id'    => array( 'youtube_client_secret', 'youtube_daily_uploads' ),
-		'popup_site_wide'      => array( 'popup_profile' ),
-		'prompt_id'            => array( 'prompt_version' ),
-		'embedding_model_id'   => array( 'embedding_background' ),
-		'vector_store'         => array( 's3_vectors_bucket', 's3_vectors_index', 's3_vectors_region' ),
+		'log_conversations'     => array( 'log_retention_days' ),
+		'chat_memory'           => array( 'chat_memory_days' ),
+		'speech_replies'        => array( 'speech_posts', 'speech_posts_signed_in', 'speech_engine', 'speech_daily_chars' ),
+		'leads_enabled'         => array( 'leads_notify', 'leads_days', 'leads_link' ),
+		'wechat_enabled'        => array( 'wechat_token', 'wechat_aes_key', 'wechat_app_id', 'wechat_model_id', 'wechat_hourly', 'wechat_menu' ),
+		'wechat_drafts_enabled' => array( 'wechat_app_secret', 'wechat_drafts_category', 'wechat_drafts_schedule', 'wechat_drafts_count', 'wechat_drafts_author', 'wechat_drafts_notify' ),
+		'wxgame_enabled'        => array( 'wxgame_app_id', 'wxgame_token', 'wxgame_aes_key', 'wxgame_app_secret', 'wxgame_welcome', 'wxgame_answers', 'wxgame_fallback' ),
+		'distribution_enabled'  => array( 'distribution_links' ),
+		'youtube_client_id'     => array( 'youtube_client_secret', 'youtube_daily_uploads' ),
+		'popup_site_wide'       => array( 'popup_profile' ),
+		'prompt_id'             => array( 'prompt_version' ),
+		'embedding_model_id'    => array( 'embedding_background' ),
+		'vector_store'          => array( 's3_vectors_bucket', 's3_vectors_index', 's3_vectors_region' ),
 	);
 
 	const CHECKBOX_FIELDS = array(
@@ -2270,6 +2358,8 @@ class AI_Chat_Bedrock_Admin {
 		'analytics_events',
 		'wechat_enabled',
 		'wxgame_enabled',
+		'wechat_drafts_enabled',
+		'wechat_drafts_notify',
 		'github_read_scope',
 		'social_only_registration',
 		'organization_author',

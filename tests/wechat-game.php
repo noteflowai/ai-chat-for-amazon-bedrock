@@ -178,6 +178,7 @@ class AI_Chat_Bedrock_Conversations {
 
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat-api.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat-game.php';
 
 $failures = array();
