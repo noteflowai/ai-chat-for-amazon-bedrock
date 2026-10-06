@@ -849,7 +849,14 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				$updated[] = $post_id;
 			}
 		}
-		return rest_ensure_response( $done + array( 'drafts_updated' => $updated ) );
+		// How many drafts WeChat lists, which the scheduled update reads to leave edited ones alone.
+		$times = self::draft_times( self::options( null ) );
+		return rest_ensure_response(
+			$done + array(
+				'drafts_updated' => $updated,
+				'drafts_listed'  => is_wp_error( $times ) ? $times->get_error_code() : count( $times ),
+			)
+		);
 	}
 
 	public function can_find_video_ids() {
