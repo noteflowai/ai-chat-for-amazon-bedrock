@@ -30,7 +30,13 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 
 	// Images uploaded once, per post and per featured image, so a later draft reuses them.
 	const IMAGES_META = '_aicfab_wechat_images';
-	const COVER_META  = '_aicfab_wechat_cover';
+
+	// The ID WeChat gave the post's video when its owner uploaded it, such as wxv_123….
+	const VIDEO_META = '_aicfab_wechat_video';
+
+	// Where the video goes, until the article is styled.
+	const VIDEO_MARK = '[[aicfab-wechat-video]]';
+	const COVER_META = '_aicfab_wechat_cover';
 
 	// WeChat's answers for a draft it no longer has: an unknown media_id, or one already sent.
 	const DRAFT_GONE = array( 'wx_40007', 'wx_53403', 'wx_53404' );
@@ -252,8 +258,9 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 					return null;
 				}
 				return array(
-					'media_id' => (string) $entry['item_id'],
-					'index'    => isset( $entry['version'] ) && preg_match( '/^idx:(\d)$/', (string) $entry['version'], $found ) ? (int) $found[1] : 0,
+					'media_id'   => (string) $entry['item_id'],
+					'index'      => isset( $entry['version'] ) && preg_match( '/^idx:(\d)$/', (string) $entry['version'], $found ) ? (int) $found[1] : 0,
+					'updated_at' => isset( $entry['updated_at'] ) ? (int) $entry['updated_at'] : 0,
 				);
 			}
 		}
@@ -523,8 +530,10 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		);
 		$language = AI_Chat_Bedrock_Content::language( $post );
 		$switched = isset( $locales[ $language ] ) && function_exists( 'switch_to_locale' ) && switch_to_locale( $locales[ $language ] );
-		$html     = self::clean_html( self::without_players( AI_Chat_Bedrock_Content::render_as_guest( $post ) ) );
+		$video    = self::video_id( $post->ID );
+		$html     = self::clean_html( self::without_players( AI_Chat_Bedrock_Content::render_as_guest( $post ), $video ) );
 		$more     = self::style( '<p>' . esc_html__( 'Tap "Read more" for the full article on the site.', 'ai-chat-for-amazon-bedrock' ) . '</p>' );
+		$fallback = esc_html__( 'If the video does not show, tap "Read more" to watch it on the site.', 'ai-chat-for-amazon-bedrock' );
 		if ( $switched ) {
 			restore_previous_locale();
 		}
@@ -548,8 +557,11 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			$html
 		);
 		// An image that could not be used leaves nothing behind.
-		$html = self::without_empty( $html );
-		return self::fit( self::style( $html ), $more );
+		$html = self::style( self::without_empty( $html ) );
+		if ( '' !== $video ) {
+			$html = preg_replace( '#<p\b[^>]*>' . preg_quote( self::VIDEO_MARK, '#' ) . '</p>#', self::player( $video ) . '<p style="' . self::STYLES['caption'] . '">' . $fallback . '</p>', $html, 1 );
+		}
+		return self::fit( $html, $more );
 	}
 
 	/**
@@ -562,8 +574,14 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * @param string $html Post HTML.
 	 * @return string
 	 */
-	public static function without_players( $html ) {
-		$note = function ( $poster ) {
+	public static function without_players( $html, $video = '' ) {
+		$placed = false;
+		$note   = function ( $poster ) use ( $video, &$placed ) {
+			// The first player becomes the video uploaded to WeChat, when there is one.
+			if ( '' !== $video && ! $placed ) {
+				$placed = true;
+				return '<p>' . self::VIDEO_MARK . '</p>';
+			}
 			$image = '' !== $poster ? '<p><img src="' . esc_url( $poster ) . '" alt=""></p>' : '';
 			return $image . '<blockquote><p>' . esc_html__( '▶ This lesson has a video. Insert it here in the Official Accounts Platform\'s editor (upload the MP4 to the material library first), or tap "Read more" to watch it on the site.', 'ai-chat-for-amazon-bedrock' ) . '</p></blockquote>';
 		};
@@ -577,6 +595,52 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			(string) $html
 		);
 		return $html;
+	}
+
+	/**
+	 * WeChat's own player for a video uploaded to the account, as its editor writes it.
+	 *
+	 * @param string $video Video ID, such as wxv_123….
+	 * @return string
+	 */
+	public static function player( $video ) {
+		$src = 'https://mp.weixin.qq.com/mp/readtemplate?t=pages/video_player_tmpl&action=mpvideo&auto=0&vid=' . rawurlencode( $video );
+		return '<p><iframe class="video_iframe rich_pages" data-vidtype="2" data-mpvid="' . esc_attr( $video ) . '" data-ratio="1.7777777777777777" data-w="1920" allowfullscreen="" frameborder="0" data-src="' . esc_url( $src ) . '"></iframe></p>';
+	}
+
+	/**
+	 * The post's WeChat video ID, if its owner entered one.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string
+	 */
+	public static function video_id( $post_id ) {
+		return self::clean_video( (string) get_post_meta( absint( $post_id ), self::VIDEO_META, true ) );
+	}
+
+	public static function clean_video( $value ) {
+		$value = trim( (string) $value );
+		return preg_match( '/^wxv_[0-9A-Za-z_]{6,40}$/', $value ) ? $value : '';
+	}
+
+	/**
+	 * Keep the video ID entered in the editor's box, when the post is saved.
+	 *
+	 * @param int $post_id Post ID.
+	 */
+	public static function save_video( $post_id ) {
+		if ( ! isset( $_POST['aicfab_wechat_video_nonce'], $_POST['aicfab_wechat_video'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['aicfab_wechat_video_nonce'] ) ), 'aicfab_wechat_video_' . $post_id ) ) {
+			return;
+		}
+		if ( wp_is_post_revision( $post_id ) || ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+		$video = self::clean_video( sanitize_text_field( wp_unslash( (string) $_POST['aicfab_wechat_video'] ) ) );
+		if ( '' === $video ) {
+			delete_post_meta( $post_id, self::VIDEO_META );
+			return;
+		}
+		update_post_meta( $post_id, self::VIDEO_META, $video );
 	}
 
 	/**
@@ -636,6 +700,19 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		);
 		// A button, such as signing in with Google, does nothing in WeChat and goes whole.
 		$html = preg_replace( '#<a\b(?=[^>]*(?:wp-login\.php|class="[^"]*(?:\bbtn\b|_btn\b|-btn\b|\bbutton\b|button__link|wp-element-button)))[^>]*>.*?</a>#is', '', $html );
+		// A link that is a whole item or paragraph, such as a quiz or an online lab, is opened
+		// from Read more, since WeChat does not open it; the reader is told so.
+		$hint = esc_html__( '(tap "Read more" at the end to open it)', 'ai-chat-for-amazon-bedrock' );
+		$lone = '\s*<a\b[^>]*>((?:(?!</?a\b).)*?)</a>\s*';
+		// A list of links only, such as further reading, gets the hint once, after it.
+		$html = preg_replace_callback(
+			'#<(ul|ol)\b[^>]*>((?:\s*<li\b[^>]*>' . $lone . '</li>)+)\s*</\1>#is',
+			function ( $links ) use ( $lone, $hint ) {
+				return '<' . $links[1] . '>' . preg_replace( '#<li\b[^>]*>' . $lone . '</li>#is', '<li>$1</li>', $links[2] ) . '</' . $links[1] . '><p>' . $hint . '</p>';
+			},
+			$html
+		);
+		$html = preg_replace( '#<(li|p)\b([^>]*)>' . $lone . '</\1>#is', '<$1$2>$3 ' . $hint . '</$1>', $html );
 		// WeChat does not open links outside it, so their text stays and the link goes.
 		$html    = preg_replace( '#<a\b[^>]*>(.*?)</a>#is', '$1', $html );
 		$plain   = array();
@@ -935,9 +1012,12 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( ! self::enabled( $options ) || 'off' === self::schedule( $options ) ) {
 			return;
 		}
-		$ids = self::candidates( $options );
+		$refreshed = ! empty( $options['wechat_drafts_sync'] ) ? self::refresh_changed( $options ) : 0;
+		$ids       = self::candidates( $options );
 		if ( ! $ids ) {
-			self::note( array( 'nothing' => true ), 'schedule' );
+			if ( ! $refreshed ) {
+				self::note( array( 'nothing' => true ), 'schedule' );
+			}
 			return;
 		}
 		$done = self::create( $ids, $options, 'schedule' );
@@ -954,6 +1034,58 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			sprintf( _n( '%d article is ready in the WeChat draft box', '%d articles are ready in the WeChat draft box', count( $titles ), 'ai-chat-for-amazon-bedrock' ), count( $titles ) ),
 			implode( "\n", $titles ) . "\n\n" . __( 'Check them and publish in the WeChat Official Accounts Platform: https://mp.weixin.qq.com/', 'ai-chat-for-amazon-bedrock' )
 		);
+	}
+
+	/**
+	 * Replace the articles of drafts whose post changed since it was sent, such as a lesson
+	 * that gained a quiz, while they are still drafts.
+	 *
+	 * @param array $options Settings.
+	 * @return int Drafts updated.
+	 */
+	public static function refresh_changed( $options ) {
+		$ids  = get_posts(
+			array(
+				'post_type'      => 'post',
+				'post_status'    => 'publish',
+				'posts_per_page' => 50,
+				'fields'         => 'ids',
+				'orderby'        => 'modified',
+				'order'          => 'DESC',
+				'no_found_rows'  => true,
+				'date_query'     => array(
+					array(
+						'column' => 'post_modified_gmt',
+						'after'  => self::RECENT_DAYS . ' days ago',
+					),
+				),
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- once a scheduled run, for posts sent to WeChat.
+					array(
+						'key'     => AI_Chat_Bedrock_Distribution::META,
+						'value'   => '"wechat"',
+						'compare' => 'LIKE',
+					),
+				),
+			)
+		);
+		$done = 0;
+		foreach ( (array) $ids as $id ) {
+			$draft = self::draft_of( (int) $id );
+			$post  = get_post( (int) $id );
+			if ( $done >= self::MAX_ARTICLES || null === $draft || ! $post instanceof WP_Post ) {
+				continue;
+			}
+			if ( strtotime( $post->post_modified_gmt . ' UTC' ) <= $draft['updated_at'] || '' !== self::shortfall( $post ) ) {
+				continue;
+			}
+			$result = self::create( array( $post->ID ), $options, 'schedule' );
+			// WeChat refusing the account stops the run; a post it refuses is left for later.
+			if ( is_wp_error( $result ) && 0 === strpos( (string) $result->get_error_code(), 'wx_' ) && 'wx_nothing' !== $result->get_error_code() ) {
+				break;
+			}
+			$done += is_wp_error( $result ) ? 0 : 1;
+		}
+		return $done;
 	}
 
 	/**
@@ -1026,8 +1158,11 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		$label = self::sent( $post->ID ) ? __( 'Send to the WeChat draft box again', 'ai-chat-for-amazon-bedrock' ) : __( 'Send to the WeChat draft box', 'ai-chat-for-amazon-bedrock' );
 		echo '<p><a class="button" href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=ai_chat_bedrock_wechat_draft&post=' . (int) $post->ID ), 'aicfab_wechat_draft_' . (int) $post->ID ) ) . '">' . esc_html( $label ) . '</a></p>';
 		if ( null !== self::draft_of( $post->ID ) ) {
-			echo '<p class="description">' . esc_html__( 'Its draft is replaced with the current version, including any changes made to it in WeChat, such as an inserted video.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Its draft is replaced with the current version, including any changes made to it in WeChat.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 		}
+		wp_nonce_field( 'aicfab_wechat_video_' . $post->ID, 'aicfab_wechat_video_nonce' );
+		echo '<label for="aicfab_wechat_video">' . esc_html__( 'WeChat video ID', 'ai-chat-for-amazon-bedrock' ) . '</label><input type="text" id="aicfab_wechat_video" class="widefat" name="aicfab_wechat_video" value="' . esc_attr( self::video_id( $post->ID ) ) . '" placeholder="wxv_…">';
+		echo '<p class="description">' . esc_html__( 'WeChat\'s API takes videos of at most 10 MB and cannot place one in an article. Upload the post\'s video in the Official Accounts Platform, enter the ID it gets, wxv_ and digits, and save the post: each draft then shows WeChat\'s player where the video is.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 
 	/**
