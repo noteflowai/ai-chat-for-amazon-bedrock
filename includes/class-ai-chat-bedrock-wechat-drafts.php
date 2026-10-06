@@ -34,6 +34,14 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	// The ID WeChat gave the post's video when its owner uploaded it, such as wxv_123….
 	const VIDEO_META = '_aicfab_wechat_video';
 
+	// The post's video in the account's material library, uploaded through the API.
+	const MATERIAL_META = '_aicfab_wechat_video_material';
+
+	// WeChat's limit for a video sent to its material API.
+	const VIDEO_BYTES = 10485760;
+
+	const VIDEO_ROUTE = '/wechat-video';
+
 	// Where the video goes, until the article is styled.
 	const VIDEO_MARK = '[[aicfab-wechat-video]]';
 	const COVER_META = '_aicfab_wechat_cover';
@@ -531,7 +539,9 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		$language = AI_Chat_Bedrock_Content::language( $post );
 		$switched = isset( $locales[ $language ] ) && function_exists( 'switch_to_locale' ) && switch_to_locale( $locales[ $language ] );
 		$video    = self::video_id( $post->ID );
-		$html     = self::clean_html( self::without_players( AI_Chat_Bedrock_Content::render_as_guest( $post ), $video ) );
+		$material = get_post_meta( $post->ID, self::MATERIAL_META, true );
+		$material = is_array( $material ) && ! empty( $material['title'] ) ? (string) $material['title'] : '';
+		$html     = self::clean_html( self::without_players( AI_Chat_Bedrock_Content::render_as_guest( $post ), $video, $material ) );
 		$more     = self::style( '<p>' . esc_html__( 'Tap "Read more" for the full article on the site.', 'ai-chat-for-amazon-bedrock' ) . '</p>' );
 		$fallback = esc_html__( 'If the video does not show, tap "Read more" to watch it on the site.', 'ai-chat-for-amazon-bedrock' );
 		if ( $switched ) {
@@ -574,15 +584,20 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * @param string $html Post HTML.
 	 * @return string
 	 */
-	public static function without_players( $html, $video = '' ) {
+	public static function without_players( $html, $video = '', $material = '' ) {
 		$placed = false;
-		$note   = function ( $poster ) use ( $video, &$placed ) {
+		$note   = function ( $poster ) use ( $video, $material, &$placed ) {
 			// The first player becomes the video uploaded to WeChat, when there is one.
 			if ( '' !== $video && ! $placed ) {
 				$placed = true;
 				return '<p>' . self::VIDEO_MARK . '</p>';
 			}
 			$image = '' !== $poster ? '<p><img src="' . esc_url( $poster ) . '" alt=""></p>' : '';
+			if ( '' !== $material && ! $placed ) {
+				$placed = true;
+				/* translators: %s: the video's title in the material library. */
+				return $image . '<blockquote><p>' . esc_html( sprintf( __( '▶ This lesson\'s video is in the account\'s material library as "%s". Insert it here in the Official Accounts Platform\'s editor, or tap "Read more" to watch it on the site.', 'ai-chat-for-amazon-bedrock' ), $material ) ) . '</p></blockquote>';
+			}
 			return $image . '<blockquote><p>' . esc_html__( '▶ This lesson has a video. Insert it here in the Official Accounts Platform\'s editor (upload the MP4 to the material library first), or tap "Read more" to watch it on the site.', 'ai-chat-for-amazon-bedrock' ) . '</p></blockquote>';
 		};
 		// A video block, with its caption, or a video on its own.
@@ -606,6 +621,99 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	public static function player( $video ) {
 		$src = 'https://mp.weixin.qq.com/mp/readtemplate?t=pages/video_player_tmpl&action=mpvideo&auto=0&vid=' . rawurlencode( $video );
 		return '<p><iframe class="video_iframe rich_pages" data-vidtype="2" data-mpvid="' . esc_attr( $video ) . '" data-ratio="1.7777777777777777" data-w="1920" allowfullscreen="" frameborder="0" data-src="' . esc_url( $src ) . '"></iframe></p>';
+	}
+
+	/**
+	 * Upload a post's video to the account's material library.
+	 *
+	 * WeChat's API takes an MP4 of at most 10 MB, so this is a copy made small for WeChat,
+	 * kept in the Media Library; the article itself cannot hold it, and the editor inserts it
+	 * from the library.
+	 *
+	 * @param int $post_id    Post the video belongs to.
+	 * @param int $attachment The MP4 in the Media Library.
+	 * @return array|WP_Error media_id and title.
+	 */
+	public static function upload_video( $post_id, $attachment ) {
+		$post = get_post( absint( $post_id ) );
+		if ( ! self::enabled() || ! $post instanceof WP_Post ) {
+			return new WP_Error( 'wx_secret', __( 'Drafts for the WeChat Official Account are off, or its AppID or AppSecret is missing.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 400 ) );
+		}
+		$file = get_attached_file( absint( $attachment ) );
+		$mime = (string) get_post_mime_type( absint( $attachment ) );
+		clearstatcache( true, (string) $file );
+		if ( ! $file || 'video/mp4' !== $mime || ! is_readable( $file ) || filesize( $file ) > self::VIDEO_BYTES ) {
+			return new WP_Error( 'aicfab_wechat_video_file', __( 'Choose an MP4 of at most 10 MB in the Media Library: WeChat\'s API takes no larger video.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 400 ) );
+		}
+		$title = self::title( html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ) );
+		$form  = AI_Chat_Bedrock_WeChat_API::multipart(
+			$file,
+			'video/mp4',
+			array(
+				'description' => wp_json_encode(
+					array(
+						'title'        => $title,
+						'introduction' => AI_Chat_Bedrock_Security::string_substr( html_entity_decode( AI_Chat_Bedrock_Distribution::public_excerpt( $post, 120 ), ENT_QUOTES, 'UTF-8' ), 0, 120 ),
+					),
+					JSON_UNESCAPED_UNICODE
+				),
+			)
+		);
+		$sent  = null === $form ? new WP_Error( 'aicfab_wechat_video_file', 'Unreadable' ) : AI_Chat_Bedrock_WeChat_API::call( 'material/add_material?type=video', $form['body'], self::account( self::options( null ) ), 120, $form['type'] );
+		if ( is_wp_error( $sent ) ) {
+			return $sent;
+		}
+		if ( empty( $sent['media_id'] ) ) {
+			return new WP_Error( 'wx_http', 'No media_id' );
+		}
+		$material = array(
+			'media_id'   => (string) $sent['media_id'],
+			'title'      => $title,
+			'attachment' => absint( $attachment ),
+			'time'       => time(),
+		);
+		update_post_meta( $post->ID, self::MATERIAL_META, $material );
+		return $material;
+	}
+
+	/**
+	 * Register the route that uploads a post's video.
+	 */
+	public function register_routes() {
+		register_rest_route(
+			AI_Chat_Bedrock_WP_MCP_Server::NAMESPACE_V1,
+			self::VIDEO_ROUTE,
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'handle_video' ),
+				'permission_callback' => array( $this, 'can_upload_video' ),
+				'args'                => array(
+					'post'       => array(
+						'required' => true,
+						'type'     => 'integer',
+					),
+					'attachment' => array(
+						'required' => true,
+						'type'     => 'integer',
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Who may upload: someone who may edit the post and the video, and upload files.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return bool
+	 */
+	public function can_upload_video( $request ) {
+		return self::enabled() && current_user_can( 'upload_files' ) && current_user_can( 'edit_post', absint( $request->get_param( 'post' ) ) ) && current_user_can( 'edit_post', absint( $request->get_param( 'attachment' ) ) );
+	}
+
+	public function handle_video( $request ) {
+		$done = self::upload_video( absint( $request->get_param( 'post' ) ), absint( $request->get_param( 'attachment' ) ) );
+		return is_wp_error( $done ) ? new WP_Error( $done->get_error_code(), self::describe( $done ), array( 'status' => 502 ) ) : rest_ensure_response( $done );
 	}
 
 	/**
@@ -1159,6 +1267,11 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		echo '<p><a class="button" href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=ai_chat_bedrock_wechat_draft&post=' . (int) $post->ID ), 'aicfab_wechat_draft_' . (int) $post->ID ) ) . '">' . esc_html( $label ) . '</a></p>';
 		if ( null !== self::draft_of( $post->ID ) ) {
 			echo '<p class="description">' . esc_html__( 'Its draft is replaced with the current version, including any changes made to it in WeChat.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		}
+		$material = get_post_meta( $post->ID, self::MATERIAL_META, true );
+		if ( is_array( $material ) && ! empty( $material['title'] ) ) {
+			/* translators: %s: the video's title in the material library. */
+			echo '<p>' . esc_html( sprintf( __( 'Video uploaded to the material library as "%s".', 'ai-chat-for-amazon-bedrock' ), $material['title'] ) ) . '</p>';
 		}
 		wp_nonce_field( 'aicfab_wechat_video_' . $post->ID, 'aicfab_wechat_video_nonce' );
 		echo '<label for="aicfab_wechat_video">' . esc_html__( 'WeChat video ID', 'ai-chat-for-amazon-bedrock' ) . '</label><input type="text" id="aicfab_wechat_video" class="widefat" name="aicfab_wechat_video" value="' . esc_attr( self::video_id( $post->ID ) ) . '" placeholder="wxv_…">';

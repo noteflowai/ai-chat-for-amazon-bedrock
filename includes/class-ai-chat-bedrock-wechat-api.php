@@ -139,15 +139,24 @@ class AI_Chat_Bedrock_WeChat_API {
 	 * @param string $mime image/jpeg or image/png.
 	 * @return array|null Body and content type, or null when the file cannot be read.
 	 */
-	public static function multipart( $file, $mime ) {
+	public static function multipart( $file, $mime, $fields = array() ) {
 		$data = is_readable( $file ) ? file_get_contents( $file ) : false; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- a local upload, read to send it.
 		if ( false === $data ) {
 			return null;
 		}
 		$boundary = 'aicfab' . bin2hex( random_bytes( 12 ) );
-		$name     = 'image/png' === $mime ? 'image.png' : 'image.jpg';
+		$names    = array(
+			'image/png' => 'image.png',
+			'video/mp4' => 'video.mp4',
+		);
+		$name     = isset( $names[ $mime ] ) ? $names[ $mime ] : 'image.jpg';
+		$body     = '';
+		// Other fields first, such as a video's title and introduction.
+		foreach ( $fields as $field => $value ) {
+			$body .= '--' . $boundary . "\r\nContent-Disposition: form-data; name=\"" . $field . "\"\r\n\r\n" . $value . "\r\n";
+		}
 		return array(
-			'body' => '--' . $boundary . "\r\nContent-Disposition: form-data; name=\"media\"; filename=\"" . $name . "\"\r\nContent-Type: " . $mime . "\r\n\r\n" . $data . "\r\n--" . $boundary . "--\r\n",
+			'body' => $body . '--' . $boundary . "\r\nContent-Disposition: form-data; name=\"media\"; filename=\"" . $name . "\"\r\nContent-Type: " . $mime . "\r\n\r\n" . $data . "\r\n--" . $boundary . "--\r\n",
 			'type' => 'multipart/form-data; boundary=' . $boundary,
 		);
 	}

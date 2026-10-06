@@ -56,6 +56,15 @@ class WP_Error {
 		return $this->data;
 	}
 }
+class WP_REST_Request_Stub {
+	private $params;
+	public function __construct( $params ) {
+		$this->params = $params;
+	}
+	public function get_param( $name ) {
+		return isset( $this->params[ $name ] ) ? $this->params[ $name ] : null;
+	}
+}
 class WP_Post {
 	public $ID;
 	public $post_type     = 'post';
@@ -311,6 +320,16 @@ function delete_post_meta( $id, $key ) {
 }
 function wp_nonce_field( $action, $name ) {
 	echo '<input type="hidden" name="' . $name . '" value="nonce-' . $action . '">';
+}
+$GLOBALS['aicfab_attachments'] = array();
+function get_attached_file( $id ) {
+	return isset( $GLOBALS['aicfab_attachments'][ $id ] ) ? $GLOBALS['aicfab_attachments'][ $id ][0] : false;
+}
+function get_post_mime_type( $id ) {
+	return isset( $GLOBALS['aicfab_attachments'][ $id ] ) ? $GLOBALS['aicfab_attachments'][ $id ][1] : false;
+}
+function rest_ensure_response( $data ) {
+	return $data;
 }
 function is_wp_error( $value ) {
 	return $value instanceof WP_Error;
@@ -585,6 +604,38 @@ $GLOBALS['aicfab_http'] = array();
 AI_Chat_Bedrock_WeChat_Drafts::run();
 check_drafts( array() === array_filter( $GLOBALS['aicfab_http'], function ( $c ) { return 'draft/update' === $c['path']; } ), 'An unchanged post is left alone on the next run.' );
 drafts_settings();
+drafts_reset();
+
+// --- A lesson's video, made small, in the material library --------------------------------
+
+drafts_reset();
+$aicfab_small = $aicfab_uploads . '/2026/10/lesson-0-1-wechat.mp4';
+$aicfab_large = $aicfab_uploads . '/2026/10/lesson-big.mp4';
+file_put_contents( $aicfab_small, str_repeat( 'v', 4000 ) );
+$aicfab_fh = fopen( $aicfab_large, 'w' );
+ftruncate( $aicfab_fh, AI_Chat_Bedrock_WeChat_Drafts::VIDEO_BYTES + 1 );
+fclose( $aicfab_fh );
+$GLOBALS['aicfab_attachments'] = array(
+	50 => array( $aicfab_small, 'video/mp4' ),
+	51 => array( $aicfab_large, 'video/mp4' ),
+	52 => array( $aicfab_uploads . '/2026/10/arm.png', 'image/png' ),
+);
+$GLOBALS['aicfab_posts'][6] = new WP_Post( array( 'ID' => 6, 'post_title' => '物理AI实验室 0.5：人形机器人热潮，把 Tesla 季度报告的一段话拆到演示、样机、量产与上岗', 'post_excerpt' => '人形机器人到底走到哪一步了？', 'thumbnail' => 7, 'post_content' => '<video src="https://cdn.test/a.mp4" poster=""></video><p>Text</p>' ) );
+$material = AI_Chat_Bedrock_WeChat_Drafts::upload_video( 6, 50 );
+$call     = end( $GLOBALS['aicfab_http'] );
+check_drafts( 'material/add_material' === $call['path'] && false !== strpos( $call['url'], 'type=video' ) && false !== strpos( $call['body'], 'name="media"; filename="video.mp4"' ) && false !== strpos( $call['body'], "Content-Type: video/mp4" ), 'The video goes to the material API as an MP4.' );
+check_drafts( false !== strpos( $call['body'], 'name="description"' ) && false !== strpos( $call['body'], '"title":"物理AI实验室 0.5：人形机器人热潮"' ) && false !== strpos( $call['body'], '"introduction":"人形机器人到底走到哪一步了？"' ), 'With the title and introduction WeChat asks for.' );
+check_drafts( is_array( $material ) && 0 === strpos( $material['media_id'], 'COVER_MEDIA_' ) && $material === get_post_meta( 6, AI_Chat_Bedrock_WeChat_Drafts::MATERIAL_META, true ), 'Its media_id is kept with the post.' );
+check_drafts( 'aicfab_wechat_video_file' === AI_Chat_Bedrock_WeChat_Drafts::upload_video( 6, 51 )->get_error_code() && 'aicfab_wechat_video_file' === AI_Chat_Bedrock_WeChat_Drafts::upload_video( 6, 52 )->get_error_code(), 'A video over 10 MB, or a file that is not an MP4, is refused before WeChat is asked.' );
+$html = AI_Chat_Bedrock_WeChat_Drafts::content( $GLOBALS['aicfab_posts'][6], array( 'app_id' => AICFAB_APP_ID, 'secret' => AICFAB_SECRET, 'cache' => 'aicfab_wechat_access' ) );
+check_drafts( false !== strpos( html_entity_decode( $html, ENT_QUOTES ), 'video is in the account\'s material library as "物理AI实验室 0.5：人形机器人热潮"' ), 'The draft names the video to insert from the material library.' );
+$drafts = new AI_Chat_Bedrock_WeChat_Drafts();
+$GLOBALS['aicfab_caps']['upload_files'] = true;
+check_drafts( $drafts->can_upload_video( new WP_REST_Request_Stub( array( 'post' => 6, 'attachment' => 50 ) ) ) && ! $drafts->can_upload_video( new WP_REST_Request_Stub( array( 'post' => 99, 'attachment' => 50 ) ) ), 'Uploading needs permission to edit the post.' );
+$GLOBALS['aicfab_caps']['upload_files'] = false;
+check_drafts( ! $drafts->can_upload_video( new WP_REST_Request_Stub( array( 'post' => 6, 'attachment' => 50 ) ) ), 'And to upload files.' );
+unlink( $aicfab_small );
+unlink( $aicfab_large );
 drafts_reset();
 
 // --- When WeChat refuses --------------------------------------------------------------------
