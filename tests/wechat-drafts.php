@@ -449,6 +449,10 @@ check_drafts( 1 === count( array_filter( AI_Chat_Bedrock_Distribution::entries( 
 $GLOBALS['aicfab_replies']['draft/update'] = array( '{"errcode":40007,"errmsg":"invalid media_id"}' );
 $anew = AI_Chat_Bedrock_WeChat_Drafts::create( array( 1 ), null, 'manual' );
 check_drafts( false === $anew['updated'] && $done['media_id'] !== $anew['media_id'] && 'draft/add' === end( $GLOBALS['aicfab_http'] )['path'], 'A draft already published or deleted is made anew.' );
+$GLOBALS['aicfab_replies']['draft/update'] = array( '{"errcode":45003,"errmsg":"title size out of limit"}' );
+$calls   = count( $GLOBALS['aicfab_http'] );
+$refused = AI_Chat_Bedrock_WeChat_Drafts::create( array( 1 ), null, 'manual' );
+check_drafts( is_wp_error( $refused ) && 'wx_45003' === $refused->get_error_code() && 'draft/update' === end( $GLOBALS['aicfab_http'] )['path'] && false !== strpos( AI_Chat_Bedrock_WeChat_Drafts::status_summary(), 'wx_45003' ), 'Any other refusal of the update is reported, and no second draft is made.' );
 
 $skip = AI_Chat_Bedrock_WeChat_Drafts::create( array( 3, 4 ), null, 'manual' );
 check_drafts( is_wp_error( $skip ) && 'wx_nothing' === $skip->get_error_code() && array( 3 => 'no_cover', 4 => 'not_public' ) === $skip->get_error_data()['skipped'], 'A post without any image, or not public, is skipped with the reason.' );

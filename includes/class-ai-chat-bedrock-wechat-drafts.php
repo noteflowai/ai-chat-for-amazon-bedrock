@@ -32,6 +32,9 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	const IMAGES_META = '_aicfab_wechat_images';
 	const COVER_META  = '_aicfab_wechat_cover';
 
+	// WeChat's answers for a draft it no longer has: an unknown media_id, or one already sent.
+	const DRAFT_GONE = array( 'wx_40007', 'wx_53403', 'wx_53404' );
+
 	// WeChat's limits for a title and a digest, in characters.
 	const TITLE_CHARS  = 32;
 	const DIGEST_CHARS = 120;
@@ -275,6 +278,11 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				self::account( $options ),
 				30
 			);
+			// Only a draft WeChat no longer has, published or deleted, is made anew; any other
+			// refusal is reported, so a post is never left in two drafts.
+			if ( is_wp_error( $updated ) && ! in_array( $updated->get_error_code(), self::DRAFT_GONE, true ) ) {
+				return self::note( $updated, $source, $skipped );
+			}
 			$media_id = is_wp_error( $updated ) ? '' : $earlier['media_id'];
 		}
 		if ( '' === $media_id ) {
