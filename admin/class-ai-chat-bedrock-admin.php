@@ -1441,7 +1441,8 @@ class AI_Chat_Bedrock_Admin {
 		echo '</select><br>';
 		echo '<label for="aicfab_field_wechat_drafts_count">' . esc_html__( 'Articles a draft', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="number" id="aicfab_field_wechat_drafts_count" class="small-text" name="ai_chat_bedrock_settings[wechat_drafts_count]" value="' . esc_attr( AI_Chat_Bedrock_WeChat_Drafts::count( $options ) ) . '" min="1" max="' . esc_attr( AI_Chat_Bedrock_WeChat_Drafts::MAX_ARTICLES ) . '"><br>';
 		echo '<label for="aicfab_field_wechat_drafts_author">' . esc_html__( 'Author shown in WeChat', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="text" id="aicfab_field_wechat_drafts_author" class="regular-text" maxlength="16" name="ai_chat_bedrock_settings[wechat_drafts_author]" value="' . esc_attr( AI_Chat_Bedrock_WeChat_Drafts::author( $options ) ) . '"><br>';
-		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[wechat_drafts_notify]" value="1" ' . checked( ! empty( $options['wechat_drafts_notify'] ), true, false ) . '> ' . esc_html__( 'Email the site when a scheduled draft is ready', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[wechat_drafts_notify]" value="1" ' . checked( ! empty( $options['wechat_drafts_notify'] ), true, false ) . '> ' . esc_html__( 'Email the site when a scheduled draft is ready', 'ai-chat-for-amazon-bedrock' ) . '</label><br>';
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[wechat_drafts_sync]" value="1" ' . checked( ! empty( $options['wechat_drafts_sync'] ), true, false ) . '> ' . esc_html__( 'On each scheduled run, update drafts whose post changed since it was sent, replacing changes made to them in WeChat', 'ai-chat-for-amazon-bedrock' ) . '</label>';
 		if ( '' !== AI_Chat_Bedrock_WeChat_Drafts::app_secret( $options ) ) {
 			echo '<br><label><input type="checkbox" name="ai_chat_bedrock_settings[wechat_drafts_clear]" value="1"> ' . esc_html__( 'Remove the saved AppSecret', 'ai-chat-for-amazon-bedrock' ) . '</label>';
 		}
@@ -2159,6 +2160,7 @@ class AI_Chat_Bedrock_Admin {
 
 		$output['wechat_drafts_enabled']  = ! empty( $input['wechat_drafts_enabled'] );
 		$output['wechat_drafts_notify']   = ! empty( $input['wechat_drafts_notify'] );
+		$output['wechat_drafts_sync']     = ! empty( $input['wechat_drafts_sync'] );
 		$output['wechat_drafts_schedule'] = AI_Chat_Bedrock_WeChat_Drafts::schedule( array( 'wechat_drafts_schedule' => isset( $input['wechat_drafts_schedule'] ) ? (string) $input['wechat_drafts_schedule'] : 'off' ) );
 		$output['wechat_drafts_count']    = AI_Chat_Bedrock_WeChat_Drafts::count( array( 'wechat_drafts_count' => isset( $input['wechat_drafts_count'] ) ? $input['wechat_drafts_count'] : 0 ) );
 		$output['wechat_drafts_category'] = isset( $input['wechat_drafts_category'] ) ? absint( $input['wechat_drafts_category'] ) : 0;
@@ -2348,7 +2350,7 @@ class AI_Chat_Bedrock_Admin {
 		'speech_replies'        => array( 'speech_posts', 'speech_posts_signed_in', 'speech_engine', 'speech_daily_chars' ),
 		'leads_enabled'         => array( 'leads_notify', 'leads_days', 'leads_link' ),
 		'wechat_enabled'        => array( 'wechat_token', 'wechat_aes_key', 'wechat_app_id', 'wechat_model_id', 'wechat_hourly', 'wechat_menu' ),
-		'wechat_drafts_enabled' => array( 'wechat_app_secret', 'wechat_drafts_category', 'wechat_drafts_schedule', 'wechat_drafts_count', 'wechat_drafts_author', 'wechat_drafts_notify' ),
+		'wechat_drafts_enabled' => array( 'wechat_app_secret', 'wechat_drafts_category', 'wechat_drafts_schedule', 'wechat_drafts_count', 'wechat_drafts_author', 'wechat_drafts_notify', 'wechat_drafts_sync' ),
 		'wxgame_enabled'        => array( 'wxgame_app_id', 'wxgame_token', 'wxgame_aes_key', 'wxgame_app_secret', 'wxgame_welcome', 'wxgame_answers', 'wxgame_fallback' ),
 		'distribution_enabled'  => array( 'distribution_links' ),
 		'youtube_client_id'     => array( 'youtube_client_secret', 'youtube_daily_uploads' ),
@@ -2385,6 +2387,7 @@ class AI_Chat_Bedrock_Admin {
 		'wechat_drafts_enabled',
 		'wechat_drafts_notify',
 		'publish_kit',
+		'wechat_drafts_sync',
 		'github_read_scope',
 		'social_only_registration',
 		'organization_author',

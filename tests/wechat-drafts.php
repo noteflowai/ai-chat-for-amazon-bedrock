@@ -66,6 +66,7 @@ class WP_Post {
 	public $post_excerpt  = '';
 	public $language      = 'zh';
 	public $thumbnail     = 0;
+	public $post_modified_gmt = '2026-10-01 00:00:00';
 	public function __construct( $fields ) {
 		foreach ( $fields as $key => $value ) {
 			$this->$key = $value;
@@ -294,6 +295,19 @@ function absint( $value ) {
 }
 function apply_filters( $hook, $value ) {
 	return $value;
+}
+function wp_verify_nonce( $nonce, $action ) {
+	return 'good' === $nonce;
+}
+function wp_unslash( $value ) {
+	return $value;
+}
+function wp_is_post_revision( $id ) {
+	return false;
+}
+function delete_post_meta( $id, $key ) {
+	unset( $GLOBALS['aicfab_meta'][ $id ][ $key ] );
+	return true;
 }
 function wp_nonce_field( $action, $name ) {
 	echo '<input type="hidden" name="' . $name . '" value="nonce-' . $action . '">';
@@ -534,6 +548,43 @@ $GLOBALS['aicfab_deleted']                         = array();
 $article                                           = AI_Chat_Bedrock_WeChat_Drafts::article( $GLOBALS['aicfab_posts'][6], $GLOBALS['aicfab_options'] );
 check_drafts( 1 === substr_count( $article['content'], '<img src="http://mmbiz.qpic.cn/img/' ) && false !== strpos( $article['content'], 'This lesson has a video' ), 'A poster on a CDN is fetched and uploaded to WeChat; a file that is not an image, and plain http, are not.' );
 check_drafts( 1 === count( $GLOBALS['aicfab_deleted'] ) && ! file_exists( $GLOBALS['aicfab_deleted'][0] ), 'The fetched file is deleted after the upload.' );
+drafts_reset();
+
+// --- Videos uploaded to WeChat, quizzes, and keeping drafts current -------------------------
+
+check_drafts( 'wxv_3712345678901234567' === AI_Chat_Bedrock_WeChat_Drafts::clean_video( ' wxv_3712345678901234567 ' ) && '' === AI_Chat_Bedrock_WeChat_Drafts::clean_video( 'https://evil.test/"><script>' ), 'A WeChat video ID is wxv_ and letters or digits.' );
+$_POST = array( 'aicfab_wechat_video_nonce' => 'good', 'aicfab_wechat_video' => 'wxv_3712345678901234567' );
+AI_Chat_Bedrock_WeChat_Drafts::save_video( 6 );
+check_drafts( 'wxv_3712345678901234567' === AI_Chat_Bedrock_WeChat_Drafts::video_id( 6 ), 'The video ID entered in the box is kept when the post is saved.' );
+$_POST = array( 'aicfab_wechat_video_nonce' => 'forged', 'aicfab_wechat_video' => '' );
+AI_Chat_Bedrock_WeChat_Drafts::save_video( 6 );
+check_drafts( '' !== AI_Chat_Bedrock_WeChat_Drafts::video_id( 6 ), 'Not without the box\'s nonce.' );
+$_POST = array();
+$GLOBALS['aicfab_remote']['https://cdn.test/poster.png'] = base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' );
+$GLOBALS['aicfab_posts'][6] = new WP_Post( array( 'ID' => 6, 'post_title' => 'Video lesson', 'thumbnail' => 7, 'post_content' => '<figure class="wp-block-video"><video src="https://cdn.test/a.mp4" poster="https://cdn.test/poster.png"></video></figure><p>Text</p><video src="https://cdn.test/b.mp4"></video><ul><li><a href="https://cdn.test/quiz.html">互动小测（5 题）</a></li><li><a href="https://cdn.test/lab/">浏览器实验</a></li></ul><p><a href="https://cdn.test/quiz.html">Take the quiz</a></p><p>See <a href="/a">one</a> and <a href="/b">two</a>.</p>' ) );
+$html = AI_Chat_Bedrock_WeChat_Drafts::content( $GLOBALS['aicfab_posts'][6], array( 'app_id' => AICFAB_APP_ID, 'secret' => AICFAB_SECRET, 'cache' => 'aicfab_wechat_access' ) );
+check_drafts( 1 === substr_count( $html, '<iframe class="video_iframe rich_pages" data-vidtype="2" data-mpvid="wxv_3712345678901234567"' ) && false !== strpos( $html, 'vid=wxv_3712345678901234567' ) && false !== strpos( $html, 'If the video does not show' ), 'With a video ID, the first video is WeChat\'s own player, with a line for when it does not show.' );
+check_drafts( 1 === substr_count( $html, 'This lesson has a video' ) && false === strpos( $html, '[[aicfab' ), 'A further video still gets the note to insert it.' );
+check_drafts( false !== strpos( $html, '互动小测（5 题）</li><li style="margin:0 0 8px;line-height:1.75;font-size:16px;color:#333;">浏览器实验</li></ul><p style="margin:0 0 16px;line-height:1.75;font-size:16px;color:#333;">(tap "Read more" at the end to open it)</p>' ), 'A list of links, such as a quiz and a lab, is followed once by where to open them.' );
+check_drafts( false !== strpos( $html, 'Take the quiz (tap "Read more" at the end to open it)</p>' ) && false !== strpos( $html, 'See one and two.</p>' ), 'A link that is a whole paragraph gets the hint; links within a sentence do not.' );
+
+drafts_reset();
+drafts_settings( array( 'wechat_drafts_schedule' => 'daily', 'wechat_drafts_sync' => true, 'wechat_drafts_category' => 99 ) );
+AI_Chat_Bedrock_Distribution::record( 2, array( 'platform' => 'wechat', 'item_id' => 'CURRENT_D1', 'status' => 'planned', 'version' => 'idx:0' ), 'wechat' );
+AI_Chat_Bedrock_Distribution::record( 4, array( 'platform' => 'wechat', 'item_id' => 'CURRENT_D2', 'status' => 'planned', 'version' => 'idx:0' ), 'wechat' );
+$GLOBALS['aicfab_posts'][2]->post_content     = '<p>' . str_repeat( '新增小测。', 200 ) . '</p><img src="https://example.test/wp-content/uploads/2026/10/arm.png" alt="">';
+$GLOBALS['aicfab_posts'][2]->post_modified_gmt = gmdate( 'Y-m-d H:i:s', time() - 60 );
+foreach ( array( 2, 4 ) as $aicfab_id ) {
+	$GLOBALS['aicfab_meta'][ $aicfab_id ][ AI_Chat_Bedrock_Distribution::META ][0]['updated_at'] = time() - 3600;
+}
+$GLOBALS['aicfab_posts'][2]->thumbnail         = 7;
+AI_Chat_Bedrock_WeChat_Drafts::run();
+$updates = array_values( array_filter( $GLOBALS['aicfab_http'], function ( $c ) { return 'draft/update' === $c['path']; } ) );
+check_drafts( 1 === count( $updates ) && false !== strpos( $updates[0]['body'], 'CURRENT_D1' ) && false !== strpos( $updates[0]['body'], '新增小测' ), 'A scheduled run replaces the article of a draft whose post changed, as when a quiz is added.' );
+$GLOBALS['aicfab_http'] = array();
+AI_Chat_Bedrock_WeChat_Drafts::run();
+check_drafts( array() === array_filter( $GLOBALS['aicfab_http'], function ( $c ) { return 'draft/update' === $c['path']; } ), 'An unchanged post is left alone on the next run.' );
+drafts_settings();
 drafts_reset();
 
 // --- When WeChat refuses --------------------------------------------------------------------

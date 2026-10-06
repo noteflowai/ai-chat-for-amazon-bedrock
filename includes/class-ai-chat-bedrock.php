@@ -292,6 +292,7 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'wp_abilities_api_init', $publish_kit, 'register_abilities' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_publish_kit', 'AI_Chat_Bedrock_Publish_Kit', 'handle_write' );
 		$this->loader->add_action( 'ai_chat_bedrock_distribution_box', 'AI_Chat_Bedrock_Publish_Kit', 'render_box_section' );
+		$this->loader->add_action( 'save_post', 'AI_Chat_Bedrock_WeChat_Drafts', 'save_video' );
 
 		// The site description, and the type and language it adds to retrieved passages.
 		// Both check the setting when they run.
