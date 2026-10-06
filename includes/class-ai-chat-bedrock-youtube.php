@@ -1035,7 +1035,7 @@ class AI_Chat_Bedrock_YouTube {
 	}
 
 	private static function back( $notice ) {
-		wp_safe_redirect( add_query_arg( 'aicfab_youtube', $notice, admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings&tab=publishing' ) ) );
+		wp_safe_redirect( add_query_arg( 'aicfab_youtube', $notice, admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings&tab=publishing&section=video' ) ) );
 		exit;
 	}
 

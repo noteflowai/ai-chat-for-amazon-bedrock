@@ -149,12 +149,15 @@ $limits = array(
 								<?php foreach ( $limits as $key => $aicfab_limit ) : ?>
 									<tr>
 										<th scope="row"><label for="aicfab_profile_<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $aicfab_limit[0] ); ?></label></th>
-										<td><input type="number" id="aicfab_profile_<?php echo esc_attr( $key ); ?>" class="small-text" name="<?php echo esc_attr( $key ); ?>" min="<?php echo esc_attr( $aicfab_limit[1] ); ?>" max="<?php echo esc_attr( $aicfab_limit[2] ); ?>" step="<?php echo esc_attr( $aicfab_limit[3] ); ?>" value="<?php echo esc_attr( $limit( $key ) ); ?>" placeholder="<?php echo esc_attr( $aicfab_limit[4] ); ?>"></td>
+										<td><input type="number" id="aicfab_profile_<?php echo esc_attr( $key ); ?>" class="small-text" name="<?php echo esc_attr( $key ); ?>" min="<?php echo esc_attr( $aicfab_limit[1] ); ?>" max="<?php echo esc_attr( $aicfab_limit[2] ); ?>" step="<?php echo esc_attr( $aicfab_limit[3] ); ?>" value="<?php echo esc_attr( $limit( $key ) ); ?>" aria-describedby="aicfab_profile_<?php echo esc_attr( $key ); ?>-inherits">
+											<?php /* translators: %s: the main setting's value, used when the field is empty. */ ?>
+											<span class="aicfab-inherits" id="aicfab_profile_<?php echo esc_attr( $key ); ?>-inherits"><?php echo esc_html( sprintf( __( 'Empty: %s, as in the main settings', 'ai-chat-for-amazon-bedrock' ), $aicfab_limit[4] ) ); ?></span>
+										</td>
 									</tr>
 								<?php endforeach; ?>
 							</table>
 						</fieldset>
-						<p class="description"><?php esc_html_e( 'Leave a field empty to use the main setting, shown in grey.', 'ai-chat-for-amazon-bedrock' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Leave a field empty to use the main setting.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 					</td>
 				</tr>
 				<tr>

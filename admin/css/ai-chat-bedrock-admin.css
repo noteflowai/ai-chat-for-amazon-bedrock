@@ -366,6 +366,31 @@
     overflow-wrap: anywhere;
 }
 
+/* What an empty field means, beside it. */
+.aicfab-inherits {
+    color: #50575e;
+    font-size: 13px;
+}
+
+/* Setup steps, folded once all are done. */
+.aicfab-steps-done {
+    margin: 4px 0 12px;
+}
+
+.aicfab-steps-done > summary {
+    cursor: pointer;
+    color: #2271b1;
+}
+
+/* Fields of a feature, shown once it is on. */
+.aicfab-depends {
+    margin-top: 4px;
+}
+
+.aicfab-depends[hidden] {
+    display: none;
+}
+
 /* Whether WeChat reaches a channel, above its fields. */
 .aicfab-contact-status {
     margin-top: 0;

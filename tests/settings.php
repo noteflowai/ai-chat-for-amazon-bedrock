@@ -296,7 +296,14 @@ foreach ( $GLOBALS['aicfab_fields'] as $aicfab_field => $aicfab_where ) {
 	}
 }
 check_set( count( $GLOBALS['aicfab_fields'] ) > 30 && array() === $aicfab_misplaced, 'Every settings field is on the tab of its section; misplaced: ' . implode( ', ', $aicfab_misplaced ) );
-check_set( 'aicfab_tab_publishing' === $GLOBALS['aicfab_fields']['youtube_client_id'][0] && 'aicfab_tab_publishing' === $GLOBALS['aicfab_fields']['wechat_enabled'][0] && 'aicfab_tab_publishing' === $GLOBALS['aicfab_fields']['wxgame_enabled'][0] && 'aicfab_tab_publishing' === $GLOBALS['aicfab_fields']['wechat_drafts_enabled'][0] && 'aicfab_tab_agents' === $GLOBALS['aicfab_fields']['abilities_tools'][0] && 'aicfab_tab_governance' === $GLOBALS['aicfab_fields']['allow_public_chat'][0] && 'aicfab_tab_governance' === $GLOBALS['aicfab_fields']['log_conversations'][0], 'Channels hold YouTube and every WeChat setting; agents and safety have tabs of their own.' );
+check_set( 'aicfab_tab_publishing' === $GLOBALS['aicfab_fields']['youtube_client_id'][0] && 'aicfab_tab_wechat' === $GLOBALS['aicfab_fields']['wechat_enabled'][0] && 'aicfab_tab_wechat' === $GLOBALS['aicfab_fields']['wechat_drafts_enabled'][0] && 'aicfab_tab_wxgame' === $GLOBALS['aicfab_fields']['wxgame_enabled'][0] && 'aicfab_tab_agents' === $GLOBALS['aicfab_fields']['abilities_tools'][0] && 'aicfab_tab_governance' === $GLOBALS['aicfab_fields']['allow_public_chat'][0] && 'aicfab_tab_governance' === $GLOBALS['aicfab_fields']['log_conversations'][0], 'The Official Account with its drafts, the mini game and the video platforms each have a Channels page; agents and safety have tabs of their own.' );
+$aicfab_channels = AI_Chat_Bedrock_Admin::tabs()['publishing'];
+check_set( array( 'wechat', 'wxgame', 'video' ) === array_keys( $aicfab_channels['sections'] ) && $aicfab_channels['page'] === $aicfab_channels['sections']['wechat']['page'], 'A link to Channels opens its first page, the Official Account.' );
+$aicfab_channel_fields = array();
+foreach ( $aicfab_channels['sections'] as $aicfab_item ) {
+	$aicfab_channel_fields[] = AI_Chat_Bedrock_Admin::fields_for_page( $aicfab_item['page'] );
+}
+check_set( array() === array_intersect( $aicfab_channel_fields[0], $aicfab_channel_fields[1], $aicfab_channel_fields[2] ) && ! array_intersect( $aicfab_channel_fields[0], $aicfab_channel_fields[1] ) && in_array( 'publish_kit', $aicfab_channel_fields[2], true ), 'Each page saves only its own fields.' );
 
 // --- Publishing ------------------------------------------------------------------
 
