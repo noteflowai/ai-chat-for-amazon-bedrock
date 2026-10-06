@@ -68,8 +68,10 @@ trait AI_Chat_Bedrock_Admin_Channels {
 		echo '</fieldset>';
 		/* translators: %s: the address WeChat sends messages to. */
 		echo '<p class="description">' . esc_html( sprintf( __( 'Off by default. In the WeChat Official Accounts Platform, under Settings and Development > Basic Configuration, enable the server configuration with the URL %s and the token entered here. Plaintext mode needs only the token; compatible and safe mode also need the EncodingAESKey and AppID. No AppSecret is needed.', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_WeChat::url() ) ) . '</p>';
+		echo '<details class="aicfab-help"><summary>' . esc_html__( 'More about this', 'ai-chat-for-amazon-bedrock' ) . '</summary>';
 		echo '<p class="description">' . esc_html__( 'With message push on, WeChat turns off the menu set in its console, and an account that is not verified cannot set one through its API, so followers write a word instead: 菜单 gets the menu above, and 精选 or 最新 the newest featured posts (the category chosen for WeChat drafts below) with their addresses. Neither calls the model.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'The chat answers each text message from the site\'s pages, in plain text with its sources. WeChat waits about fifteen seconds in all; a longer answer is kept and the follower is told to send 1 to see it, so choose a fast model for WeChat if the chat\'s model takes longer. A new follower gets the welcome message and suggested questions. Every answer counts towards the daily request limit, and the conversation log records them when it is on.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '</details>';
 	}
 
 	public function publish_kit_render() {
@@ -123,7 +125,9 @@ trait AI_Chat_Bedrock_Admin_Channels {
 			echo '<p>' . esc_html( $next ) . ' <a class="button button-small" href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=ai_chat_bedrock_wechat_drafts_run' ), 'aicfab_wechat_drafts_run' ) ) . '">' . esc_html__( 'Run it now', 'ai-chat-for-amazon-bedrock' ) . '</a></p>';
 		}
 		echo '<p class="description">' . esc_html__( 'Off by default. Uses the AppID entered for the WeChat Official Account above, and the AppSecret and IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform. Each post becomes an article with its title, excerpt, the featured image as cover, the text and images a signed-out visitor sees, and the post as "Read more"; links in the text become plain text, as WeChat does not open them. Posts are sent from the Published elsewhere box, by an agent, or on the schedule, which takes featured posts of the last 60 days not sent before, in Chinese when the site has it, and only those with a featured image and at least 600 characters of public text.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<details class="aicfab-help"><summary>' . esc_html__( 'More about this', 'ai-chat-for-amazon-bedrock' ) . '</summary>';
 		echo '<p class="description">' . esc_html__( 'Only drafts are made: WeChat lets only verified company accounts publish through its API. Check each draft and publish it in the Official Accounts Platform.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '</details>';
 	}
 
 	public function wxgame_render() {
@@ -175,7 +179,9 @@ trait AI_Chat_Bedrock_Admin_Channels {
 		}
 		/* translators: %s: the address WeChat sends the game's messages to. */
 		echo '<p class="description">' . esc_html( sprintf( __( 'Off by default. In the mini game\'s console, under Development Management > Development Settings > Message Push, enter the URL %s, the token and, for safe mode, the EncodingAESKey; JSON and XML both work. The game opens the chat with wx.openCustomerServiceConversation, and the sessionFrom it passes is counted as the scene.', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_WeChat_Game::url() ) ) . '</p>';
+		echo '<details class="aicfab-help"><summary>' . esc_html__( 'More about this', 'ai-chat-for-amazon-bedrock' ) . '</summary>';
 		echo '<p class="description">' . esc_html__( 'Questions are answered with the set answers only, matched by keyword; nothing is generated, as a mini game needs an AI category and an algorithm filing to answer with AI. Answers are sent through WeChat\'s customer service API, which needs the AppSecret and this server\'s address in the game\'s IP whitelist, and allows a few answers within 48 hours of a player\'s message. Only daily totals are kept, with players counted under a code that changes every day; questions go to the conversation log when it is on. What players do in the game itself is reported by the game with wx.reportEvent and shown in WeChat\'s own analysis.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '</details>';
 	}
 
 	public function distribution_render() {

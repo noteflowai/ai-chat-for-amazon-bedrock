@@ -385,6 +385,21 @@
     display: none;
 }
 
+/* Longer help under a field, folded below its first paragraph. */
+.aicfab-help {
+    max-width: 70ch;
+    margin-top: 4px;
+}
+
+.aicfab-help > summary {
+    cursor: pointer;
+    color: #2271b1;
+}
+
+.aicfab-help[open] > summary {
+    margin-bottom: 4px;
+}
+
 /* Setup steps, folded once all are done. */
 .aicfab-steps-done {
     margin: 4px 0 12px;

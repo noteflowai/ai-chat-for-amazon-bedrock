@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-06T15:36:46+00:00\n"
+"POT-Creation-Date: 2026-10-06T15:50:37+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -805,7 +805,7 @@ msgstr ""
 #: admin/class-ai-chat-bedrock-admin.php:1122
 #: admin/class-ai-chat-bedrock-admin.php:2216
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:41
-#: admin/trait-ai-chat-bedrock-admin-channels.php:134
+#: admin/trait-ai-chat-bedrock-admin-channels.php:138
 msgid "WeChat mini game"
 msgstr ""
 
@@ -819,7 +819,7 @@ msgid "Video and social platforms"
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:1126
-#: admin/trait-ai-chat-bedrock-admin-channels.php:184
+#: admin/trait-ai-chat-bedrock-admin-channels.php:190
 msgid "Publishing record"
 msgstr ""
 
@@ -828,7 +828,7 @@ msgid "Bilibili videos"
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:1128
-#: admin/trait-ai-chat-bedrock-admin-channels.php:210
+#: admin/trait-ai-chat-bedrock-admin-channels.php:216
 #: includes/class-ai-chat-bedrock-youtube.php:950
 #: includes/class-ai-chat-bedrock-youtube.php:965
 msgid "YouTube uploads"
@@ -1563,9 +1563,9 @@ msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:1839
 #: admin/class-ai-chat-bedrock-admin.php:1854
-#: admin/trait-ai-chat-bedrock-admin-channels.php:287
-#: admin/trait-ai-chat-bedrock-admin-channels.php:312
-#: admin/trait-ai-chat-bedrock-admin-channels.php:343
+#: admin/trait-ai-chat-bedrock-admin-channels.php:293
+#: admin/trait-ai-chat-bedrock-admin-channels.php:318
+#: admin/trait-ai-chat-bedrock-admin-channels.php:349
 msgid "The credential could not be encrypted; the existing value was preserved."
 msgstr ""
 
@@ -3503,9 +3503,9 @@ msgid "WeChat has not reached this address yet."
 msgstr ""
 
 #: admin/trait-ai-chat-bedrock-admin-channels.php:48
-#: admin/trait-ai-chat-bedrock-admin-channels.php:87
-#: admin/trait-ai-chat-bedrock-admin-channels.php:132
-#: admin/trait-ai-chat-bedrock-admin-channels.php:212
+#: admin/trait-ai-chat-bedrock-admin-channels.php:89
+#: admin/trait-ai-chat-bedrock-admin-channels.php:136
+#: admin/trait-ai-chat-bedrock-admin-channels.php:218
 msgid "Saved — enter a value to replace"
 msgstr ""
 
@@ -3514,12 +3514,12 @@ msgid "Answer messages that followers send to the account"
 msgstr ""
 
 #: admin/trait-ai-chat-bedrock-admin-channels.php:54
-#: admin/trait-ai-chat-bedrock-admin-channels.php:139
+#: admin/trait-ai-chat-bedrock-admin-channels.php:143
 msgid "Token"
 msgstr ""
 
 #: admin/trait-ai-chat-bedrock-admin-channels.php:55
-#: admin/trait-ai-chat-bedrock-admin-channels.php:140
+#: admin/trait-ai-chat-bedrock-admin-channels.php:144
 msgid "EncodingAESKey, for safe mode"
 msgstr ""
 
@@ -3561,270 +3561,276 @@ msgid "Off by default. In the WeChat Official Accounts Platform, under Settings 
 msgstr ""
 
 #: admin/trait-ai-chat-bedrock-admin-channels.php:71
-msgid "With message push on, WeChat turns off the menu set in its console, and an account that is not verified cannot set one through its API, so followers write a word instead: 菜单 gets the menu above, and 精选 or 最新 the newest featured posts (the category chosen for WeChat drafts below) with their addresses. Neither calls the model."
+#: admin/trait-ai-chat-bedrock-admin-channels.php:128
+#: admin/trait-ai-chat-bedrock-admin-channels.php:182
+msgid "More about this"
 msgstr ""
 
 #: admin/trait-ai-chat-bedrock-admin-channels.php:72
+msgid "With message push on, WeChat turns off the menu set in its console, and an account that is not verified cannot set one through its API, so followers write a word instead: 菜单 gets the menu above, and 精选 or 最新 the newest featured posts (the category chosen for WeChat drafts below) with their addresses. Neither calls the model."
+msgstr ""
+
+#: admin/trait-ai-chat-bedrock-admin-channels.php:73
 msgid "The chat answers each text message from the site's pages, in plain text with its sources. WeChat waits about fifteen seconds in all; a longer answer is kept and the follower is told to send 1 to see it, so choose a fast model for WeChat if the chat's model takes longer. A new follower gets the welcome message and suggested questions. Every answer counts towards the daily request limit, and the conversation log records them when it is on."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:77
+#: admin/trait-ai-chat-bedrock-admin-channels.php:79
 msgid "Write each platform's copy for a post with the chat's model"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:78
+#: admin/trait-ai-chat-bedrock-admin-channels.php:80
 msgid "Off by default. Bilibili opens its publishing API only to registered companies and Xiaohongshu has none for creators, so there a person publishes. With this on, the Published elsewhere box writes the Bilibili, Xiaohongshu and YouTube title, text, tags and category from the text a signed-out visitor reads, within each platform's limits and in the post's language, with links to each creator page and the cover. After publishing, enter the address in the same box to record it. Each kit is one model request; agents can ask for one through an ability. The copy is an AI draft: check it, and declare AI assistance with the platform's label."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:84
+#: admin/trait-ai-chat-bedrock-admin-channels.php:86
 msgid "WeChat Official Account drafts"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:85
+#: admin/trait-ai-chat-bedrock-admin-channels.php:87
 msgid "Send posts to the Official Account's draft box"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:87
+#: admin/trait-ai-chat-bedrock-admin-channels.php:89
 msgid "AppSecret of the Official Account"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:88
+#: admin/trait-ai-chat-bedrock-admin-channels.php:90
 msgid "Featured posts"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:94
+#: admin/trait-ai-chat-bedrock-admin-channels.php:96
 msgid "All posts"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:99
+#: admin/trait-ai-chat-bedrock-admin-channels.php:101
 msgid "Collect the newest featured posts into a draft"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:101
+#: admin/trait-ai-chat-bedrock-admin-channels.php:103
 msgid "Never; only when sent from a post or by an agent"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:102
+#: admin/trait-ai-chat-bedrock-admin-channels.php:104
 msgid "Every day at 9:00"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:103
+#: admin/trait-ai-chat-bedrock-admin-channels.php:105
 msgid "Every week"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:108
+#: admin/trait-ai-chat-bedrock-admin-channels.php:110
 msgid "Articles a draft"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:109
+#: admin/trait-ai-chat-bedrock-admin-channels.php:111
 msgid "Author shown in WeChat"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:110
+#: admin/trait-ai-chat-bedrock-admin-channels.php:112
 msgid "Email the site when a scheduled draft is ready"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:111
+#: admin/trait-ai-chat-bedrock-admin-channels.php:113
 msgid "On each scheduled run, update drafts whose post changed since it was sent, unless they were edited, published or deleted in WeChat; with emails on, you are told of edited ones"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:113
+#: admin/trait-ai-chat-bedrock-admin-channels.php:115
 msgid "Remove the saved AppSecret"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:123
+#: admin/trait-ai-chat-bedrock-admin-channels.php:125
 msgid "Run it now"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:125
+#: admin/trait-ai-chat-bedrock-admin-channels.php:127
 msgid "Off by default. Uses the AppID entered for the WeChat Official Account above, and the AppSecret and IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform. Each post becomes an article with its title, excerpt, the featured image as cover, the text and images a signed-out visitor sees, and the post as \"Read more\"; links in the text become plain text, as WeChat does not open them. Posts are sent from the Published elsewhere box, by an agent, or on the schedule, which takes featured posts of the last 60 days not sent before, in Chinese when the site has it, and only those with a featured image and at least 600 characters of public text."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:126
+#: admin/trait-ai-chat-bedrock-admin-channels.php:129
 msgid "Only drafts are made: WeChat lets only verified company accounts publish through its API. Check each draft and publish it in the Official Accounts Platform."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:135
+#: admin/trait-ai-chat-bedrock-admin-channels.php:139
 msgid "Take the mini game's customer service messages and count what players do there"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:137
+#: admin/trait-ai-chat-bedrock-admin-channels.php:141
 msgid "AppID"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:141
+#: admin/trait-ai-chat-bedrock-admin-channels.php:145
 msgid "AppSecret, to send answers"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:145
+#: admin/trait-ai-chat-bedrock-admin-channels.php:149
 msgid "Welcome, when a player opens the chat"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:146
+#: admin/trait-ai-chat-bedrock-admin-channels.php:150
 msgid "Set answers, one per line as: keywords = answer"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:146
+#: admin/trait-ai-chat-bedrock-admin-channels.php:150
 msgid "recharge, payment = Payments are handled by WeChat Pay. Send your order number if one is missing."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:147
+#: admin/trait-ai-chat-bedrock-admin-channels.php:151
 msgid "Reply when no answer matches (optional)"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:149
+#: admin/trait-ai-chat-bedrock-admin-channels.php:153
 msgid "Remove the saved token, key and AppSecret"
 msgstr ""
 
 #. translators: 1: player-days, 2: chats opened, 3: messages, 4: share of questions answered, 5: answers sent.
-#: admin/trait-ai-chat-bedrock-admin-channels.php:157
+#: admin/trait-ai-chat-bedrock-admin-channels.php:161
 #, php-format
 msgid "Last 30 days: %1$s players (counted once a day), %2$s chats opened, %3$s messages, %4$s of questions matched a set answer, %5$s answers sent."
 msgstr ""
 
 #. translators: %s: scenes, the sessionFrom the game passed, with counts.
-#: admin/trait-ai-chat-bedrock-admin-channels.php:164
+#: admin/trait-ai-chat-bedrock-admin-channels.php:168
 #, php-format
 msgid "Opened most from: %s."
 msgstr ""
 
 #. translators: 1: subscription template ID, 2: share of players who accepted, 3: how many were asked.
-#: admin/trait-ai-chat-bedrock-admin-channels.php:171
+#: admin/trait-ai-chat-bedrock-admin-channels.php:175
 #, php-format
 msgid "Template %1$s: %2$s accepted of %3$s asked."
 msgstr ""
 
 #. translators: %s: the address WeChat sends the game's messages to.
-#: admin/trait-ai-chat-bedrock-admin-channels.php:177
+#: admin/trait-ai-chat-bedrock-admin-channels.php:181
 #, php-format
 msgid "Off by default. In the mini game's console, under Development Management > Development Settings > Message Push, enter the URL %s, the token and, for safe mode, the EncodingAESKey; JSON and XML both work. The game opens the chat with wx.openCustomerServiceConversation, and the sessionFrom it passes is counted as the scene."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:178
+#: admin/trait-ai-chat-bedrock-admin-channels.php:183
 msgid "Questions are answered with the set answers only, matched by keyword; nothing is generated, as a mini game needs an AI category and an algorithm filing to answer with AI. Answers are sent through WeChat's customer service API, which needs the AppSecret and this server's address in the game's IP whitelist, and allows a few answers within 48 hours of a player's message. Only daily totals are kept, with players counted under a code that changes every day; questions go to the conversation log when it is on. What players do in the game itself is reported by the game with wx.reportEvent and shown in WeChat's own analysis."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:185
+#: admin/trait-ai-chat-bedrock-admin-channels.php:191
 msgid "Keep a record of where each post is published on Bilibili, YouTube or Xiaohongshu"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:186
+#: admin/trait-ai-chat-bedrock-admin-channels.php:192
 msgid "Link to the public ones under each post"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:188
+#: admin/trait-ai-chat-bedrock-admin-channels.php:194
 msgid "Off by default. Agents read a post's publishing package and record what they published, with the item's ID, address, account, language and status, through the abilities and the MCP server, using the WordPress permissions of their account; a new edition can be marked as replacing the old one. The record shows in the Published elsewhere box when editing a post. The plugin never signs in to Bilibili or Xiaohongshu: neither has a publishing API for individual creators, so publishing there stays with the agent or person using their creator tools."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:199
+#: admin/trait-ai-chat-bedrock-admin-channels.php:205
 msgid "The YouTube channel is connected."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:200
+#: admin/trait-ai-chat-bedrock-admin-channels.php:206
 msgid "The YouTube channel is disconnected, and the site's access was revoked at Google."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:201
+#: admin/trait-ai-chat-bedrock-admin-channels.php:207
 msgid "Save the OAuth client ID and secret first."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:202
+#: admin/trait-ai-chat-bedrock-admin-channels.php:208
 msgid "The sign-in did not come back from the request this site made, so it was ignored. Try again."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:203
+#: admin/trait-ai-chat-bedrock-admin-channels.php:209
 #: includes/class-ai-chat-bedrock-youtube.php:328
 msgid "Google did not grant access to the channel."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:204
+#: admin/trait-ai-chat-bedrock-admin-channels.php:210
 msgid "Google did not return a lasting token. Check the client secret and the redirect URI, then try again."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:205
+#: admin/trait-ai-chat-bedrock-admin-channels.php:211
 msgid "The Google account has no YouTube channel."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:211
+#: admin/trait-ai-chat-bedrock-admin-channels.php:217
 msgid "OAuth client ID"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:211
+#: admin/trait-ai-chat-bedrock-admin-channels.php:217
 msgid "Client ID from Google Cloud"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:212
+#: admin/trait-ai-chat-bedrock-admin-channels.php:218
 msgid "OAuth client secret"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:213
+#: admin/trait-ai-chat-bedrock-admin-channels.php:219
 msgid "Uploads a day"
 msgstr ""
 
 #. translators: %s: YouTube channel name.
-#: admin/trait-ai-chat-bedrock-admin-channels.php:217
+#: admin/trait-ai-chat-bedrock-admin-channels.php:223
 #, php-format
 msgid "Connected to the channel %s."
 msgstr ""
 
 #. translators: %s: YouTube channel name.
-#: admin/trait-ai-chat-bedrock-admin-channels.php:217
+#: admin/trait-ai-chat-bedrock-admin-channels.php:223
 msgid "Disconnect"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:219
+#: admin/trait-ai-chat-bedrock-admin-channels.php:225
 msgid "Connect a YouTube channel"
 msgstr ""
 
 #. translators: %s: redirect URI to register in Google Cloud.
-#: admin/trait-ai-chat-bedrock-admin-channels.php:222
+#: admin/trait-ai-chat-bedrock-admin-channels.php:228
 #, php-format
 msgid "Off until a channel is connected. In Google Cloud, enable the YouTube Data API v3, create an OAuth client of type Web application with the authorized redirect URI %s, and enter its ID and secret here; then connect the channel. Uploads run in the background from the Published elsewhere box of a post, with the publishing record on, and are added to it. Google keeps videos uploaded from a project that has not passed YouTube's audit private, and each upload uses 1,600 of the 10,000 quota units a project gets a day."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:228
+#: admin/trait-ai-chat-bedrock-admin-channels.php:234
 msgid "Embed Bilibili videos from their links, as WordPress does for YouTube"
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:229
+#: admin/trait-ai-chat-bedrock-admin-channels.php:235
 msgid "Off by default. A Bilibili video address on a line of its own, or in an Embed block, shows the Bilibili player. The player is loaded from Bilibili, which can then set its own cookies, so add the suggested text from Settings > Privacy to your privacy policy before turning it on."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:254
+#: admin/trait-ai-chat-bedrock-admin-channels.php:260
 msgid "That does not look like an OAuth client secret, so it was not saved."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:257
+#: admin/trait-ai-chat-bedrock-admin-channels.php:263
 msgid "That is not an OAuth client ID from Google Cloud, so it was not saved."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:277
+#: admin/trait-ai-chat-bedrock-admin-channels.php:283
 msgid "The WeChat token must be 3 to 32 letters and digits, as in the Official Accounts Platform; it was not saved."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:278
-#: admin/trait-ai-chat-bedrock-admin-channels.php:333
+#: admin/trait-ai-chat-bedrock-admin-channels.php:284
+#: admin/trait-ai-chat-bedrock-admin-channels.php:339
 msgid "The EncodingAESKey must be 43 letters and digits; it was not saved."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:317
-#: admin/trait-ai-chat-bedrock-admin-channels.php:334
+#: admin/trait-ai-chat-bedrock-admin-channels.php:323
+#: admin/trait-ai-chat-bedrock-admin-channels.php:340
 msgid "The AppSecret must be 32 letters and digits; it was not saved."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:329
+#: admin/trait-ai-chat-bedrock-admin-channels.php:335
 msgid "The mini game AppID starts with wx and has 18 characters; it was not saved."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:332
+#: admin/trait-ai-chat-bedrock-admin-channels.php:338
 msgid "The mini game token must be 3 to 32 letters and digits; it was not saved."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:360
+#: admin/trait-ai-chat-bedrock-admin-channels.php:366
 msgid "The mini game has its own AppID, not the Official Account's; it was not saved."
 msgstr ""
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:375
+#: admin/trait-ai-chat-bedrock-admin-channels.php:381
 msgid "The mini game uses the same token or EncodingAESKey as the Official Account. It was saved; choose safe mode in both, so each message is checked against its own AppID, and consider separate values."
 msgstr ""
 
