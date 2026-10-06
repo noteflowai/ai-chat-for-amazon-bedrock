@@ -771,7 +771,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			}
 		}
 		foreach ( array( 'url', 'down_url' ) as $field ) {
-			if ( isset( $item[ $field ] ) && preg_match( '/(?:[?&]vid=|\b)((?:wxv|apiv)_[0-9A-Za-z_]{6,40})/', rawurldecode( (string) $item[ $field ] ), $found ) ) {
+			if ( isset( $item[ $field ] ) && preg_match( '/(?:[?&]vid=|\b)(wxv_[0-9A-Za-z_]{6,40})/', rawurldecode( (string) $item[ $field ] ), $found ) ) {
 				return $found[1];
 			}
 		}
@@ -863,8 +863,10 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 
 	public static function clean_video( $value ) {
 		$value = trim( (string) $value );
-		// wxv_ for a video uploaded in the Official Accounts Platform, apiv_ for one sent to the API.
-		return preg_match( '/^(?:wxv|apiv)_[0-9A-Za-z_]{6,40}$/', $value ) ? $value : '';
+		// Only a wxv_ ID, which a video uploaded in the Official Accounts Platform gets, plays in an
+		// article. A video sent to the material API gets an apiv_ ID, which WeChat's player
+		// refuses with error -61 ("the video does not exist"), so that one is not taken.
+		return preg_match( '/^wxv_[0-9A-Za-z_]{6,40}$/', $value ) ? $value : '';
 	}
 
 	/**
