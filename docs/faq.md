@@ -100,7 +100,7 @@ Add the suggested text from Settings > Privacy to your privacy policy before tur
 
 ## Can it answer my WeChat Official Account?
 
-Yes, under Channels > WeChat Official Account, which is off by default. Followers who write to the account in WeChat get an answer from your pages, as visitors to the site do.
+Yes, under Settings > Channels > WeChat Official Account, which is off by default. Followers who write to the account in WeChat get an answer from your pages, as visitors to the site do.
 
 1. In the WeChat Official Accounts Platform, open Settings and Development > Basic Configuration and choose a token: 3 to 32 letters and digits. Use a long random one.
 2. Enter the token in the plugin, tick **Answer messages that followers send to the account** and save.
@@ -116,7 +116,7 @@ Every request must carry WeChat's signature for your token and be no more than 1
 
 It makes drafts. Under Settings > Channels > WeChat Official Account drafts, off by default, posts become articles in the account's draft box; you look at them and publish in the Official Accounts Platform. Since July 2025 WeChat lets only verified company accounts publish or send to all followers through its API, and a personal or unverified account can still make drafts, so the plugin stops there. That also leaves a person to see each article before followers do.
 
-1. Under Channels > WeChat Official Account, enter the AppID.
+1. Under Settings > Channels > WeChat Official Account, enter the AppID.
 2. In the WeChat Developers Platform, under Basic Information > Developer Key, enable the AppSecret and add the server's outgoing IP address to the IP whitelist. If the address is not there, the settings screen names the one WeChat saw.
 3. In the same tab, enter the AppSecret, tick **Send posts to the Official Account's draft box**, and choose the category of featured posts.
 
@@ -126,19 +126,19 @@ Posts reach the draft box three ways:
 
 - **From the editor.** The Published elsewhere box has **Send to the WeChat draft box**.
 - **By an agent.** The `create-wechat-draft` ability, also the MCP tool `create_wechat_draft`, makes one draft of up to eight posts in the order given. It needs permission to publish posts and to edit each one.
-- **On a schedule.** Every day at 9:00 or every week, the newest featured posts of the last 60 days that have a featured image and at least 600 characters a guest can read, and were not sent before, in Chinese when Polylang has it, are collected into one draft of up to eight articles (three by default), and the site is emailed to check and publish them.
+- **On a schedule.** Every day at 9:00 or every week, the newest featured posts of the last 60 days that have a featured image and at least 600 characters a guest can read, and were not sent before, in Chinese when Polylang has it, are collected into one draft of up to eight articles (three by default), and, with **Email the site when a scheduled draft is ready** on, the site is emailed to check and publish them.
 
 Each draft is noted in the publishing record of its posts, as planned with the draft's media ID, so a scheduled run never sends a post twice; mark it public with the article's address once it is out.
 
 **Videos.** WeChat plays no video from another site in an article, and its draft API has no video type: an article is `news` or `newspic`, and a `<video>` tag is removed. A video or embedded player therefore becomes its poster and a line telling readers to watch it on the site from Read more. To show it in the article instead, upload it in the Official Accounts Platform (Content > Material library > Video) and insert it in the editor, or use a Channels (视频号) video or a Tencent Video link, as WeChat's staff advise: a video sent to the material API, which takes at most 10 MB, is never reviewed and cannot be placed in an article, even in the editor, and mass sending refuses it (48022). Such a copy, uploaded through the `ai-chat-bedrock/v1/wechat-video` route, serves only to reply to followers with a video message. A video uploaded in the Official Accounts Platform has a `wxv_` ID, which can be entered as the post's **WeChat video ID** to have WeChat's player placed on every update; that player code is the editor's own, not a documented API, so inserting the video in the editor is the dependable way.
 
-**Keeping drafts current.** **Send to the WeChat draft box again** replaces the post's article in the draft it is in, with `draft/update`, and deletes older copies of it, unless another post shares the draft; a draft already published or deleted is made anew. With **update drafts whose post changed** on, each scheduled run does the same for posts edited since they were sent, such as a lesson that gained a quiz, but leaves alone any draft updated in WeChat after the plugin sent it, read from WeChat's draft list: that draft holds its owner's edits, such as an inserted video, and the site is emailed once for each change of the post instead.
+**Keeping drafts current.** **Send to the WeChat draft box again** replaces the post's article in the draft it is in, with `draft/update`, and deletes older copies of it, unless another post shares the draft; a draft already published or deleted is made anew. With **update drafts whose post changed** on, each scheduled run (so a schedule must be chosen) does the same for posts edited since they were sent, such as a lesson that gained a quiz, but leaves alone any draft updated in WeChat after the plugin sent it, read from WeChat's draft list: that draft holds its owner's edits, such as an inserted video, and, with emails on, the site is told once for each change of the post. A draft no longer in the list was published or deleted and is not made again; its record says so. When WeChat cannot be asked, nothing is replaced and the reason shows on the settings screen.
 
-**A menu without a menu.** With message push on, WeChat turns off the menu set in its console, and an unverified account cannot set one through the API. Under Channels > WeChat Official Account, write a menu text instead: followers who send 菜单, 目录 or menu get it, new followers get it after the welcome, and 精选 or 最新 lists the five newest featured posts with their addresses. Neither calls the model or counts towards the hourly limit. The `ai_chat_bedrock_wechat_keywords` filter changes the words.
+**A menu without a menu.** With message push on, WeChat turns off the menu set in its console, and an unverified account cannot set one through the API. Under Settings > Channels > WeChat Official Account, write a menu text instead: followers who send 菜单, 目录, menu or メニュー get it, new followers get it after the welcome, and 精选, 最新, new, latest or 新着 lists the five newest featured posts with their addresses. Neither calls the model or counts towards the hourly limit. The `ai_chat_bedrock_wechat_keywords` filter changes the words.
 
 ## Can it handle my WeChat mini game's customer service?
 
-Yes, under Channels > WeChat mini game, which is off by default. A mini game sends what happens in its customer service chat to one address: a player opening the chat, from which part of the game, their messages, and their answers to subscription message prompts. The plugin takes them, answers what it can and keeps daily counts.
+Yes, under Settings > Channels > WeChat mini game, which is off by default. A mini game sends what happens in its customer service chat to one address: a player opening the chat, from which part of the game, their messages, and their answers to subscription message prompts. The plugin takes them, answers what it can and keeps daily counts.
 
 1. Enter the game's AppID, a token of 3 to 32 letters and digits and, for safe mode, an EncodingAESKey. To send answers, also enter the AppSecret, which is stored encrypted and never exported.
 2. In the mini game's console, under Development Management > Development Settings > Message Push, enter the URL the setting shows, `https://your-site/wp-json/ai-chat-bedrock/v1/wechat-game`, the same token and key, safe mode and either JSON or XML. WeChat checks the address at once.

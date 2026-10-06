@@ -116,6 +116,21 @@ class AI_Chat_Bedrock_YouTube {
 	 *
 	 * @return bool
 	 */
+	/**
+	 * Who may upload to the site's channel: editors and administrators by default, as an upload
+	 * speaks for the site and uses its share of Google's daily quota.
+	 *
+	 * @return string Capability.
+	 */
+	public static function capability() {
+		/**
+		 * The capability needed to upload videos to the connected YouTube channel.
+		 *
+		 * @param string $capability Capability.
+		 */
+		return (string) apply_filters( 'ai_chat_bedrock_youtube_capability', 'publish_pages' );
+	}
+
 	public static function ready() {
 		return class_exists( 'AI_Chat_Bedrock_Distribution' ) && AI_Chat_Bedrock_Distribution::enabled() && null !== self::channel();
 	}
@@ -200,7 +215,6 @@ class AI_Chat_Bedrock_YouTube {
 		if ( is_wp_error( $tokens ) || empty( $tokens['refresh_token'] ) ) {
 			self::back( 'youtube_token' );
 		}
-		self::cache_access_token( $tokens );
 		$channel = self::api(
 			'GET',
 			'/channels',
@@ -215,6 +229,8 @@ class AI_Chat_Bedrock_YouTube {
 		if ( null === $item ) {
 			self::back( 'youtube_channel' );
 		}
+		// Kept only now, so a reconnection that fails leaves no token of the other account.
+		self::cache_access_token( $tokens );
 		update_option(
 			self::OPTION,
 			array(
@@ -379,7 +395,7 @@ class AI_Chat_Bedrock_YouTube {
 	 */
 	public static function queue( $post_id, $input ) {
 		$post = get_post( absint( $post_id ) );
-		if ( ! $post instanceof WP_Post || ! current_user_can( 'edit_post', $post->ID ) || ! current_user_can( 'upload_files' ) ) {
+		if ( ! $post instanceof WP_Post || ! current_user_can( 'edit_post', $post->ID ) || ! current_user_can( 'upload_files' ) || ! current_user_can( self::capability() ) ) {
 			return new WP_Error( 'aicfab_youtube_forbidden', __( 'You cannot upload a video for this post.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		if ( ! self::ready() ) {
@@ -859,7 +875,7 @@ class AI_Chat_Bedrock_YouTube {
 	 * @param WP_Post $post Post.
 	 */
 	public static function render_box_section( $post ) {
-		if ( ! self::ready() || ! current_user_can( 'upload_files' ) ) {
+		if ( ! self::ready() || ! current_user_can( 'upload_files' ) || ! current_user_can( self::capability() ) ) {
 			return;
 		}
 		$job = self::job( $post->ID );
@@ -931,7 +947,7 @@ class AI_Chat_Bedrock_YouTube {
 	 */
 	public static function add_page( $menu ) {
 		if ( self::ready() ) {
-			add_submenu_page( $menu, __( 'YouTube uploads', 'ai-chat-for-amazon-bedrock' ), __( 'YouTube uploads', 'ai-chat-for-amazon-bedrock' ), 'upload_files', 'ai-chat-for-amazon-bedrock-youtube', array( __CLASS__, 'render_page' ) );
+			add_submenu_page( $menu, __( 'YouTube uploads', 'ai-chat-for-amazon-bedrock' ), __( 'YouTube uploads', 'ai-chat-for-amazon-bedrock' ), self::capability(), 'ai-chat-for-amazon-bedrock-youtube', array( __CLASS__, 'render_page' ) );
 		}
 	}
 

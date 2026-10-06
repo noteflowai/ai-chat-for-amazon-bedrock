@@ -253,6 +253,10 @@ class AI_Chat_Bedrock_Abilities {
 		if ( '' === $prompt ) {
 			return new WP_Error( 'aicfab_missing_prompt', __( 'A prompt is required.', 'ai-chat-for-amazon-bedrock' ) );
 		}
+		// Each call is a model request: a few a minute for each user, under the daily limit.
+		if ( ! AI_Chat_Bedrock_Security::check_rate_limit( 'generate-text-' . get_current_user_id(), 10 ) ) {
+			return new WP_Error( 'aicfab_rate_limited', __( 'Too many requests. Please wait a moment.', 'ai-chat-for-amazon-bedrock' ) );
+		}
 
 		$prompt   = AI_Chat_Bedrock_Security::string_substr( $prompt, 0, self::MAX_TEXT );
 		$messages = array();

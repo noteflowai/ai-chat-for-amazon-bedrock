@@ -227,9 +227,10 @@ class AI_Chat_Bedrock_WeChat_Game {
 			return $denied;
 		}
 		$safe = 'aes' === strtolower( (string) $request->get_param( 'encrypt_type' ) );
-		// With the Official Account's token, only an encrypted message, which names its AppID,
-		// shows which of the two it was meant for.
-		if ( 'POST' === $method && ! $safe && AI_Chat_Bedrock_WeChat::token( $options ) === $token ) {
+		// With an EncodingAESKey set the game is in safe mode, and a plaintext message, whose
+		// signature does not cover it, is not WeChat's; with the Official Account's token, only an
+		// encrypted message, which names its AppID, shows which of the two it was meant for.
+		if ( 'POST' === $method && ! $safe && ( '' !== self::aes_key( $options ) || AI_Chat_Bedrock_WeChat::token( $options ) === $token ) ) {
 			self::note_contact( 'plaintext' );
 			return $denied;
 		}
@@ -240,7 +241,7 @@ class AI_Chat_Bedrock_WeChat_Game {
 		} else {
 			$valid = AI_Chat_Bedrock_WeChat::signature_matches( (string) $request->get_param( 'signature' ), array( $token, $timestamp, $nonce ) );
 		}
-		if ( $valid && 'POST' === $method && ! AI_Chat_Bedrock_WeChat_API::fresh( self::REST_ROUTE, (string) $request->get_param( $safe ? 'msg_signature' : 'signature' ), $timestamp, $nonce, (string) $request->get_body(), self::MAX_AGE ) ) {
+		if ( $valid && 'POST' === $method && ! AI_Chat_Bedrock_WeChat_API::fresh( self::REST_ROUTE, $timestamp, $nonce, (string) $request->get_body(), self::MAX_AGE ) ) {
 			self::note_contact( 'replay' );
 			return $denied;
 		}
@@ -648,7 +649,7 @@ class AI_Chat_Bedrock_WeChat_Game {
 				'off'       => __( 'the address was called while the game was off, so nothing was taken', 'ai-chat-for-amazon-bedrock' ),
 				'stale'     => __( 'a request came without a current timestamp, so it was refused', 'ai-chat-for-amazon-bedrock' ),
 				'signature' => __( 'the signature did not match the token, so the request was refused; enter the same token here as in WeChat', 'ai-chat-for-amazon-bedrock' ),
-				'plaintext' => __( 'a plaintext message was refused, because the mini game shares the Official Account\'s token; choose safe mode for the mini game', 'ai-chat-for-amazon-bedrock' ),
+				'plaintext' => __( 'a plaintext message was refused, because the mini game is set for safe mode (it has an EncodingAESKey, or shares the Official Account\'s token); choose safe mode in WeChat', 'ai-chat-for-amazon-bedrock' ),
 				'replay'    => __( 'a signed address was used again with a different message, so it was refused', 'ai-chat-for-amazon-bedrock' ),
 				'checked'   => __( 'WeChat checked the address, and the signature matched', 'ai-chat-for-amazon-bedrock' ),
 				'message'   => __( 'a signed message arrived from WeChat', 'ai-chat-for-amazon-bedrock' ),

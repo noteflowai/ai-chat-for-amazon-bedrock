@@ -188,6 +188,21 @@ function wp_safe_remote_post( $url, $args ) {
 	if ( ! empty( $GLOBALS['aicfab_replies'][ $path ] ) ) {
 		return array( 'body' => array_shift( $GLOBALS['aicfab_replies'][ $path ] ) );
 	}
+	// By default WeChat lists every draft the plugin sent, as last changed when it was sent.
+	if ( 'draft/batchget' === $path ) {
+		$items = array();
+		foreach ( $GLOBALS['aicfab_meta'] as $meta ) {
+			foreach ( isset( $meta['_aicfab_distribution'] ) ? $meta['_aicfab_distribution'] : array() as $entry ) {
+				if ( 'wechat' === $entry['platform'] && 'planned' === $entry['status'] ) {
+					$items[ $entry['item_id'] ] = array(
+						'media_id'    => $entry['item_id'],
+						'update_time' => $entry['updated_at'],
+					);
+				}
+			}
+		}
+		return array( 'body' => json_encode( array( 'total_count' => count( $items ), 'item_count' => count( $items ), 'item' => array_values( $items ) ) ) );
+	}
 	$n       = count( $GLOBALS['aicfab_http'] );
 	$replies = array(
 		'stable_token'          => '{"access_token":"AT","expires_in":7200}',
@@ -196,7 +211,6 @@ function wp_safe_remote_post( $url, $args ) {
 		'draft/add'             => '{"media_id":"DRAFT_MEDIA_ID_' . $n . '"}',
 		'draft/update'          => '{"errcode":0,"errmsg":"ok"}',
 		'draft/delete'          => '{"errcode":0,"errmsg":"ok"}',
-		'draft/batchget'        => '{"total_count":0,"item_count":0,"item":[]}',
 		'material/batchget_material' => '{"total_count":0,"item_count":0,"item":[]}',
 	);
 	return array( 'body' => $replies[ $path ] );
@@ -637,57 +651,25 @@ if ( PHP_VERSION_ID < 80100 ) {
 	$aicfab_cache->setAccessible( true );
 }
 $aicfab_cache->setValue( null, null );
-check_drafts( true === AI_Chat_Bedrock_WeChat_Drafts::edited_in_wechat( $aicfab_sent, $GLOBALS['aicfab_options'] ), 'When WeChat cannot say, the draft is treated as edited, so nothing is replaced on a guess.' );
+check_drafts( 'unknown' === AI_Chat_Bedrock_WeChat_Drafts::draft_state( $aicfab_sent, $GLOBALS['aicfab_options'] ) && true === AI_Chat_Bedrock_WeChat_Drafts::edited_in_wechat( $aicfab_sent, $GLOBALS['aicfab_options'] ), 'When WeChat cannot say, nothing is replaced on a guess.' );
 $aicfab_cache->setValue( null, array( $aicfab_sent['media_id'] => $aicfab_sent['updated_at'] + 30 ) );
 check_drafts( false === AI_Chat_Bedrock_WeChat_Drafts::edited_in_wechat( $aicfab_sent, $GLOBALS['aicfab_options'] ), 'The update the plugin itself made is not taken for an edit.' );
+
+// WeChat unreachable on a run: nothing replaced, nobody told of edits that may not exist.
+$GLOBALS['aicfab_posts'][2]->post_modified_gmt = gmdate( 'Y-m-d H:i:s', $aicfab_sent['updated_at'] + 900 );
+$GLOBALS['aicfab_replies']['draft/batchget']   = array( '{"errcode":40164,"errmsg":"invalid ip 198.51.100.9, not in whitelist"}' );
+$GLOBALS['aicfab_http']                        = array();
+$GLOBALS['aicfab_mail']                        = array();
+AI_Chat_Bedrock_WeChat_Drafts::run();
+check_drafts( array() === array_filter( $GLOBALS['aicfab_http'], function ( $c ) { return 'draft/update' === $c['path'] || 'draft/add' === $c['path']; } ) && array() === $GLOBALS['aicfab_mail'] && false !== strpos( AI_Chat_Bedrock_WeChat_Drafts::status_summary(), '198.51.100.9' ), 'When WeChat cannot be asked, nothing is replaced, no edit is claimed, and the reason is shown.' );
+
+// The draft was published (or deleted) in WeChat: it is not made again when the post changes.
+$GLOBALS['aicfab_replies']['draft/batchget'] = array( '{"total_count":0,"item_count":0,"item":[]}' );
+$GLOBALS['aicfab_http']                      = array();
+AI_Chat_Bedrock_WeChat_Drafts::run();
+$aicfab_after = AI_Chat_Bedrock_Distribution::entries( 2 );
+check_drafts( array() === array_filter( $GLOBALS['aicfab_http'], function ( $c ) { return 'draft/update' === $c['path'] || 'draft/add' === $c['path']; } ) && 'submitted' === $aicfab_after[0]['status'] && null === AI_Chat_Bedrock_WeChat_Drafts::draft_of( 2 ) && AI_Chat_Bedrock_WeChat_Drafts::sent( 2 ), 'A draft no longer in the draft box, published or deleted, is not made again; its record says so.' );
 drafts_settings();
-drafts_reset();
-
-// --- A lesson's video, made small, in the material library --------------------------------
-
-drafts_reset();
-$aicfab_small = $aicfab_uploads . '/2026/10/lesson-0-1-wechat.mp4';
-$aicfab_large = $aicfab_uploads . '/2026/10/lesson-big.mp4';
-file_put_contents( $aicfab_small, str_repeat( 'v', 4000 ) );
-$aicfab_fh = fopen( $aicfab_large, 'w' );
-ftruncate( $aicfab_fh, AI_Chat_Bedrock_WeChat_Drafts::VIDEO_BYTES + 1 );
-fclose( $aicfab_fh );
-$GLOBALS['aicfab_attachments'] = array(
-	50 => array( $aicfab_small, 'video/mp4' ),
-	51 => array( $aicfab_large, 'video/mp4' ),
-	52 => array( $aicfab_uploads . '/2026/10/arm.png', 'image/png' ),
-);
-$GLOBALS['aicfab_posts'][6] = new WP_Post( array( 'ID' => 6, 'post_title' => '物理AI实验室 0.5：人形机器人热潮，把 Tesla 季度报告的一段话拆到演示、样机、量产与上岗', 'post_excerpt' => '人形机器人到底走到哪一步了？', 'thumbnail' => 7, 'post_content' => '<video src="https://cdn.test/a.mp4" poster=""></video><p>Text</p>' ) );
-$material = AI_Chat_Bedrock_WeChat_Drafts::upload_video( 6, 50 );
-$call     = end( $GLOBALS['aicfab_http'] );
-check_drafts( 'material/add_material' === $call['path'] && false !== strpos( $call['url'], 'type=video' ) && false !== strpos( $call['body'], 'name="media"; filename="video.mp4"' ) && false !== strpos( $call['body'], "Content-Type: video/mp4" ), 'The video goes to the material API as an MP4.' );
-check_drafts( false !== strpos( $call['body'], 'name="description"' ) && false !== strpos( $call['body'], '"title":"物理AI实验室 0.5：人形机器人热潮"' ) && false !== strpos( $call['body'], '"introduction":"人形机器人到底走到哪一步了？"' ), 'With the title and introduction WeChat asks for.' );
-check_drafts( is_array( $material ) && 0 === strpos( $material['media_id'], 'COVER_MEDIA_' ) && $material === get_post_meta( 6, AI_Chat_Bedrock_WeChat_Drafts::MATERIAL_META, true ), 'Its media_id is kept with the post.' );
-check_drafts( 'aicfab_wechat_video_file' === AI_Chat_Bedrock_WeChat_Drafts::upload_video( 6, 51 )->get_error_code() && 'aicfab_wechat_video_file' === AI_Chat_Bedrock_WeChat_Drafts::upload_video( 6, 52 )->get_error_code(), 'A video over 10 MB, or a file that is not an MP4, is refused before WeChat is asked.' );
-$html = AI_Chat_Bedrock_WeChat_Drafts::content( $GLOBALS['aicfab_posts'][6], array( 'app_id' => AICFAB_APP_ID, 'secret' => AICFAB_SECRET, 'cache' => 'aicfab_wechat_access' ) );
-check_drafts( false === strpos( html_entity_decode( $html, ENT_QUOTES ), 'material library as' ) && false !== strpos( html_entity_decode( $html, ENT_QUOTES ), 'Watch this lesson\'s video on the site' ) && false === strpos( $html, 'Insert it here' ), 'The draft does not point to the API-uploaded copy, which WeChat never reviews for articles, but asks for the video to be uploaded in its platform.' );
-$drafts = new AI_Chat_Bedrock_WeChat_Drafts();
-$GLOBALS['aicfab_caps']['upload_files'] = true;
-check_drafts( $drafts->can_upload_video( new WP_REST_Request_Stub( array( 'post' => 6, 'attachment' => 50 ) ) ) && ! $drafts->can_upload_video( new WP_REST_Request_Stub( array( 'post' => 99, 'attachment' => 50 ) ) ), 'Uploading needs permission to edit the post.' );
-$GLOBALS['aicfab_caps']['upload_files'] = false;
-check_drafts( ! $drafts->can_upload_video( new WP_REST_Request_Stub( array( 'post' => 6, 'attachment' => 50 ) ) ), 'And to upload files.' );
-unlink( $aicfab_small );
-unlink( $aicfab_large );
-drafts_reset();
-
-// --- Video IDs from the material list --------------------------------------------------------
-
-drafts_reset();
-check_drafts( 'wxv_1234567890123' === AI_Chat_Bedrock_WeChat_Drafts::vid_of( array( 'vid' => 'wxv_1234567890123' ) ) && 'wxv_9876543210987' === AI_Chat_Bedrock_WeChat_Drafts::vid_of( array( 'url' => 'https://mp.weixin.qq.com/mp/readtemplate?t=pages/video_player_tmpl&action=mpvideo&vid=wxv_9876543210987' ) ) && '' === AI_Chat_Bedrock_WeChat_Drafts::vid_of( array( 'url' => 'https://mp.weixin.qq.com/some/video' ) ), 'A video ID is read from its field, or from the address that carries it.' );
-check_drafts( '' === AI_Chat_Bedrock_WeChat_Drafts::vid_of( array( 'vid' => 'apiv_1234567890123456789' ) ) && '' === AI_Chat_Bedrock_WeChat_Drafts::clean_video( 'apiv_1234567890123456789' ), 'An apiv_ ID, which a video sent to the API gets, is not taken: WeChat\'s article player refuses it (-61).' );
-$GLOBALS['aicfab_meta'][2][ AI_Chat_Bedrock_WeChat_Drafts::MATERIAL_META ] = array( 'media_id' => 'MAT_TWO', 'title' => 'Arms' );
-$GLOBALS['aicfab_meta'][3][ AI_Chat_Bedrock_WeChat_Drafts::MATERIAL_META ] = array( 'media_id' => 'MAT_THREE', 'title' => 'No pictures' );
-$GLOBALS['aicfab_meta'][4][ AI_Chat_Bedrock_WeChat_Drafts::MATERIAL_META ] = array( 'media_id' => 'MAT_FOUR', 'title' => 'Hand-set' );
-$GLOBALS['aicfab_meta'][4][ AI_Chat_Bedrock_WeChat_Drafts::VIDEO_META ]    = 'wxv_0000000000004';
-$GLOBALS['aicfab_replies']['material/batchget_material'] = array( '{"total_count":3,"item_count":3,"item":[{"media_id":"MAT_TWO","name":"Arms","update_time":1,"url":"https://mp.weixin.qq.com/mp/readtemplate?t=pages/video_player_tmpl&vid=wxv_2222222222222"},{"media_id":"MAT_THREE","name":"No pictures","update_time":1,"url":""},{"media_id":"MAT_FOUR","name":"Hand-set","vid":"wxv_4444444444444"}]}' );
-$ids = AI_Chat_Bedrock_WeChat_Drafts::find_video_ids();
-check_drafts( array( 2 => 'wxv_2222222222222' ) === $ids['found'] && array( 3 ) === $ids['waiting'] && 'wxv_2222222222222' === AI_Chat_Bedrock_WeChat_Drafts::video_id( 2 ), 'A post whose uploaded video has an ID gets it; one without waits.' );
-check_drafts( 'wxv_0000000000004' === AI_Chat_Bedrock_WeChat_Drafts::video_id( 4 ) && array( 'media_id', 'name', 'update_time', 'url', 'vid' ) === $ids['fields'], 'A video ID entered by hand is kept, and the fields WeChat gave are reported.' );
 drafts_reset();
 
 // --- When WeChat refuses --------------------------------------------------------------------

@@ -194,7 +194,6 @@ function game_settings( $extra = array() ) {
 			'wxgame_enabled'    => true,
 			'wxgame_app_id'     => AICFAB_APP_ID,
 			'wxgame_token'      => AI_Chat_Bedrock_Security::encrypt_secret( AICFAB_TOKEN ),
-			'wxgame_aes_key'    => AI_Chat_Bedrock_Security::encrypt_secret( AICFAB_AES_KEY ),
 			'wxgame_app_secret' => AI_Chat_Bedrock_Security::encrypt_secret( AICFAB_SECRET ),
 			'wxgame_welcome'    => 'Welcome! Ask about levels or payments.',
 			'wxgame_answers'    => "充值, 支付 | pay = 充值由微信支付处理，发送订单号查询。\nlevel 3 = Level 3 opens after the forest boss.",
@@ -349,6 +348,9 @@ check_game( array( 'xpay_goods_deliver_notify' => 1 ) === game_today()['events']
 // --- Safe mode ------------------------------------------------------------------------------
 
 game_reset();
+game_settings( array( 'wxgame_aes_key' => AI_Chat_Bedrock_Security::encrypt_secret( AICFAB_AES_KEY ) ) );
+$downgrade = game_signed( 'POST', game_json( array( 'MsgType' => 'text', 'Content' => 'pay', 'MsgId' => 9099 ) ) );
+check_game( 403 === $downgrade->get_status() && 'plaintext' === $GLOBALS['aicfab_store']['aicfab_wxgame_contact']['result'] && array() === $GLOBALS['aicfab_http'], 'With an EncodingAESKey set, a plaintext message, whose signature does not cover it, is refused.' );
 $inner     = game_json( array( 'MsgType' => 'text', 'Content' => 'pay', 'MsgId' => 9100 ) );
 $encrypted = AI_Chat_Bedrock_WeChat::encrypt( $inner, AICFAB_AES_KEY, AICFAB_APP_ID );
 $timestamp = (string) time();
@@ -365,6 +367,7 @@ check_game( 403 === $refused->get_status() && 1 === count( game_sent() ), 'A mes
 // --- A signed address used again ----------------------------------------------------------
 
 game_reset();
+game_settings();
 $aicfab_ts    = (string) time();
 $aicfab_parts = array( AICFAB_TOKEN, $aicfab_ts, 'nreplay' );
 sort( $aicfab_parts, SORT_STRING );
@@ -379,7 +382,7 @@ check_game( AI_Chat_Bedrock_WeChat_Game::SEEN_TTL >= AI_Chat_Bedrock_WeChat_Game
 // --- Sharing the Official Account's token ---------------------------------------------------
 
 game_reset();
-game_settings( array( 'wechat_token' => AI_Chat_Bedrock_Security::encrypt_secret( AICFAB_TOKEN ) ) );
+game_settings( array( 'wechat_token' => AI_Chat_Bedrock_Security::encrypt_secret( AICFAB_TOKEN ), 'wxgame_aes_key' => AI_Chat_Bedrock_Security::encrypt_secret( AICFAB_AES_KEY ) ) );
 $plain = game_signed( 'POST', game_json( array( 'MsgType' => 'text', 'Content' => 'pay', 'MsgId' => 9150 ) ) );
 check_game( 403 === $plain->get_status() && 'plaintext' === $GLOBALS['aicfab_store']['aicfab_wxgame_contact']['result'] && array() === $GLOBALS['aicfab_http'], 'With the Official Account\'s token, a plaintext message is refused, as it cannot show which account it is for.' );
 check_game( '7788' === game_signed( 'GET', '', array( 'echostr' => '7788' ) )->get_data(), 'WeChat can still check the address.' );

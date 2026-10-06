@@ -542,6 +542,8 @@ check_wx( '<xml>hello</xml>' === AI_Chat_Bedrock_WeChat::decrypt( $round, AICFAB
 
 wx_reset();
 wx_settings( array( 'wechat_aes_key' => AI_Chat_Bedrock_Security::encrypt_secret( AICFAB_AES_KEY ), 'wechat_app_id' => AICFAB_APP_ID ) );
+$downgrade = wx_post( wx_message( 'Spend money as someone else', 6099 ) );
+check_wx( 403 === $downgrade->get_status() && 'plaintext' === $GLOBALS['aicfab_store']['aicfab_wechat_contact']['result'], 'With an EncodingAESKey set, a plaintext message, whose signature does not cover it, is refused.' );
 $timestamp = (string) time();
 $inner     = AI_Chat_Bedrock_WeChat::encrypt( wx_message( 'Do you deliver on Sundays?', 6001 ), AICFAB_AES_KEY, AICFAB_APP_ID );
 $parts     = array( AICFAB_TOKEN, $timestamp, 'n6001', $inner );

@@ -20,7 +20,7 @@ $GLOBALS['aicfab_meta']       = array();
 $GLOBALS['aicfab_requests']   = array();
 $GLOBALS['aicfab_responses']  = array();
 $GLOBALS['aicfab_cron']       = array();
-$GLOBALS['aicfab_can']        = array( 'manage_options', 'upload_files', 'edit_post:7', 'edit_post:41', 'edit_post:42' );
+$GLOBALS['aicfab_can']        = array( 'manage_options', 'upload_files', 'publish_pages', 'edit_post:7', 'edit_post:41', 'edit_post:42' );
 $GLOBALS['aicfab_redirect']   = '';
 $GLOBALS['aicfab_records']    = array();
 
@@ -52,6 +52,9 @@ class WP_Post {
 	}
 }
 class AICFAB_Redirect extends Exception {}
+function apply_filters( $hook, $value ) {
+	return $value;
+}
 function is_wp_error( $value ) {
 	return $value instanceof WP_Error;
 }
@@ -303,6 +306,9 @@ $input                   = array( 'attachment' => 41, 'title' => '', 'descriptio
 
 check_yt( 'aicfab_youtube_file' === AI_Chat_Bedrock_YouTube::queue( 7, array( 'attachment' => 42 ) + $input )->get_error_code(), 'Only a video can be uploaded.' );
 check_yt( 'aicfab_youtube_forbidden' === AI_Chat_Bedrock_YouTube::queue( 7, array( 'attachment' => 43 ) + $input )->get_error_code(), 'A video the user may not edit, such as another author\'s, cannot be uploaded.' );
+$GLOBALS['aicfab_can'] = array_values( array_diff( $GLOBALS['aicfab_can'], array( 'publish_pages' ) ) );
+check_yt( 'aicfab_youtube_forbidden' === AI_Chat_Bedrock_YouTube::queue( 7, $input )->get_error_code(), 'An author, who may not publish pages, cannot upload to the site\'s channel.' );
+$GLOBALS['aicfab_can'][] = 'publish_pages';
 check_yt( 'aicfab_youtube_audience' === AI_Chat_Bedrock_YouTube::queue( 7, array( 'made_for_kids' => '' ) + $input )->get_error_code(), 'The audience must be declared.' );
 check_yt( 'aicfab_youtube_forbidden' === AI_Chat_Bedrock_YouTube::queue( 8, $input )->get_error_code(), 'A post the user cannot edit is refused.' );
 $job = AI_Chat_Bedrock_YouTube::queue( 7, $input );
