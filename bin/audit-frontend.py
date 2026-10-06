@@ -241,7 +241,7 @@ def main():
         for _ in range(40):
             time.sleep(1.0)
             grown = tab.ev("window.aicfabRoot().querySelectorAll('.ai-chat-bedrock-message.ai-message').length") or 0
-            settled = tab.ev("window.aicfabRoot().getAttribute('aria-busy')")
+            settled = tab.ev("(window.aicfabRoot().querySelector('.ai-chat-bedrock-messages') || window.aicfabRoot()).getAttribute('aria-busy')")
             if grown > (before or 0) and 'false' == settled:
                 break
 
@@ -259,7 +259,7 @@ def main():
             "(function(){var m=window.aicfabRoot().querySelectorAll('.ai-chat-bedrock-message.ai-message');"
             "var last=m[m.length-1];return last?last.textContent.trim().length:0;})()"
         ))
-        print("  aria-busy after finishing:", tab.ev("window.aicfabRoot().getAttribute('aria-busy')"))
+        print("  aria-busy after finishing:", tab.ev("(window.aicfabRoot().querySelector('.ai-chat-bedrock-messages') || window.aicfabRoot()).getAttribute('aria-busy')"))
 
         report = json.loads(tab.ev(NAMES_PROBE) or '{}')
         print("  controls after an answer:", report.get("total"))

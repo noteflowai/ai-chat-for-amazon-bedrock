@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-06T11:45:01+00:00\n"
+"POT-Creation-Date: 2026-10-06T12:20:26+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -416,12 +416,12 @@ msgid "MCP Settings"
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:194
-#: ai-chat-for-amazon-bedrock.php:56
+#: ai-chat-for-amazon-bedrock.php:59
 msgid "Settings"
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:195
-#: ai-chat-for-amazon-bedrock.php:57
+#: ai-chat-for-amazon-bedrock.php:60
 msgid "Diagnostics"
 msgstr ""
 
@@ -490,7 +490,7 @@ msgstr ""
 #: includes/class-ai-chat-bedrock-mcp-integration.php:393
 #: includes/class-ai-chat-bedrock-review-prompt.php:120
 #: includes/class-ai-chat-bedrock-stream.php:74
-#: public/class-ai-chat-bedrock-public.php:368
+#: public/class-ai-chat-bedrock-public.php:370
 msgid "Security check failed."
 msgstr ""
 
@@ -701,7 +701,7 @@ msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:1084
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:137
-#: public/partials/ai-chat-bedrock-public-display.php:60
+#: public/partials/ai-chat-bedrock-public-display.php:69
 msgid "Suggested questions"
 msgstr ""
 
@@ -1918,9 +1918,9 @@ msgstr ""
 #: admin/class-ai-chat-bedrock-admin.php:2489
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:36
 #: includes/class-ai-chat-bedrock-chat-history.php:381
-#: public/class-ai-chat-bedrock-public.php:289
-#: public/class-ai-chat-bedrock-public.php:310
-#: public/partials/ai-chat-bedrock-public-display.php:20
+#: public/class-ai-chat-bedrock-public.php:291
+#: public/class-ai-chat-bedrock-public.php:312
+#: public/partials/ai-chat-bedrock-public-display.php:21
 msgid "Chat"
 msgstr ""
 
@@ -2122,13 +2122,13 @@ msgstr ""
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:267
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:327
 #: includes/class-ai-chat-bedrock-metrics.php:1294
-#: public/class-ai-chat-bedrock-public.php:122
+#: public/class-ai-chat-bedrock-public.php:124
 msgid "Helpful"
 msgstr ""
 
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:268
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:327
-#: public/class-ai-chat-bedrock-public.php:123
+#: public/class-ai-chat-bedrock-public.php:125
 msgid "Not helpful"
 msgstr ""
 
@@ -2936,6 +2936,7 @@ msgstr ""
 #: admin/partials/ai-chat-bedrock-admin-leads.php:150
 #: includes/class-ai-chat-bedrock-leads.php:557
 #: includes/class-ai-chat-bedrock-leads.php:919
+#: public/partials/ai-chat-bedrock-public-display.php:54
 msgid "Conversation"
 msgstr ""
 
@@ -2946,7 +2947,7 @@ msgstr ""
 
 #: admin/partials/ai-chat-bedrock-admin-leads.php:152
 #: includes/class-ai-chat-bedrock-leads.php:578
-#: public/class-ai-chat-bedrock-public.php:142
+#: public/class-ai-chat-bedrock-public.php:144
 msgctxt "chat avatar for the assistant"
 msgid "AI"
 msgstr ""
@@ -3745,7 +3746,7 @@ msgid "Apply configuration"
 msgstr ""
 
 #: admin/partials/ai-chat-bedrock-admin-test.php:14
-#: public/class-ai-chat-bedrock-public.php:290
+#: public/class-ai-chat-bedrock-public.php:292
 msgid "Chat with AI"
 msgstr ""
 
@@ -3765,7 +3766,7 @@ msgstr ""
 msgid "Change the model settings"
 msgstr ""
 
-#: ai-chat-for-amazon-bedrock.php:72
+#: ai-chat-for-amazon-bedrock.php:75
 msgid "Support"
 msgstr ""
 
@@ -4227,7 +4228,7 @@ msgstr ""
 #: includes/class-ai-chat-bedrock-chat-history.php:284
 #: includes/class-ai-chat-bedrock-speech.php:438
 #: includes/class-ai-chat-bedrock-stream.php:80
-#: public/class-ai-chat-bedrock-public.php:382
+#: public/class-ai-chat-bedrock-public.php:384
 msgid "Please sign in to use the chat."
 msgstr ""
 
@@ -4730,7 +4731,7 @@ msgid "removed"
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-distribution.php:708
-#: public/class-ai-chat-bedrock-public.php:133
+#: public/class-ai-chat-bedrock-public.php:135
 msgid "failed"
 msgstr ""
 
@@ -4834,7 +4835,7 @@ msgstr ""
 
 #. translators: 1: input tokens, 2: output tokens.
 #: includes/class-ai-chat-bedrock-editor-assistant.php:248
-#: public/class-ai-chat-bedrock-public.php:140
+#: public/class-ai-chat-bedrock-public.php:142
 #, php-format
 msgid "Tokens: %1$d in / %2$d out"
 msgstr ""
@@ -5090,7 +5091,7 @@ msgid "Privacy policy"
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-leads.php:187
-#: public/class-ai-chat-bedrock-public.php:292
+#: public/class-ai-chat-bedrock-public.php:294
 msgid "Send"
 msgstr ""
 
@@ -5882,7 +5883,7 @@ msgid "Categories and tags"
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-ontology.php:246
-#: public/class-ai-chat-bedrock-public.php:145
+#: public/class-ai-chat-bedrock-public.php:147
 msgid "Products"
 msgstr ""
 
@@ -6352,7 +6353,7 @@ msgid "Listen"
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-speech.php:677
-#: public/partials/ai-chat-bedrock-public-display.php:77
+#: public/partials/ai-chat-bedrock-public-display.php:86
 msgid "Stop"
 msgstr ""
 
@@ -6381,8 +6382,8 @@ msgid "Streaming is disabled on this site."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-stream.php:91
-#: public/class-ai-chat-bedrock-public.php:351
-#: public/class-ai-chat-bedrock-public.php:390
+#: public/class-ai-chat-bedrock-public.php:353
+#: public/class-ai-chat-bedrock-public.php:392
 msgid "Too many requests. Please wait a minute and try again."
 msgstr ""
 
@@ -6840,7 +6841,7 @@ msgid "Generated text"
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-woocommerce.php:1319
-#: public/class-ai-chat-bedrock-public.php:118
+#: public/class-ai-chat-bedrock-public.php:120
 msgid "Copy"
 msgstr ""
 
@@ -6870,7 +6871,7 @@ msgid "Inserted. Update the product to save it."
 msgstr ""
 
 #: includes/class-ai-chat-bedrock-woocommerce.php:1351
-#: public/class-ai-chat-bedrock-public.php:119
+#: public/class-ai-chat-bedrock-public.php:121
 msgid "Copied"
 msgstr ""
 
@@ -7288,129 +7289,141 @@ msgstr ""
 msgid "Clear this conversation?"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:120
+#: public/class-ai-chat-bedrock-public.php:118
+msgid "You said:"
+msgstr ""
+
+#: public/class-ai-chat-bedrock-public.php:119
+msgid "Assistant:"
+msgstr ""
+
+#: public/class-ai-chat-bedrock-public.php:122
 msgid "Try again"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:121
+#: public/class-ai-chat-bedrock-public.php:123
 msgid "Was this helpful?"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:124
+#: public/class-ai-chat-bedrock-public.php:126
 msgid "Thanks for the feedback."
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:125
+#: public/class-ai-chat-bedrock-public.php:127
 msgid "Your message is too long."
 msgstr ""
 
 #. translators: %d: number of tools being used.
-#: public/class-ai-chat-bedrock-public.php:127
+#: public/class-ai-chat-bedrock-public.php:129
 #, php-format
 msgid "Using %d tool(s) to gather information…"
 msgstr ""
 
 #. translators: %s: comma separated list of tool names.
-#: public/class-ai-chat-bedrock-public.php:129
+#: public/class-ai-chat-bedrock-public.php:131
 #, php-format
 msgid "Using %s…"
 msgstr ""
 
 #. translators: %d: number of tool calls the agent made.
-#: public/class-ai-chat-bedrock-public.php:131
+#: public/class-ai-chat-bedrock-public.php:133
 #, php-format
 msgid "Agent steps (%d)"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:132
+#: public/class-ai-chat-bedrock-public.php:134
 msgid "succeeded"
 msgstr ""
 
 #. translators: %d: tool round number.
-#: public/class-ai-chat-bedrock-public.php:135
+#: public/class-ai-chat-bedrock-public.php:137
 #, php-format
 msgid "round %d"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:136
+#: public/class-ai-chat-bedrock-public.php:138
 msgid "The round limit was reached, so the answer was written with the information gathered so far."
 msgstr ""
 
 #. translators: %s: model identifier that answered instead of the main model.
-#: public/class-ai-chat-bedrock-public.php:138
+#: public/class-ai-chat-bedrock-public.php:140
 #, php-format
 msgid "The main model was unavailable, so %s answered."
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:141
+#: public/class-ai-chat-bedrock-public.php:143
 msgctxt "chat avatar for the visitor"
 msgid "You"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:143
+#: public/class-ai-chat-bedrock-public.php:145
 msgid "Sources"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:144
+#: public/class-ai-chat-bedrock-public.php:146
 msgid "(opens in a new tab)"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:146
+#: public/class-ai-chat-bedrock-public.php:148
 msgid "View product"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:147
+#: public/class-ai-chat-bedrock-public.php:149
 msgid "Add to cart"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:148
+#: public/class-ai-chat-bedrock-public.php:150
 msgid "Original price:"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:149
+#: public/class-ai-chat-bedrock-public.php:151
 msgid "Current price:"
 msgstr ""
 
 #. translators: %s: average rating, such as 4.5.
-#: public/class-ai-chat-bedrock-public.php:151
+#: public/class-ai-chat-bedrock-public.php:153
 #, php-format
 msgid "Rated %s out of 5"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:270
+#: public/class-ai-chat-bedrock-public.php:272
 msgid "The chat is not shown to visitors yet: Amazon Bedrock credentials or a model are still missing. Only administrators see this message."
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:272
+#: public/class-ai-chat-bedrock-public.php:274
 msgid "Finish the setup"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:291
+#: public/class-ai-chat-bedrock-public.php:293
 msgid "Type your message here…"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:293
+#: public/class-ai-chat-bedrock-public.php:295
 msgid "Clear chat"
 msgstr ""
 
-#: public/class-ai-chat-bedrock-public.php:348
-#: public/class-ai-chat-bedrock-public.php:363
+#: public/class-ai-chat-bedrock-public.php:350
+#: public/class-ai-chat-bedrock-public.php:365
 msgid "Method not allowed."
 msgstr ""
 
-#: public/partials/ai-chat-bedrock-public-display.php:55
+#: public/partials/ai-chat-bedrock-public-display.php:42
+msgid "Close chat"
+msgstr ""
+
+#: public/partials/ai-chat-bedrock-public-display.php:64
 msgid "Sign in to chat with the assistant."
 msgstr ""
 
-#: public/partials/ai-chat-bedrock-public-display.php:56
+#: public/partials/ai-chat-bedrock-public-display.php:65
 msgid "Sign in"
 msgstr ""
 
-#: public/partials/ai-chat-bedrock-public-display.php:68
+#: public/partials/ai-chat-bedrock-public-display.php:77
 msgid "Chat message"
 msgstr ""
 
-#: public/partials/ai-chat-bedrock-public-display.php:86
+#: public/partials/ai-chat-bedrock-public-display.php:95
 msgid "Powered by Amazon Bedrock"
 msgstr ""
 

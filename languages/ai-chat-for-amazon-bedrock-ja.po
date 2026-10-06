@@ -355,7 +355,7 @@ msgid "AI Chat Bedrock"
 msgstr "AI Chat Bedrock"
 
 #: admin/class-ai-chat-bedrock-admin.php:194
-#: ai-chat-for-amazon-bedrock.php:56
+#: ai-chat-for-amazon-bedrock.php:59
 msgid "Settings"
 msgstr "設定"
 
@@ -389,7 +389,7 @@ msgid "Answer checks"
 msgstr "回答チェック"
 
 #: admin/class-ai-chat-bedrock-admin.php:195
-#: ai-chat-for-amazon-bedrock.php:57
+#: ai-chat-for-amazon-bedrock.php:60
 msgid "Diagnostics"
 msgstr "診断"
 
@@ -430,7 +430,7 @@ msgstr "まず埋め込みモデルを選択してください。"
 #: includes/class-ai-chat-bedrock-mcp-integration.php:393
 #: includes/class-ai-chat-bedrock-review-prompt.php:120
 #: includes/class-ai-chat-bedrock-stream.php:74
-#: public/class-ai-chat-bedrock-public.php:368
+#: public/class-ai-chat-bedrock-public.php:370
 msgid "Security check failed."
 msgstr "セキュリティチェックに失敗しました。"
 
@@ -650,7 +650,7 @@ msgstr "ウェルカムメッセージ"
 
 #: admin/class-ai-chat-bedrock-admin.php:1084
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:137
-#: public/partials/ai-chat-bedrock-public-display.php:60
+#: public/partials/ai-chat-bedrock-public-display.php:69
 msgid "Suggested questions"
 msgstr "おすすめの質問"
 
@@ -1206,9 +1206,9 @@ msgstr "設定を保存しました。"
 #: admin/class-ai-chat-bedrock-admin.php:2489
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:36
 #: includes/class-ai-chat-bedrock-chat-history.php:381
-#: public/class-ai-chat-bedrock-public.php:289
-#: public/class-ai-chat-bedrock-public.php:310
-#: public/partials/ai-chat-bedrock-public-display.php:20
+#: public/class-ai-chat-bedrock-public.php:291
+#: public/class-ai-chat-bedrock-public.php:312
+#: public/partials/ai-chat-bedrock-public-display.php:21
 msgid "Chat"
 msgstr "チャット"
 
@@ -1394,13 +1394,13 @@ msgstr "すべての評価"
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:267
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:327
 #: includes/class-ai-chat-bedrock-metrics.php:1294
-#: public/class-ai-chat-bedrock-public.php:122
+#: public/class-ai-chat-bedrock-public.php:124
 msgid "Helpful"
 msgstr "役に立った"
 
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:268
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:327
-#: public/class-ai-chat-bedrock-public.php:123
+#: public/class-ai-chat-bedrock-public.php:125
 msgid "Not helpful"
 msgstr "役に立たなかった"
 
@@ -2660,7 +2660,7 @@ msgid "Apply configuration"
 msgstr "設定を適用"
 
 #: admin/partials/ai-chat-bedrock-admin-test.php:14
-#: public/class-ai-chat-bedrock-public.php:290
+#: public/class-ai-chat-bedrock-public.php:292
 msgid "Chat with AI"
 msgstr "AI とチャット"
 
@@ -3419,7 +3419,7 @@ msgstr "まずテキストを追加してください。"
 
 #. translators: 1: input tokens, 2: output tokens.
 #: includes/class-ai-chat-bedrock-editor-assistant.php:248
-#: public/class-ai-chat-bedrock-public.php:140
+#: public/class-ai-chat-bedrock-public.php:142
 #, php-format
 msgid "Tokens: %1$d in / %2$d out"
 msgstr "トークン：入力 %1$d / 出力 %2$d"
@@ -4142,7 +4142,7 @@ msgstr "ストリーム開始"
 #: includes/class-ai-chat-bedrock-chat-history.php:284
 #: includes/class-ai-chat-bedrock-speech.php:438
 #: includes/class-ai-chat-bedrock-stream.php:80
-#: public/class-ai-chat-bedrock-public.php:382
+#: public/class-ai-chat-bedrock-public.php:384
 msgid "Please sign in to use the chat."
 msgstr "チャットを使うにはログインしてください。"
 
@@ -4151,8 +4151,8 @@ msgid "Streaming is disabled on this site."
 msgstr "このサイトではストリーミングが無効です。"
 
 #: includes/class-ai-chat-bedrock-stream.php:91
-#: public/class-ai-chat-bedrock-public.php:351
-#: public/class-ai-chat-bedrock-public.php:390
+#: public/class-ai-chat-bedrock-public.php:353
+#: public/class-ai-chat-bedrock-public.php:392
 msgid "Too many requests. Please wait a minute and try again."
 msgstr "リクエストが多すぎます。1 分ほど待ってからもう一度お試しください。"
 
@@ -4270,7 +4270,7 @@ msgid "Generated text"
 msgstr "生成されたテキスト"
 
 #: includes/class-ai-chat-bedrock-woocommerce.php:1319
-#: public/class-ai-chat-bedrock-public.php:118
+#: public/class-ai-chat-bedrock-public.php:120
 msgid "Copy"
 msgstr "コピー"
 
@@ -4300,7 +4300,7 @@ msgid "Inserted. Update the product to save it."
 msgstr "挿入しました。保存するには商品を更新してください。"
 
 #: includes/class-ai-chat-bedrock-woocommerce.php:1351
-#: public/class-ai-chat-bedrock-public.php:119
+#: public/class-ai-chat-bedrock-public.php:121
 msgid "Copied"
 msgstr "コピーしました"
 
@@ -4415,156 +4415,156 @@ msgstr "回答を停止しました。"
 msgid "Clear this conversation?"
 msgstr "この会話を消去しますか？"
 
-#: public/class-ai-chat-bedrock-public.php:120
+#: public/class-ai-chat-bedrock-public.php:122
 msgid "Try again"
 msgstr "再試行"
 
-#: public/class-ai-chat-bedrock-public.php:121
+#: public/class-ai-chat-bedrock-public.php:123
 msgid "Was this helpful?"
 msgstr "この回答は役に立ちましたか？"
 
-#: public/class-ai-chat-bedrock-public.php:124
+#: public/class-ai-chat-bedrock-public.php:126
 msgid "Thanks for the feedback."
 msgstr "フィードバックありがとうございます。"
 
-#: public/class-ai-chat-bedrock-public.php:125
+#: public/class-ai-chat-bedrock-public.php:127
 msgid "Your message is too long."
 msgstr "メッセージが長すぎます。"
 
 #. translators: %d: number of tools being used.
-#: public/class-ai-chat-bedrock-public.php:127
+#: public/class-ai-chat-bedrock-public.php:129
 #, php-format
 msgid "Using %d tool(s) to gather information…"
 msgstr "%d 個のツールで情報を集めています…"
 
 #. translators: %s: comma separated list of tool names.
-#: public/class-ai-chat-bedrock-public.php:129
+#: public/class-ai-chat-bedrock-public.php:131
 #, php-format
 msgid "Using %s…"
 msgstr "%s を使用中…"
 
 #. translators: %d: number of tool calls the agent made.
-#: public/class-ai-chat-bedrock-public.php:131
+#: public/class-ai-chat-bedrock-public.php:133
 #, php-format
 msgid "Agent steps (%d)"
 msgstr "エージェントの手順（%d）"
 
-#: public/class-ai-chat-bedrock-public.php:132
+#: public/class-ai-chat-bedrock-public.php:134
 msgid "succeeded"
 msgstr "成功"
 
 #: includes/class-ai-chat-bedrock-distribution.php:708
-#: public/class-ai-chat-bedrock-public.php:133
+#: public/class-ai-chat-bedrock-public.php:135
 msgid "failed"
 msgstr "失敗"
 
 #. translators: %d: tool round number.
-#: public/class-ai-chat-bedrock-public.php:135
+#: public/class-ai-chat-bedrock-public.php:137
 #, php-format
 msgid "round %d"
 msgstr "%d 回目"
 
-#: public/class-ai-chat-bedrock-public.php:136
+#: public/class-ai-chat-bedrock-public.php:138
 msgid "The round limit was reached, so the answer was written with the information gathered so far."
 msgstr "回数の上限に達したため、ここまでに集めた情報で回答しました。"
 
 #. translators: %s: model identifier that answered instead of the main model.
-#: public/class-ai-chat-bedrock-public.php:138
+#: public/class-ai-chat-bedrock-public.php:140
 #, php-format
 msgid "The main model was unavailable, so %s answered."
 msgstr "メインのモデルが利用できなかったため、%s が回答しました。"
 
-#: public/class-ai-chat-bedrock-public.php:141
+#: public/class-ai-chat-bedrock-public.php:143
 msgctxt "chat avatar for the visitor"
 msgid "You"
 msgstr "あなた"
 
 #: admin/partials/ai-chat-bedrock-admin-leads.php:152
 #: includes/class-ai-chat-bedrock-leads.php:578
-#: public/class-ai-chat-bedrock-public.php:142
+#: public/class-ai-chat-bedrock-public.php:144
 msgctxt "chat avatar for the assistant"
 msgid "AI"
 msgstr "AI"
 
-#: public/class-ai-chat-bedrock-public.php:143
+#: public/class-ai-chat-bedrock-public.php:145
 msgid "Sources"
 msgstr "出典"
 
-#: public/class-ai-chat-bedrock-public.php:144
+#: public/class-ai-chat-bedrock-public.php:146
 msgid "(opens in a new tab)"
 msgstr "（新しいタブで開きます）"
 
 #: includes/class-ai-chat-bedrock-ontology.php:246
-#: public/class-ai-chat-bedrock-public.php:145
+#: public/class-ai-chat-bedrock-public.php:147
 msgid "Products"
 msgstr "商品"
 
-#: public/class-ai-chat-bedrock-public.php:146
+#: public/class-ai-chat-bedrock-public.php:148
 msgid "View product"
 msgstr "商品を見る"
 
-#: public/class-ai-chat-bedrock-public.php:147
+#: public/class-ai-chat-bedrock-public.php:149
 msgid "Add to cart"
 msgstr "カートに追加"
 
-#: public/class-ai-chat-bedrock-public.php:148
+#: public/class-ai-chat-bedrock-public.php:150
 msgid "Original price:"
 msgstr "元の価格:"
 
-#: public/class-ai-chat-bedrock-public.php:149
+#: public/class-ai-chat-bedrock-public.php:151
 msgid "Current price:"
 msgstr "現在の価格:"
 
 #. translators: %s: average rating, such as 4.5.
-#: public/class-ai-chat-bedrock-public.php:151
+#: public/class-ai-chat-bedrock-public.php:153
 #, php-format
 msgid "Rated %s out of 5"
 msgstr "5 点中 %s 点"
 
-#: public/class-ai-chat-bedrock-public.php:270
+#: public/class-ai-chat-bedrock-public.php:272
 msgid "The chat is not shown to visitors yet: Amazon Bedrock credentials or a model are still missing. Only administrators see this message."
 msgstr "チャットはまだ訪問者に表示されていません。Amazon Bedrock の認証情報またはモデルが未設定です。このメッセージは管理者にのみ表示されます。"
 
-#: public/class-ai-chat-bedrock-public.php:272
+#: public/class-ai-chat-bedrock-public.php:274
 msgid "Finish the setup"
 msgstr "設定を完了"
 
-#: public/class-ai-chat-bedrock-public.php:291
+#: public/class-ai-chat-bedrock-public.php:293
 msgid "Type your message here…"
 msgstr "ここにメッセージを入力…"
 
 #: includes/class-ai-chat-bedrock-leads.php:187
-#: public/class-ai-chat-bedrock-public.php:292
+#: public/class-ai-chat-bedrock-public.php:294
 msgid "Send"
 msgstr "送信"
 
-#: public/class-ai-chat-bedrock-public.php:293
+#: public/class-ai-chat-bedrock-public.php:295
 msgid "Clear chat"
 msgstr "会話を消去"
 
-#: public/class-ai-chat-bedrock-public.php:348
-#: public/class-ai-chat-bedrock-public.php:363
+#: public/class-ai-chat-bedrock-public.php:350
+#: public/class-ai-chat-bedrock-public.php:365
 msgid "Method not allowed."
 msgstr "許可されていないリクエストです。"
 
-#: public/partials/ai-chat-bedrock-public-display.php:55
+#: public/partials/ai-chat-bedrock-public-display.php:64
 msgid "Sign in to chat with the assistant."
 msgstr "ログインするとアシスタントとチャットできます。"
 
-#: public/partials/ai-chat-bedrock-public-display.php:56
+#: public/partials/ai-chat-bedrock-public-display.php:65
 msgid "Sign in"
 msgstr "ログイン"
 
-#: public/partials/ai-chat-bedrock-public-display.php:68
+#: public/partials/ai-chat-bedrock-public-display.php:77
 msgid "Chat message"
 msgstr "チャットメッセージ"
 
 #: includes/class-ai-chat-bedrock-speech.php:677
-#: public/partials/ai-chat-bedrock-public-display.php:77
+#: public/partials/ai-chat-bedrock-public-display.php:86
 msgid "Stop"
 msgstr "停止"
 
-#: public/partials/ai-chat-bedrock-public-display.php:86
+#: public/partials/ai-chat-bedrock-public-display.php:95
 msgid "Powered by Amazon Bedrock"
 msgstr "Amazon Bedrock を利用しています"
 
@@ -5749,10 +5749,6 @@ msgstr "%sで質問してください。上で合格しなかったチェック�
 msgid "support forum on WordPress.org"
 msgstr "WordPress.org のサポートフォーラム"
 
-#: ai-chat-for-amazon-bedrock.php:72
-msgid "Support"
-msgstr "サポート"
-
 #: includes/class-ai-chat-bedrock-aws-credentials.php:243
 msgid "Amazon Bedrock API key (Settings > Connectors, encrypted)"
 msgstr "Amazon Bedrock API キー（設定 > コネクター、暗号化済み）"
@@ -5909,6 +5905,7 @@ msgstr "（名前なし）"
 #: admin/partials/ai-chat-bedrock-admin-leads.php:150
 #: includes/class-ai-chat-bedrock-leads.php:557
 #: includes/class-ai-chat-bedrock-leads.php:919
+#: public/partials/ai-chat-bedrock-public-display.php:54
 msgid "Conversation"
 msgstr "会話"
 
@@ -7003,7 +7000,7 @@ msgid ""
 "News: https://example.com/news/\n"
 "Send 精选 for the newest featured articles."
 msgstr "コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。"
-"コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\n"
+"コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\n"
 "ニュース：https://example.com/news/\n"
 "「精选」と送ると最新のおすすめ記事が届きます。"
 
@@ -7501,3 +7498,19 @@ msgstr "チャットはサイトのページをもとに、各テキストメッ
 #, php-format
 msgid "The last signed request from WeChat came %s ago."
 msgstr "WeChat から署名付きの最後のリクエストが届いたのは %s 前です。"
+
+#: public/class-ai-chat-bedrock-public.php:118
+msgid "You said:"
+msgstr "あなた："
+
+#: public/class-ai-chat-bedrock-public.php:119
+msgid "Assistant:"
+msgstr "アシスタント："
+
+#: public/partials/ai-chat-bedrock-public-display.php:42
+msgid "Close chat"
+msgstr "チャットを閉じる"
+
+#: ai-chat-for-amazon-bedrock.php:75
+msgid "Support"
+msgstr "サポート"

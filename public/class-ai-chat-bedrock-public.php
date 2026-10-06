@@ -115,6 +115,8 @@ class AI_Chat_Bedrock_Public {
 					'generic_error'     => __( 'The request could not be completed. Please try again.', 'ai-chat-for-amazon-bedrock' ),
 					'stopped'           => __( 'Answer stopped.', 'ai-chat-for-amazon-bedrock' ),
 					'clear_confirm'     => __( 'Clear this conversation?', 'ai-chat-for-amazon-bedrock' ),
+					'you_said'          => __( 'You said:', 'ai-chat-for-amazon-bedrock' ),
+					'assistant_said'    => __( 'Assistant:', 'ai-chat-for-amazon-bedrock' ),
 					'copy'              => __( 'Copy', 'ai-chat-for-amazon-bedrock' ),
 					'copied'            => __( 'Copied', 'ai-chat-for-amazon-bedrock' ),
 					'retry'             => __( 'Try again', 'ai-chat-for-amazon-bedrock' ),

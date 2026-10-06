@@ -49,7 +49,30 @@ const context = vm.createContext({
         events.push({ name: event.name, data: event.data });
     }
 });
-vm.runInContext([extract('parseChunk'), extract('isNonceError'), extract('safeUrl')].join('\n'), context);
+vm.runInContext([extract('parseChunk'), extract('isNonceError'), extract('safeUrl'), extract('isSendKey')].join('\n'), context);
+
+// --- Markdown in answers -----------------------------------------------------------------
+
+const md = vm.createContext({});
+vm.runInContext(extract('renderMarkdown'), md);
+const rendered = md.renderMarkdown('### Shipping\nWe ship **fast**.\n\n- One *item*\n- See [the guide](https://site.test/a?b=1&amp;c=2)\n\n1. First\n2. Second');
+check(-1 !== rendered.indexOf('<p class="ai-chat-bedrock-heading"><strong>Shipping</strong></p>'), 'A heading is shown as a bold line, not with its hashes.');
+check(-1 !== rendered.indexOf('<ul><li>One <em>item</em></li><li>See <a href="https://site.test/a?b=1&amp;c=2" target="_blank" rel="noopener noreferrer">the guide</a></li></ul>'), 'A list is a list, and a web link is a link that opens apart from the chat.');
+check(-1 !== rendered.indexOf('<ol><li>First</li><li>Second</li></ol>'), 'A numbered list is numbered.');
+check(-1 !== rendered.indexOf('<p>We ship <strong>fast</strong>.</p>'), 'Paragraphs and bold survive.');
+check(-1 === md.renderMarkdown('[x](javascript:alert(1))').indexOf('<a'), 'Only web addresses become links.');
+check(-1 === md.renderMarkdown('[x](https://site.test/"onmouseover=alert(1))').indexOf('<a'), 'An address with a quote is not linked, so it cannot leave its attribute.');
+check('<p>2 * 3 * 4 = 24</p>' === md.renderMarkdown('2 * 3 * 4 = 24'), 'Arithmetic is not taken for emphasis.');
+check('<pre><code>- not a list</code></pre><p>after</p>' === md.renderMarkdown('```\n- not a list\n```\nafter'), 'Code keeps its text as written.');
+check('<p>退货政策：<strong>30 天</strong>内可退。</p>' === md.renderMarkdown('退货政策：**30 天**内可退。'), 'Chinese bold works without spaces around it.');
+
+// --- Sending with Enter ------------------------------------------------------------------
+
+check(context.isSendKey({ key: 'Enter', keyCode: 13 }), 'Enter sends.');
+check(!context.isSendKey({ key: 'Enter', keyCode: 13, shiftKey: true }), 'Shift+Enter starts a new line.');
+check(!context.isSendKey({ key: 'Enter', keyCode: 13, isComposing: true }), 'Enter that picks a Chinese or Japanese candidate does not send.');
+check(!context.isSendKey({ key: 'Enter', keyCode: 229 }), 'Nor does it in browsers that only report the composing key code.');
+check(!context.isSendKey({ key: 'a', keyCode: 65 }), 'Other keys do not send.');
 
 // --- Event stream parsing --------------------------------------------------------------
 

@@ -125,9 +125,18 @@ expect_true(
 // The chat title was an h3 directly under the page h1, which skips a level on the front end
 // and on the Test Chat screen. It is an h2, styled by class so the level can move again
 // without touching CSS.
+// A build installed again under the same version must not be served its old scripts by a CDN
+// that keeps them as immutable, so assets carry the build as well as the version.
+$aicfab_main_source   = file_get_contents( __DIR__ . '/../ai-chat-for-amazon-bedrock.php' );
+$aicfab_loader_source = file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock.php' );
+expect_true(
+	false !== strpos( $aicfab_main_source, "define( 'AI_CHAT_BEDROCK_ASSET_VERSION', AI_CHAT_BEDROCK_VERSION . '.' . (int) filemtime( __FILE__ ) );" )
+		&& 2 === substr_count( $aicfab_loader_source, '( $this->plugin_name, self::asset_version() )' ),
+	'scripts and styles are versioned by build as well as release'
+);
 $aicfab_chat_view = file_get_contents( __DIR__ . '/../public/partials/ai-chat-bedrock-public-display.php' );
 expect_true(
-	false !== strpos( $aicfab_chat_view, '<h2 class="ai-chat-bedrock-title">' ),
+	false !== strpos( $aicfab_chat_view, '<h2 class="ai-chat-bedrock-title"' ),
 	'the chat title is an h2 so it does not skip a level under the page title'
 );
 expect_true(
