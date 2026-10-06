@@ -280,6 +280,7 @@ class AI_Chat_Bedrock {
 
 		$wechat_drafts = new AI_Chat_Bedrock_WeChat_Drafts();
 		$this->loader->add_action( 'wp_abilities_api_init', $wechat_drafts, 'register_abilities' );
+		$this->loader->add_action( 'rest_api_init', $wechat_drafts, 'register_routes' );
 		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_WeChat_Drafts', 'sync_schedule' );
 		$this->loader->add_action( 'ai_chat_bedrock_wechat_drafts', 'AI_Chat_Bedrock_WeChat_Drafts', 'run' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_wechat_draft', 'AI_Chat_Bedrock_WeChat_Drafts', 'handle_send' );
