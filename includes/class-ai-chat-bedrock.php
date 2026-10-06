@@ -73,6 +73,13 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-analytics.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-consent.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-wechat.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-wechat-api.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-wechat-game.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-wechat-drafts.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-publish-kit.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-distribution.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-bilibili.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-youtube.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-review-prompt.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-sse.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-stream.php';
@@ -90,10 +97,13 @@ class AI_Chat_Bedrock {
 
 	private function set_locale() {
 		$this->loader->add_filter( 'lang_dir_for_domain', 'AI_Chat_Bedrock_Translation', 'bundled_languages', 10, 3 );
+		// Minified scripts and styles, where the package carries them.
+		$this->loader->add_filter( 'script_loader_src', 'AI_Chat_Bedrock', 'minified_src' );
+		$this->loader->add_filter( 'style_loader_src', 'AI_Chat_Bedrock', 'minified_src' );
 	}
 
 	private function define_admin_hooks() {
-		$admin    = new AI_Chat_Bedrock_Admin( $this->plugin_name, $this->version );
+		$admin    = new AI_Chat_Bedrock_Admin( $this->plugin_name, self::asset_version() );
 		$security = new AI_Chat_Bedrock_Security();
 		$this->loader->add_action( 'admin_enqueue_scripts', $admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $admin, 'enqueue_scripts' );
@@ -153,7 +163,7 @@ class AI_Chat_Bedrock {
 	}
 
 	private function define_public_hooks() {
-		$public = new AI_Chat_Bedrock_Public( $this->plugin_name, $this->version );
+		$public = new AI_Chat_Bedrock_Public( $this->plugin_name, self::asset_version() );
 		$this->loader->add_action( 'wp_enqueue_scripts', $public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $public, 'enqueue_scripts' );
 		$this->loader->add_filter( 'wp_inline_script_attributes', $public, 'early_script_attributes' );
@@ -161,6 +171,8 @@ class AI_Chat_Bedrock {
 		$this->loader->add_shortcode( 'ai_chat_bedrock', $public, 'display_chat_interface' );
 		$this->loader->add_action( 'init', $public, 'register_blocks' );
 		$this->loader->add_action( 'wp_footer', $public, 'render_site_wide_popup', 5 );
+		// After every chat has rendered and before wp_print_footer_scripts, at 20.
+		$this->loader->add_action( 'wp_footer', $public, 'trim_scripts', 19 );
 		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_message', $public, 'handle_chat_message' );
 		$this->loader->add_action( 'wp_ajax_nopriv_ai_chat_bedrock_message', $public, 'handle_chat_message' );
 		$this->loader->add_action( 'wp_ajax_ai_chat_bedrock_refresh_nonce', $public, 'handle_refresh_nonce' );
@@ -205,6 +217,10 @@ class AI_Chat_Bedrock {
 		$wechat = new AI_Chat_Bedrock_WeChat();
 		$this->loader->add_action( 'rest_api_init', $wechat, 'register_routes' );
 		$this->loader->add_filter( 'rest_pre_serve_request', 'AI_Chat_Bedrock_WeChat', 'serve', 10, 3 );
+
+		$wechat_game = new AI_Chat_Bedrock_WeChat_Game();
+		$this->loader->add_action( 'rest_api_init', $wechat_game, 'register_routes' );
+		$this->loader->add_filter( 'rest_pre_serve_request', 'AI_Chat_Bedrock_WeChat_Game', 'serve', 10, 3 );
 
 		$chat_history = new AI_Chat_Bedrock_Chat_History();
 		$this->loader->add_action( 'rest_api_init', $chat_history, 'register_routes' );
@@ -255,6 +271,36 @@ class AI_Chat_Bedrock {
 		$site_abilities = new AI_Chat_Bedrock_Site_Abilities();
 		$this->loader->add_action( 'wp_abilities_api_init', $site_abilities, 'register' );
 
+		$distribution = new AI_Chat_Bedrock_Distribution();
+		$this->loader->add_action( 'wp_abilities_api_init', $distribution, 'register_abilities' );
+		$this->loader->add_action( 'add_meta_boxes', $distribution, 'add_meta_box' );
+		$this->loader->add_filter( 'the_content', 'AI_Chat_Bedrock_Distribution', 'add_links', 25 );
+		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_Bilibili', 'register' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_youtube_connect', 'AI_Chat_Bedrock_YouTube', 'handle_connect' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_youtube_callback', 'AI_Chat_Bedrock_YouTube', 'handle_callback' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_youtube_disconnect', 'AI_Chat_Bedrock_YouTube', 'handle_disconnect' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_youtube_upload', 'AI_Chat_Bedrock_YouTube', 'handle_upload' );
+		$this->loader->add_action( 'ai_chat_bedrock_youtube_upload', 'AI_Chat_Bedrock_YouTube', 'run' );
+		$this->loader->add_action( 'ai_chat_bedrock_youtube_status', 'AI_Chat_Bedrock_YouTube', 'poll' );
+		$this->loader->add_action( 'ai_chat_bedrock_distribution_box', 'AI_Chat_Bedrock_YouTube', 'render_box_section' );
+
+		$wechat_drafts = new AI_Chat_Bedrock_WeChat_Drafts();
+		$this->loader->add_action( 'wp_abilities_api_init', $wechat_drafts, 'register_abilities' );
+		$this->loader->add_action( 'rest_api_init', $wechat_drafts, 'register_routes' );
+		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_WeChat_Drafts', 'sync_schedule' );
+		$this->loader->add_action( 'ai_chat_bedrock_wechat_drafts', 'AI_Chat_Bedrock_WeChat_Drafts', 'run' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_wechat_draft', 'AI_Chat_Bedrock_WeChat_Drafts', 'handle_send' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_wechat_drafts_run', 'AI_Chat_Bedrock_WeChat_Drafts', 'handle_run_now' );
+		$this->loader->add_action( 'ai_chat_bedrock_distribution_box', 'AI_Chat_Bedrock_WeChat_Drafts', 'render_box_section' );
+		$this->loader->add_action( 'save_post', 'AI_Chat_Bedrock_Distribution', 'save_manual_record' );
+
+		$publish_kit = new AI_Chat_Bedrock_Publish_Kit();
+		$this->loader->add_action( 'rest_api_init', $publish_kit, 'register_routes' );
+		$this->loader->add_action( 'wp_abilities_api_init', $publish_kit, 'register_abilities' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_publish_kit', 'AI_Chat_Bedrock_Publish_Kit', 'handle_write' );
+		$this->loader->add_action( 'ai_chat_bedrock_distribution_box', 'AI_Chat_Bedrock_Publish_Kit', 'render_box_section' );
+		$this->loader->add_action( 'save_post', 'AI_Chat_Bedrock_WeChat_Drafts', 'save_video' );
+
 		// The site description, and the type and language it adds to retrieved passages.
 		// Both check the setting when they run.
 		$ontology = new AI_Chat_Bedrock_Ontology();
@@ -287,6 +333,47 @@ class AI_Chat_Bedrock {
 
 	public function get_loader() {
 		return $this->loader;
+	}
+
+	/**
+	 * Point one of this plugin's scripts or styles at its minified copy.
+	 *
+	 * The package carries a .min file beside each readable one; the source tree does not.
+	 * So the readable file is used while developing, with SCRIPT_DEBUG on, and wherever no
+	 * minified copy was built, and every enqueue keeps naming the readable file.
+	 *
+	 * @param string $src Asset URL, with its version.
+	 * @return string
+	 */
+	public static function minified_src( $src ) {
+		static $exists = array();
+
+		$base = defined( 'AI_CHAT_BEDROCK_PLUGIN_URL' ) ? AI_CHAT_BEDROCK_PLUGIN_URL : '';
+		if ( ! is_string( $src ) || '' === $base || 0 !== strpos( $src, $base ) || ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ) {
+			return $src;
+		}
+		$parts    = explode( '?', $src, 2 );
+		$relative = substr( $parts[0], strlen( $base ) );
+		if ( ! preg_match( '#^(?:public|admin)/(?:js|css)/[a-z0-9-]+\.(js|css)$#', $relative, $type ) ) {
+			return $src;
+		}
+		$minified = substr( $relative, 0, -strlen( $type[1] ) ) . 'min.' . $type[1];
+		if ( ! isset( $exists[ $minified ] ) ) {
+			$exists[ $minified ] = file_exists( AI_CHAT_BEDROCK_PLUGIN_DIR . $minified );
+		}
+		return $exists[ $minified ] ? $base . $minified . ( isset( $parts[1] ) ? '?' . $parts[1] : '' ) : $src;
+	}
+
+	/**
+	 * The version scripts and styles are registered with: the plugin version and its build.
+	 *
+	 * @return string
+	 */
+	public static function asset_version() {
+		if ( defined( 'AI_CHAT_BEDROCK_ASSET_VERSION' ) ) {
+			return AI_CHAT_BEDROCK_ASSET_VERSION;
+		}
+		return defined( 'AI_CHAT_BEDROCK_VERSION' ) ? AI_CHAT_BEDROCK_VERSION : '1.1.0';
 	}
 
 	public function get_version() {

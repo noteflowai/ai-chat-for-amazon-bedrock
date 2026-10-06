@@ -40,7 +40,7 @@ class AI_Chat_Bedrock_Transfer {
 	 * @return array
 	 */
 	public static function credential_keys() {
-		return array( 'aws_access_key', 'aws_secret_key', 'aws_session_token', 'bedrock_api_key', 'wechat_token', 'wechat_aes_key' );
+		return array( 'aws_access_key', 'aws_secret_key', 'aws_session_token', 'bedrock_api_key', 'wechat_token', 'wechat_aes_key', 'wxgame_token', 'wxgame_aes_key', 'wxgame_app_secret', 'wechat_app_secret', 'youtube_client_secret' );
 	}
 
 	/**

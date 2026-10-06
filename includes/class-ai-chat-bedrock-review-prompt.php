@@ -56,7 +56,7 @@ class AI_Chat_Bedrock_Review_Prompt {
 	/**
 	 * Whether to show the prompt to the current user on this screen.
 	 *
-	 * @param string $plugin_name Plugin slug, which every plugin screen ID contains.
+	 * @param string $plugin_name Plugin slug, which the Overview screen ID ends with.
 	 * @return bool
 	 */
 	public static function should_show( $plugin_name ) {
@@ -64,7 +64,8 @@ class AI_Chat_Bedrock_Review_Prompt {
 			return false;
 		}
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		if ( ! $screen || false === strpos( (string) $screen->id, (string) $plugin_name ) ) {
+		// Only on Overview, where the site's progress is shown, not above the work on other screens.
+		if ( ! $screen || 'toplevel_page_' . $plugin_name !== (string) $screen->id ) {
 			return false;
 		}
 		if ( get_user_meta( get_current_user_id(), self::META, true ) ) {
@@ -93,7 +94,7 @@ class AI_Chat_Bedrock_Review_Prompt {
 		}
 
 		printf(
-			'<div class="notice notice-info is-dismissible aicfab-review-prompt"><p>%1$s</p><p><a class="button button-primary" href="%2$s" target="_blank" rel="noopener noreferrer">%3$s</a> <a href="%4$s" target="_blank" rel="noopener noreferrer">%5$s</a></p></div>',
+			'<div class="notice notice-info is-dismissible aicfab-review-prompt"><p>%1$s</p><p><a class="button" href="%2$s" target="_blank" rel="noopener noreferrer">%3$s</a> <a href="%4$s" target="_blank" rel="noopener noreferrer">%5$s</a></p></div>',
 			esc_html__( 'Your chat has been answering visitors for over a week. If it has helped, a review on WordPress.org helps other site owners find it. If something is not right, the support forum is the place to say so.', 'ai-chat-for-amazon-bedrock' ),
 			esc_url( self::REVIEW_URL ),
 			esc_html__( 'Write a review', 'ai-chat-for-amazon-bedrock' ),

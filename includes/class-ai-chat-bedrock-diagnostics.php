@@ -100,6 +100,7 @@ class AI_Chat_Bedrock_Diagnostics {
 		$checks[] = $this->check_encryption();
 		$checks[] = $this->check_public_access( $options );
 		$checks[] = $this->check_mcp();
+		$checks[] = $this->check_schedules();
 		$checks[] = $this->check_guardrail( $options );
 		$checks[] = $this->check_knowledge_base( $options );
 		$checks[] = $this->check_vector_store( $options );
@@ -239,7 +240,7 @@ class AI_Chat_Bedrock_Diagnostics {
 		$label      = __( 'Guardrail', 'ai-chat-for-amazon-bedrock' );
 		$identifier = isset( $options['guardrail_id'] ) ? trim( (string) $options['guardrail_id'] ) : '';
 		if ( '' === $identifier ) {
-			return $this->result( 'guardrail', $label, 'pass', __( 'No guardrail is configured, so nothing is filtered by Amazon Bedrock.', 'ai-chat-for-amazon-bedrock' ) );
+			return $this->result( 'guardrail', $label, 'off', __( 'No guardrail is configured, so nothing is filtered by Amazon Bedrock.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
 		$version = isset( $options['guardrail_version'] ) ? trim( (string) $options['guardrail_version'] ) : '';
@@ -303,7 +304,7 @@ class AI_Chat_Bedrock_Diagnostics {
 		$label = __( 'Knowledge base', 'ai-chat-for-amazon-bedrock' );
 		$id    = isset( $options['knowledge_base_id'] ) ? trim( (string) $options['knowledge_base_id'] ) : '';
 		if ( '' === $id ) {
-			return $this->result( 'knowledge_base', $label, 'pass', __( 'No Amazon Bedrock knowledge base is configured.', 'ai-chat-for-amazon-bedrock' ) );
+			return $this->result( 'knowledge_base', $label, 'off', __( 'No Amazon Bedrock knowledge base is configured.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
 		// AWS requires ten alphanumeric characters, or a knowledge base ARN.
@@ -348,7 +349,7 @@ class AI_Chat_Bedrock_Diagnostics {
 		$label = __( 'Semantic search index', 'ai-chat-for-amazon-bedrock' );
 		$model = isset( $options['embedding_model_id'] ) ? (string) $options['embedding_model_id'] : '';
 		if ( '' === $model || ! class_exists( 'AI_Chat_Bedrock_Embeddings' ) ) {
-			return $this->result( 'vector_store', $label, 'pass', __( 'Semantic search is off; answers use keyword search.', 'ai-chat-for-amazon-bedrock' ) );
+			return $this->result( 'vector_store', $label, 'off', __( 'Semantic search is off; answers use keyword search.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		if ( 's3_vectors' !== AI_Chat_Bedrock_Embeddings::store( $options ) ) {
 			$status = AI_Chat_Bedrock_Embeddings::status( $model );
@@ -394,9 +395,59 @@ class AI_Chat_Bedrock_Diagnostics {
 		return $this->result( 'vector_store', $label, 'pass', $message );
 	}
 
+	/**
+	 * Whether WordPress runs the plugin's background tasks on time.
+	 *
+	 * Scheduled WeChat drafts, YouTube uploads, indexing and clean-ups run through WP-Cron,
+	 * which runs only when someone visits and which a page cache or DISABLE_WP_CRON without a
+	 * server cron job can stop altogether. Nothing failed then, so nothing said so.
+	 *
+	 * @return array
+	 */
+	private function check_schedules() {
+		$label  = __( 'Background tasks', 'ai-chat-for-amazon-bedrock' );
+		$late   = 0;
+		$oldest = 0;
+		$cutoff = time() - 15 * MINUTE_IN_SECONDS;
+		foreach ( (array) ( function_exists( 'wp_get_ready_cron_jobs' ) ? wp_get_ready_cron_jobs() : array() ) as $time => $hooks ) {
+			foreach ( (array) $hooks as $hook => $events ) {
+				if ( 0 === strpos( (string) $hook, 'ai_chat_bedrock_' ) && (int) $time < $cutoff ) {
+					$late  += count( (array) $events );
+					$oldest = $oldest ? min( $oldest, (int) $time ) : (int) $time;
+				}
+			}
+		}
+		if ( $late > 0 ) {
+			$advice = defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON
+				? __( 'WP-Cron is turned off with DISABLE_WP_CRON, so a server cron job has to call wp-cron.php, or run wp cron event run --due-now, every few minutes.', 'ai-chat-for-amazon-bedrock' )
+				: __( 'WP-Cron runs only when someone visits, and a page cache can keep it from running. Have a server cron job call wp-cron.php every few minutes, then set DISABLE_WP_CRON.', 'ai-chat-for-amazon-bedrock' );
+			return $this->result(
+				'schedules',
+				$label,
+				'warn',
+				AI_Chat_Bedrock_Translation::sentences(
+					sprintf(
+						/* translators: 1: number of tasks, 2: how long ago the oldest was due, such as 3 hours. */
+						_n( '%1$s background task is overdue, by %2$s.', '%1$s background tasks are overdue, the oldest by %2$s.', $late, 'ai-chat-for-amazon-bedrock' ),
+						number_format_i18n( $late ),
+						human_time_diff( $oldest, time() )
+					),
+					$advice
+				)
+			);
+		}
+		// The recurring tasks, by name, so the check needs none of their classes loaded.
+		foreach ( array( 'ai_chat_bedrock_wechat_drafts', 'ai_chat_bedrock_index_embeddings', 'ai_chat_bedrock_prune_leads', 'ai_chat_bedrock_prune_chat_history' ) as $hook ) {
+			if ( wp_next_scheduled( $hook ) ) {
+				return $this->result( 'schedules', $label, 'pass', __( 'The plugin\'s background tasks run on time.', 'ai-chat-for-amazon-bedrock' ) );
+			}
+		}
+		return $this->result( 'schedules', $label, 'off', __( 'No background tasks are scheduled.', 'ai-chat-for-amazon-bedrock' ) );
+	}
+
 	private function check_mcp() {
 		if ( ! get_option( 'ai_chat_bedrock_enable_mcp', false ) ) {
-			return $this->result( 'mcp', __( 'MCP tools', 'ai-chat-for-amazon-bedrock' ), 'pass', __( 'MCP tools are disabled.', 'ai-chat-for-amazon-bedrock' ) );
+			return $this->result( 'mcp', __( 'MCP tools', 'ai-chat-for-amazon-bedrock' ), 'off', __( 'MCP tools are disabled.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		if ( get_option( 'ai_chat_bedrock_mcp_public_access', false ) ) {
 			return $this->result( 'mcp', __( 'MCP tools', 'ai-chat-for-amazon-bedrock' ), 'warn', __( 'The built-in WordPress MCP endpoint is publicly readable. Disable public access unless it is required.', 'ai-chat-for-amazon-bedrock' ) );
@@ -435,7 +486,7 @@ class AI_Chat_Bedrock_Diagnostics {
 		return array(
 			'id'      => sanitize_key( $id ),
 			'label'   => $label,
-			'status'  => in_array( $status, array( 'pass', 'warn', 'fail' ), true ) ? $status : 'warn',
+			'status'  => in_array( $status, array( 'pass', 'off', 'warn', 'fail' ), true ) ? $status : 'warn',
 			'message' => $message,
 		);
 	}

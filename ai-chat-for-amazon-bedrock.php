@@ -3,7 +3,7 @@
  * Plugin Name: AI Chatbot & Agents for Amazon Bedrock
  * Plugin URI: https://github.com/noteflowai/ai-chat-for-amazon-bedrock
  * Description: Streaming chat and governed tool-using agents on Amazon Bedrock, with IAM role credentials, a standards-compliant MCP server and client, and security-first defaults.
- * Version: 1.65.0
+ * Version: 1.67.0
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * WC requires at least: 8.0
@@ -22,7 +22,10 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-define( 'AI_CHAT_BEDROCK_VERSION', '1.65.0' );
+define( 'AI_CHAT_BEDROCK_VERSION', '1.67.0' );
+// Scripts and styles carry the build as well as the version. A CDN may keep them as immutable,
+// and a build installed again under the same version would otherwise get its old assets.
+define( 'AI_CHAT_BEDROCK_ASSET_VERSION', AI_CHAT_BEDROCK_VERSION . '.' . (int) filemtime( __FILE__ ) );
 define( 'AI_CHAT_BEDROCK_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AI_CHAT_BEDROCK_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'AI_CHAT_BEDROCK_PLUGIN_FILE', __FILE__ );

@@ -190,6 +190,14 @@ function wp_enqueue_script( $handle, $src = '', $deps = array(), ...$rest ) {
 function wp_enqueue_style( $handle, $src = '', $deps = array(), ...$rest ) {
 	aicfab_asset_enqueue( 'style', $handle, $src, $deps );
 }
+function wp_script_is( $handle, $status = 'enqueued' ) {
+	return ! empty( $GLOBALS['aicfab_assets']['script'][ $handle ]['enqueued'] );
+}
+function wp_dequeue_script( $handle ) {
+	if ( isset( $GLOBALS['aicfab_assets']['script'][ $handle ] ) ) {
+		$GLOBALS['aicfab_assets']['script'][ $handle ]['enqueued'] = false;
+	}
+}
 $GLOBALS['aicfab_inline'] = array();
 function wp_add_inline_script( $handle, $code, $position = 'after' ) {
 	$GLOBALS['aicfab_inline'][] = array( $handle, $code );
@@ -241,8 +249,13 @@ $GLOBALS['aicfab_post'] = null;
 function is_singular( $types = '' ) {
 	return null !== $GLOBALS['aicfab_post'];
 }
+$GLOBALS['aicfab_posts'] = array();
 function get_post( $post = null ) {
-	return $GLOBALS['aicfab_post'];
+	return is_int( $post ) && isset( $GLOBALS['aicfab_posts'][ $post ] ) ? $GLOBALS['aicfab_posts'][ $post ] : $GLOBALS['aicfab_post'];
+}
+$GLOBALS['aicfab_block_theme'] = false;
+function wp_is_block_theme() {
+	return $GLOBALS['aicfab_block_theme'];
 }
 function has_block( $block, $post = null ) {
 	return null !== $GLOBALS['aicfab_post'] && false !== strpos( (string) $GLOBALS['aicfab_post']->post_content, '<!-- wp:' . $block );
@@ -761,7 +774,7 @@ $aicfab_profiled = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', '
 check_pub( false !== strpos( $aicfab_profiled, 'data-welcome="Support desk here."' ), 'The chat carries its profile\'s greeting for when it is cleared.' );
 $aicfab_default = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array() );
 check_pub( false !== strpos( $aicfab_default, 'data-welcome="Hello there."' ), 'Without a profile it carries the site greeting.' );
-$aicfab_script = file_get_contents( dirname( __DIR__ ) . '/public/js/ai-chat-bedrock-public.js' );
+$aicfab_script = file_get_contents( dirname( __DIR__ ) . '/public/js/ai-chat-bedrock-public.js' ) . file_get_contents( dirname( __DIR__ ) . '/public/js/ai-chat-bedrock-popup.js' );
 
 // The chat followed the visitor's device, so a phone in dark mode got a dark panel on a light theme.
 check_pub( false !== strpos( $aicfab_default, 'data-scheme="light"' ), 'The chat is light unless chosen otherwise.' );
@@ -771,6 +784,16 @@ check_pub( false !== strpos( $aicfab_auto, 'data-scheme="auto"' ), 'The chat can
 aicfab_reset_pub( array( 'chat_color_scheme' => '" onmouseover="x' ) );
 $aicfab_bad = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array() );
 check_pub( false !== strpos( $aicfab_bad, 'data-scheme="light"' ), 'An unknown color scheme falls back to light.' );
+check_pub( false === strpos( $aicfab_default, '--aicfab-accent' ), 'Without an accent colour the chat keeps its own.' );
+check_pub( '#aabbcc' === AI_Chat_Bedrock_Chat_Request::accent_color( '#ABC' ) && '' === AI_Chat_Bedrock_Chat_Request::accent_color( 'red;x:y' ) && '' === AI_Chat_Bedrock_Chat_Request::accent_color( '#12345g' ), 'An accent is a hex colour or nothing.' );
+aicfab_reset_pub( array( 'chat_accent_color' => '#2563eb' ) );
+$aicfab_accented = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array() );
+check_pub( false !== strpos( $aicfab_accented, '--aicfab-accent:#2563eb;' ) && false !== strpos( $aicfab_accented, '--aicfab-accent-contrast:#ffffff;' ), 'A site\'s blue is used, with white text on it.' );
+aicfab_reset_pub( array( 'chat_accent_color' => '#facc15' ) );
+$aicfab_yellow = ( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) )->display_chat_interface( array( 'mode' => 'popup' ) );
+check_pub( false !== strpos( $aicfab_yellow, '--aicfab-accent-contrast:#0b101c;' ) && 2 === substr_count( $aicfab_yellow, '--aicfab-launcher:#facc15;' ), 'A light accent gets dark text, on the chat and on its launcher.' );
+check_pub( AI_Chat_Bedrock_Chat_Request::contrast( '#facc15', '#0b101c' ) >= 4.5 && abs( AI_Chat_Bedrock_Chat_Request::contrast( '#ffffff', '#000000' ) - 21 ) < 0.01, 'Contrast is measured as WCAG does.' );
+aicfab_reset_pub( array() );
 $aicfab_css = file_get_contents( dirname( __DIR__ ) . '/public/css/ai-chat-bedrock-public.css' );
 check_pub( 1 === preg_match( '/@media \(prefers-color-scheme: dark\) \{\s*\.ai-chat-bedrock-container\[data-scheme="auto"\]/', $aicfab_css ), 'Only a chat set to follow the device turns dark with it.' );
 // A theme's textarea height pushed the send button out of the popup, which hides overflow.
@@ -937,6 +960,112 @@ check_pub( false !== strpos( $aicfab_sent, 'Reference material' ), 'The passages
 $aicfab_built = AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]', $GLOBALS['aicfab_opts']['ai_chat_bedrock_settings'] );
 check_pub( ! is_wp_error( $aicfab_built ) && $GLOBALS['aicfab_sources'] === $aicfab_built['sources'], 'Another question keeps its sources.' );
 $GLOBALS['aicfab_sources'] = array();
+
+// --- Each visitor's share of the daily cap ---------------------------------------------
+
+// A cap of 100 a day gives each visitor 20 (a tenth, but at least 20). Without a share one
+// visitor, or one script, could use up the whole day for everyone else.
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-usage.php';
+aicfab_reset_pub( array( 'daily_request_limit' => 100 ) );
+$GLOBALS['aicfab_logged_in'] = false;
+$_SERVER['REMOTE_ADDR']      = '10.4.4.4';
+$aicfab_share_opts           = $GLOBALS['aicfab_opts']['ai_chat_bedrock_settings'];
+for ( $aicfab_i = 0; $aicfab_i < 20; $aicfab_i++ ) {
+	$aicfab_built = AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]', $aicfab_share_opts );
+}
+check_pub( ! is_wp_error( $aicfab_built ), 'A visitor can ask up to their share.' );
+$aicfab_built = AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]', $aicfab_share_opts );
+check_pub( is_wp_error( $aicfab_built ) && 'aicfab_visitor_daily_limit' === $aicfab_built->get_error_code(), 'The question after a visitor\'s share is refused.' );
+check_pub( is_wp_error( $aicfab_built ) && 429 === $aicfab_built->get_error_data()['status'], 'It is refused as too many requests.' );
+$_SERVER['REMOTE_ADDR'] = '10.4.4.5';
+check_pub( ! is_wp_error( AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]', $aicfab_share_opts ) ), 'Another visitor still has their own share.' );
+$_SERVER['REMOTE_ADDR'] = '10.4.4.4';
+check_pub( ! is_wp_error( AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]', array_merge( $aicfab_share_opts, array( '_shared_client' => true ) ) ) ), 'A shared client such as WeChat, where every follower has one address, is not held to one visitor\'s share.' );
+$GLOBALS['aicfab_logged_in'] = true;
+check_pub( ! is_wp_error( AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]', $aicfab_share_opts ) ), 'An administrator is not held to a visitor\'s share.' );
+$GLOBALS['aicfab_logged_in'] = false;
+$GLOBALS['aicfab_filtered']['ai_chat_bedrock_visitor_daily_requests'] = 0;
+check_pub( ! is_wp_error( AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]', $aicfab_share_opts ) ), 'A site can turn the share off with the filter.' );
+unset( $GLOBALS['aicfab_filtered']['ai_chat_bedrock_visitor_daily_requests'] );
+
+// --- A page where no chat can be used loads only the popup script ------------------------
+
+$aicfab_rendered = new ReflectionProperty( 'AI_Chat_Bedrock_Public', 'rendered' );
+if ( PHP_VERSION_ID < 80100 ) {
+	$aicfab_rendered->setAccessible( true );
+}
+$aicfab_page = function ( $logged_in, $mode ) use ( $aicfab_rendered ) {
+	$aicfab_rendered->setValue( null, array( 'any' => false, 'usable' => false ) );
+	aicfab_reset_pub( array() );
+	$GLOBALS['aicfab_assets']    = array();
+	$GLOBALS['aicfab_logged_in'] = $logged_in;
+	$public                      = new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' );
+	$html                        = null === $mode ? '' : $public->display_chat_interface( array( 'mode' => $mode ) );
+	$public->trim_scripts();
+	return array(
+		'html'  => $html,
+		'chat'  => wp_script_is( 'ai-chat-for-amazon-bedrock' ),
+		'popup' => wp_script_is( AI_Chat_Bedrock_Public::POPUP_HANDLE ),
+		'deps'  => isset( $GLOBALS['aicfab_assets']['script']['ai-chat-for-amazon-bedrock'] ) ? $GLOBALS['aicfab_assets']['script']['ai-chat-for-amazon-bedrock']['deps'] : array(),
+	);
+};
+$aicfab_out = $aicfab_page( false, 'popup' );
+check_pub( false !== strpos( $aicfab_out['html'], 'ai-chat-bedrock-sign-in-link' ) && ! $aicfab_out['chat'] && $aicfab_out['popup'], 'A signed-out visitor who may only sign in gets the popup script, not the chat.' );
+$aicfab_out = $aicfab_page( true, 'popup' );
+check_pub( false === strpos( $aicfab_out['html'], 'ai-chat-bedrock-sign-in-link' ) && $aicfab_out['chat'] && in_array( AI_Chat_Bedrock_Public::POPUP_HANDLE, $aicfab_out['deps'], true ), 'Where the chat can be used it loads, with the popup script before it.' );
+$aicfab_page( false, null );
+$aicfab_public = new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' );
+$aicfab_public->enqueue_scripts();
+wp_enqueue_script( 'ai-chat-for-amazon-bedrock' );
+$aicfab_public->trim_scripts();
+check_pub( ! wp_script_is( 'ai-chat-for-amazon-bedrock' ) && ! wp_script_is( AI_Chat_Bedrock_Public::POPUP_HANDLE ), 'A page that rendered no chat after all loads neither.' );
+check_pub( isset( $GLOBALS['aicfab_localized']['ai_chat_bedrock_popup']['analytics'] ) && AI_Chat_Bedrock_Public::POPUP_HANDLE === $GLOBALS['aicfab_localized_on']['ai_chat_bedrock_popup'], 'The popup script is told whether analytics events are on.' );
+
+// --- Styles in the head wherever the chat is placed ---------------------------------------
+
+if ( ! class_exists( 'WP_Post' ) ) {
+	class WP_Post {
+		public $ID           = 0;
+		public $post_type    = 'post';
+		public $post_content = '';
+		public function __construct( $id, $content, $type = 'post' ) {
+			$this->ID           = $id;
+			$this->post_content = $content;
+			$this->post_type    = $type;
+		}
+	}
+}
+$aicfab_has_chat = function () {
+	$method = new ReflectionMethod( 'AI_Chat_Bedrock_Public', 'current_page_has_chat' );
+	if ( PHP_VERSION_ID < 80100 ) {
+		$method->setAccessible( true );
+	}
+	return $method->invoke( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) );
+};
+aicfab_reset_pub( array() );
+$GLOBALS['post']         = new WP_Post( 1, '<!-- wp:paragraph --><p>Hi</p><!-- /wp:paragraph -->' );
+$GLOBALS['aicfab_post']  = $GLOBALS['post'];
+$GLOBALS['aicfab_posts'] = array( 9 => new WP_Post( 9, '<!-- wp:ai-chat-bedrock/chat /-->', 'wp_block' ) );
+check_pub( ! $aicfab_has_chat(), 'A post without a chat does not load its styles.' );
+$GLOBALS['post']->post_content = '[ai_chat_bedrock]';
+check_pub( $aicfab_has_chat(), 'A chat in the post loads them in the head.' );
+$GLOBALS['post']->post_content = '<!-- wp:block {"ref":9} /-->';
+check_pub( $aicfab_has_chat(), 'So does a chat inside a synced pattern in the post.' );
+$GLOBALS['aicfab_posts'][9]->post_type = 'post';
+check_pub( ! $aicfab_has_chat(), 'A reference to something that is not a pattern is not followed.' );
+$GLOBALS['post']->post_content         = '';
+$GLOBALS['aicfab_opts']['widget_block'] = array( 2 => array( 'content' => '<!-- wp:ai-chat-bedrock/chat {"mode":"inline"} /-->' ), '_multiwidget' => 1 );
+check_pub( $aicfab_has_chat(), 'In a classic theme, a chat in a widget loads its styles in the head, not the footer.' );
+$GLOBALS['aicfab_block_theme'] = true;
+check_pub( ! $aicfab_has_chat(), 'A block theme renders its template before the head, so widgets are not scanned.' );
+$GLOBALS['aicfab_block_theme']          = false;
+$GLOBALS['aicfab_opts']['widget_block'] = array();
+$GLOBALS['aicfab_opts']['widget_text']  = array( 3 => array( 'text' => 'Ask us: [ai_chat_bedrock mode="popup"]' ) );
+check_pub( $aicfab_has_chat(), 'A shortcode in a text widget counts too.' );
+unset( $GLOBALS['post'] );
+$GLOBALS['aicfab_post']  = null;
+$GLOBALS['aicfab_posts'] = array();
+$GLOBALS['aicfab_opts']['widget_text'] = array();
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

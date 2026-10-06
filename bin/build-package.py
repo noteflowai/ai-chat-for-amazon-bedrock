@@ -12,9 +12,14 @@ Usage:
 """
 
 import argparse
+import glob
 import hashlib
+import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 import zipfile
 from pathlib import Path
 
@@ -26,6 +31,9 @@ SECRET_PATTERNS = (
     re.compile(r'-----BEGIN [A-Z ]*PRIVATE KEY-----'),
 )
 TEXT_SUFFIXES = {'.php', '.js', '.css', '.txt', '.json', '.pot', '.po', '.md', '.xml'}
+# Scripts and styles that get a minified copy in the package, beside the readable file the
+# plugin falls back to (see AI_Chat_Bedrock::minified_src()).
+MINIFY_DIRS = {'public/js', 'public/css', 'admin/js', 'admin/css'}
 
 
 def read_distignore():
@@ -81,6 +89,55 @@ def plugin_version():
     return match.group(1)
 
 
+def minifiable(rel):
+    return rel.parent.as_posix() in MINIFY_DIRS and rel.suffix in ('.js', '.css') and not rel.stem.endswith('.min')
+
+
+def minified_name(rel):
+    return rel.with_name(f'{rel.stem}.min{rel.suffix}')
+
+
+def esbuild_binary():
+    """esbuild from AICFAB_ESBUILD, the PATH, or npx's cache; None when there is none."""
+    candidates = [os.environ.get('AICFAB_ESBUILD', ''), shutil.which('esbuild') or '']
+    candidates += sorted(glob.glob(os.path.expanduser('~/.npm/_npx/*/node_modules/esbuild/bin/esbuild')))
+    for candidate in candidates:
+        if candidate and os.access(candidate, os.X_OK):
+            return candidate
+    return None
+
+
+def minify(paths):
+    """Minified copies of the shipped scripts and styles, by their package path.
+
+    Targets ES2017, so no newer syntax than the readable scripts use reaches a browser. Each
+    minified script is parsed again by Node when it is available.
+    """
+    binary = esbuild_binary()
+    if not binary:
+        print('warning: esbuild not found (set AICFAB_ESBUILD); the package ships readable scripts and styles only')
+        return {}
+    node = shutil.which('node')
+    copies = {}
+    for rel in paths:
+        if not minifiable(rel):
+            continue
+        result = subprocess.run(
+            [binary, str(PROJECT_DIR / rel), '--minify', '--target=es2017', '--log-level=error'],
+            capture_output=True, check=False,
+        )
+        if result.returncode != 0 or not result.stdout:
+            raise SystemExit(f'Could not minify {rel}: {result.stderr.decode(errors="ignore").strip()}')
+        if rel.suffix == '.js' and node:
+            with tempfile.NamedTemporaryFile(suffix='.js') as handle:
+                handle.write(result.stdout)
+                handle.flush()
+                if subprocess.run([node, '--check', handle.name], capture_output=True, check=False).returncode != 0:
+                    raise SystemExit(f'The minified copy of {rel} does not parse.')
+        copies[minified_name(rel)] = result.stdout
+    return copies
+
+
 def audit(paths):
     """Report anything that must never ship."""
     problems = []
@@ -108,13 +165,17 @@ def build(destination):
     if archive.exists():
         archive.unlink()
 
+    copies = minify(paths)
     with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         for rel in paths:
             zip_file.write(PROJECT_DIR / rel, f'{SLUG}/{rel.as_posix()}')
+        for rel, body in sorted(copies.items()):
+            zip_file.writestr(f'{SLUG}/{rel.as_posix()}', body)
 
     digest = hashlib.sha256(archive.read_bytes()).hexdigest()
     print(f'version={version}')
-    print(f'files={len(paths)}')
+    print(f'files={len(paths) + len(copies)}')
+    print(f'minified={len(copies)}')
     print(f'bytes={archive.stat().st_size}')
     print(f'sha256={digest}')
     print(f'archive={archive}')
@@ -122,12 +183,20 @@ def build(destination):
 
 
 def verify(archive):
-    expected = {f'{SLUG}/{rel.as_posix()}' for rel in shipped_files()}
+    shipped = shipped_files()
+    expected = {f'{SLUG}/{rel.as_posix()}' for rel in shipped}
+    # Minified copies are built into the package, all of them or, without esbuild, none.
+    copies = {f'{SLUG}/{minified_name(rel).as_posix()}' for rel in shipped if minifiable(rel)}
     with zipfile.ZipFile(archive) as zip_file:
         actual = {name for name in zip_file.namelist() if not name.endswith('/')}
 
+    present = actual & copies
+    if present and present != copies:
+        for name in sorted(copies - present):
+            print(f'  minified copy missing from the archive: {name}')
+        raise SystemExit(f'{archive} has some minified copies but not all.')
     missing = sorted(expected - actual)
-    extra = sorted(actual - expected)
+    extra = sorted(actual - expected - copies)
     for name in missing:
         print(f'  missing from the archive: {name}')
     for name in extra:

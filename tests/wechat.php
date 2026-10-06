@@ -157,6 +157,9 @@ class AI_Chat_Bedrock_Translation {
 	public static function presentation( $options ) {
 		return $options;
 	}
+	public static function sentences( ...$parts ) {
+		return implode( ' ', $parts );
+	}
 }
 class AI_Chat_Bedrock_Chat_Request {
 	public static function build( $message, $history, $options ) {
@@ -176,6 +179,9 @@ class AI_Chat_Bedrock_Chat_Request {
 	}
 }
 class AI_Chat_Bedrock_Content {
+	public static function is_public( $post ) {
+		return 'members only' !== $post->post_title;
+	}
 	public static function request_language( $slug ) {
 		return in_array( $slug, array( 'zh', 'en', 'ja' ), true ) ? $slug : '';
 	}
@@ -210,8 +216,21 @@ class AI_Chat_Bedrock_Conversations {
 	}
 }
 
+$GLOBALS['aicfab_feature_posts'] = array();
+function get_posts( $args ) {
+	$GLOBALS['aicfab_post_query'] = $args;
+	return $GLOBALS['aicfab_feature_posts'];
+}
+function get_the_title( $post ) {
+	return $post->post_title;
+}
+function get_permalink( $post ) {
+	return 'https://example.test/?p=' . $post->ID;
+}
+
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat-api.php';
 
 $failures = array();
 function check_wx( $condition, $message ) {
@@ -247,7 +266,7 @@ function wx_serve( $request ) {
 }
 function wx_post( $body, $params = array() ) {
 	$timestamp = isset( $params['timestamp'] ) ? $params['timestamp'] : (string) time();
-	$nonce     = 'n' . mt_rand( 1000, 9999 );
+	$nonce     = 'n' . uniqid( '', true );
 	$parts     = array( AICFAB_TOKEN, $timestamp, $nonce );
 	sort( $parts, SORT_STRING );
 	$params += array(
@@ -319,6 +338,7 @@ wx_serve( new WP_REST_Request( 'GET', array( 'signature' => sha1( implode( '', $
 check_wx( 'checked' === $GLOBALS['aicfab_store']['aicfab_wechat_contact']['result'] && 0 === strpos( AI_Chat_Bedrock_WeChat::contact_summary(), 'Last contact 1 mins ago: WeChat checked the address' ), 'A passed address check is reported.' );
 wx_serve( new WP_REST_Request( 'GET', array( 'timestamp' => '1', 'nonce' => 'n3' ) ) );
 check_wx( 'stale' === $GLOBALS['aicfab_store']['aicfab_wechat_contact']['result'], 'An old timestamp is reported.' );
+check_wx( ! empty( $GLOBALS['aicfab_store']['aicfab_wechat_contact']['ok'] ) && false !== strpos( AI_Chat_Bedrock_WeChat::contact_summary(), 'The last signed request from WeChat came' ), 'A refused request does not hide that WeChat reached the address.' );
 $GLOBALS['aicfab_writes'] = 0;
 for ( $i = 0; $i < 5; $i++ ) {
 	wx_serve( new WP_REST_Request( 'GET', array( 'timestamp' => '1', 'nonce' => 'n3' ) ) );
@@ -352,6 +372,46 @@ check_wx( wx_content( $again ) === $fields['Content'] && 1 === count( $GLOBALS['
 
 wx_post( wx_message( 'And on Mondays?', 1002 ) );
 check_wx( array( array( 'role' => 'user', 'content' => 'Do you deliver on Sundays?' ), array( 'role' => 'assistant', 'content' => 'We **deliver** on Sundays from 9 to 12.' ) ) === $GLOBALS['aicfab_built']['history'], 'A follow-up question carries the conversation so far.' );
+
+// --- A signed address used again ----------------------------------------------------------
+
+wx_reset();
+wx_settings();
+$aicfab_ts    = (string) time();
+$aicfab_parts = array( AICFAB_TOKEN, $aicfab_ts, 'nreplay' );
+sort( $aicfab_parts, SORT_STRING );
+$aicfab_query = array( 'timestamp' => $aicfab_ts, 'nonce' => 'nreplay', 'signature' => sha1( implode( '', $aicfab_parts ) ) );
+$first        = wx_serve( new WP_REST_Request( 'POST', $aicfab_query, wx_message( 'Do you deliver?', 8101 ) ) );
+$again        = wx_serve( new WP_REST_Request( 'POST', $aicfab_query, wx_message( 'Do you deliver?', 8101 ) ) );
+$swapped      = wx_serve( new WP_REST_Request( 'POST', $aicfab_query, str_replace( 'oFollower1', 'oSomeoneElse', wx_message( 'Spend money', 8102 ) ) ) );
+check_wx( 200 === $first->get_status() && 200 === $again->get_status() && 403 === $swapped->get_status() && 1 === count( $GLOBALS['aicfab_runs'] ), 'WeChat sending the same request again is answered; another message under the same signature is refused.' );
+wx_reset();
+
+// --- The menu and featured posts ------------------------------------------------------------
+
+wx_reset();
+wx_settings( array( 'wechat_menu' => "Courses: https://example.test/courses/\nSend 精选 for new articles." ) );
+$menu = wx_content( wx_post( wx_message( '菜单', 7001 ) ) );
+check_wx( "Courses: https://example.test/courses/\nSend 精选 for new articles." === $menu && array() === $GLOBALS['aicfab_runs'], 'A follower who sends 菜单 gets the menu, without the model.' );
+check_wx( $menu === wx_content( wx_post( wx_message( ' MENU ', 7002 ) ) ), 'The menu word is matched without case or spaces.' );
+$GLOBALS['aicfab_feature_posts'] = array( (object) array( 'ID' => 11, 'post_title' => '具身智能入门' ), (object) array( 'ID' => 13, 'post_title' => 'members only' ), (object) array( 'ID' => 12, 'post_title' => 'World models &amp; robots' ) );
+$featured                        = wx_content( wx_post( wx_message( '精选', 7003 ) ) );
+check_wx( false !== strpos( $featured, "具身智能入门\nhttps://example.test/?p=11" ) && false !== strpos( $featured, 'World models & robots' ) && 0 === strpos( $featured, 'Featured articles:' ) && false === strpos( $featured, 'members only' ) && array() === $GLOBALS['aicfab_runs'], 'Sending 精选 lists the newest public posts with their addresses, without the model.' );
+check_wx( 'publish' === $GLOBALS['aicfab_post_query']['post_status'] && false === $GLOBALS['aicfab_post_query']['has_password'], 'Only published posts without a password are listed.' );
+$GLOBALS['aicfab_feature_posts'] = array();
+check_wx( 'There are no featured articles yet.' === wx_content( wx_post( wx_message( '最新', 7004 ) ) ), 'With none, the follower is told so.' );
+wx_settings( array( 'wechat_hourly' => 1, 'wechat_menu' => 'Menu' ) );
+wx_post( wx_message( '菜单', 7005 ) );
+wx_post( wx_message( '菜单', 7006 ) );
+wx_post( wx_message( 'Do you deliver?', 7007 ) );
+check_wx( 1 === count( $GLOBALS['aicfab_runs'] ), 'Menu words do not count towards the hourly limit.' );
+$hello = wx_content( wx_post( '<xml><ToUserName><![CDATA[gh_bakery]]></ToUserName><FromUserName><![CDATA[oNew]]></FromUserName><CreateTime>' . time() . '</CreateTime><MsgType><![CDATA[event]]></MsgType><Event><![CDATA[subscribe]]></Event></xml>' ) );
+check_wx( "\n\nMenu" === substr( $hello, -6 ), 'A new follower gets the menu after the welcome.' );
+wx_reset();
+wx_settings();
+wx_post( wx_message( '菜单', 7008 ) );
+check_wx( 1 === count( $GLOBALS['aicfab_runs'] ), 'Without a menu, 菜单 is a question like any other.' );
+wx_reset();
 
 // --- A faster model for WeChat -----------------------------------------------------------------
 
@@ -486,6 +546,8 @@ check_wx( '<xml>hello</xml>' === AI_Chat_Bedrock_WeChat::decrypt( $round, AICFAB
 
 wx_reset();
 wx_settings( array( 'wechat_aes_key' => AI_Chat_Bedrock_Security::encrypt_secret( AICFAB_AES_KEY ), 'wechat_app_id' => AICFAB_APP_ID ) );
+$downgrade = wx_post( wx_message( 'Spend money as someone else', 6099 ) );
+check_wx( 403 === $downgrade->get_status() && 'plaintext' === $GLOBALS['aicfab_store']['aicfab_wechat_contact']['result'], 'With an EncodingAESKey set, a plaintext message, whose signature does not cover it, is refused.' );
 $timestamp = (string) time();
 $inner     = AI_Chat_Bedrock_WeChat::encrypt( wx_message( 'Do you deliver on Sundays?', 6001 ), AICFAB_AES_KEY, AICFAB_APP_ID );
 $parts     = array( AICFAB_TOKEN, $timestamp, 'n6001', $inner );

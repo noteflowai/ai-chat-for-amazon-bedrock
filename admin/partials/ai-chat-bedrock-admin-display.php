@@ -343,6 +343,14 @@ $aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 					?>
 				<?php endif; ?>
 			</p>
+			<?php
+			// Once every step is done the ticked list only takes room from what is worth doing
+			// next, so it folds away, still there for anyone retracing the setup.
+			if ( $aicfab_progress['complete'] ) :
+				?>
+				<details class="aicfab-steps-done">
+					<summary><?php esc_html_e( 'Show the setup steps', 'ai-chat-for-amazon-bedrock' ); ?></summary>
+			<?php endif; ?>
 			<ol class="aicfab-steps">
 				<?php foreach ( $steps as $index => $step ) : ?>
 					<li class="<?php echo $step['done'] ? 'is-done' : ''; ?>">
@@ -354,6 +362,9 @@ $aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 					</li>
 				<?php endforeach; ?>
 			</ol>
+			<?php if ( $aicfab_progress['complete'] ) : ?>
+				</details>
+			<?php endif; ?>
 			<p>
 				<a class="button button-primary" href="<?php echo esc_url( $settings_url ); ?>"><?php esc_html_e( 'Open settings', 'ai-chat-for-amazon-bedrock' ); ?></a>
 				<a class="button" href="<?php echo esc_url( $diagnostics_url ); ?>"><?php esc_html_e( 'Run diagnostics', 'ai-chat-for-amazon-bedrock' ); ?></a>

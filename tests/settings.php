@@ -83,6 +83,9 @@ class AI_Chat_Bedrock_Chat_Request {
 	public static function color_scheme( $value ) {
 		return in_array( $value, array( 'light', 'dark', 'auto' ), true ) ? $value : 'light';
 	}
+	public static function accent_color( $value ) {
+		return preg_match( '/^#[0-9a-f]{6}$/', (string) $value ) ? (string) $value : '';
+	}
 }
 class AI_Chat_Bedrock_Profiles {
 	public static function sanitize_key( $value ) {
@@ -116,6 +119,9 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-chat-history.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-speech.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-leads.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat-game.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat-drafts.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-youtube.php';
 require dirname( __DIR__ ) . '/admin/class-ai-chat-bedrock-admin.php';
 
 $failures = array();
@@ -260,10 +266,56 @@ $saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'acco
 check_set( 'account' === $saved['chat_memory'] && AI_Chat_Bedrock_Chat_History::MAX_DAYS === $saved['chat_memory_days'], 'Account memory is saved with its retention, capped at a year.' );
 $saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'light' ) );
 check_set( 'account' === $saved['chat_memory'] && 365 === $saved['chat_memory_days'], 'Another tab keeps the memory setting and its retention.' );
+$saved = save_tab( $admin, array( 'chat_accent_color' ), array( 'chat_accent_color' => '#2563eb' ) );
+check_set( '#2563eb' === $saved['chat_accent_color'] && 'account' === $saved['chat_memory'], 'An accent colour is saved without touching other settings.' );
+$saved = save_tab( $admin, array( 'chat_accent_color' ), array( 'chat_accent_color' => 'red;background:url(x)' ) );
+check_set( '' === $saved['chat_accent_color'], 'Anything but a colour is saved as the default.' );
 $saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'everywhere', 'chat_memory_days' => '0' ) );
 check_set( '' === $saved['chat_memory'] && AI_Chat_Bedrock_Chat_History::DEFAULT_DAYS === $saved['chat_memory_days'], 'An unknown memory mode is saved as off, and no retention as the default.' );
 $saved = save_tab( $admin, array( 'chat_memory' ), array( 'chat_memory' => 'tab', 'chat_memory_days' => '14' ) );
 check_set( 'tab' === $saved['chat_memory'] && 14 === $saved['chat_memory_days'], 'Tab memory is saved.' );
+
+// --- Every field shows on its section's tab ----------------------------------------
+
+$GLOBALS['aicfab_sections'] = array();
+$GLOBALS['aicfab_fields']   = array();
+if ( ! function_exists( 'register_setting' ) ) {
+	function register_setting( $group, $name, $args = array() ) {}
+	function add_settings_section( $id, $title, $callback, $page ) {
+		$GLOBALS['aicfab_sections'][ $id ] = $page;
+	}
+	function add_settings_field( $id, $title, $callback, $page, $section, $args = array() ) {
+		$GLOBALS['aicfab_fields'][ $id ] = array( $page, $section );
+	}
+}
+$admin->register_settings();
+$aicfab_misplaced = array();
+foreach ( $GLOBALS['aicfab_fields'] as $aicfab_field => $aicfab_where ) {
+	if ( ! isset( $GLOBALS['aicfab_sections'][ $aicfab_where[1] ] ) || $GLOBALS['aicfab_sections'][ $aicfab_where[1] ] !== $aicfab_where[0] ) {
+		$aicfab_misplaced[] = $aicfab_field;
+	}
+}
+check_set( count( $GLOBALS['aicfab_fields'] ) > 30 && array() === $aicfab_misplaced, 'Every settings field is on the tab of its section; misplaced: ' . implode( ', ', $aicfab_misplaced ) );
+check_set( 'aicfab_tab_publishing' === $GLOBALS['aicfab_fields']['youtube_client_id'][0] && 'aicfab_tab_wechat' === $GLOBALS['aicfab_fields']['wechat_enabled'][0] && 'aicfab_tab_wechat' === $GLOBALS['aicfab_fields']['wechat_drafts_enabled'][0] && 'aicfab_tab_wxgame' === $GLOBALS['aicfab_fields']['wxgame_enabled'][0] && 'aicfab_tab_agents' === $GLOBALS['aicfab_fields']['abilities_tools'][0] && 'aicfab_tab_governance' === $GLOBALS['aicfab_fields']['allow_public_chat'][0] && 'aicfab_tab_governance' === $GLOBALS['aicfab_fields']['log_conversations'][0], 'The Official Account with its drafts, the mini game and the video platforms each have a Channels page; agents and safety have tabs of their own.' );
+$aicfab_channels = AI_Chat_Bedrock_Admin::tabs()['publishing'];
+check_set( array( 'wechat', 'wxgame', 'video' ) === array_keys( $aicfab_channels['sections'] ) && $aicfab_channels['page'] === $aicfab_channels['sections']['wechat']['page'], 'A link to Channels opens its first page, the Official Account.' );
+$aicfab_channel_fields = array();
+foreach ( $aicfab_channels['sections'] as $aicfab_item ) {
+	$aicfab_channel_fields[] = AI_Chat_Bedrock_Admin::fields_for_page( $aicfab_item['page'] );
+}
+check_set( array() === array_intersect( $aicfab_channel_fields[0], $aicfab_channel_fields[1], $aicfab_channel_fields[2] ) && ! array_intersect( $aicfab_channel_fields[0], $aicfab_channel_fields[1] ) && in_array( 'publish_kit', $aicfab_channel_fields[2], true ), 'Each page saves only its own fields.' );
+
+// --- Publishing ------------------------------------------------------------------
+
+$saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' ) );
+check_set( empty( $saved['distribution_enabled'] ) && empty( $saved['distribution_links'] ) && empty( $saved['bilibili_embeds'] ) && '' === AI_Chat_Bedrock_YouTube::client( $saved )['id'], 'Publishing features are off by default.' );
+$saved = save_tab( $admin, array( 'distribution_enabled', 'bilibili_embeds', 'youtube_client_id' ), array( 'distribution_enabled' => '1', 'distribution_links' => '1', 'bilibili_embeds' => '1', 'youtube_client_id' => '123456-abcdef.apps.googleusercontent.com', 'youtube_client_secret' => 'GOCSPX-abcdefghijklmnop', 'youtube_daily_uploads' => '3' ) );
+check_set( true === $saved['distribution_enabled'] && true === $saved['distribution_links'] && true === $saved['bilibili_embeds'] && 3 === $saved['youtube_daily_uploads'], 'The record, its links, Bilibili embeds and the daily uploads are saved.' );
+check_set( 'GOCSPX-abcdefghijklmnop' === AI_Chat_Bedrock_YouTube::client( $saved )['secret'] && false === strpos( json_encode( $saved ), 'GOCSPX-abcdefghijklmnop' ), 'The client secret is stored encrypted.' );
+$saved = save_tab( $admin, array( 'distribution_enabled', 'bilibili_embeds', 'youtube_client_id' ), array( 'distribution_enabled' => '1', 'youtube_client_id' => '123456-abcdef.apps.googleusercontent.com', 'youtube_client_secret' => '' ) );
+check_set( 'GOCSPX-abcdefghijklmnop' === AI_Chat_Bedrock_YouTube::client( $saved )['secret'] && false === $saved['distribution_links'], 'An empty secret field keeps the saved secret; an unticked box turns its option off.' );
+$saved = save_tab( $admin, array( 'distribution_enabled', 'bilibili_embeds', 'youtube_client_id' ), array( 'youtube_client_id' => 'not-a-client', 'youtube_client_secret' => 'bad secret!' ) );
+check_set( '' === $saved['youtube_client_id'] && isset( $GLOBALS['aicfab_notices']['youtube_client_id'] ) && isset( $GLOBALS['aicfab_notices']['youtube_client_secret'] ) && 'GOCSPX-abcdefghijklmnop' === AI_Chat_Bedrock_YouTube::client( array( 'youtube_client_secret' => $saved['youtube_client_secret'] ) )['secret'], 'A malformed client ID or secret is refused with a notice.' );
 
 // --- WeChat Official Account -----------------------------------------------------
 
@@ -280,6 +332,31 @@ $saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_enabled' =>
 check_set( 'Tok3nForTests' === AI_Chat_Bedrock_WeChat::token( $saved ) && '' === $saved['wechat_app_id'] && isset( $GLOBALS['aicfab_notices']['wechat_token'] ), 'A malformed token is refused with a notice, and the original ID is not taken for an AppID.' );
 $saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_clear' => '1' ) );
 check_set( false === $saved['wechat_enabled'] && '' === AI_Chat_Bedrock_WeChat::token( $saved ) && '' === AI_Chat_Bedrock_WeChat::aes_key( $saved ), 'The token and key can be removed.' );
+
+// --- WeChat menu and drafts ------------------------------------------------------
+
+$saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_enabled' => '1', 'wechat_token' => 'Tok3nForTests', 'wechat_menu' => "Courses: https://example.test/courses/\nNews" ) );
+check_set( "Courses: https://example.test/courses/\nNews" === $saved['wechat_menu'], 'The WeChat menu text is saved, line breaks kept.' );
+$saved = save_tab( $admin, array( 'wechat_drafts_enabled' ), array( 'wechat_drafts_enabled' => '1', 'wechat_app_secret' => 'fedcba9876543210fedcba9876543210', 'wechat_drafts_category' => '4', 'wechat_drafts_schedule' => 'weekly', 'wechat_drafts_count' => '12', 'wechat_drafts_author' => 'Lab', 'wechat_drafts_notify' => '1' ) );
+check_set( true === $saved['wechat_drafts_enabled'] && 'fedcba9876543210fedcba9876543210' === AI_Chat_Bedrock_WeChat_Drafts::app_secret( $saved ) && 4 === $saved['wechat_drafts_category'] && 'weekly' === $saved['wechat_drafts_schedule'] && 8 === $saved['wechat_drafts_count'] && 'Lab' === $saved['wechat_drafts_author'] && true === $saved['wechat_drafts_notify'], 'Drafts: switch, AppSecret, category, schedule, count (at most 8), author and email are saved.' );
+check_set( false === strpos( json_encode( $saved ), 'fedcba9876543210fedcba9876543210' ) && "Courses: https://example.test/courses/\nNews" === $saved['wechat_menu'], 'The AppSecret is stored encrypted, and the Chat tab keeps its menu.' );
+$saved = save_tab( $admin, array( 'wechat_drafts_enabled' ), array( 'wechat_drafts_enabled' => '1', 'wechat_app_secret' => 'nope', 'wechat_drafts_schedule' => 'hourly' ) );
+check_set( 'fedcba9876543210fedcba9876543210' === AI_Chat_Bedrock_WeChat_Drafts::app_secret( $saved ) && 'off' === $saved['wechat_drafts_schedule'] && isset( $GLOBALS['aicfab_notices']['wechat_app_secret'] ), 'A malformed AppSecret is refused and the saved one kept; an unknown schedule is off.' );
+$saved = save_tab( $admin, array( 'wechat_drafts_enabled' ), array( 'wechat_drafts_clear' => '1' ) );
+check_set( '' === AI_Chat_Bedrock_WeChat_Drafts::app_secret( $saved ) && false === $saved['wechat_drafts_enabled'], 'The AppSecret can be removed.' );
+
+// --- WeChat mini game ------------------------------------------------------------
+
+$saved = save_tab( $admin, array( 'wxgame_enabled' ), array( 'wxgame_enabled' => '1', 'wxgame_app_id' => 'wx1234567890game00', 'wxgame_token' => 'GameTok3n', 'wxgame_aes_key' => 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG', 'wxgame_app_secret' => '0123456789abcdef0123456789abcdef', 'wxgame_welcome' => "Hi!\nAsk away.", 'wxgame_answers' => "pay, 充值 = WeChat Pay handles it.\nnonsense", 'wxgame_fallback' => 'We read every message.' ) );
+check_set( true === $saved['wxgame_enabled'] && 'wx1234567890game00' === $saved['wxgame_app_id'] && 'GameTok3n' === AI_Chat_Bedrock_WeChat_Game::token( $saved ) && '0123456789abcdef0123456789abcdef' === AI_Chat_Bedrock_WeChat_Game::app_secret( $saved ) && "Hi!\nAsk away." === $saved['wxgame_welcome'] && 'pay, 充值 = WeChat Pay handles it.' === $saved['wxgame_answers'] && 'We read every message.' === $saved['wxgame_fallback'], 'The mini game\'s switch, AppID, secrets, welcome, answers and fallback are saved.' );
+check_set( false === strpos( json_encode( $saved ), 'GameTok3n' ) && false === strpos( json_encode( $saved ), '0123456789abcdef0123456789abcdef' ), 'The mini game\'s token and AppSecret are stored encrypted.' );
+$saved = save_tab( $admin, array( 'wxgame_enabled' ), array( 'wxgame_enabled' => '1', 'wxgame_app_id' => 'wx1234567890game00', 'wxgame_token' => '', 'wxgame_app_secret' => 'too short' ) );
+check_set( 'GameTok3n' === AI_Chat_Bedrock_WeChat_Game::token( $saved ) && '0123456789abcdef0123456789abcdef' === AI_Chat_Bedrock_WeChat_Game::app_secret( $saved ) && isset( $GLOBALS['aicfab_notices']['wxgame_app_secret'] ), 'Empty fields keep the saved secrets, and a malformed AppSecret is refused with a notice.' );
+$saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_enabled' => '1', 'wechat_token' => 'Tok3nForTests', 'wechat_app_id' => 'wx1234567890abcdef' ) );
+$saved = save_tab( $admin, array( 'wxgame_enabled' ), array( 'wxgame_enabled' => '1', 'wxgame_app_id' => 'wx1234567890abcdef', 'wxgame_token' => 'Tok3nForTests' ) );
+check_set( '' === $saved['wxgame_app_id'] && 'Tok3nForTests' === AI_Chat_Bedrock_WeChat_Game::token( $saved ) && isset( $GLOBALS['aicfab_notices']['wxgame_app_id'], $GLOBALS['aicfab_notices']['wxgame_token'] ) && 'Tok3nForTests' === AI_Chat_Bedrock_WeChat::token( $saved ), 'The mini game cannot take the Official Account\'s AppID, even from another tab; the same token is saved, with a reminder.' );
+$saved = save_tab( $admin, array( 'wxgame_enabled' ), array( 'wxgame_clear' => '1' ) );
+check_set( false === $saved['wxgame_enabled'] && '' === AI_Chat_Bedrock_WeChat_Game::token( $saved ) && ! AI_Chat_Bedrock_WeChat_Game::can_reply( $saved ), 'The mini game\'s secrets can be removed.' );
 
 // --- Pages hidden from search ----------------------------------------------------
 
@@ -344,6 +421,35 @@ $saved = save_tab( $admin, array( 'chat_title' ), array( 'chat_title' => 'Ask' )
 check_set( 'cohere.rerank-v3-5:0' === $saved['rerank_model_id'], 'Another tab keeps the reranking model.' );
 $saved = save_tab( $admin, array( 'knowledge_base_id', 'rerank_model_id' ), array( 'knowledge_base_id' => 'KB123', 'rerank_model_id' => 'cohere.rerank-v9:0' ) );
 check_set( '' === $saved['rerank_model_id'] && isset( $GLOBALS['aicfab_notices']['rerank_model_id'] ), 'An unsupported reranking model leaves reranking off, with a notice.' );
+
+// --- Whether WeChat reaches a channel, as a status ----------------------------------------
+
+if ( ! function_exists( 'esc_attr' ) ) {
+	function esc_attr( $text ) {
+		return htmlspecialchars( (string) $text, ENT_QUOTES );
+	}
+}
+if ( ! function_exists( 'esc_html' ) ) {
+	function esc_html( $text ) {
+		return htmlspecialchars( (string) $text, ENT_QUOTES );
+	}
+}
+$aicfab_status = new ReflectionMethod( 'AI_Chat_Bedrock_Admin', 'contact_status' );
+if ( PHP_VERSION_ID < 80100 ) {
+	$aicfab_status->setAccessible( true );
+}
+$aicfab_pill = function ( $last, $lines = array( 'What happened.' ) ) use ( $aicfab_status ) {
+	ob_start();
+	$aicfab_status->invoke( null, $last, $lines );
+	return ob_get_clean();
+};
+check_set( false !== strpos( $aicfab_pill( array(), array() ), 'is-warn' ) && false !== strpos( $aicfab_pill( array(), array() ), 'WeChat has not reached this address yet.' ), 'An address WeChat never reached is a warning that says so.' );
+check_set( false !== strpos( $aicfab_pill( array( 'time' => 100, 'result' => 'message' ) ), 'is-good' ), 'A signed message is shown as connected.' );
+check_set( false !== strpos( $aicfab_pill( array( 'time' => 100, 'result' => 'signature' ) ), 'is-bad' ), 'A refused signature needs attention.' );
+check_set( false !== strpos( $aicfab_pill( array( 'time' => 100, 'result' => 'stale', 'ok' => 90 ) ), 'is-warn' ), 'A request refused after WeChat has reached the address is worth a look, not an alarm.' );
+check_set( false !== strpos( $aicfab_pill( array( 'time' => 100, 'result' => 'message', 'error' => array( 'time' => 120 ) ) ), 'is-bad' ), 'An answer that could not be sent after the last message needs attention.' );
+check_set( false !== strpos( $aicfab_pill( array( 'time' => 200, 'result' => 'message', 'error' => array( 'time' => 120 ) ) ), 'is-good' ), 'A send error older than the last message is past.' );
+check_set( false !== strpos( $aicfab_pill( array( 'time' => 100, 'result' => 'checked' ), array( '<b>x</b>' ) ), '&lt;b&gt;' ), 'The words are escaped.' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );

@@ -152,6 +152,50 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 	}
 
 	/**
+	 * The publishing record, offered when the site turns it on.
+	 *
+	 * @return array
+	 */
+	private function distribution_tools() {
+		$tools = array();
+		if ( class_exists( 'AI_Chat_Bedrock_WeChat_Drafts' ) && AI_Chat_Bedrock_WeChat_Drafts::enabled() ) {
+			$tools['create_wechat_draft'] = array(
+				'name'        => 'create_wechat_draft',
+				'description' => 'Make one draft in the site\'s WeChat Official Account from up to eight published posts, in order: title, excerpt, cover from the featured image, the text and images a signed-out visitor sees, and the post as Read more. Nothing is published; the owner publishes the draft in the Official Accounts Platform. Notes the draft in each post\'s publishing record. Requires permission to publish posts and to edit each one.',
+				'parameters'  => AI_Chat_Bedrock_WeChat_Drafts::schema(),
+			);
+		}
+		if ( class_exists( 'AI_Chat_Bedrock_Publish_Kit' ) && AI_Chat_Bedrock_Publish_Kit::enabled() ) {
+			$tools['prepare_publish_kit'] = array(
+				'name'        => 'prepare_publish_kit',
+				'description' => 'Write the title, text, tags and category for publishing a published post on Bilibili, Xiaohongshu or YouTube, from the text a signed-out visitor reads, with the site\'s model, within each platform\'s limits, and keep it with the post. Publishes nothing; the copy is an AI draft for a person to check. Requires permission to edit the post.',
+				'parameters'  => AI_Chat_Bedrock_Publish_Kit::schema(),
+			);
+		}
+		if ( ! class_exists( 'AI_Chat_Bedrock_Distribution' ) || ! AI_Chat_Bedrock_Distribution::enabled() ) {
+			return $tools;
+		}
+		$schemas = AI_Chat_Bedrock_Distribution::schemas();
+		return $tools + array(
+			'get_publish_package' => array(
+				'name'        => 'get_publish_package',
+				'description' => 'Return what is needed to publish a post on another platform: title, address, plain text as a signed-out visitor reads it, excerpt, tags, image, translations, and where it is already published. Read only.',
+				'parameters'  => $schemas['get_publish_package'],
+			),
+			'record_publication'  => array(
+				'name'        => 'record_publication',
+				'description' => 'Record or update one item a post was published as on Bilibili, YouTube or Xiaohongshu, after checking it on the platform: its ID, https address, account, language and status. Pass replaces to mark the edition it replaces. Changes only this record, never the post. Requires permission to edit the post.',
+				'parameters'  => $schemas['record_publication'],
+			),
+			'list_publications'   => array(
+				'name'        => 'list_publications',
+				'description' => 'List publishing records across posts, filtered by platform, status, language or post, for example editions that are still public after being replaced. Read only.',
+				'parameters'  => $schemas['list_publications'],
+			),
+		);
+	}
+
+	/**
 	 * The site description, offered when the site turns it on.
 	 *
 	 * @return array
@@ -209,7 +253,7 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 	 * @return array
 	 */
 	private function available_tools() {
-		$tools = array_merge( $this->tools, $this->ontology_tools(), $this->metrics_tools(), $this->ability_tools() );
+		$tools = array_merge( $this->tools, $this->ontology_tools(), $this->metrics_tools(), $this->distribution_tools(), $this->ability_tools() );
 		return (array) apply_filters( 'ai_chat_bedrock_wp_mcp_tools', $tools );
 	}
 
@@ -515,6 +559,12 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 					return new WP_Error( 'tool_unavailable', __( 'This tool is not enabled on this site.', 'ai-chat-for-amazon-bedrock' ) );
 				}
 				return AI_Chat_Bedrock_Metrics::query( $arguments, 'agent' );
+			case 'get_publish_package':
+			case 'record_publication':
+			case 'list_publications':
+			case 'create_wechat_draft':
+			case 'prepare_publish_kit':
+				return $this->distribution_call( $name, $arguments );
 		}
 
 		if ( ! class_exists( 'AI_Chat_Bedrock_Site_Abilities' ) || ! AI_Chat_Bedrock_Site_Abilities::enabled() ) {
@@ -543,6 +593,36 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 		}
 
 		return new WP_Error( 'unknown_tool', __( 'Unknown tool.', 'ai-chat-for-amazon-bedrock' ) );
+	}
+
+	/**
+	 * Run a publishing record tool, with the permissions of the signed-in account.
+	 *
+	 * @param string $name      Tool name.
+	 * @param array  $arguments Arguments.
+	 * @return array|WP_Error
+	 */
+	private function distribution_call( $name, $arguments ) {
+		if ( ! isset( $this->distribution_tools()[ $name ] ) ) {
+			return new WP_Error( 'tool_unavailable', __( 'This tool is not enabled on this site.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		$arguments = is_array( $arguments ) ? $arguments : array();
+		if ( 'prepare_publish_kit' === $name ) {
+			$kit = new AI_Chat_Bedrock_Publish_Kit();
+			return $kit->can_generate( $arguments ) ? $kit->ability_generate( $arguments ) : new WP_Error( 'forbidden', __( 'This account cannot edit that post.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		if ( 'create_wechat_draft' === $name ) {
+			$drafts = new AI_Chat_Bedrock_WeChat_Drafts();
+			return $drafts->can_send( $arguments ) ? $drafts->ability_create( $arguments ) : new WP_Error( 'forbidden', __( 'This account cannot send those posts.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		$record = new AI_Chat_Bedrock_Distribution();
+		if ( 'list_publications' === $name ) {
+			return $record->can_list() ? AI_Chat_Bedrock_Distribution::search( $arguments ) : new WP_Error( 'forbidden', __( 'This account cannot read the publishing record.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		if ( ! $record->can_edit_input_post( $arguments ) ) {
+			return new WP_Error( 'forbidden', __( 'This account cannot edit that post.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		return 'record_publication' === $name ? $record->ability_record( $arguments ) : $record->ability_package( $arguments );
 	}
 
 	private function negotiate_version( $params ) {
@@ -784,7 +864,9 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 	}
 
 	private function is_public_post( $post ) {
-		return $post instanceof WP_Post && 'publish' === $post->post_status && '' === $post->post_password;
+		// Also kept out: what the site keeps from AI answers, such as pages hidden from search.
+		return $post instanceof WP_Post && 'publish' === $post->post_status && '' === $post->post_password
+			&& ( ! class_exists( 'AI_Chat_Bedrock_Content' ) || AI_Chat_Bedrock_Content::is_answerable( $post ) );
 	}
 
 	private function site_info() {
@@ -804,12 +886,18 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 			'title'   => get_the_title( $post ),
 			'slug'    => $post->post_name,
 			'date'    => get_the_date( 'c', $post ),
-			'excerpt' => wp_strip_all_tags( get_the_excerpt( $post ) ),
+			// From what a signed-out visitor reads: the stored post can hold members-only sections.
+			'excerpt' => class_exists( 'AI_Chat_Bedrock_Distribution' ) ? AI_Chat_Bedrock_Distribution::public_excerpt( $post ) : wp_strip_all_tags( (string) $post->post_excerpt ),
 			'author'  => $author ? $author->display_name : '',
 			'url'     => get_permalink( $post ),
 		);
 		if ( $include_content ) {
-			$data['content'] = wp_strip_all_tags( strip_shortcodes( apply_filters( 'the_content', $post->post_content ) ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- applying a core filter, not declaring a hook.
+			$text  = class_exists( 'AI_Chat_Bedrock_Content' ) ? AI_Chat_Bedrock_Content::public_text( $post ) : '';
+			$title = class_exists( 'AI_Chat_Bedrock_Content' ) ? AI_Chat_Bedrock_Content::title( $post ) : '';
+			if ( '' !== $title && 0 === strpos( $text, $title ) ) {
+				$text = substr( $text, strlen( $title ) );
+			}
+			$data['content'] = trim( $text );
 		}
 		return $data;
 	}

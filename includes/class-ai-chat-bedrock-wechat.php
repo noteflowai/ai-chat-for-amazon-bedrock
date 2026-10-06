@@ -211,12 +211,24 @@ class AI_Chat_Bedrock_WeChat {
 			self::note_contact( 'stale', $method );
 			return $denied;
 		}
-		if ( 'POST' === $method && 'aes' === strtolower( (string) $request->get_param( 'encrypt_type' ) ) ) {
+		$safe = 'aes' === strtolower( (string) $request->get_param( 'encrypt_type' ) );
+		// With an EncodingAESKey set, the account is in safe mode, and a plaintext message, whose
+		// signature does not cover it, is not WeChat's.
+		if ( 'POST' === $method && ! $safe && '' !== self::aes_key( $options ) && '' !== self::app_id( $options ) ) {
+			self::note_contact( 'plaintext', $method );
+			return $denied;
+		}
+		if ( 'POST' === $method && $safe ) {
 			$body  = (string) $request->get_body();
 			$outer = strlen( $body ) <= self::MAX_BODY_BYTES ? self::parse( $body ) : null;
 			$valid = null !== $outer && ! empty( $outer['Encrypt'] ) && self::signature_matches( (string) $request->get_param( 'msg_signature' ), array( $token, $timestamp, $nonce, $outer['Encrypt'] ) );
 		} else {
 			$valid = self::signature_matches( (string) $request->get_param( 'signature' ), array( $token, $timestamp, $nonce ) );
+		}
+		// WeChat's repeats carry the same message; another message under a used signature is not WeChat's.
+		if ( $valid && 'POST' === $method && class_exists( 'AI_Chat_Bedrock_WeChat_API' ) && ! AI_Chat_Bedrock_WeChat_API::fresh( self::REST_ROUTE, $timestamp, $nonce, (string) $request->get_body(), self::MAX_AGE ) ) {
+			self::note_contact( 'replay', $method );
+			return $denied;
 		}
 		self::note_contact( $valid ? ( 'GET' === $method ? 'checked' : 'message' ) : 'signature', $method );
 		return $valid ? true : $denied;
@@ -236,18 +248,25 @@ class AI_Chat_Bedrock_WeChat {
 	public static function note_contact( $result, $method ) {
 		$last = get_option( self::CONTACT_OPTION, array() );
 		$last = is_array( $last ) ? $last : array();
-		if ( isset( $last['result'], $last['time'] ) && $last['result'] === $result && time() - (int) $last['time'] < MINUTE_IN_SECONDS ) {
+		// The same outcome, or one refusal after another, is written at most once a minute, so a
+		// stream of bad requests does not write on every one.
+		$refused = array( 'stale', 'signature', 'replay', 'plaintext' );
+		if ( isset( $last['result'], $last['time'] ) && time() - (int) $last['time'] < MINUTE_IN_SECONDS && ( $last['result'] === $result || ( in_array( $last['result'], $refused, true ) && in_array( $result, $refused, true ) ) ) ) {
 			return;
 		}
-		update_option(
-			self::CONTACT_OPTION,
-			array(
-				'result' => $result,
-				'method' => $method,
-				'time'   => time(),
-			),
-			false
+		$next = array(
+			'result' => $result,
+			'method' => $method,
+			'time'   => time(),
 		);
+		// The last signed contact is kept apart, so that anyone sending the address junk can not
+		// hide that WeChat reaches it.
+		if ( in_array( $result, array( 'checked', 'message' ), true ) ) {
+			$next['ok'] = time();
+		} elseif ( ! empty( $last['ok'] ) ) {
+			$next['ok'] = (int) $last['ok'];
+		}
+		update_option( self::CONTACT_OPTION, $next, false );
 	}
 
 	/**
@@ -266,10 +285,17 @@ class AI_Chat_Bedrock_WeChat {
 			'signature' => __( 'the signature did not match the token, so the request was refused; enter the same token here as in WeChat', 'ai-chat-for-amazon-bedrock' ),
 			'checked'   => __( 'WeChat checked the address, and the signature matched', 'ai-chat-for-amazon-bedrock' ),
 			'message'   => __( 'a signed message arrived from WeChat', 'ai-chat-for-amazon-bedrock' ),
+			'replay'    => __( 'a signed address was used again with a different message, so it was refused', 'ai-chat-for-amazon-bedrock' ),
+			'plaintext' => __( 'a plaintext message was refused, because an EncodingAESKey is set: choose safe mode in WeChat, or remove the key here', 'ai-chat-for-amazon-bedrock' ),
 		);
 		$result = isset( $what[ $last['result'] ] ) ? $what[ $last['result'] ] : (string) $last['result'];
 		/* translators: 1: how long ago, such as 5 mins, 2: what happened. */
-		return sprintf( __( 'Last contact %1$s ago: %2$s.', 'ai-chat-for-amazon-bedrock' ), human_time_diff( (int) $last['time'], time() ), $result );
+		$summary = sprintf( __( 'Last contact %1$s ago: %2$s.', 'ai-chat-for-amazon-bedrock' ), human_time_diff( (int) $last['time'], time() ), $result );
+		if ( ! empty( $last['ok'] ) && ! in_array( $last['result'], array( 'checked', 'message' ), true ) ) {
+			/* translators: %s: how long ago, such as 5 mins. */
+			$summary = AI_Chat_Bedrock_Translation::sentences( $summary, sprintf( __( 'The last signed request from WeChat came %s ago.', 'ai-chat-for-amazon-bedrock' ), human_time_diff( (int) $last['ok'], time() ) ) );
+		}
+		return $summary;
 	}
 
 	/**
@@ -400,6 +426,13 @@ class AI_Chat_Bedrock_WeChat {
 			}
 		}
 
+		// The menu and the featured posts are the site's own words, not the model's.
+		$fixed = self::menu_reply( $text, $options );
+		if ( '' !== $fixed ) {
+			set_transient( $key, $fixed, self::ANSWER_TTL );
+			return $fixed;
+		}
+
 		if ( ! self::within_hourly_limit( $follower, $options ) ) {
 			$answer = __( 'You have sent a lot of questions this hour. Please try again later.', 'ai-chat-for-amazon-bedrock' );
 			set_transient( $key, $answer, self::ANSWER_TTL );
@@ -413,6 +446,90 @@ class AI_Chat_Bedrock_WeChat {
 		$answer = self::answer( $text, $follower, $options );
 		set_transient( $key, $answer, self::ANSWER_TTL );
 		return $answer;
+	}
+
+	/**
+	 * The reply to a menu word: the site's menu text, or its newest featured posts.
+	 *
+	 * With message push on, WeChat turns off the menu set in its console, and an account that
+	 * is not verified cannot set one through the API, so a follower sends 菜单 instead of
+	 * tapping one. Neither reply calls the model or counts towards the hourly limit.
+	 *
+	 * @param string $text    Follower's message.
+	 * @param array  $options Settings.
+	 * @return string The reply, or an empty string for a message that is not a menu word.
+	 */
+	public static function menu_reply( $text, $options ) {
+		$word = trim( function_exists( 'mb_strtolower' ) ? mb_strtolower( (string) $text, 'UTF-8' ) : strtolower( (string) $text ) );
+		/**
+		 * Words that ask for the menu, and for the newest featured posts.
+		 *
+		 * @param array $keywords menu and featured, each a list of words.
+		 */
+		$keywords = (array) apply_filters(
+			'ai_chat_bedrock_wechat_keywords',
+			array(
+				'menu'     => array( '菜单', '目录', 'menu', 'メニュー' ),
+				'featured' => array( '精选', '最新', 'new', 'latest', '新着' ),
+			)
+		);
+		$menu     = self::menu( $options );
+		if ( '' !== $menu && isset( $keywords['menu'] ) && in_array( $word, (array) $keywords['menu'], true ) ) {
+			return self::cut_bytes( $menu, self::MAX_REPLY_BYTES );
+		}
+		if ( isset( $keywords['featured'] ) && in_array( $word, (array) $keywords['featured'], true ) ) {
+			return self::featured( $options );
+		}
+		return '';
+	}
+
+	/**
+	 * The menu text the site set, if any.
+	 *
+	 * @param array|null $options Settings.
+	 * @return string
+	 */
+	public static function menu( $options = null ) {
+		$options = self::options( $options );
+		return isset( $options['wechat_menu'] ) ? trim( (string) $options['wechat_menu'] ) : '';
+	}
+
+	/**
+	 * The newest featured posts, with their addresses: the category chosen for drafts, in the
+	 * language drafts are sent in, or else the newest posts.
+	 *
+	 * @param array $options Settings.
+	 * @return string
+	 */
+	public static function featured( $options ) {
+		$args = array(
+			'post_type'           => 'post',
+			'post_status'         => 'publish',
+			'posts_per_page'      => 8,
+			'orderby'             => 'date',
+			'order'               => 'DESC',
+			'has_password'        => false,
+			'ignore_sticky_posts' => true,
+			'no_found_rows'       => true,
+		);
+		if ( class_exists( 'AI_Chat_Bedrock_WeChat_Drafts' ) ) {
+			if ( AI_Chat_Bedrock_WeChat_Drafts::category( $options ) ) {
+				$args['cat'] = AI_Chat_Bedrock_WeChat_Drafts::category( $options );
+			}
+			if ( '' !== AI_Chat_Bedrock_WeChat_Drafts::language() ) {
+				$args['lang'] = AI_Chat_Bedrock_WeChat_Drafts::language();
+			}
+		}
+		$lines = array();
+		foreach ( get_posts( $args ) as $post ) {
+			if ( count( $lines ) < 5 && ( ! class_exists( 'AI_Chat_Bedrock_Content' ) || AI_Chat_Bedrock_Content::is_public( $post ) ) ) {
+				$lines[] = html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ) . "\n" . get_permalink( $post );
+			}
+		}
+		if ( ! $lines ) {
+			return __( 'There are no featured articles yet.', 'ai-chat-for-amazon-bedrock' );
+		}
+		return self::cut_bytes( __( 'Featured articles:', 'ai-chat-for-amazon-bedrock' ) . "\n\n" . implode( "\n\n", $lines ), self::MAX_REPLY_BYTES );
 	}
 
 	/**
@@ -488,7 +605,10 @@ class AI_Chat_Bedrock_WeChat {
 
 		$history = get_transient( self::history_key( $follower ) );
 		$history = is_array( $history ) ? $history : array();
-		$built   = AI_Chat_Bedrock_Chat_Request::build( AI_Chat_Bedrock_Security::string_substr( $text, 0, 2000 ), $history, $options );
+		// All followers arrive from WeChat's servers, so the per-visitor share does not apply;
+		// each follower has an hourly limit instead.
+		$options['_shared_client'] = true;
+		$built                     = AI_Chat_Bedrock_Chat_Request::build( AI_Chat_Bedrock_Security::string_substr( $text, 0, 2000 ), $history, $options );
 		if ( is_wp_error( $built ) ) {
 			return 'aicfab_daily_limit' === $built->get_error_code() ? __( 'The assistant has answered as many questions as it can today. Please try again tomorrow.', 'ai-chat-for-amazon-bedrock' ) : self::sorry();
 		}
@@ -626,7 +746,8 @@ class AI_Chat_Bedrock_WeChat {
 				$hello .= "\n· " . $ask;
 			}
 		}
-		return self::format( $hello );
+		$menu = self::menu( $options );
+		return self::cut_bytes( self::format( $hello ) . ( '' !== $menu ? "\n\n" . $menu : '' ), self::MAX_REPLY_BYTES );
 	}
 
 	private static function sorry() {

@@ -617,6 +617,9 @@ class AI_Chat_Bedrock_Eval {
 			$options = is_array( $options ) ? $options : array();
 		}
 
+		// An evaluation is the operator's, often from WP-CLI with nobody signed in, not one visitor's.
+		$options['_shared_client'] = true;
+
 		$results = array();
 		foreach ( $cases as $golden ) {
 			$results[] = self::run_case( $golden, $options );

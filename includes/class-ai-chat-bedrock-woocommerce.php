@@ -1334,7 +1334,7 @@ class AI_Chat_Bedrock_WooCommerce {
 			return;
 		}
 		$handle = 'ai-chat-for-amazon-bedrock-woocommerce';
-		wp_enqueue_script( $handle, AI_CHAT_BEDROCK_PLUGIN_URL . 'admin/js/ai-chat-bedrock-woocommerce.js', array( 'wp-api-fetch' ), AI_CHAT_BEDROCK_VERSION, true );
+		wp_enqueue_script( $handle, AI_CHAT_BEDROCK_PLUGIN_URL . 'admin/js/ai-chat-bedrock-woocommerce.js', array( 'wp-api-fetch' ), defined( 'AI_CHAT_BEDROCK_ASSET_VERSION' ) ? AI_CHAT_BEDROCK_ASSET_VERSION : AI_CHAT_BEDROCK_VERSION, true );
 		wp_localize_script(
 			$handle,
 			'aicfabProductAssistant',
@@ -1413,8 +1413,14 @@ class AI_Chat_Bedrock_WooCommerce {
 				$paragraphs[] = __( 'A copy of each contact request is emailed to the site\'s staff.', 'ai-chat-for-amazon-bedrock' );
 			}
 		}
+		if ( class_exists( 'AI_Chat_Bedrock_Bilibili' ) && AI_Chat_Bedrock_Bilibili::enabled() ) {
+			$paragraphs[] = __( 'Some pages show videos in Bilibili\'s player. The player is loaded from Bilibili, a video platform based in China, which receives your IP address and browser details and can set its own cookies, under Bilibili\'s privacy policy, as soon as the page is shown.', 'ai-chat-for-amazon-bedrock' );
+		}
 		if ( class_exists( 'AI_Chat_Bedrock_WeChat' ) && AI_Chat_Bedrock_WeChat::enabled() ) {
 			$paragraphs[] = __( 'If you write to this site\'s WeChat Official Account, WeChat, a service of Tencent, passes your messages to this site, and they are sent to Amazon Bedrock to write the answer. Your last few messages and the answers are kept on this site for 30 minutes, under a code made from your WeChat ID, so that a follow-up question can be understood. If the site keeps a conversation log, your questions are stored there too, without your WeChat ID.', 'ai-chat-for-amazon-bedrock' );
+		}
+		if ( class_exists( 'AI_Chat_Bedrock_WeChat_Game' ) && AI_Chat_Bedrock_WeChat_Game::enabled() ) {
+			$paragraphs[] = __( 'If you use the customer service chat in this site\'s WeChat mini game, WeChat, a service of Tencent, passes to this site that you opened it, the part of the game you opened it from, your messages and your answers to subscription prompts. Questions are answered with replies the site has written, sent back through WeChat; nothing is sent to an AI service. The site keeps only daily totals, such as how many players opened the chat, counted with a code that changes every day, not your WeChat ID; a code made from your WeChat ID is kept for 12 hours only so that you are not welcomed twice. If the site keeps a conversation log, your questions are stored there too, without your WeChat ID.', 'ai-chat-for-amazon-bedrock' );
 		}
 		if ( class_exists( 'AI_Chat_Bedrock_Analytics' ) && AI_Chat_Bedrock_Analytics::enabled() ) {
 			$paragraphs[] = __( 'This site\'s analytics records when you open the chat, ask a question and get an answer, follow a link or product in an answer, rate an answer or send a contact request. The text of your messages and your contact details are not included.', 'ai-chat-for-amazon-bedrock' );

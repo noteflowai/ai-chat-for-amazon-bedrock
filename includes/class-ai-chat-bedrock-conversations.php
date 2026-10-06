@@ -74,7 +74,7 @@ class AI_Chat_Bedrock_Conversations {
 			'id'            => self::new_id(),
 			'time'          => time(),
 			'user'          => get_current_user_id(),
-			'source'        => in_array( $source, array( 'chat', 'stream', 'editor', 'ability', 'wechat' ), true ) ? $source : 'chat',
+			'source'        => in_array( $source, array( 'chat', 'stream', 'editor', 'ability', 'wechat', 'wxgame' ), true ) ? $source : 'chat',
 			'model'         => AI_Chat_Bedrock_Security::string_substr( $model, 0, 120 ),
 			'question'      => AI_Chat_Bedrock_Security::string_substr( wp_strip_all_tags( $question ), 0, self::MAX_TEXT ),
 			'answer'        => AI_Chat_Bedrock_Security::string_substr( wp_strip_all_tags( $answer ), 0, self::MAX_TEXT ),
@@ -261,6 +261,21 @@ class AI_Chat_Bedrock_Conversations {
 	public static function recent( $limit = 50 ) {
 		$entries = array_reverse( self::all() );
 		return array_slice( $entries, 0, max( 1, min( self::MAX_ENTRIES, absint( $limit ) ) ) );
+	}
+
+	/**
+	 * A stored question or answer as plain text for a list: Markdown emphasis, code, headings,
+	 * list markers and citation markers such as [P2] removed, links reduced to their text.
+	 *
+	 * @param string $text Stored text.
+	 * @return string
+	 */
+	public static function plain( $text ) {
+		$text = preg_replace( '/\[([^\]]+)\]\([^)\s]+\)/u', '$1', (string) $text );
+		$text = preg_replace( '/\s*\[(?:[A-Z]?\d{1,3})(?:\s*,\s*[A-Z]?\d{1,3})*\]/u', '', $text );
+		$text = preg_replace( '/^\s{0,3}(?:#{1,6}\s+|[-*+]\s+|\d{1,3}[.)]\s+|>\s?)/mu', '', $text );
+		$text = preg_replace( '/(\*\*|__|\*|`+|~~)(?=\S)(.+?)(?<=\S)\1/u', '$2', $text );
+		return trim( preg_replace( '/[ \t]*\n\s*/u', ' ', (string) $text ) );
 	}
 
 	/**

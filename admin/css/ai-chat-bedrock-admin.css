@@ -363,9 +363,95 @@
 
 .aicfab-usage-models code {
     font-size: 11px;
+    overflow-wrap: anywhere;
+}
+
+/* What an empty field means, beside it. */
+.aicfab-inherits {
+    color: #50575e;
+    font-size: 13px;
+}
+
+/* Adding an MCP server, below the list. */
+.aicfab-add-server {
+    margin-top: 12px;
+}
+
+.aicfab-add-server > summary {
+    list-style: none;
+}
+
+.aicfab-add-server > summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Longer help under a field, folded below its first paragraph. */
+.aicfab-help {
+    max-width: 70ch;
+    margin-top: 4px;
+}
+
+.aicfab-help > summary {
+    cursor: pointer;
+    color: #2271b1;
+}
+
+.aicfab-help[open] > summary {
+    margin-bottom: 4px;
+}
+
+/* Setup steps, folded once all are done. */
+.aicfab-steps-done {
+    margin: 4px 0 12px;
+}
+
+.aicfab-steps-done > summary {
+    cursor: pointer;
+    color: #2271b1;
+}
+
+/* Fields of a feature, shown once it is on. */
+.aicfab-depends {
+    margin-top: 4px;
+}
+
+.aicfab-depends[hidden] {
+    display: none;
+}
+
+/* Whether WeChat reaches a channel, above its fields. */
+.aicfab-contact-status {
+    margin-top: 0;
+    max-width: 70ch;
+}
+
+.aicfab-contact-status .aicfab-pill {
+    margin-right: 6px;
+}
+
+/* Help under a field reads as a paragraph, not a line across a wide screen. */
+.wrap .form-table .description {
+    max-width: 70ch;
+}
+
+.wrap .form-table select {
+    max-width: 100%;
 }
 
 @media screen and (max-width: 782px) {
+    /* Settings tabs scroll sideways on a phone instead of wrapping into rows. */
+    .wrap .aicfab-settings-tabs.nav-tab-wrapper {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .wrap .aicfab-settings-tabs .nav-tab {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
     .aicfab-usage-series li {
         grid-template-columns: 52px 1fr;
     }

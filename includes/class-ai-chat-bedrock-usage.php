@@ -14,6 +14,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class AI_Chat_Bedrock_Usage {
 
+	// A visitor's share of the site's daily cap: a tenth, and at least this many questions.
+	const VISITOR_SHARE = 10;
+	const VISITOR_MIN   = 20;
+
 	const OPTION         = 'ai_chat_bedrock_usage';
 	const RETENTION_DAYS = 30;
 	const MAX_MODELS     = 20;
@@ -221,6 +225,27 @@ class AI_Chat_Bedrock_Usage {
 			return false;
 		}
 		return self::requests_today() >= $limit;
+	}
+
+	/**
+	 * Questions one visitor may ask in a day: a tenth of the site's daily cap, and at least 20,
+	 * so one account, or a few made for the purpose, cannot use up the day for everyone. None
+	 * without a site cap. Administrators are not limited by it.
+	 *
+	 * @param array $options Plugin options.
+	 * @return int Zero for no limit.
+	 */
+	public static function visitor_daily_limit( $options = null ) {
+		$site    = self::daily_limit( $options );
+		$visitor = $site > 0 ? min( $site, max( self::VISITOR_MIN, intdiv( $site, self::VISITOR_SHARE ) ) ) : 0;
+
+		/**
+		 * Chat questions one visitor may ask in a day.
+		 *
+		 * @param int $visitor Questions; by default a tenth of the site's daily cap, at least 20.
+		 * @param int $site    The site's daily cap, 0 for none.
+		 */
+		return max( 0, (int) apply_filters( 'ai_chat_bedrock_visitor_daily_requests', $visitor, $site ) );
 	}
 
 	/**

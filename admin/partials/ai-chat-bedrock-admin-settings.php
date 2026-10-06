@@ -22,6 +22,13 @@ $current     = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) 
 $current     = isset( $aicfab_nav[ $current ] ) ? $current : 'aws';
 $aicfab_page = isset( $aicfab_tabs[ $current ] ) ? $aicfab_tabs[ $current ]['page'] : '';
 $base        = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings' );
+// A tab with sections shows one at a time, each its own form, as WooCommerce does.
+$aicfab_sections = isset( $aicfab_tabs[ $current ]['sections'] ) ? $aicfab_tabs[ $current ]['sections'] : array();
+$aicfab_section  = isset( $_GET['section'] ) ? sanitize_key( wp_unslash( $_GET['section'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$aicfab_section  = isset( $aicfab_sections[ $aicfab_section ] ) ? $aicfab_section : (string) key( $aicfab_sections );
+if ( '' !== $aicfab_section ) {
+	$aicfab_page = $aicfab_sections[ $aicfab_section ]['page'];
+}
 ?>
 <div class="wrap">
 	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
@@ -79,12 +86,24 @@ $base        = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings' )
 		</p></div>
 	<?php endif; ?>
 
-	<nav class="nav-tab-wrapper" aria-label="<?php esc_attr_e( 'Settings sections', 'ai-chat-for-amazon-bedrock' ); ?>">
+	<nav class="nav-tab-wrapper aicfab-settings-tabs" aria-label="<?php esc_attr_e( 'Settings sections', 'ai-chat-for-amazon-bedrock' ); ?>">
 		<?php foreach ( $aicfab_nav as $key => $aicfab_tab ) : ?>
 			<a class="nav-tab <?php echo $key === $current ? 'nav-tab-active' : ''; ?>"
 				href="<?php echo esc_url( add_query_arg( 'tab', $key, $base ) ); ?>"<?php echo $key === $current ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $aicfab_tab['label'] ); ?></a>
 		<?php endforeach; ?>
 	</nav>
+
+	<?php if ( count( $aicfab_sections ) > 1 ) : ?>
+		<ul class="subsubsub aicfab-sections">
+			<?php
+			$aicfab_last = array_key_last( $aicfab_sections );
+			foreach ( $aicfab_sections as $key => $aicfab_item ) :
+				?>
+				<li><a href="<?php echo esc_url( add_query_arg( 'section', $key, add_query_arg( 'tab', $current, $base ) ) ); ?>"<?php echo $key === $aicfab_section ? ' class="current" aria-current="page"' : ''; ?>><?php echo esc_html( $aicfab_item['label'] ); ?></a><?php echo $key === $aicfab_last ? '' : ' |'; ?></li>
+			<?php endforeach; ?>
+		</ul>
+		<br class="clear">
+	<?php endif; ?>
 
 	<?php if ( '' !== $aicfab_page ) : ?>
 	<form method="post" action="options.php">

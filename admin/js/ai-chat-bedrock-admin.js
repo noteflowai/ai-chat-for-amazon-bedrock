@@ -93,6 +93,9 @@
         if ('pass' === status) {
             return i18n.status_pass || 'Pass';
         }
+        if ('off' === status) {
+            return i18n.status_off || 'Not in use';
+        }
         if ('fail' === status) {
             return i18n.status_fail || 'Action required';
         }
@@ -165,10 +168,55 @@
         });
     }
 
+    /**
+     * Whether what a group of fields depends on is on: any of the named checkboxes ticked, or
+     * the named select at the given value.
+     */
+    function dependencyMet(names, value, find) {
+        return names.some(function (name) {
+            const $control = find(name);
+            if (!$control.length) {
+                return false;
+            }
+            if ($control.is(':checkbox')) {
+                return $control.is(':checked');
+            }
+            return value ? value === String($control.val()) : '' !== String($control.val() || '');
+        });
+    }
+
+    // Fields of a feature show once the feature is on, as WooCommerce's payment settings do.
+    // Hidden fields are still sent, so nothing saved is lost by turning a feature off.
+    function bindDependents() {
+        $('[data-aicfab-depends]').each(function () {
+            const $group = $(this);
+            const names = String($group.attr('data-aicfab-depends')).split(/\s+/).filter(Boolean);
+            const value = String($group.attr('data-aicfab-value') || '');
+            const find = function (name) {
+                return $('[name="' + name.replace(/"/g, '') + '"]').not('[type="hidden"]');
+            };
+            const update = function () {
+                $group.prop('hidden', !dependencyMet(names, value, find));
+            };
+            names.forEach(function (name) {
+                find(name).on('change', update);
+            });
+            update();
+        });
+    }
+
+    function bindColorFields() {
+        if ($.fn.wpColorPicker) {
+            $('.aicfab-color-field').wpColorPicker();
+        }
+    }
+
     $(function () {
         bindModelRefresh();
         bindDiagnostics();
         bindConfirmations();
+        bindColorFields();
+        bindDependents();
     });
 
     window.AIChatBedrockAdmin = AIChatBedrockAdmin;

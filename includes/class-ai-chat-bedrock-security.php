@@ -11,6 +11,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class AI_Chat_Bedrock_Security {
 
+	// Object cache group of the counters kept there, when the site has a persistent cache.
+	const CACHE_GROUP = 'aicfab_counters';
+
 	const ENCRYPTION_PREFIX = 'aicfab:v1:';
 
 	/**
@@ -136,8 +139,14 @@ class AI_Chat_Bedrock_Security {
 		$window = max( 1, (int) $window );
 		// The counter belongs to the current window and dies with it. Keyed by client alone, every
 		// request re-armed the expiry, so a steady client never saw its count reset.
-		$slot  = (int) floor( time() / $window );
-		$key   = 'aicfab_rl_' . md5( sanitize_key( $bucket ) . '|' . $window . '|' . $slot . '|' . self::client_identifier() );
+		$slot = (int) floor( time() / $window );
+		$key  = 'aicfab_rl_' . md5( sanitize_key( $bucket ) . '|' . $window . '|' . $slot . '|' . self::client_identifier() );
+		// With a persistent object cache the count is one atomic increment, so requests made at
+		// the same moment cannot all slip under the limit.
+		$atomic = self::increment( $key, $window );
+		if ( null !== $atomic ) {
+			return $atomic <= $limit;
+		}
 		$count = (int) get_transient( $key );
 
 		if ( $count >= $limit ) {
@@ -156,6 +165,9 @@ class AI_Chat_Bedrock_Security {
 	 * @return int
 	 */
 	public static function daily_spent( $bucket ) {
+		if ( function_exists( 'wp_using_ext_object_cache' ) && wp_using_ext_object_cache() ) {
+			return max( 0, (int) wp_cache_get( self::daily_key( $bucket ), self::CACHE_GROUP ) );
+		}
 		return max( 0, (int) get_transient( self::daily_key( $bucket ) ) );
 	}
 
@@ -167,9 +179,30 @@ class AI_Chat_Bedrock_Security {
 	 */
 	public static function spend_daily( $bucket, $amount ) {
 		$amount = (int) $amount;
-		if ( $amount > 0 ) {
-			set_transient( self::daily_key( $bucket ), self::daily_spent( $bucket ) + $amount, DAY_IN_SECONDS );
+		if ( $amount <= 0 ) {
+			return;
 		}
+		if ( null !== self::increment( self::daily_key( $bucket ), DAY_IN_SECONDS, $amount ) ) {
+			return;
+		}
+		set_transient( self::daily_key( $bucket ), self::daily_spent( $bucket ) + $amount, DAY_IN_SECONDS );
+	}
+
+	/**
+	 * Add to a counter atomically, when the site has a persistent object cache such as Redis.
+	 *
+	 * @param string $key    Counter.
+	 * @param int    $ttl    Seconds it lives.
+	 * @param int    $amount Amount to add.
+	 * @return int|null The new count, or null without such a cache.
+	 */
+	private static function increment( $key, $ttl, $amount = 1 ) {
+		if ( ! function_exists( 'wp_using_ext_object_cache' ) || ! wp_using_ext_object_cache() ) {
+			return null;
+		}
+		wp_cache_add( $key, 0, self::CACHE_GROUP, $ttl );
+		$count = wp_cache_incr( $key, $amount, self::CACHE_GROUP );
+		return false === $count ? null : (int) $count;
 	}
 
 	/**

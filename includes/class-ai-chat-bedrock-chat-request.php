@@ -65,6 +65,60 @@ class AI_Chat_Bedrock_Chat_Request {
 		return in_array( $value, array( 'light', 'dark', 'auto' ), true ) ? $value : 'light';
 	}
 
+	/**
+	 * The chat's accent colour as #rrggbb, or empty for the default blue.
+	 *
+	 * @param mixed $value Stored or submitted value.
+	 * @return string
+	 */
+	public static function accent_color( $value ) {
+		$value = strtolower( trim( (string) $value ) );
+		if ( preg_match( '/^#([0-9a-f])([0-9a-f])([0-9a-f])$/', $value, $short ) ) {
+			$value = '#' . $short[1] . $short[1] . $short[2] . $short[2] . $short[3] . $short[3];
+		}
+		return preg_match( '/^#[0-9a-f]{6}$/', $value ) ? $value : '';
+	}
+
+	/**
+	 * Custom properties that give the chat the site's accent colour, with white text on it where
+	 * that reaches 4.5:1 and otherwise whichever of white and near-black contrasts more. Empty
+	 * when no colour is set.
+	 *
+	 * @param array $options Plugin settings.
+	 * @return string
+	 */
+	public static function accent_style( $options ) {
+		$accent = self::accent_color( is_array( $options ) && isset( $options['chat_accent_color'] ) ? $options['chat_accent_color'] : '' );
+		if ( '' === $accent ) {
+			return '';
+		}
+		$white = self::contrast( $accent, '#ffffff' );
+		$text  = $white >= 4.5 || $white >= self::contrast( $accent, '#0b101c' ) ? '#ffffff' : '#0b101c';
+		return '--aicfab-accent:' . $accent . ';--aicfab-user-bubble:' . $accent . ';--aicfab-accent-contrast:' . $text . ';--aicfab-launcher:' . $accent . ';--aicfab-launcher-text:' . $text . ';';
+	}
+
+	/**
+	 * WCAG contrast ratio of two #rrggbb colours.
+	 *
+	 * @param string $first  Colour.
+	 * @param string $second Colour.
+	 * @return float
+	 */
+	public static function contrast( $first, $second ) {
+		$luminance = function ( $hex ) {
+			$sum = 0.0;
+			foreach ( array( 0.2126, 0.7152, 0.0722 ) as $index => $weight ) {
+				$channel = hexdec( substr( $hex, 1 + 2 * $index, 2 ) ) / 255;
+				$sum    += $weight * ( $channel <= 0.04045 ? $channel / 12.92 : pow( ( $channel + 0.055 ) / 1.055, 2.4 ) );
+			}
+			return $sum;
+		};
+
+		$a = $luminance( $first );
+		$b = $luminance( $second );
+		return ( max( $a, $b ) + 0.05 ) / ( min( $a, $b ) + 0.05 );
+	}
+
 
 	const MAX_MESSAGE_CHARS = 4000;
 	const MAX_HISTORY_BYTES = 50000;
@@ -108,6 +162,17 @@ class AI_Chat_Bedrock_Chat_Request {
 		 */
 		if ( class_exists( 'AI_Chat_Bedrock_Usage' ) && AI_Chat_Bedrock_Usage::daily_limit_reached( $options ) ) {
 			return new WP_Error( 'aicfab_daily_limit', __( 'The daily Amazon Bedrock request limit for this site has been reached.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 429 ) );
+		}
+		// Each visitor's share of the day, so one cannot use it up for all. WeChat followers,
+		// who all arrive from WeChat's servers, have a limit of their own.
+		if ( empty( $options['_shared_client'] ) && class_exists( 'AI_Chat_Bedrock_Usage' ) && ! current_user_can( 'manage_options' ) ) {
+			$share = AI_Chat_Bedrock_Usage::visitor_daily_limit( $options );
+			if ( $share > 0 && AI_Chat_Bedrock_Security::daily_spent( 'chat' ) >= $share ) {
+				return new WP_Error( 'aicfab_visitor_daily_limit', __( 'You have asked as many questions as one visitor can today. Please come back tomorrow.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 429 ) );
+			}
+			if ( $share > 0 ) {
+				AI_Chat_Bedrock_Security::spend_daily( 'chat', 1 );
+			}
 		}
 
 		// A JSON API caller may send history as an array; accept it instead of casting it to "Array".

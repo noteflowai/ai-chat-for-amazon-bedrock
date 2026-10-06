@@ -18,12 +18,81 @@
     }
 
     function formatMessage(value) {
-        let text = escapeHtml(value);
-        text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-        text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-        return text.replace(/\n/g, '<br>');
+        return renderMarkdown(escapeHtml(value));
+    }
+
+    /**
+     * The Markdown a model writes, from text that is already escaped: code, emphasis,
+     * headings, lists and web links. A link's address may hold no quote, space or angle
+     * bracket, so it cannot leave its attribute, and only http and https are linked.
+     */
+    function renderMarkdown(escaped) {
+        const blocks = [];
+        let text = String(escaped).replace(/```[^\n]*\n?([\s\S]*?)```/g, function (match, code) {
+            blocks.push('<pre><code>' + code.replace(/\n$/, '') + '</code></pre>');
+            return '\u0000' + (blocks.length - 1) + '\u0000';
+        });
+
+        function inline(line) {
+            return line
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s<>"'()]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/(^|[^*\w])\*(?!\s)([^*\n]+?)\*(?!\w)/g, '$1<em>$2</em>');
+        }
+
+        const out = [];
+        let list = null;
+        let lines = [];
+        function flushLines() {
+            if (lines.length) {
+                out.push('<p>' + lines.join('<br>') + '</p>');
+                lines = [];
+            }
+        }
+        function flushList() {
+            if (list) {
+                out.push('<' + list.tag + '>' + list.items.map(function (item) {
+                    return '<li>' + item + '</li>';
+                }).join('') + '</' + list.tag + '>');
+                list = null;
+            }
+        }
+
+        text.split('\n').forEach(function (line) {
+            const bullet = /^\s{0,3}[-*+]\s+(.*)$/.exec(line);
+            const number = /^\s{0,3}\d{1,3}[.)]\s+(.*)$/.exec(line);
+            const heading = /^\s{0,3}#{1,6}\s+(.*?)\s*#*\s*$/.exec(line);
+            const item = bullet || number;
+            if (item) {
+                const tag = bullet ? 'ul' : 'ol';
+                flushLines();
+                if (list && list.tag !== tag) {
+                    flushList();
+                }
+                list = list || { tag: tag, items: [] };
+                list.items.push(inline(item[1]));
+                return;
+            }
+            flushList();
+            if (/^\u0000\d+\u0000$/.test(line.trim())) {
+                flushLines();
+                out.push(line.trim());
+            } else if (heading) {
+                flushLines();
+                out.push('<p class="ai-chat-bedrock-heading"><strong>' + inline(heading[1]) + '</strong></p>');
+            } else if ('' === line.trim()) {
+                flushLines();
+            } else {
+                lines.push(inline(line));
+            }
+        });
+        flushLines();
+        flushList();
+
+        return out.join('').replace(/\u0000(\d+)\u0000/g, function (match, index) {
+            return blocks[Number(index)];
+        });
     }
 
     function avatar(isUser) {
@@ -35,52 +104,10 @@
         });
     }
 
-    /**
-     * Report what the chat did, never what was written in it.
-     *
-     * A DOM event on document always carries it, for a site's own code. When the site has
-     * turned analytics events on, it also goes to the analytics tag on the page: a Google Tag
-     * Manager container gets it in its data layer, Google Analytics otherwise through gtag
-     * (MonsterInsights names its copy __gtagTracker), and Matomo and Plausible through their
-     * queues. With a consent plugin on the WP Consent API, it waits for consent to statistics.
-     */
+    // Events go out through the popup script, which every chat loads first.
     function track(name, details) {
-        const data = {};
-        Object.keys(details || {}).forEach(function (key) {
-            if (null != details[key] && '' !== details[key]) {
-                data[key] = details[key];
-            }
-        });
-        try {
-            document.dispatchEvent(new CustomEvent('ai-chat-bedrock:event', { detail: { name: name, data: Object.assign({}, data) } }));
-        } catch (error) {
-            // A browser without CustomEvent still gets the analytics below.
-        }
-        if (!params.analytics || ('function' === typeof window.wp_has_consent && !window.wp_has_consent('statistics'))) {
-            return;
-        }
-        try {
-            const layer = window[window.gtm4wp_datalayer_name || 'dataLayer'];
-            const gtm = window.google_tag_manager && Object.keys(window.google_tag_manager).some(function (key) {
-                return 0 === key.indexOf('GTM-');
-            });
-            const gtag = 'function' === typeof window.gtag ? window.gtag : ('function' === typeof window.__gtagTracker ? window.__gtagTracker : null);
-            if (gtm && Array.isArray(layer)) {
-                layer.push(Object.assign({ event: name }, data));
-            } else if (gtag) {
-                gtag('event', name, Object.assign({}, data));
-            } else if (Array.isArray(layer)) {
-                // A tag manager that has not finished loading reads the layer when it does.
-                layer.push(Object.assign({ event: name }, data));
-            }
-            if (window._paq && 'function' === typeof window._paq.push) {
-                window._paq.push(['trackEvent', 'AI chat', name, String(data.rating || data.product_action || data.question_source || data.link_url || '')]);
-            }
-            if ('function' === typeof window.plausible) {
-                window.plausible(name, { props: Object.assign({}, data) });
-            }
-        } catch (error) {
-            // An analytics tag that fails must not break the chat.
+        if ('function' === typeof window.aiChatBedrockTrack) {
+            window.aiChatBedrockTrack(name, details);
         }
     }
 
@@ -119,6 +146,17 @@
             });
         }
         return nonceRequest;
+    }
+
+    /**
+     * Whether a key press sends the message: Enter without Shift, and not the Enter that
+     * picks a candidate in a Chinese or Japanese input method, which would send half a word.
+     */
+    function isSendKey(event) {
+        if ('Enter' !== event.key || event.shiftKey) {
+            return false;
+        }
+        return !event.isComposing && 229 !== event.keyCode;
     }
 
     /**
@@ -198,63 +236,7 @@
         );
     }
 
-    $('.ai-chat-bedrock-popup').each(function () {
-        const $popup = $(this);
-        const $launcher = $popup.find('.ai-chat-bedrock-launcher');
-        const $panel = $popup.find('.ai-chat-bedrock-popup-panel');
-
-        const stateKey = 'aicfabPopupOpen';
-
-        function remember(open) {
-            try {
-                window.sessionStorage.setItem(stateKey, open ? '1' : '0');
-            } catch (error) {
-                // Session storage is unavailable; the state simply is not remembered.
-            }
-        }
-
-        function setOpen(open, focus) {
-            $popup.attr('data-state', open ? 'open' : 'closed');
-            $launcher.attr('aria-expanded', open ? 'true' : 'false');
-            $panel.prop('hidden', !open);
-            if (open && false !== focus) {
-                /*
-                 * Focus goes into the panel either way. On a touch screen it goes to the panel
-                 * itself rather than the message box, whose keyboard would cover the welcome
-                 * and the suggested questions the moment the chat opened.
-                 */
-                const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-                const $target = $panel.find(touch ? '.ai-chat-bedrock-sign-in-link' : '.ai-chat-bedrock-textarea, .ai-chat-bedrock-sign-in-link').first();
-                ($target.length ? $target : $panel).trigger('focus');
-            }
-        }
-
-        $launcher.on('click', function () {
-            const open = 'open' !== $popup.attr('data-state');
-            setOpen(open);
-            remember(open);
-            if (open) {
-                track('ai_chat_open', { chat_profile: String($panel.find('.ai-chat-bedrock-container').attr('data-profile') || '') });
-            }
-        });
-
-        // Keep the panel open while the visitor browses other pages in this tab.
-        try {
-            if ('1' === window.sessionStorage.getItem(stateKey)) {
-                setOpen(true, false);
-            }
-        } catch (error) {
-            // Ignore storage failures.
-        }
-
-        $(document).on('keydown', function (event) {
-            if ('Escape' === event.key && 'open' === $popup.attr('data-state')) {
-                setOpen(false);
-                remember(false);
-                $launcher.trigger('focus');
-            }
-        });
-    });
+    // The floating chat's button and panel are run by ai-chat-bedrock-popup.js.
 
     $('.ai-chat-bedrock-container').each(function () {
         const $container = $(this);
@@ -280,8 +262,56 @@
         let transcript = [];
         let sentSinceLoad = false;
 
-        function scrollToBottom() {
-            $messages.scrollTop($messages.prop('scrollHeight'));
+        // The list follows a growing answer only while the reader is at the bottom. Scrolled
+        // up to read something earlier, they are not dragged back down by every chunk.
+        let follow = true;
+        $messages.on('scroll', function () {
+            follow = this.scrollHeight - this.scrollTop - this.clientHeight < 48;
+        });
+
+        function scrollToBottom(force) {
+            if (force) {
+                follow = true;
+            }
+            if (follow) {
+                $messages.scrollTop($messages.prop('scrollHeight'));
+            }
+        }
+
+        /**
+         * Render a streamed answer at most once a frame. Rendering on every chunk redid the
+         * whole growing answer dozens of times a second, which slows as the answer grows.
+         */
+        function schedulePaint(state) {
+            if (state.frame) {
+                return;
+            }
+            if (!window.requestAnimationFrame) {
+                paint(state);
+                return;
+            }
+            state.frame = window.requestAnimationFrame(function () {
+                state.frame = 0;
+                paint(state);
+            });
+        }
+
+        function paint(state) {
+            if (state.frame) {
+                window.cancelAnimationFrame(state.frame);
+                state.frame = 0;
+            }
+            if (state.bubble) {
+                state.bubble.content.html(formatMessage(state.text));
+                scrollToBottom();
+            }
+        }
+
+        // What is waiting for the next frame is shown now, before the answer is read or kept.
+        function settle(state) {
+            if (state.frame) {
+                paint(state);
+            }
         }
 
         function timeLabel(seconds) {
@@ -302,7 +332,8 @@
             }).text(label);
 
             $button.on('click', function () {
-                const text = String($content.text() || '');
+                // innerText keeps the breaks between paragraphs and list items; text() runs them together.
+                const text = String(($content[0] && $content[0].innerText) || $content.text() || '');
                 const done = function () {
                     $button.text(params.i18n.copied || label);
                     window.setTimeout(function () {
@@ -792,11 +823,15 @@
                 $meta.append(copyButton($content));
             }
 
-            $body.append($content, $meta);
+            // The avatar is hidden from screen readers, so who is speaking is said in words.
+            const i18n = params.i18n || {};
+            const $speaker = $('<span>', { 'class': 'screen-reader-text' }).text(isUser ? (i18n.you_said || 'You said:') : (i18n.assistant_said || 'Assistant:'));
+            $content.attr('dir', 'auto');
+            $body.append($speaker, $content, $meta);
             $message.append(avatar(isUser), $body);
             $messages.find('.ai-chat-bedrock-welcome-message').remove();
             $messages.append($message);
-            scrollToBottom();
+            scrollToBottom(isUser);
             return { message: $message, content: $content };
         }
 
@@ -1013,7 +1048,10 @@
             pending = value;
             $textarea.prop('disabled', value);
             $submit.prop('disabled', value);
-            $container.attr('aria-busy', value ? 'true' : 'false');
+            // Busy is the message list, not the whole chat: the announcement region is outside
+            // it, as some screen readers hold back what changes inside a busy element.
+            $messages.attr('aria-busy', value ? 'true' : 'false');
+            $container.toggleClass('is-busy', !!value);
             refreshStop();
         }
 
@@ -1163,12 +1201,12 @@
                 }
                 $messages.find('.ai-chat-bedrock-status').remove();
                 state.text += payload.text;
-                state.bubble.content.html(formatMessage(state.text));
-                scrollToBottom();
+                schedulePaint(state);
                 return;
             }
 
             if ('tools' === event.name) {
+                settle(state);
                 state.text = '';
                 if (state.bubble) {
                     state.bubble.content.empty();
@@ -1195,6 +1233,7 @@
             }
 
             if ('done' === event.name) {
+                settle(state);
                 state.done = true;
                 $messages.find('.ai-chat-bedrock-status').remove();
                 if (typeof payload.message === 'string' && payload.message.length) {
@@ -1266,7 +1305,7 @@
         }
 
         function sendStreaming(message, requestHistory, retried) {
-            const state = { text: '', bubble: null, error: '', done: false, fallback: false, renew: false, typing: typingIndicator() };
+            const state = { text: '', bubble: null, error: '', done: false, fallback: false, renew: false, frame: 0, typing: typingIndicator() };
             const body = new URLSearchParams();
             body.set('message', message);
             body.set('history', JSON.stringify(requestHistory));
@@ -1330,6 +1369,7 @@
                 }
                 return read();
             }).then(function () {
+                settle(state);
                 if (state.typing) {
                     state.typing.remove();
                     state.typing = null;
@@ -1376,6 +1416,7 @@
                 // Aborting rejects the fetch. That is the visitor's own doing, so it must
                 // not be reported as a failure.
                 if (stopped) {
+                    settle(state);
                     if (state.typing) {
                         state.typing.remove();
                         state.typing = null;
@@ -1476,7 +1517,7 @@
         $submit.on('click', submitMessage);
         $textarea.on('input', autoGrow);
         $textarea.on('keydown', function (event) {
-            if ('Enter' === event.key && !event.shiftKey) {
+            if (isSendKey(event.originalEvent || event)) {
                 submitMessage(event);
             }
         });
@@ -1530,21 +1571,9 @@
         }
     });
 
-    /*
-     * Taps on the chat made while an optimizer held this script back, as noted by
-     * ai-chat-bedrock-early.js. They are repeated now that the chat can answer them. A tap on
-     * the chat button is skipped when the chat is already open, since remembering an open
-     * chat may have opened it, and repeating the tap would close it again.
-     */
-    const early = window.aiChatBedrockEarly;
-    if (early) {
-        early.ready = true;
-        early.taps.splice(0).forEach(function (element) {
-            if (!document.documentElement.contains(element) || 'true' === element.getAttribute('aria-expanded')) {
-                return;
-            }
-            element.click();
-            early.repeated.push({ element: element, at: Date.now() });
-        });
+    // Taps made while an optimizer held the scripts back are repeated now that the chat can
+    // answer them, by the popup script that noted where they belong.
+    if ('function' === typeof window.aiChatBedrockReplay) {
+        window.aiChatBedrockReplay();
     }
 })(jQuery);

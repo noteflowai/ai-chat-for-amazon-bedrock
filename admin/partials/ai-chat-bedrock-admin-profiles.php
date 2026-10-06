@@ -42,8 +42,19 @@ $limits = array(
 	'context_results'       => array( __( 'Passages per answer', 'ai-chat-for-amazon-bedrock' ), 0, 8, 1, $inherit( 'context_results', 3 ) ),
 );
 ?>
+<?php
+// The form shows to add or edit a profile, after a refused save, and when there is none yet;
+// otherwise the list leads, with Add profile beside the title as on Posts and Users.
+$aicfab_adding    = isset( $_GET['add'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view state.
+$aicfab_show_form = $current || $aicfab_adding || empty( $profiles ) || 0 === strpos( (string) $notice, 'aicfab_' );
+$aicfab_page_url  = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-profiles' );
+?>
 <div class="wrap aicfab-dashboard">
-	<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+	<h1 class="wp-heading-inline"><?php echo esc_html( get_admin_page_title() ); ?></h1>
+	<?php if ( ! $aicfab_show_form ) : ?>
+		<a class="page-title-action" href="<?php echo esc_url( add_query_arg( 'add', '1', $aicfab_page_url ) . '#aicfab-profile-form' ); ?>"><?php esc_html_e( 'Add profile', 'ai-chat-for-amazon-bedrock' ); ?></a>
+	<?php endif; ?>
+	<hr class="wp-header-end">
 	<p class="aicfab-lede"><?php esc_html_e( 'Serve several chats from one plugin. Each profile can use its own model, prompt, presentation, guest access and grounding, and anything left empty falls back to the main settings.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 
 	<?php if ( 'saved' === $notice ) : ?>
@@ -83,7 +94,7 @@ $limits = array(
 								<?php wp_nonce_field( 'ai_chat_bedrock_delete_profile' ); ?>
 								<input type="hidden" name="action" value="ai_chat_bedrock_delete_profile">
 								<input type="hidden" name="key" value="<?php echo esc_attr( $key ); ?>">
-								<button type="submit" class="button button-small"><?php esc_html_e( 'Delete', 'ai-chat-for-amazon-bedrock' ); ?><span class="screen-reader-text"> <?php echo esc_html( $profile['label'] ); ?></span></button>
+								<button type="submit" class="button-link button-link-delete"><?php esc_html_e( 'Delete', 'ai-chat-for-amazon-bedrock' ); ?><span class="screen-reader-text"> <?php echo esc_html( $profile['label'] ); ?></span></button>
 							</form>
 						</td>
 					</tr>
@@ -92,7 +103,8 @@ $limits = array(
 		</table>
 	<?php endif; ?>
 
-	<div class="aicfab-panel aicfab-profile-form">
+	<?php if ( $aicfab_show_form ) : ?>
+	<div class="aicfab-panel aicfab-profile-form" id="aicfab-profile-form">
 		<h2><?php echo esc_html( $current ? __( 'Edit profile', 'ai-chat-for-amazon-bedrock' ) : __( 'Add profile', 'ai-chat-for-amazon-bedrock' ) ); ?></h2>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<?php wp_nonce_field( 'ai_chat_bedrock_save_profile' ); ?>
@@ -149,12 +161,15 @@ $limits = array(
 								<?php foreach ( $limits as $key => $aicfab_limit ) : ?>
 									<tr>
 										<th scope="row"><label for="aicfab_profile_<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $aicfab_limit[0] ); ?></label></th>
-										<td><input type="number" id="aicfab_profile_<?php echo esc_attr( $key ); ?>" class="small-text" name="<?php echo esc_attr( $key ); ?>" min="<?php echo esc_attr( $aicfab_limit[1] ); ?>" max="<?php echo esc_attr( $aicfab_limit[2] ); ?>" step="<?php echo esc_attr( $aicfab_limit[3] ); ?>" value="<?php echo esc_attr( $limit( $key ) ); ?>" placeholder="<?php echo esc_attr( $aicfab_limit[4] ); ?>"></td>
+										<td><input type="number" id="aicfab_profile_<?php echo esc_attr( $key ); ?>" class="small-text" name="<?php echo esc_attr( $key ); ?>" min="<?php echo esc_attr( $aicfab_limit[1] ); ?>" max="<?php echo esc_attr( $aicfab_limit[2] ); ?>" step="<?php echo esc_attr( $aicfab_limit[3] ); ?>" value="<?php echo esc_attr( $limit( $key ) ); ?>" aria-describedby="aicfab_profile_<?php echo esc_attr( $key ); ?>-inherits">
+											<?php /* translators: %s: the main setting's value, used when the field is empty. */ ?>
+											<span class="aicfab-inherits" id="aicfab_profile_<?php echo esc_attr( $key ); ?>-inherits"><?php echo esc_html( sprintf( __( 'Empty: %s, as in the main settings', 'ai-chat-for-amazon-bedrock' ), $aicfab_limit[4] ) ); ?></span>
+										</td>
 									</tr>
 								<?php endforeach; ?>
 							</table>
 						</fieldset>
-						<p class="description"><?php esc_html_e( 'Leave a field empty to use the main setting, shown in grey.', 'ai-chat-for-amazon-bedrock' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Leave a field empty to use the main setting.', 'ai-chat-for-amazon-bedrock' ); ?></p>
 					</td>
 				</tr>
 				<tr>
@@ -180,10 +195,11 @@ $limits = array(
 			</table>
 			<p class="submit">
 				<?php submit_button( $current ? __( 'Update profile', 'ai-chat-for-amazon-bedrock' ) : __( 'Add profile', 'ai-chat-for-amazon-bedrock' ), 'primary', 'submit', false ); ?>
-				<?php if ( $current ) : ?>
-					<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-profiles' ) ); ?>"><?php esc_html_e( 'Cancel', 'ai-chat-for-amazon-bedrock' ); ?></a>
+				<?php if ( ( $current || $aicfab_adding ) && ! empty( $profiles ) ) : ?>
+					<a class="button" href="<?php echo esc_url( $aicfab_page_url ); ?>"><?php esc_html_e( 'Cancel', 'ai-chat-for-amazon-bedrock' ); ?></a>
 				<?php endif; ?>
 			</p>
 		</form>
 	</div>
+	<?php endif; ?>
 </div>

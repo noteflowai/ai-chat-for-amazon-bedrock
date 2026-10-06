@@ -57,6 +57,28 @@ function apply_filters( $hook, $value ) {
 function is_wp_error( $thing ) {
 	return false;
 }
+if ( ! defined( 'MINUTE_IN_SECONDS' ) ) {
+	define( 'MINUTE_IN_SECONDS', 60 );
+}
+$GLOBALS['aicfab_ready_cron'] = array();
+$GLOBALS['aicfab_scheduled']  = array();
+function wp_get_ready_cron_jobs() {
+	return $GLOBALS['aicfab_ready_cron'];
+}
+function wp_next_scheduled( $hook, $args = array() ) {
+	return isset( $GLOBALS['aicfab_scheduled'][ $hook ] ) ? $GLOBALS['aicfab_scheduled'][ $hook ] : false;
+}
+function human_time_diff( $from, $to = 0 ) {
+	return (int) round( abs( $to - $from ) / 3600 ) . ' hours';
+}
+function _n( $single, $plural, $number, $domain = null ) {
+	return 1 === (int) $number ? $single : $plural;
+}
+if ( ! function_exists( 'number_format_i18n' ) ) {
+	function number_format_i18n( $number, $decimals = 0 ) {
+		return number_format( $number, $decimals );
+	}
+}
 function wp_json_encode( $value, $flags = 0 ) {
 	return json_encode( $value, $flags );
 }
@@ -221,10 +243,10 @@ check_diag( in_array( 'invocation', $aicfab_live_ids, true ), 'The live test rep
 
 // --- Every check has the shape the screen renders ------------------------------
 
-$aicfab_allowed_status = array( 'pass', 'warn', 'fail' );
+$aicfab_allowed_status = array( 'pass', 'off', 'warn', 'fail' );
 foreach ( $aicfab_live as $aicfab_check ) {
 	check_diag( isset( $aicfab_check['id'], $aicfab_check['label'], $aicfab_check['status'], $aicfab_check['message'] ), 'Each check carries id, label, status and message.' );
-	check_diag( in_array( $aicfab_check['status'], $aicfab_allowed_status, true ), 'Status is one of pass, warn or fail, got ' . $aicfab_check['status'] );
+	check_diag( in_array( $aicfab_check['status'], $aicfab_allowed_status, true ), 'Status is one of pass, off, warn or fail, got ' . $aicfab_check['status'] );
 	check_diag( '' !== trim( (string) $aicfab_check['message'] ), 'No check is reported without saying anything, at ' . $aicfab_check['id'] );
 	// Every id in this class is a literal that is already a key, so asserting that they
 	// survive sanitize_key would pass with the call removed. Shape is what is checked here.
@@ -252,6 +274,16 @@ foreach ( $aicfab_private as $aicfab_check ) {
 		check_diag( 'pass' === $aicfab_check['status'], 'An authenticated MCP endpoint passes.' );
 	}
 }
+
+// A feature nobody set up is neither a pass nor a problem, so it says so rather than going green.
+$GLOBALS['aicfab_opts']['ai_chat_bedrock_enable_mcp'] = false;
+$aicfab_unused                                        = array();
+foreach ( $aicfab_diag->run( false ) as $aicfab_check ) {
+	$aicfab_unused[ $aicfab_check['id'] ] = $aicfab_check['status'];
+}
+check_diag( 'off' === $aicfab_unused['mcp'], 'Disabled MCP tools are not in use, not a pass.' );
+check_diag( 'off' === $aicfab_unused['guardrail'] && 'off' === $aicfab_unused['knowledge_base'], 'An unconfigured guardrail or knowledge base is not in use, not a pass.' );
+$GLOBALS['aicfab_opts']['ai_chat_bedrock_enable_mcp'] = true;
 
 // --- An IAM role is the better posture, and says so ---------------------------
 
@@ -296,6 +328,42 @@ foreach ( $aicfab_toolong as $aicfab_check ) {
 	if ( 'model' === $aicfab_check['id'] ) {
 		check_diag( 'fail' === $aicfab_check['status'], 'An absurdly long model id fails.' );
 	}
+}
+
+// --- Background tasks that WordPress no longer runs ------------------------------------
+
+$aicfab_schedule = function () use ( $aicfab_diag ) {
+	foreach ( $aicfab_diag->run( false ) as $check ) {
+		if ( 'schedules' === $check['id'] ) {
+			return $check;
+		}
+	}
+	return null;
+};
+$GLOBALS['aicfab_ready_cron'] = array();
+$GLOBALS['aicfab_scheduled']  = array();
+check_diag( 'off' === $aicfab_schedule()['status'], 'With nothing scheduled, background tasks are not in use.' );
+$GLOBALS['aicfab_scheduled'] = array( 'ai_chat_bedrock_prune_chat_history' => time() + 3600 );
+check_diag( 'pass' === $aicfab_schedule()['status'], 'Tasks scheduled for later run on time.' );
+$GLOBALS['aicfab_ready_cron'] = array(
+	time() - 60           => array( 'ai_chat_bedrock_wechat_drafts' => array( 'k' => array() ) ),
+	time() - 2 * 3600     => array( 'some_other_plugin' => array( 'k' => array() ) ),
+);
+check_diag( 'pass' === $aicfab_schedule()['status'], 'A task due a minute ago, or another plugin\'s late task, is no alarm.' );
+$GLOBALS['aicfab_ready_cron'][ time() - 3 * 3600 ] = array(
+	'ai_chat_bedrock_wechat_drafts'  => array( 'a' => array() ),
+	'ai_chat_bedrock_youtube_upload' => array( 'b' => array(), 'c' => array() ),
+);
+$aicfab_late = $aicfab_schedule();
+check_diag( 'warn' === $aicfab_late['status'] && false !== strpos( $aicfab_late['message'], '3 background tasks are overdue, the oldest by 3 hours.' ), 'Tasks hours overdue are counted, with how late the oldest is.' );
+check_diag( false !== strpos( $aicfab_late['message'], 'server cron job call wp-cron.php' ), 'And it says how to make WordPress run them.' );
+$GLOBALS['aicfab_ready_cron'] = array();
+$GLOBALS['aicfab_scheduled']  = array();
+// The check names the recurring tasks; a renamed hook must be renamed there too.
+$aicfab_diag_source = file_get_contents( dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-diagnostics.php' );
+foreach ( array( 'wechat-drafts' => 'CRON', 'embeddings' => 'CRON_HOOK', 'leads' => 'CRON_HOOK', 'chat-history' => 'CRON_HOOK' ) as $aicfab_file => $aicfab_constant ) {
+	preg_match( '/const ' . $aicfab_constant . ' *= \'([a-z_]+)\'/', file_get_contents( dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-' . $aicfab_file . '.php' ), $aicfab_hook );
+	check_diag( isset( $aicfab_hook[1] ) && false !== strpos( $aicfab_diag_source, "'" . $aicfab_hook[1] . "'" ), 'The background task check knows the hook of ' . $aicfab_file . '.' );
 }
 
 if ( $failures ) {

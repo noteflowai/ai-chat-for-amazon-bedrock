@@ -125,9 +125,31 @@ expect_true(
 // The chat title was an h3 directly under the page h1, which skips a level on the front end
 // and on the Test Chat screen. It is an h2, styled by class so the level can move again
 // without touching CSS.
+// A build installed again under the same version must not be served its old scripts by a CDN
+// that keeps them as immutable, so assets carry the build as well as the version.
+$aicfab_main_source   = file_get_contents( __DIR__ . '/../ai-chat-for-amazon-bedrock.php' );
+$aicfab_loader_source = file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock.php' );
+expect_true(
+	false !== strpos( $aicfab_main_source, "define( 'AI_CHAT_BEDROCK_ASSET_VERSION', AI_CHAT_BEDROCK_VERSION . '.' . (int) filemtime( __FILE__ ) );" )
+		&& 2 === substr_count( $aicfab_loader_source, '( $this->plugin_name, self::asset_version() )' ),
+	'scripts and styles are versioned by build as well as release'
+);
+// The readable file is used until a minified copy sits beside it, as it does in the package.
+$aicfab_src = AI_CHAT_BEDROCK_PLUGIN_URL . 'public/js/ai-chat-bedrock-popup.js?ver=1.2.3';
+$aicfab_min = AI_CHAT_BEDROCK_PLUGIN_DIR . 'public/js/ai-chat-bedrock-popup.min.js';
+expect_true( ! file_exists( $aicfab_min ), 'the source tree carries no minified copies, only the package does' );
+$aicfab_plain = AI_CHAT_BEDROCK_PLUGIN_URL . 'public/js/ai-chat-bedrock-early.js?ver=1.2.3';
+expect_true( $aicfab_plain === AI_Chat_Bedrock::minified_src( $aicfab_plain ), 'without a minified copy the readable file is used' );
+file_put_contents( $aicfab_min, '/* test */' );
+$aicfab_minified = AI_Chat_Bedrock::minified_src( $aicfab_src );
+unlink( $aicfab_min );
+expect_true( AI_CHAT_BEDROCK_PLUGIN_URL . 'public/js/ai-chat-bedrock-popup.min.js?ver=1.2.3' === $aicfab_minified, 'with one, its minified copy is used, with the same version' );
+expect_true( 'https://cdn.example/x.js' === AI_Chat_Bedrock::minified_src( 'https://cdn.example/x.js' ) && AI_CHAT_BEDROCK_PLUGIN_URL . 'blocks/chat/editor.js' === AI_Chat_Bedrock::minified_src( AI_CHAT_BEDROCK_PLUGIN_URL . 'blocks/chat/editor.js' ), 'other scripts, and files outside the plugin\'s js and css folders, are left alone' );
+expect_true( in_array( array( 'AI_Chat_Bedrock', 'minified_src' ), isset( $GLOBALS['aicfab_filters']['script_loader_src'] ) ? $GLOBALS['aicfab_filters']['script_loader_src'] : array(), true ) || false !== strpos( file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock.php' ), "add_filter( 'script_loader_src', 'AI_Chat_Bedrock', 'minified_src' )" ), 'the filter is attached to scripts and styles' );
+
 $aicfab_chat_view = file_get_contents( __DIR__ . '/../public/partials/ai-chat-bedrock-public-display.php' );
 expect_true(
-	false !== strpos( $aicfab_chat_view, '<h2 class="ai-chat-bedrock-title">' ),
+	false !== strpos( $aicfab_chat_view, '<h2 class="ai-chat-bedrock-title"' ),
 	'the chat title is an h2 so it does not skip a level under the page title'
 );
 expect_true(

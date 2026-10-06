@@ -73,6 +73,17 @@ function __( $text, $domain = null ) {
 function is_wp_error( $thing ) {
 	return $thing instanceof WP_Error;
 }
+$GLOBALS['aicfab_transients'] = isset( $GLOBALS['aicfab_transients'] ) ? $GLOBALS['aicfab_transients'] : array();
+function get_transient( $key ) {
+	return isset( $GLOBALS['aicfab_transients'][ $key ] ) ? $GLOBALS['aicfab_transients'][ $key ] : false;
+}
+function set_transient( $key, $value, $ttl = 0 ) {
+	$GLOBALS['aicfab_transients'][ $key ] = $value;
+	return true;
+}
+function get_current_user_id() {
+	return 1;
+}
 function apply_filters( $hook, $value ) {
 	return $value;
 }
