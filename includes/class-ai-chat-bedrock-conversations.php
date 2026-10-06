@@ -264,6 +264,21 @@ class AI_Chat_Bedrock_Conversations {
 	}
 
 	/**
+	 * A stored question or answer as plain text for a list: Markdown emphasis, code, headings,
+	 * list markers and citation markers such as [P2] removed, links reduced to their text.
+	 *
+	 * @param string $text Stored text.
+	 * @return string
+	 */
+	public static function plain( $text ) {
+		$text = preg_replace( '/\[([^\]]+)\]\([^)\s]+\)/u', '$1', (string) $text );
+		$text = preg_replace( '/\s*\[(?:[A-Z]?\d{1,3})(?:\s*,\s*[A-Z]?\d{1,3})*\]/u', '', $text );
+		$text = preg_replace( '/^\s{0,3}(?:#{1,6}\s+|[-*+]\s+|\d{1,3}[.)]\s+|>\s?)/mu', '', $text );
+		$text = preg_replace( '/(\*\*|__|\*|`+|~~)(?=\S)(.+?)(?<=\S)\1/u', '$2', $text );
+		return trim( preg_replace( '/[ \t]*\n\s*/u', ' ', (string) $text ) );
+	}
+
+	/**
 	 * Totals for the admin summary.
 	 *
 	 * @return array

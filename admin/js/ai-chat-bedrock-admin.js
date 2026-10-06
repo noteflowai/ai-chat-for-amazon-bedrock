@@ -93,6 +93,9 @@
         if ('pass' === status) {
             return i18n.status_pass || 'Pass';
         }
+        if ('off' === status) {
+            return i18n.status_off || 'Not in use';
+        }
         if ('fail' === status) {
             return i18n.status_fail || 'Action required';
         }

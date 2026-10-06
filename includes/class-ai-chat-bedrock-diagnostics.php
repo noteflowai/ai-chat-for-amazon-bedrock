@@ -239,7 +239,7 @@ class AI_Chat_Bedrock_Diagnostics {
 		$label      = __( 'Guardrail', 'ai-chat-for-amazon-bedrock' );
 		$identifier = isset( $options['guardrail_id'] ) ? trim( (string) $options['guardrail_id'] ) : '';
 		if ( '' === $identifier ) {
-			return $this->result( 'guardrail', $label, 'pass', __( 'No guardrail is configured, so nothing is filtered by Amazon Bedrock.', 'ai-chat-for-amazon-bedrock' ) );
+			return $this->result( 'guardrail', $label, 'off', __( 'No guardrail is configured, so nothing is filtered by Amazon Bedrock.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
 		$version = isset( $options['guardrail_version'] ) ? trim( (string) $options['guardrail_version'] ) : '';
@@ -303,7 +303,7 @@ class AI_Chat_Bedrock_Diagnostics {
 		$label = __( 'Knowledge base', 'ai-chat-for-amazon-bedrock' );
 		$id    = isset( $options['knowledge_base_id'] ) ? trim( (string) $options['knowledge_base_id'] ) : '';
 		if ( '' === $id ) {
-			return $this->result( 'knowledge_base', $label, 'pass', __( 'No Amazon Bedrock knowledge base is configured.', 'ai-chat-for-amazon-bedrock' ) );
+			return $this->result( 'knowledge_base', $label, 'off', __( 'No Amazon Bedrock knowledge base is configured.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
 		// AWS requires ten alphanumeric characters, or a knowledge base ARN.
@@ -348,7 +348,7 @@ class AI_Chat_Bedrock_Diagnostics {
 		$label = __( 'Semantic search index', 'ai-chat-for-amazon-bedrock' );
 		$model = isset( $options['embedding_model_id'] ) ? (string) $options['embedding_model_id'] : '';
 		if ( '' === $model || ! class_exists( 'AI_Chat_Bedrock_Embeddings' ) ) {
-			return $this->result( 'vector_store', $label, 'pass', __( 'Semantic search is off; answers use keyword search.', 'ai-chat-for-amazon-bedrock' ) );
+			return $this->result( 'vector_store', $label, 'off', __( 'Semantic search is off; answers use keyword search.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		if ( 's3_vectors' !== AI_Chat_Bedrock_Embeddings::store( $options ) ) {
 			$status = AI_Chat_Bedrock_Embeddings::status( $model );
@@ -396,7 +396,7 @@ class AI_Chat_Bedrock_Diagnostics {
 
 	private function check_mcp() {
 		if ( ! get_option( 'ai_chat_bedrock_enable_mcp', false ) ) {
-			return $this->result( 'mcp', __( 'MCP tools', 'ai-chat-for-amazon-bedrock' ), 'pass', __( 'MCP tools are disabled.', 'ai-chat-for-amazon-bedrock' ) );
+			return $this->result( 'mcp', __( 'MCP tools', 'ai-chat-for-amazon-bedrock' ), 'off', __( 'MCP tools are disabled.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		if ( get_option( 'ai_chat_bedrock_mcp_public_access', false ) ) {
 			return $this->result( 'mcp', __( 'MCP tools', 'ai-chat-for-amazon-bedrock' ), 'warn', __( 'The built-in WordPress MCP endpoint is publicly readable. Disable public access unless it is required.', 'ai-chat-for-amazon-bedrock' ) );
@@ -435,7 +435,7 @@ class AI_Chat_Bedrock_Diagnostics {
 		return array(
 			'id'      => sanitize_key( $id ),
 			'label'   => $label,
-			'status'  => in_array( $status, array( 'pass', 'warn', 'fail' ), true ) ? $status : 'warn',
+			'status'  => in_array( $status, array( 'pass', 'off', 'warn', 'fail' ), true ) ? $status : 'warn',
 			'message' => $message,
 		);
 	}

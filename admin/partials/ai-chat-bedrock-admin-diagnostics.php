@@ -23,11 +23,13 @@ $aicfab_arn      = is_wp_error( $aicfab_identity ) ? '' : $aicfab_identity['arn'
 $aicfab_policy   = AI_Chat_Bedrock_Iam_Policy::for_site( get_option( 'ai_chat_bedrock_settings', array() ), $aicfab_account );
 $labels          = array(
 	'pass' => __( 'Pass', 'ai-chat-for-amazon-bedrock' ),
+	'off'  => __( 'Not in use', 'ai-chat-for-amazon-bedrock' ),
 	'warn' => __( 'Review', 'ai-chat-for-amazon-bedrock' ),
 	'fail' => __( 'Action required', 'ai-chat-for-amazon-bedrock' ),
 );
 $tones           = array(
 	'pass' => 'is-good',
+	'off'  => 'is-neutral',
 	'warn' => 'is-warn',
 	'fail' => 'is-bad',
 );

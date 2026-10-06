@@ -79,7 +79,7 @@ $base        = admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings' )
 		</p></div>
 	<?php endif; ?>
 
-	<nav class="nav-tab-wrapper" aria-label="<?php esc_attr_e( 'Settings sections', 'ai-chat-for-amazon-bedrock' ); ?>">
+	<nav class="nav-tab-wrapper aicfab-settings-tabs" aria-label="<?php esc_attr_e( 'Settings sections', 'ai-chat-for-amazon-bedrock' ); ?>">
 		<?php foreach ( $aicfab_nav as $key => $aicfab_tab ) : ?>
 			<a class="nav-tab <?php echo $key === $current ? 'nav-tab-active' : ''; ?>"
 				href="<?php echo esc_url( add_query_arg( 'tab', $key, $base ) ); ?>"<?php echo $key === $current ? ' aria-current="page"' : ''; ?>><?php echo esc_html( $aicfab_tab['label'] ); ?></a>
