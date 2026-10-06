@@ -76,6 +76,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-wechat-api.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-wechat-game.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-wechat-drafts.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-publish-kit.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-distribution.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-bilibili.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-youtube.php';
@@ -284,6 +285,13 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'ai_chat_bedrock_wechat_drafts', 'AI_Chat_Bedrock_WeChat_Drafts', 'run' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_wechat_draft', 'AI_Chat_Bedrock_WeChat_Drafts', 'handle_send' );
 		$this->loader->add_action( 'ai_chat_bedrock_distribution_box', 'AI_Chat_Bedrock_WeChat_Drafts', 'render_box_section' );
+		$this->loader->add_action( 'save_post', 'AI_Chat_Bedrock_Distribution', 'save_manual_record' );
+
+		$publish_kit = new AI_Chat_Bedrock_Publish_Kit();
+		$this->loader->add_action( 'rest_api_init', $publish_kit, 'register_routes' );
+		$this->loader->add_action( 'wp_abilities_api_init', $publish_kit, 'register_abilities' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_publish_kit', 'AI_Chat_Bedrock_Publish_Kit', 'handle_write' );
+		$this->loader->add_action( 'ai_chat_bedrock_distribution_box', 'AI_Chat_Bedrock_Publish_Kit', 'render_box_section' );
 
 		// The site description, and the type and language it adds to retrieved passages.
 		// Both check the setting when they run.

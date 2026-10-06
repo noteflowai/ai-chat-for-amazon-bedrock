@@ -41,6 +41,19 @@ class WP_Post {
 		$this->post_status = $status;
 	}
 }
+function get_transient( $key ) {
+	return isset( $GLOBALS['aicfab_transients'][ $key ] ) ? $GLOBALS['aicfab_transients'][ $key ] : false;
+}
+function delete_transient( $key ) {
+	unset( $GLOBALS['aicfab_transients'][ $key ] );
+	return true;
+}
+function get_current_user_id() {
+	return 1;
+}
+function wp_nonce_field( $action, $name ) {
+	echo '<input type="hidden" name="' . $name . '" value="nonce-' . $action . '">';
+}
 function is_wp_error( $value ) {
 	return $value instanceof WP_Error;
 }

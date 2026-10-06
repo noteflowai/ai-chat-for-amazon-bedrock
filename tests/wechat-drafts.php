@@ -272,6 +272,9 @@ function absint( $value ) {
 function apply_filters( $hook, $value ) {
 	return $value;
 }
+function wp_nonce_field( $action, $name ) {
+	echo '<input type="hidden" name="' . $name . '" value="nonce-' . $action . '">';
+}
 function is_wp_error( $value ) {
 	return $value instanceof WP_Error;
 }

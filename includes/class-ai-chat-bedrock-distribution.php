@@ -561,6 +561,7 @@ class AI_Chat_Bedrock_Distribution {
 	 */
 	public static function box_needed() {
 		return self::enabled()
+			|| ( class_exists( 'AI_Chat_Bedrock_Publish_Kit' ) && AI_Chat_Bedrock_Publish_Kit::enabled() )
 			|| ( class_exists( 'AI_Chat_Bedrock_WeChat_Drafts' ) && AI_Chat_Bedrock_WeChat_Drafts::enabled() )
 			|| ( class_exists( 'AI_Chat_Bedrock_YouTube' ) && AI_Chat_Bedrock_YouTube::ready() );
 	}
@@ -571,6 +572,11 @@ class AI_Chat_Bedrock_Distribution {
 	 * @param WP_Post $post Post.
 	 */
 	public function render_meta_box( $post ) {
+		$notice = get_transient( 'aicfab_record_notice_' . get_current_user_id() );
+		if ( is_string( $notice ) && '' !== $notice ) {
+			delete_transient( 'aicfab_record_notice_' . get_current_user_id() );
+			echo '<p><strong>' . esc_html( $notice ) . '</strong></p>';
+		}
 		$entries   = self::entries( $post->ID );
 		$platforms = self::platforms();
 		if ( empty( $entries ) ) {
@@ -593,12 +599,94 @@ class AI_Chat_Bedrock_Distribution {
 			}
 			echo '</ul>';
 		}
+		if ( current_user_can( 'edit_post', $post->ID ) ) {
+			// Saved with the post: the box is part of the editor's form, which a form of its own
+			// would break.
+			wp_nonce_field( 'aicfab_record_' . $post->ID, 'aicfab_record_nonce' );
+			echo '<details><summary>' . esc_html__( 'Record where it was published', 'ai-chat-for-amazon-bedrock' ) . '</summary>';
+			echo '<label for="aicfab_record_url">' . esc_html__( 'Address on the platform', 'ai-chat-for-amazon-bedrock' ) . '</label><input type="url" id="aicfab_record_url" class="widefat" name="aicfab_record[url]" placeholder="https://www.bilibili.com/video/BV…">';
+			echo '<label for="aicfab_record_status">' . esc_html__( 'Status', 'ai-chat-for-amazon-bedrock' ) . '</label> <select id="aicfab_record_status" name="aicfab_record[status]">';
+			foreach ( array( 'public', 'unlisted', 'private', 'submitted', 'removed' ) as $status ) {
+				echo '<option value="' . esc_attr( $status ) . '">' . esc_html( self::status_label( $status ) ) . '</option>';
+			}
+			echo '</select>';
+			echo '<p class="description">' . esc_html__( 'A Bilibili, YouTube, Xiaohongshu or WeChat article address. It is recorded when you save the post.', 'ai-chat-for-amazon-bedrock' ) . '</p></details>';
+		}
 		/**
 		 * Fires at the end of the Published elsewhere box, for actions such as uploading.
 		 *
 		 * @param WP_Post $post Post.
 		 */
 		do_action( 'ai_chat_bedrock_distribution_box', $post );
+	}
+
+	/**
+	 * Record the address entered in the box, when the post is saved.
+	 *
+	 * @param int $post_id Post ID.
+	 */
+	public static function save_manual_record( $post_id ) {
+		if ( ! isset( $_POST['aicfab_record_nonce'], $_POST['aicfab_record'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['aicfab_record_nonce'] ) ), 'aicfab_record_' . $post_id ) ) {
+			return;
+		}
+		if ( wp_is_post_revision( $post_id ) || ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+		$input = (array) wp_unslash( $_POST['aicfab_record'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each field is checked by clean() through from_url() and record().
+		$url   = isset( $input['url'] ) && is_string( $input['url'] ) ? trim( $input['url'] ) : '';
+		if ( '' === $url ) {
+			return;
+		}
+		$found = self::from_url( $url );
+		if ( null === $found ) {
+			set_transient( 'aicfab_record_notice_' . get_current_user_id(), __( 'That address is not one the record knows: use a Bilibili, YouTube, Xiaohongshu or WeChat article address.', 'ai-chat-for-amazon-bedrock' ), 300 );
+			return;
+		}
+		$status = isset( $input['status'] ) && is_string( $input['status'] ) ? sanitize_key( $input['status'] ) : 'public';
+		$saved  = self::record( $post_id, $found + array( 'status' => $status ), 'manual' );
+		if ( is_wp_error( $saved ) ) {
+			set_transient( 'aicfab_record_notice_' . get_current_user_id(), $saved->get_error_message(), 300 );
+		}
+	}
+
+	/**
+	 * The platform and item of an address on it.
+	 *
+	 * @param string $url Address.
+	 * @return array|null platform, item_id and url, or null for an address the record does not know.
+	 */
+	public static function from_url( $url ) {
+		$url   = esc_url_raw( trim( (string) $url ), array( 'http', 'https' ) );
+		$host  = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+		$path  = (string) wp_parse_url( $url, PHP_URL_PATH );
+		$query = array();
+		wp_parse_str( (string) wp_parse_url( $url, PHP_URL_QUERY ), $query );
+		$item     = '';
+		$platform = '';
+		if ( in_array( $host, array( 'www.bilibili.com', 'bilibili.com', 'm.bilibili.com' ), true ) && preg_match( '#/video/(BV[0-9A-Za-z]{10})#', $path, $found ) ) {
+			$platform = 'bilibili';
+			$item     = $found[1];
+		} elseif ( in_array( $host, array( 'www.youtube.com', 'youtube.com', 'm.youtube.com' ), true ) ) {
+			$platform = 'youtube';
+			$item     = isset( $query['v'] ) && is_string( $query['v'] ) ? $query['v'] : ( preg_match( '#^/(?:shorts|live)/([A-Za-z0-9_-]{11})#', $path, $found ) ? $found[1] : '' );
+		} elseif ( 'youtu.be' === $host && preg_match( '#^/([A-Za-z0-9_-]{11})#', $path, $found ) ) {
+			$platform = 'youtube';
+			$item     = $found[1];
+		} elseif ( in_array( $host, array( 'www.xiaohongshu.com', 'xiaohongshu.com' ), true ) && preg_match( '#/(?:explore|discovery/item)/([0-9a-f]{24})#', $path, $found ) ) {
+			$platform = 'xiaohongshu';
+			$item     = $found[1];
+		} elseif ( 'mp.weixin.qq.com' === $host ) {
+			$platform = 'wechat';
+			$item     = preg_match( '#^/s/([A-Za-z0-9_-]{8,128})#', $path, $found ) ? $found[1] : ( isset( $query['sn'] ) && is_string( $query['sn'] ) ? $query['sn'] : '' );
+		}
+		if ( '' === $platform || '' === $item ) {
+			return null;
+		}
+		return array(
+			'platform' => $platform,
+			'item_id'  => $item,
+			'url'      => 0 === strpos( $url, 'http://' ) ? 'https://' . substr( $url, 7 ) : $url,
+		);
 	}
 
 	/**

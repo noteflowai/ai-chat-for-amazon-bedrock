@@ -1108,6 +1108,7 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'distribution_enabled', __( 'Publishing record', 'ai-chat-for-amazon-bedrock' ), 'distribution_render', 'aicfab_publishing' );
 		$this->field( 'bilibili_embeds', __( 'Bilibili videos', 'ai-chat-for-amazon-bedrock' ), 'bilibili_embeds_render', 'aicfab_publishing' );
 		$this->field( 'youtube_client_id', __( 'YouTube uploads', 'ai-chat-for-amazon-bedrock' ), 'youtube_render', 'aicfab_publishing' );
+		$this->field( 'publish_kit', __( 'Publishing kits', 'ai-chat-for-amazon-bedrock' ), 'publish_kit_render', 'aicfab_publishing' );
 
 		add_settings_section( 'aicfab_governance', __( 'Safety and spend controls', 'ai-chat-for-amazon-bedrock' ), array( $this, 'governance_section_callback' ), 'aicfab_tab_governance' );
 		$this->field( 'allow_public_chat', __( 'Guest access', 'ai-chat-for-amazon-bedrock' ), 'allow_public_chat_render', 'aicfab_governance' );
@@ -1406,6 +1407,11 @@ class AI_Chat_Bedrock_Admin {
 		echo '<p class="description">' . esc_html( sprintf( __( 'Off by default. In the WeChat Official Accounts Platform, under Settings and Development > Basic Configuration, enable the server configuration with the URL %s and the token entered here. Plaintext mode needs only the token; compatible and safe mode also need the EncodingAESKey and AppID. No AppSecret is needed.', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_WeChat::url() ) ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'With message push on, WeChat turns off the menu set in its console, and an account that is not verified cannot set one through its API, so followers write a word instead: 菜单 gets the menu above, and 精选 or 最新 the newest featured posts (the category chosen for WeChat drafts below) with their addresses. Neither calls the model.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'The chat answers each text message from the site\'s pages, in plain text with its sources. WeChat waits about fifteen seconds in all; a longer answer is kept and the follower is told to send 1 to see it, so choose a fast model for WeChat if the chat\'s takes longer. A new follower gets the welcome message and suggested questions. Every answer counts towards the daily request limit, and the conversation log records them when it is on.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+	public function publish_kit_render() {
+		$options = get_option( 'ai_chat_bedrock_settings', array() );
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[publish_kit]" value="1" ' . checked( AI_Chat_Bedrock_Publish_Kit::enabled( is_array( $options ) ? $options : array() ), true, false ) . '> ' . esc_html__( 'Write each platform\'s copy for a post with the chat\'s model', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Off by default. Bilibili opens its publishing API only to registered companies and Xiaohongshu has none for creators, so there a person publishes. With this on, the Published elsewhere box writes the Bilibili, Xiaohongshu and YouTube title, text, tags and category from the text a signed-out visitor reads, within each platform\'s limits and in the post\'s language, with links to each creator page and the cover. After publishing, enter the address in the same box to record it. Each kit is one model request; agents can ask for one through an ability. The copy is an AI draft: check it, and declare AI assistance with the platform\'s label.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function wechat_drafts_render() {
 		$options = get_option( 'ai_chat_bedrock_settings', array() );
@@ -2149,6 +2155,8 @@ class AI_Chat_Bedrock_Admin {
 
 		$output['wechat_menu'] = isset( $input['wechat_menu'] ) && is_string( $input['wechat_menu'] ) ? AI_Chat_Bedrock_Security::string_substr( sanitize_textarea_field( $input['wechat_menu'] ), 0, 1500 ) : '';
 
+		$output['publish_kit'] = ! empty( $input['publish_kit'] );
+
 		$output['wechat_drafts_enabled']  = ! empty( $input['wechat_drafts_enabled'] );
 		$output['wechat_drafts_notify']   = ! empty( $input['wechat_drafts_notify'] );
 		$output['wechat_drafts_schedule'] = AI_Chat_Bedrock_WeChat_Drafts::schedule( array( 'wechat_drafts_schedule' => isset( $input['wechat_drafts_schedule'] ) ? (string) $input['wechat_drafts_schedule'] : 'off' ) );
@@ -2376,6 +2384,7 @@ class AI_Chat_Bedrock_Admin {
 		'wxgame_enabled',
 		'wechat_drafts_enabled',
 		'wechat_drafts_notify',
+		'publish_kit',
 		'github_read_scope',
 		'social_only_registration',
 		'organization_author',

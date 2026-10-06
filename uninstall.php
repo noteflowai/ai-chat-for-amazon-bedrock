@@ -53,7 +53,7 @@ function ai_chat_bedrock_uninstall_site() {
 	}
 
 	// Locks of YouTube uploads, and anything WeChat left that has not expired yet.
-	foreach ( array( 'aicfab_youtube_lock_', '_transient_aicfab_wxg_', '_transient_timeout_aicfab_wxg_', '_transient_aicfab_youtube_', '_transient_timeout_aicfab_youtube_', '_transient_aicfab_wechat_draft_notice_', '_transient_timeout_aicfab_wechat_draft_notice_' ) as $ai_chat_bedrock_key_prefix ) {
+	foreach ( array( 'aicfab_youtube_lock_', '_transient_aicfab_wxg_', '_transient_timeout_aicfab_wxg_', '_transient_aicfab_youtube_', '_transient_timeout_aicfab_youtube_', '_transient_aicfab_wechat_draft_notice_', '_transient_timeout_aicfab_wechat_draft_notice_', '_transient_aicfab_publish_kit_notice_', '_transient_timeout_aicfab_publish_kit_notice_', '_transient_aicfab_record_notice_', '_transient_timeout_aicfab_record_notice_' ) as $ai_chat_bedrock_key_prefix ) {
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( $ai_chat_bedrock_key_prefix ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 	}
 
@@ -64,7 +64,7 @@ function ai_chat_bedrock_uninstall_site() {
 
 	// Post meta this plugin wrote, removed by key rather than by option name. Every key the
 	// plugin writes has to appear here; tests/security-regression.php checks that it does.
-	foreach ( array( '_aicfab_embedding', '_aicfab_embedding_model', '_aicfab_embedding_hash', '_aicfab_index_state', '_aicfab_index_retry', '_aicfab_index_failures', '_aicfab_s3v_ref', '_aicfab_s3v_hash', '_aicfab_s3v_chunks', '_aicfab_scaffolded', '_aicfab_chat_page', '_aicfab_distribution', '_aicfab_youtube_upload', '_aicfab_wechat_images', '_aicfab_wechat_cover' ) as $ai_chat_bedrock_meta_key ) {
+	foreach ( array( '_aicfab_embedding', '_aicfab_embedding_model', '_aicfab_embedding_hash', '_aicfab_index_state', '_aicfab_index_retry', '_aicfab_index_failures', '_aicfab_s3v_ref', '_aicfab_s3v_hash', '_aicfab_s3v_chunks', '_aicfab_scaffolded', '_aicfab_chat_page', '_aicfab_distribution', '_aicfab_youtube_upload', '_aicfab_wechat_images', '_aicfab_wechat_cover', '_aicfab_publish_kit' ) as $ai_chat_bedrock_meta_key ) {
 		delete_post_meta_by_key( $ai_chat_bedrock_meta_key );
 	}
 

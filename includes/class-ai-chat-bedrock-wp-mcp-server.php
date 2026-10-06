@@ -165,6 +165,13 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 				'parameters'  => AI_Chat_Bedrock_WeChat_Drafts::schema(),
 			);
 		}
+		if ( class_exists( 'AI_Chat_Bedrock_Publish_Kit' ) && AI_Chat_Bedrock_Publish_Kit::enabled() ) {
+			$tools['prepare_publish_kit'] = array(
+				'name'        => 'prepare_publish_kit',
+				'description' => 'Write the title, text, tags and category for publishing a published post on Bilibili, Xiaohongshu or YouTube, from the text a signed-out visitor reads, with the site\'s model, within each platform\'s limits, and keep it with the post. Publishes nothing; the copy is an AI draft for a person to check. Requires permission to edit the post.',
+				'parameters'  => AI_Chat_Bedrock_Publish_Kit::schema(),
+			);
+		}
 		if ( ! class_exists( 'AI_Chat_Bedrock_Distribution' ) || ! AI_Chat_Bedrock_Distribution::enabled() ) {
 			return $tools;
 		}
@@ -556,6 +563,7 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 			case 'record_publication':
 			case 'list_publications':
 			case 'create_wechat_draft':
+			case 'prepare_publish_kit':
 				return $this->distribution_call( $name, $arguments );
 		}
 
@@ -599,6 +607,10 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 			return new WP_Error( 'tool_unavailable', __( 'This tool is not enabled on this site.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		$arguments = is_array( $arguments ) ? $arguments : array();
+		if ( 'prepare_publish_kit' === $name ) {
+			$kit = new AI_Chat_Bedrock_Publish_Kit();
+			return $kit->can_generate( $arguments ) ? $kit->ability_generate( $arguments ) : new WP_Error( 'forbidden', __( 'This account cannot edit that post.', 'ai-chat-for-amazon-bedrock' ) );
+		}
 		if ( 'create_wechat_draft' === $name ) {
 			$drafts = new AI_Chat_Bedrock_WeChat_Drafts();
 			return $drafts->can_send( $arguments ) ? $drafts->ability_create( $arguments ) : new WP_Error( 'forbidden', __( 'This account cannot send those posts.', 'ai-chat-for-amazon-bedrock' ) );

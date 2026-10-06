@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai, chatbot, ai-agent, mcp, connector
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.66.0
+Stable tag: 1.67.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -369,7 +369,7 @@ Yes, under Channels > WeChat mini game, off by default. Players who open the gam
 
 = Can it publish to Bilibili, YouTube or Xiaohongshu? =
 
-It keeps the record, under Settings > Channels, off by default: your agents publish with the platforms' creator tools and record each item through abilities and MCP, since Bilibili and Xiaohongshu offer individual creators no publishing API. YouTube uploads go through its API once a channel is connected. [The record, embeds and uploads](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-publish-to-bilibili-youtube-or-xiaohongshu).
+It keeps the record and writes the copy, under Settings > Channels, off by default: a publishing kit drafts each platform's title, text and tags with your own model, you publish with the platforms' creator tools and record the address, since Bilibili and Xiaohongshu offer individual creators no publishing API. YouTube uploads go through its API once a channel is connected. [The record, embeds and uploads](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-publish-to-bilibili-youtube-or-xiaohongshu).
 
 = Can the chat float instead of sitting in the page? =
 
@@ -488,6 +488,10 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.67.0 =
+* Publishing kits, under Settings > Channels and off by default: from the text a signed-out visitor reads, the chat's model writes a post's Bilibili, Xiaohongshu and YouTube title, text, tags and category within each platform's limits, in the post's language, shown in the Published elsewhere box with links to each creator page and the cover. Bilibili opens its publishing API only to registered companies and Xiaohongshu has none for creators, so a person publishes there; no agent outside WordPress is needed. Agents can ask for a kit through an ability and the MCP server.
+* Record where a post was published by entering its Bilibili, YouTube, Xiaohongshu or WeChat article address in the same box; it is saved with the post.
+
 = 1.66.0 =
 * Publishing record, under Settings > Channels and off by default: where each post is published on Bilibili, YouTube or Xiaohongshu, with the item's ID, address, account, language, status and the edition it replaces. Agents read a post's publishing package and record what they published through abilities and the MCP server, with their account's permissions; the record shows when editing a post and, optionally, as links under it.
 * Bilibili videos embed from their links, as YouTube's do, when turned on.
@@ -496,14 +500,10 @@ what a good answer says.
 * WeChat Official Account drafts, under Settings > Channels and off by default: featured posts become articles in the account's draft box, with cover, text, images and a Read more link to the post, sent from the editor, by an agent or on a daily or weekly schedule that emails the site. Only verified company accounts may publish through WeChat's API, so the owner publishes them. Followers who write 菜单 get the site's menu, and 精选 the newest featured posts, without the model.
 * Settings grouped by task: a Channels tab holds the WeChat Official Account, its drafts and the mini game beside the video platforms; Agents and tools has its own tab; guest access, rate limits, the conversation log and debug logging are under Safety and spend. The menu lists daily work first, starting with Overview. Old tab links still work.
 
-= 1.65.0 =
-* WeChat Official Account, under Chat and off by default: followers' text messages are answered from the site's pages in plain text with sources and a note that AI wrote them, in plaintext, compatible or safe mode, optionally by a faster model than the site's. WeChat's retries give an answer about fifteen seconds; a slower one is kept until the follower sends 1. Works with unverified personal subscription accounts, needs no AppSecret, and limits each follower per hour.
-* Faster on hosts outside AWS before credentials are entered: when no IAM role answers, the plugin no longer waits for the instance metadata service to time out on every page, admin screen and cron run. It asks again after five minutes, when the settings are saved or when Diagnostics runs its checks.
-* Ready for PHP 8.5: streamed answers no longer call a function PHP 8.5 deprecates, which could write a notice into the reply, and the conversation log export no longer relies on a CSV default PHP 8.4 deprecates. The release checks now run on PHP 7.4, 8.3 and 8.5 and fail on any PHP notice.
-* The dashboard shows how long visitors wait for the first text of a streamed answer: the number of answers, the average and the median range over the last 7 days, or unknown before any streamed answer. The time is taken on the server, from the start of the Bedrock request to the first text, and is recorded after that text has been sent. Only counters are kept, for 30 days, with no message text.
-* `wp ai-chat-bedrock usage` ends with streamed time to first text: count, average ms and median band, up to 30 days, or unknown, never 0 ms. Output is otherwise unchanged.
-
 == Upgrade Notice ==
+
+= 1.67.0 =
+Optional publishing kits: platform copy for Bilibili, Xiaohongshu and YouTube written by your own model, and recording published addresses by hand.
 
 = 1.66.0 =
 Optional record of where posts are published on Bilibili, YouTube and Xiaohongshu, kept by your agents, Bilibili embeds, uploads to YouTube, and customer service with daily counts for a WeChat mini game.
