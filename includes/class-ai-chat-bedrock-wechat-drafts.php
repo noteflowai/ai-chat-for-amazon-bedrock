@@ -826,6 +826,28 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		);
 		register_rest_route(
 			AI_Chat_Bedrock_WP_MCP_Server::NAMESPACE_V1,
+			self::VIDEO_ROUTE . '/library',
+			array(
+				array(
+					'methods'             => 'GET',
+					'callback'            => array( $this, 'handle_library' ),
+					'permission_callback' => array( $this, 'can_find_video_ids' ),
+				),
+				array(
+					'methods'             => 'DELETE',
+					'callback'            => array( $this, 'handle_library_delete' ),
+					'permission_callback' => array( $this, 'can_find_video_ids' ),
+					'args'                => array(
+						'media_id' => array(
+							'required' => true,
+							'type'     => 'string',
+						),
+					),
+				),
+			)
+		);
+		register_rest_route(
+			AI_Chat_Bedrock_WP_MCP_Server::NAMESPACE_V1,
 			self::VIDEO_ROUTE . '/ids',
 			array(
 				'methods'             => 'POST',
@@ -833,6 +855,81 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				'permission_callback' => array( $this, 'can_find_video_ids' ),
 			)
 		);
+	}
+
+	/**
+	 * The account's video material: each video's media_id, name, last update and whether it was
+	 * sent to the API (an apiv_ ID) or uploaded in the Official Accounts Platform (wxv_).
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function handle_library() {
+		$videos = array();
+		for ( $offset = 0; $offset < 200; $offset += 20 ) {
+			$page = AI_Chat_Bedrock_WeChat_API::call(
+				'material/batchget_material',
+				wp_json_encode(
+					array(
+						'type'   => 'video',
+						'offset' => $offset,
+						'count'  => 20,
+					)
+				),
+				self::account( self::options( null ) ),
+				15
+			);
+			if ( is_wp_error( $page ) ) {
+				return new WP_Error( $page->get_error_code(), self::describe( $page ), array( 'status' => 502 ) );
+			}
+			$items = isset( $page['item'] ) && is_array( $page['item'] ) ? $page['item'] : array();
+			foreach ( $items as $item ) {
+				if ( ! is_array( $item ) || empty( $item['media_id'] ) ) {
+					continue;
+				}
+				$vid      = isset( $item['vid'] ) && is_scalar( $item['vid'] ) ? (string) $item['vid'] : '';
+				$videos[] = array(
+					'media_id'    => sanitize_text_field( (string) $item['media_id'] ),
+					'name'        => isset( $item['name'] ) ? sanitize_text_field( (string) $item['name'] ) : '',
+					'update_time' => isset( $item['update_time'] ) ? (int) $item['update_time'] : 0,
+					'from_api'    => 0 === strpos( $vid, 'apiv_' ),
+				);
+			}
+			if ( count( $items ) < 20 ) {
+				break;
+			}
+		}
+		return rest_ensure_response( $videos );
+	}
+
+	/**
+	 * Delete a video from the account's material library, and forget it on the post that sent it.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function handle_library_delete( $request ) {
+		$media_id = sanitize_text_field( (string) $request->get_param( 'media_id' ) );
+		$gone     = AI_Chat_Bedrock_WeChat_API::call( 'material/del_material', wp_json_encode( array( 'media_id' => $media_id ) ), self::account( self::options( null ) ), 15 );
+		if ( is_wp_error( $gone ) ) {
+			return new WP_Error( $gone->get_error_code(), self::describe( $gone ), array( 'status' => 502 ) );
+		}
+		$senders = get_posts(
+			array(
+				'post_type'      => 'any',
+				'post_status'    => 'any',
+				'posts_per_page' => 100,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'meta_key'       => self::MATERIAL_META, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- posts with an uploaded video.
+			)
+		);
+		foreach ( (array) $senders as $post_id ) {
+			$material = get_post_meta( (int) $post_id, self::MATERIAL_META, true );
+			if ( is_array( $material ) && isset( $material['media_id'] ) && $media_id === (string) $material['media_id'] ) {
+				delete_post_meta( (int) $post_id, self::MATERIAL_META );
+			}
+		}
+		return rest_ensure_response( array( 'deleted' => $media_id ) );
 	}
 
 	/**
