@@ -1445,6 +1445,10 @@ class AI_Chat_Bedrock_Admin {
 		if ( '' !== $status ) {
 			echo '<p><strong>' . esc_html( $status ) . '</strong></p>';
 		}
+		$next = AI_Chat_Bedrock_WeChat_Drafts::schedule_summary();
+		if ( '' !== $next ) {
+			echo '<p>' . esc_html( $next ) . ' <a class="button button-small" href="' . esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=ai_chat_bedrock_wechat_drafts_run' ), 'aicfab_wechat_drafts_run' ) ) . '">' . esc_html__( 'Run it now', 'ai-chat-for-amazon-bedrock' ) . '</a></p>';
+		}
 		echo '<p class="description">' . esc_html__( 'Off by default. Uses the AppID entered for the WeChat Official Account above, and the AppSecret and IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform. Each post becomes an article with its title, excerpt, the featured image as cover, the text and images a signed-out visitor sees, and the post as "Read more"; links in the text become plain text, as WeChat does not open them. Posts are sent from the Published elsewhere box, by an agent, or on the schedule, which takes featured posts of the last 60 days not sent before, in Chinese when the site has it, and only those with a featured image and at least 600 characters of public text.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'Only drafts are made: WeChat lets only verified company accounts publish through its API. Check each draft and publish it in the Official Accounts Platform.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}

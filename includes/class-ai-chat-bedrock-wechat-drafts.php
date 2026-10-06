@@ -1170,13 +1170,21 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			}
 			return;
 		}
-		$done = self::create( $ids, $options, 'schedule' );
-		if ( is_wp_error( $done ) || empty( $options['wechat_drafts_notify'] ) || empty( $done['posts'] ) ) {
-			return;
-		}
+		// One draft for each post, as when sent by hand: each is published on its own, in order,
+		// and updated in place later.
 		$titles = array();
-		foreach ( $done['posts'] as $id ) {
-			$titles[] = '· ' . html_entity_decode( get_the_title( $id ), ENT_QUOTES, 'UTF-8' );
+		foreach ( array_reverse( $ids ) as $id ) {
+			$done = self::create( array( $id ), $options, 'schedule' );
+			// WeChat refusing the account stops the run; the reason is on the settings screen.
+			if ( is_wp_error( $done ) && 0 === strpos( (string) $done->get_error_code(), 'wx_' ) && 'wx_nothing' !== $done->get_error_code() ) {
+				break;
+			}
+			if ( ! is_wp_error( $done ) ) {
+				$titles[] = '· ' . html_entity_decode( get_the_title( $id ), ENT_QUOTES, 'UTF-8' );
+			}
+		}
+		if ( ! $titles || empty( $options['wechat_drafts_notify'] ) ) {
+			return;
 		}
 		wp_mail(
 			get_option( 'admin_email' ),
@@ -1367,6 +1375,39 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			}
 		}
 		return $times;
+	}
+
+	/**
+	 * When the scheduled run is next due, and whether WordPress's scheduler is running.
+	 *
+	 * @return string Empty while there is no schedule.
+	 */
+	public static function schedule_summary() {
+		$next = wp_next_scheduled( self::CRON );
+		if ( ! $next ) {
+			return '';
+		}
+		/* translators: %s: date and time of the next run. */
+		$line = sprintf( __( 'Next scheduled run: %s.', 'ai-chat-for-amazon-bedrock' ), wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $next ) );
+		// A run long overdue means WP-Cron is not firing, as on a site with no visits or with
+		// DISABLE_WP_CRON set and no system cron calling wp-cron.php.
+		if ( $next < time() - 15 * MINUTE_IN_SECONDS ) {
+			$line .= ' ' . __( 'It is overdue: WordPress\'s scheduler is not running. Have a system cron job request wp-cron.php every few minutes.', 'ai-chat-for-amazon-bedrock' );
+		}
+		return $line;
+	}
+
+	/**
+	 * Run the scheduled task now, from the settings screen.
+	 */
+	public static function handle_run_now() {
+		check_admin_referer( 'aicfab_wechat_drafts_run' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You cannot run this.', 'ai-chat-for-amazon-bedrock' ), 403 );
+		}
+		self::run();
+		wp_safe_redirect( admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings&tab=publishing' ) );
+		exit;
 	}
 
 	/**
