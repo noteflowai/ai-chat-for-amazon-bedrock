@@ -57,6 +57,28 @@ function apply_filters( $hook, $value ) {
 function is_wp_error( $thing ) {
 	return false;
 }
+if ( ! defined( 'MINUTE_IN_SECONDS' ) ) {
+	define( 'MINUTE_IN_SECONDS', 60 );
+}
+$GLOBALS['aicfab_ready_cron'] = array();
+$GLOBALS['aicfab_scheduled']  = array();
+function wp_get_ready_cron_jobs() {
+	return $GLOBALS['aicfab_ready_cron'];
+}
+function wp_next_scheduled( $hook, $args = array() ) {
+	return isset( $GLOBALS['aicfab_scheduled'][ $hook ] ) ? $GLOBALS['aicfab_scheduled'][ $hook ] : false;
+}
+function human_time_diff( $from, $to = 0 ) {
+	return (int) round( abs( $to - $from ) / 3600 ) . ' hours';
+}
+function _n( $single, $plural, $number, $domain = null ) {
+	return 1 === (int) $number ? $single : $plural;
+}
+if ( ! function_exists( 'number_format_i18n' ) ) {
+	function number_format_i18n( $number, $decimals = 0 ) {
+		return number_format( $number, $decimals );
+	}
+}
 function wp_json_encode( $value, $flags = 0 ) {
 	return json_encode( $value, $flags );
 }
@@ -306,6 +328,42 @@ foreach ( $aicfab_toolong as $aicfab_check ) {
 	if ( 'model' === $aicfab_check['id'] ) {
 		check_diag( 'fail' === $aicfab_check['status'], 'An absurdly long model id fails.' );
 	}
+}
+
+// --- Background tasks that WordPress no longer runs ------------------------------------
+
+$aicfab_schedule = function () use ( $aicfab_diag ) {
+	foreach ( $aicfab_diag->run( false ) as $check ) {
+		if ( 'schedules' === $check['id'] ) {
+			return $check;
+		}
+	}
+	return null;
+};
+$GLOBALS['aicfab_ready_cron'] = array();
+$GLOBALS['aicfab_scheduled']  = array();
+check_diag( 'off' === $aicfab_schedule()['status'], 'With nothing scheduled, background tasks are not in use.' );
+$GLOBALS['aicfab_scheduled'] = array( 'ai_chat_bedrock_prune_chat_history' => time() + 3600 );
+check_diag( 'pass' === $aicfab_schedule()['status'], 'Tasks scheduled for later run on time.' );
+$GLOBALS['aicfab_ready_cron'] = array(
+	time() - 60           => array( 'ai_chat_bedrock_wechat_drafts' => array( 'k' => array() ) ),
+	time() - 2 * 3600     => array( 'some_other_plugin' => array( 'k' => array() ) ),
+);
+check_diag( 'pass' === $aicfab_schedule()['status'], 'A task due a minute ago, or another plugin\'s late task, is no alarm.' );
+$GLOBALS['aicfab_ready_cron'][ time() - 3 * 3600 ] = array(
+	'ai_chat_bedrock_wechat_drafts'  => array( 'a' => array() ),
+	'ai_chat_bedrock_youtube_upload' => array( 'b' => array(), 'c' => array() ),
+);
+$aicfab_late = $aicfab_schedule();
+check_diag( 'warn' === $aicfab_late['status'] && false !== strpos( $aicfab_late['message'], '3 background tasks are overdue, the oldest by 3 hours.' ), 'Tasks hours overdue are counted, with how late the oldest is.' );
+check_diag( false !== strpos( $aicfab_late['message'], 'server cron job call wp-cron.php' ), 'And it says how to make WordPress run them.' );
+$GLOBALS['aicfab_ready_cron'] = array();
+$GLOBALS['aicfab_scheduled']  = array();
+// The check names the recurring tasks; a renamed hook must be renamed there too.
+$aicfab_diag_source = file_get_contents( dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-diagnostics.php' );
+foreach ( array( 'wechat-drafts' => 'CRON', 'embeddings' => 'CRON_HOOK', 'leads' => 'CRON_HOOK', 'chat-history' => 'CRON_HOOK' ) as $aicfab_file => $aicfab_constant ) {
+	preg_match( '/const ' . $aicfab_constant . ' *= \'([a-z_]+)\'/', file_get_contents( dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-' . $aicfab_file . '.php' ), $aicfab_hook );
+	check_diag( isset( $aicfab_hook[1] ) && false !== strpos( $aicfab_diag_source, "'" . $aicfab_hook[1] . "'" ), 'The background task check knows the hook of ' . $aicfab_file . '.' );
 }
 
 if ( $failures ) {

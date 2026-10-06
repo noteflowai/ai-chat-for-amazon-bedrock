@@ -100,6 +100,7 @@ class AI_Chat_Bedrock_Diagnostics {
 		$checks[] = $this->check_encryption();
 		$checks[] = $this->check_public_access( $options );
 		$checks[] = $this->check_mcp();
+		$checks[] = $this->check_schedules();
 		$checks[] = $this->check_guardrail( $options );
 		$checks[] = $this->check_knowledge_base( $options );
 		$checks[] = $this->check_vector_store( $options );
@@ -392,6 +393,56 @@ class AI_Chat_Bedrock_Diagnostics {
 			$message = AI_Chat_Bedrock_Translation::sentences( $message, __( 'It is a CLASSIC index, which applies metadata filters during the similarity search. The plugin asks for filtering first on every query; to make that the index default, switch it to ENHANCED with UpdateIndexMode.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		return $this->result( 'vector_store', $label, 'pass', $message );
+	}
+
+	/**
+	 * Whether WordPress runs the plugin's background tasks on time.
+	 *
+	 * Scheduled WeChat drafts, YouTube uploads, indexing and clean-ups run through WP-Cron,
+	 * which runs only when someone visits and which a page cache or DISABLE_WP_CRON without a
+	 * server cron job can stop altogether. Nothing failed then, so nothing said so.
+	 *
+	 * @return array
+	 */
+	private function check_schedules() {
+		$label  = __( 'Background tasks', 'ai-chat-for-amazon-bedrock' );
+		$late   = 0;
+		$oldest = 0;
+		$cutoff = time() - 15 * MINUTE_IN_SECONDS;
+		foreach ( (array) ( function_exists( 'wp_get_ready_cron_jobs' ) ? wp_get_ready_cron_jobs() : array() ) as $time => $hooks ) {
+			foreach ( (array) $hooks as $hook => $events ) {
+				if ( 0 === strpos( (string) $hook, 'ai_chat_bedrock_' ) && (int) $time < $cutoff ) {
+					$late  += count( (array) $events );
+					$oldest = $oldest ? min( $oldest, (int) $time ) : (int) $time;
+				}
+			}
+		}
+		if ( $late > 0 ) {
+			$advice = defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON
+				? __( 'WP-Cron is turned off with DISABLE_WP_CRON, so a server cron job has to call wp-cron.php, or run wp cron event run --due-now, every few minutes.', 'ai-chat-for-amazon-bedrock' )
+				: __( 'WP-Cron runs only when someone visits, and a page cache can keep it from running. Have a server cron job call wp-cron.php every few minutes, then set DISABLE_WP_CRON.', 'ai-chat-for-amazon-bedrock' );
+			return $this->result(
+				'schedules',
+				$label,
+				'warn',
+				AI_Chat_Bedrock_Translation::sentences(
+					sprintf(
+						/* translators: 1: number of tasks, 2: how long ago the oldest was due, such as 3 hours. */
+						_n( '%1$s background task is overdue, by %2$s.', '%1$s background tasks are overdue, the oldest by %2$s.', $late, 'ai-chat-for-amazon-bedrock' ),
+						number_format_i18n( $late ),
+						human_time_diff( $oldest, time() )
+					),
+					$advice
+				)
+			);
+		}
+		// The recurring tasks, by name, so the check needs none of their classes loaded.
+		foreach ( array( 'ai_chat_bedrock_wechat_drafts', 'ai_chat_bedrock_index_embeddings', 'ai_chat_bedrock_prune_leads', 'ai_chat_bedrock_prune_chat_history' ) as $hook ) {
+			if ( wp_next_scheduled( $hook ) ) {
+				return $this->result( 'schedules', $label, 'pass', __( 'The plugin\'s background tasks run on time.', 'ai-chat-for-amazon-bedrock' ) );
+			}
+		}
+		return $this->result( 'schedules', $label, 'off', __( 'No background tasks are scheduled.', 'ai-chat-for-amazon-bedrock' ) );
 	}
 
 	private function check_mcp() {

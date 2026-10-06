@@ -661,8 +661,8 @@ msgstr "ストリーミング応答"
 #: admin/class-ai-chat-bedrock-admin.php:1132
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:76
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:176
-#: includes/class-ai-chat-bedrock-diagnostics.php:202
-#: includes/class-ai-chat-bedrock-diagnostics.php:218
+#: includes/class-ai-chat-bedrock-diagnostics.php:203
+#: includes/class-ai-chat-bedrock-diagnostics.php:219
 msgid "Guest access"
 msgstr "訪問者のアクセス"
 
@@ -1597,9 +1597,9 @@ msgid "No region selected"
 msgstr "リージョン未選択"
 
 #: admin/partials/ai-chat-bedrock-admin-display.php:76
-#: includes/class-ai-chat-bedrock-diagnostics.php:180
-#: includes/class-ai-chat-bedrock-diagnostics.php:183
-#: includes/class-ai-chat-bedrock-diagnostics.php:185
+#: includes/class-ai-chat-bedrock-diagnostics.php:181
+#: includes/class-ai-chat-bedrock-diagnostics.php:184
+#: includes/class-ai-chat-bedrock-diagnostics.php:186
 msgid "Streaming"
 msgstr "ストリーミング"
 
@@ -1622,9 +1622,9 @@ msgstr "回答は生成完了後に表示されます。"
 
 #: admin/partials/ai-chat-bedrock-admin-display.php:86
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:100
-#: includes/class-ai-chat-bedrock-diagnostics.php:399
-#: includes/class-ai-chat-bedrock-diagnostics.php:402
-#: includes/class-ai-chat-bedrock-diagnostics.php:404
+#: includes/class-ai-chat-bedrock-diagnostics.php:450
+#: includes/class-ai-chat-bedrock-diagnostics.php:453
+#: includes/class-ai-chat-bedrock-diagnostics.php:455
 msgid "MCP tools"
 msgstr "MCP ツール"
 
@@ -3116,208 +3116,208 @@ msgstr "Amazon Bedrock チャットの設定が完了していません"
 msgid "Open Bedrock diagnostics"
 msgstr "Bedrock の診断を開く"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:118
+#: includes/class-ai-chat-bedrock-diagnostics.php:119
 msgid "PHP version"
 msgstr "PHP バージョン"
 
 #. translators: %s: PHP version.
-#: includes/class-ai-chat-bedrock-diagnostics.php:122
+#: includes/class-ai-chat-bedrock-diagnostics.php:123
 #, php-format
 msgid "PHP %s meets the plugin requirement."
 msgstr "PHP %s はプラグインの要件を満たしています。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:123
+#: includes/class-ai-chat-bedrock-diagnostics.php:124
 msgid "PHP 7.4 or newer is required."
 msgstr "PHP 7.4 以降が必要です。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:130
-#: includes/class-ai-chat-bedrock-diagnostics.php:150
+#: includes/class-ai-chat-bedrock-diagnostics.php:131
+#: includes/class-ai-chat-bedrock-diagnostics.php:151
 msgid "AWS credentials"
 msgstr "AWS 認証情報"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:130
+#: includes/class-ai-chat-bedrock-diagnostics.php:131
 msgid "No usable AWS credentials were found. Paste an Amazon Bedrock API key, add access keys, or enable IAM role credentials."
 msgstr "使用可能な AWS 認証情報が見つかりません。Amazon Bedrock API キーを貼り付けるか、アクセスキーを追加するか、IAM ロールの認証情報を有効にしてください。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:136
+#: includes/class-ai-chat-bedrock-diagnostics.php:137
 msgid "Consider wp-config.php constants or an IAM role so keys are not stored in the database."
 msgstr "キーをデータベースに保存しないよう、wp-config.php の定数または IAM ロールの使用を検討してください。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:141
+#: includes/class-ai-chat-bedrock-diagnostics.php:142
 msgid "This is a short-term key, which stops working within 12 hours. Use a long-term key or an IAM role."
 msgstr "これは短期キーで、12 時間以内に使えなくなります。長期キーまたは IAM ロールを使用してください。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:147
+#: includes/class-ai-chat-bedrock-diagnostics.php:148
 msgid "A Knowledge Base or managed prompt is configured, and those only accept signed requests. Add access keys or an IAM role for them; chat keeps using the API key."
 msgstr "ナレッジベースまたはマネージドプロンプトが設定されていますが、これらは署名付きリクエストしか受け付けません。これら用にアクセスキーまたは IAM ロールを追加してください。チャットでは引き続き API キーが使用されます。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:157
-#: includes/class-ai-chat-bedrock-diagnostics.php:159
+#: includes/class-ai-chat-bedrock-diagnostics.php:158
+#: includes/class-ai-chat-bedrock-diagnostics.php:160
 msgid "AWS region"
 msgstr "AWS リージョン"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:157
+#: includes/class-ai-chat-bedrock-diagnostics.php:158
 msgid "Select a supported AWS region for Amazon Bedrock."
 msgstr "Amazon Bedrock に対応した AWS リージョンを選択してください。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:165
-#: includes/class-ai-chat-bedrock-diagnostics.php:170
-#: includes/class-ai-chat-bedrock-diagnostics.php:172
+#: includes/class-ai-chat-bedrock-diagnostics.php:166
+#: includes/class-ai-chat-bedrock-diagnostics.php:171
+#: includes/class-ai-chat-bedrock-diagnostics.php:173
 msgid "Model selection"
 msgstr "モデルの選択"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:165
+#: includes/class-ai-chat-bedrock-diagnostics.php:166
 msgid "Select a Bedrock model in the settings."
 msgstr "設定で Bedrock モデルを選択してください。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:180
+#: includes/class-ai-chat-bedrock-diagnostics.php:181
 msgid "Streaming is disabled, so answers appear only when generation finishes."
 msgstr "ストリーミングが無効のため、回答は生成が完了してから表示されます。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:183
+#: includes/class-ai-chat-bedrock-diagnostics.php:184
 msgid "The PHP cURL extension is unavailable, so buffered responses are used instead of streaming."
 msgstr "PHP の cURL 拡張機能が利用できないため、ストリーミングの代わりにバッファリングされた応答を使用します。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:185
+#: includes/class-ai-chat-bedrock-diagnostics.php:186
 msgid "Streaming responses are enabled with automatic fallback."
 msgstr "ストリーミング応答が有効で、失敗時は自動的にフォールバックします。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:192
+#: includes/class-ai-chat-bedrock-diagnostics.php:193
 msgid "Credential encryption"
 msgstr "認証情報の暗号化"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:195
+#: includes/class-ai-chat-bedrock-diagnostics.php:196
 msgid "Stored credentials are encrypted with authenticated encryption."
 msgstr "保存された認証情報は認証付き暗号で暗号化されています。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:196
+#: includes/class-ai-chat-bedrock-diagnostics.php:197
 msgid "Sodium is unavailable, so credentials cannot be encrypted in the database. Use wp-config.php constants or an IAM role."
 msgstr "Sodium が利用できないため、データベース内の認証情報を暗号化できません。wp-config.php の定数または IAM ロールを使用してください。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:202
+#: includes/class-ai-chat-bedrock-diagnostics.php:203
 msgid "Only signed-in users can start paid Bedrock requests."
 msgstr "有料の Bedrock リクエストを開始できるのはログイン中のユーザーのみです。"
 
 #. translators: %s: requests allowed per visitor per minute.
-#: includes/class-ai-chat-bedrock-diagnostics.php:222
+#: includes/class-ai-chat-bedrock-diagnostics.php:223
 #, php-format
 msgid "Guest chat is enabled with %s request per visitor each minute. Confirm AWS Budgets and model pricing."
 msgid_plural "Guest chat is enabled with %s requests per visitor each minute. Confirm AWS Budgets and model pricing."
 msgstr[0] "訪問者向けチャットが有効で、訪問者ごとに 1 分あたり %s 件のリクエストが許可されています。AWS Budgets とモデルの料金を確認してください。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:239
+#: includes/class-ai-chat-bedrock-diagnostics.php:240
 msgid "Guardrail"
 msgstr "ガードレール"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:242
+#: includes/class-ai-chat-bedrock-diagnostics.php:243
 msgid "No guardrail is configured, so nothing is filtered by Amazon Bedrock."
 msgstr "ガードレールが設定されていないため、Amazon Bedrock によるフィルタリングは行われません。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:248
+#: includes/class-ai-chat-bedrock-diagnostics.php:249
 msgid "A guardrail is configured but credentials are missing, so it cannot be verified."
 msgstr "ガードレールは設定されていますが、認証情報がないため検証できません。"
 
 #. translators: %s: reason the guardrail could not be read.
-#: includes/class-ai-chat-bedrock-diagnostics.php:259
+#: includes/class-ai-chat-bedrock-diagnostics.php:260
 #, php-format
 msgid "The configured guardrail could not be read, so every chat request will be refused: %s"
 msgstr "設定されたガードレールを読み取れないため、すべてのチャットリクエストが拒否されます：%s"
 
 #. translators: 1: guardrail name, 2: guardrail status reported by AWS.
-#: includes/class-ai-chat-bedrock-diagnostics.php:272
+#: includes/class-ai-chat-bedrock-diagnostics.php:273
 #, php-format
 msgid "Guardrail \"%1$s\" is %2$s rather than READY."
 msgstr "ガードレール「%1$s」のステータスが READY ではなく %2$s です。"
 
 #. translators: 1: guardrail name, 2: guardrail version.
-#: includes/class-ai-chat-bedrock-diagnostics.php:285
+#: includes/class-ai-chat-bedrock-diagnostics.php:286
 #, php-format
 msgid "Guardrail \"%1$s\" is ready, version %2$s."
 msgstr "ガードレール「%1$s」は準備完了です（バージョン %2$s）。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:303
+#: includes/class-ai-chat-bedrock-diagnostics.php:304
 msgid "Knowledge base"
 msgstr "ナレッジベース"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:306
+#: includes/class-ai-chat-bedrock-diagnostics.php:307
 msgid "No Amazon Bedrock knowledge base is configured."
 msgstr "Amazon Bedrock ナレッジベースが設定されていません。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:315
+#: includes/class-ai-chat-bedrock-diagnostics.php:316
 msgid "The knowledge base ID is not the right shape. AWS expects ten letters or digits, or a knowledge base ARN."
 msgstr "ナレッジベース ID の形式が正しくありません。AWS では 10 文字の英数字、またはナレッジベースの ARN が必要です。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:321
+#: includes/class-ai-chat-bedrock-diagnostics.php:322
 msgid "A knowledge base is configured but credentials are missing, so it cannot be verified."
 msgstr "ナレッジベースは設定されていますが、認証情報がないため検証できません。"
 
 #. translators: %s: reason the knowledge base could not be queried.
-#: includes/class-ai-chat-bedrock-diagnostics.php:332
+#: includes/class-ai-chat-bedrock-diagnostics.php:333
 #, php-format
 msgid "The knowledge base could not be queried: %s"
 msgstr "ナレッジベースに問い合わせできませんでした：%s"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:338
+#: includes/class-ai-chat-bedrock-diagnostics.php:339
 msgid "The knowledge base answered a test query."
 msgstr "ナレッジベースがテストクエリに応答しました。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:348
+#: includes/class-ai-chat-bedrock-diagnostics.php:349
 msgid "Semantic search index"
 msgstr "セマンティック検索インデックス"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:351
+#: includes/class-ai-chat-bedrock-diagnostics.php:352
 msgid "Semantic search is off; answers use keyword search."
 msgstr "セマンティック検索はオフです。回答にはキーワード検索を使用します。"
 
 #. translators: 1: published item count, 2: items compared per question.
-#: includes/class-ai-chat-bedrock-diagnostics.php:362
+#: includes/class-ai-chat-bedrock-diagnostics.php:363
 #, php-format
 msgid "Vectors are stored in the WordPress database, which compares a question with %2$s of the %1$s published items. Amazon S3 Vectors searches all of them."
 msgstr "ベクトルは WordPress データベースに保存されており、質問ごとに公開済みの %1$s 件のうち %2$s 件と比較します。Amazon S3 Vectors ならすべてを検索します。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:368
+#: includes/class-ai-chat-bedrock-diagnostics.php:369
 msgid "Vectors are stored in the WordPress database."
 msgstr "ベクトルは WordPress データベースに保存されています。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:371
+#: includes/class-ai-chat-bedrock-diagnostics.php:372
 msgid "Amazon S3 Vectors is chosen, but the bucket or index name is missing, so semantic search is off."
 msgstr "Amazon S3 Vectors が選択されていますが、バケット名またはインデックス名がないため、セマンティック検索はオフになっています。"
 
 #. translators: %s: reason the index could not be read.
-#: includes/class-ai-chat-bedrock-diagnostics.php:382
+#: includes/class-ai-chat-bedrock-diagnostics.php:383
 #, php-format
 msgid "The S3 Vectors index could not be read: %s"
 msgstr "S3 Vectors インデックスを読み取れませんでした：%s"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:390
+#: includes/class-ai-chat-bedrock-diagnostics.php:391
 msgid "The S3 Vectors index exists and matches the embedding model."
 msgstr "S3 Vectors インデックスが存在し、埋め込みモデルと一致しています。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:399
+#: includes/class-ai-chat-bedrock-diagnostics.php:450
 msgid "MCP tools are disabled."
 msgstr "MCP ツールは無効です。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:402
+#: includes/class-ai-chat-bedrock-diagnostics.php:453
 msgid "The built-in WordPress MCP endpoint is publicly readable. Disable public access unless it is required."
 msgstr "組み込みの WordPress MCP エンドポイントは誰でも読み取れる状態です。必要な場合を除き、公開アクセスを無効にしてください。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:404
+#: includes/class-ai-chat-bedrock-diagnostics.php:455
 msgid "MCP tools are enabled and require authentication."
 msgstr "MCP ツールは有効で、認証が必要です。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:412
-#: includes/class-ai-chat-bedrock-diagnostics.php:431
+#: includes/class-ai-chat-bedrock-diagnostics.php:463
+#: includes/class-ai-chat-bedrock-diagnostics.php:482
 msgid "Model invocation"
 msgstr "モデルの呼び出し"
 
 #. translators: %d: round trip duration in milliseconds.
-#: includes/class-ai-chat-bedrock-diagnostics.php:418
+#: includes/class-ai-chat-bedrock-diagnostics.php:469
 #, php-format
 msgid "Round trip took %d ms."
 msgstr "往復時間は %d ミリ秒でした。"
 
 #. translators: 1: input token count, 2: output token count.
-#: includes/class-ai-chat-bedrock-diagnostics.php:425
+#: includes/class-ai-chat-bedrock-diagnostics.php:476
 #, php-format
 msgid "Tokens used: %1$d input, %2$d output."
 msgstr "使用トークン数：入力 %1$d、出力 %2$d。"
@@ -4901,7 +4901,7 @@ msgstr "リランキングモデルが HTTP %d を返しました。"
 msgid "The reranking model returned no scores."
 msgstr "リランキングモデルからスコアが返されませんでした。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:392
+#: includes/class-ai-chat-bedrock-diagnostics.php:393
 msgid "It is a CLASSIC index, which applies metadata filters during the similarity search. The plugin asks for filtering first on every query; to make that the index default, switch it to ENHANCED with UpdateIndexMode."
 msgstr "これは CLASSIC インデックスで、メタデータフィルターを類似度検索の途中で適用します。プラグインはクエリのたびに先にフィルターするよう指定します。これをインデックスの既定にするには、UpdateIndexMode で ENHANCED に切り替えてください。"
 
@@ -6124,7 +6124,7 @@ msgstr "この AWS アカウントはまだこのモデルを使えません。�
 msgid "Amazon Bedrock refused the request. Attach the generated IAM policy from the Diagnostics screen, and open the model once in the Amazon Bedrock console playground in this region to confirm the account can use it."
 msgstr "Amazon Bedrock がリクエストを拒否しました。「診断」画面で生成された IAM ポリシーをアタッチし、このリージョンの Amazon Bedrock コンソールのプレイグラウンドでモデルを一度開いて、アカウントで使えることを確認してください。"
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:170
+#: includes/class-ai-chat-bedrock-diagnostics.php:171
 msgid "The selected model was not returned by the region catalog. Confirm the region offers it and whether an inference profile ID is required."
 msgstr "選択したモデルはリージョンのカタログに含まれていませんでした。そのリージョンで提供されているか、推論プロファイル ID が必要かを確認してください。"
 
@@ -7576,3 +7576,30 @@ msgstr "下で追加すると、チャットがそのツールを呼び出せま
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:60
 msgid "Add an MCP server"
 msgstr "MCP サーバーを追加"
+
+#: includes/class-ai-chat-bedrock-diagnostics.php:408
+msgid "Background tasks"
+msgstr "バックグラウンドタスク"
+
+#: includes/class-ai-chat-bedrock-diagnostics.php:422
+msgid "WP-Cron is turned off with DISABLE_WP_CRON, so a server cron job has to call wp-cron.php, or run wp cron event run --due-now, every few minutes."
+msgstr "WP-Cron は DISABLE_WP_CRON で無効になっているため、サーバーの cron ジョブで数分ごとに wp-cron.php を呼び出すか、wp cron event run --due-now を実行する必要があります。"
+
+#: includes/class-ai-chat-bedrock-diagnostics.php:423
+msgid "WP-Cron runs only when someone visits, and a page cache can keep it from running. Have a server cron job call wp-cron.php every few minutes, then set DISABLE_WP_CRON."
+msgstr "WP-Cron は誰かがアクセスしたときにしか動かず、ページキャッシュがあると動かないこともあります。サーバーの cron ジョブで数分ごとに wp-cron.php を呼び出し、DISABLE_WP_CRON を設定してください。"
+
+#. translators: 1: number of tasks, 2: how long ago the oldest was due, such as 3 hours.
+#: includes/class-ai-chat-bedrock-diagnostics.php:431
+#, php-format
+msgid "%1$s background task is overdue, by %2$s."
+msgid_plural "%1$s background tasks are overdue, the oldest by %2$s."
+msgstr[0] "%1$s 件のバックグラウンドタスクが遅れています（最も古いもので %2$s）。"
+
+#: includes/class-ai-chat-bedrock-diagnostics.php:442
+msgid "The plugin's background tasks run on time."
+msgstr "プラグインのバックグラウンドタスクは予定どおり実行されています。"
+
+#: includes/class-ai-chat-bedrock-diagnostics.php:445
+msgid "No background tasks are scheduled."
+msgstr "予定されたバックグラウンドタスクはありません。"

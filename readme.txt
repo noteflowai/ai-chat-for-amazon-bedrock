@@ -493,6 +493,7 @@ what a good answer says.
 * Record where a post was published by entering its Bilibili, YouTube, Xiaohongshu or WeChat article address in the same box; it is saved with the post.
 * On a phone the chat is a corner button and opens full screen; an accent colour under Settings > Chat; smoother streaming; a page where a visitor may only sign in loads a 9 KB script instead of the whole chat.
 * Settings > Channels has a page each for the WeChat Official Account, the mini game and the video platforms. A feature's fields appear once it is turned on; empty limits say what they fall back to; once setup is complete, Overview folds its steps away. Profiles and MCP servers list first, with adding a step away. A chat in a synced pattern or a classic widget is styled from the start. Scripts and styles ship minified, readable with SCRIPT_DEBUG.
+* Diagnostics and Site Health warn when the plugin's background tasks are overdue, as when WP-Cron stops running, and say how to fix it.
 
 = 1.66.0 =
 * Publishing record, under Settings > Channels and off by default: where each post is published on Bilibili, YouTube or Xiaohongshu, with the item's ID, address, account, language, status and the edition it replaces. Agents read a post's publishing package and record what they published through abilities and the MCP server, with their account's permissions; the record shows when editing a post and, optionally, as links under it.
