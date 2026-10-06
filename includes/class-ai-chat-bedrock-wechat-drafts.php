@@ -72,6 +72,10 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	// The posts the site was told about, with the change it was told of.
 	const HELD_OPTION = 'aicfab_wechat_drafts_held';
 
+	// The scheduled run's lock, longer than a run with eight posts' uploads can take.
+	const LOCK_OPTION = 'aicfab_wechat_drafts_lock';
+	const LOCK_TTL    = 900;
+
 	// A draft updated in WeChat this long after the plugin sent it was edited there.
 	const EDIT_SLACK = 120;
 
@@ -1155,6 +1159,31 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( ! self::enabled( $options ) || 'off' === self::schedule( $options ) ) {
 			return;
 		}
+		// One run at a time: WP-Cron can start a second while the first is uploading, which
+		// would make a second draft of the same post. add_option() lets only one caller in.
+		if ( ! add_option( self::LOCK_OPTION, time() + self::LOCK_TTL, '', false ) ) {
+			if ( (int) get_option( self::LOCK_OPTION, 0 ) > time() ) {
+				return;
+			}
+			// A lock left by a run that died: taken over once it has expired.
+			delete_option( self::LOCK_OPTION );
+			if ( ! add_option( self::LOCK_OPTION, time() + self::LOCK_TTL, '', false ) ) {
+				return;
+			}
+		}
+		try {
+			self::run_locked( $options );
+		} finally {
+			delete_option( self::LOCK_OPTION );
+		}
+	}
+
+	/**
+	 * The scheduled run itself, under the lock.
+	 *
+	 * @param array $options Settings.
+	 */
+	private static function run_locked( $options ) {
 		$refreshed         = 0;
 		self::$draft_times = null;
 		self::$held        = array();
