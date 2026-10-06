@@ -289,7 +289,7 @@ foreach ( $GLOBALS['aicfab_fields'] as $aicfab_field => $aicfab_where ) {
 	}
 }
 check_set( count( $GLOBALS['aicfab_fields'] ) > 30 && array() === $aicfab_misplaced, 'Every settings field is on the tab of its section; misplaced: ' . implode( ', ', $aicfab_misplaced ) );
-check_set( 'aicfab_tab_publishing' === $GLOBALS['aicfab_fields']['youtube_client_id'][0], 'The YouTube settings are on the Publishing tab.' );
+check_set( 'aicfab_tab_publishing' === $GLOBALS['aicfab_fields']['youtube_client_id'][0] && 'aicfab_tab_publishing' === $GLOBALS['aicfab_fields']['wechat_enabled'][0] && 'aicfab_tab_publishing' === $GLOBALS['aicfab_fields']['wxgame_enabled'][0] && 'aicfab_tab_publishing' === $GLOBALS['aicfab_fields']['wechat_drafts_enabled'][0] && 'aicfab_tab_agents' === $GLOBALS['aicfab_fields']['abilities_tools'][0] && 'aicfab_tab_governance' === $GLOBALS['aicfab_fields']['allow_public_chat'][0] && 'aicfab_tab_governance' === $GLOBALS['aicfab_fields']['log_conversations'][0], 'Channels hold YouTube and every WeChat setting; agents and safety have tabs of their own.' );
 
 // --- Publishing ------------------------------------------------------------------
 

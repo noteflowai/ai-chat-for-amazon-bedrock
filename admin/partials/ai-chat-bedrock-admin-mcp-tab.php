@@ -251,9 +251,9 @@ $mcp_client = class_exists( 'AI_Chat_Bedrock_MCP_Client' ) ? new AI_Chat_Bedrock
 					<?php if ( ! AI_Chat_Bedrock_Abilities::tools_enabled() ) : ?>
 						<?php
 						printf(
-							/* translators: %s: link to the Answer grounding settings. */
+							/* translators: %s: link to the Agents and tools settings. */
 							esc_html__( 'They are offered to the chat once %s is on.', 'ai-chat-for-amazon-bedrock' ),
-							'<a href="' . esc_url( admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings&tab=knowledge' ) ) . '">' . esc_html__( 'WordPress abilities as tools', 'ai-chat-for-amazon-bedrock' ) . '</a>'
+							'<a href="' . esc_url( admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-settings&tab=agents' ) ) . '">' . esc_html__( 'WordPress abilities as tools', 'ai-chat-for-amazon-bedrock' ) . '</a>'
 						);
 						?>
 					<?php endif; ?>

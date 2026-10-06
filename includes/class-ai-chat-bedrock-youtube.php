@@ -377,7 +377,7 @@ class AI_Chat_Bedrock_YouTube {
 			return new WP_Error( 'aicfab_youtube_forbidden', __( 'You cannot upload a video for this post.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		if ( ! self::ready() ) {
-			return new WP_Error( 'aicfab_youtube_disconnected', __( 'Connect a YouTube channel under Settings > Publishing first.', 'ai-chat-for-amazon-bedrock' ) );
+			return new WP_Error( 'aicfab_youtube_disconnected', __( 'Connect a YouTube channel under Settings > Channels first.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		$job = self::job( $post->ID );
 		if ( is_array( $job ) && in_array( $job['state'], array( 'queued', 'uploading' ), true ) ) {
@@ -933,7 +933,7 @@ class AI_Chat_Bedrock_YouTube {
 				'aicfab_youtube_daily'        => __( 'Today\'s uploads are used up.', 'ai-chat-for-amazon-bedrock' ),
 				'aicfab_youtube_file'         => __( 'Choose a video in the Media Library whose file is on this server.', 'ai-chat-for-amazon-bedrock' ),
 				'aicfab_youtube_audience'     => __( 'Say whether the video is made for children.', 'ai-chat-for-amazon-bedrock' ),
-				'aicfab_youtube_disconnected' => __( 'Connect a YouTube channel under Settings > Publishing first.', 'ai-chat-for-amazon-bedrock' ),
+				'aicfab_youtube_disconnected' => __( 'Connect a YouTube channel under Settings > Channels first.', 'ai-chat-for-amazon-bedrock' ),
 			);
 			echo '<div class="notice notice-error"><p>' . esc_html( isset( $messages[ $error ] ) ? $messages[ $error ] : $error ) . '</p></div>';
 		}

@@ -369,7 +369,7 @@ $hit  = array_values( array_filter( $next, function ( $step ) use ( $aicfab_abil
 } ) );
 check_step( 1 === count( $hit ), 'abilities found on the site, unused, are suggested' );
 check_step( isset( $hit[0] ) && false !== strpos( $hit[0]['help'], 'WooCommerce, Rank Math' ), 'the suggestion names the plugins' );
-check_step( isset( $hit[0] ) && false !== strpos( $hit[0]['url'], 'tab=knowledge' ), 'the suggestion leads to the setting' );
+check_step( isset( $hit[0] ) && false !== strpos( $hit[0]['url'], 'tab=agents' ), 'the suggestion leads to the setting, on the Agents and tools tab' );
 
 $aicfab_on                                         = $aicfab_done + array( 'abilities_tools' => 1 );
 $GLOBALS['aicfab_options']['ai_chat_bedrock_enable_mcp'] = false;

@@ -166,12 +166,10 @@ class AI_Chat_Bedrock_Admin {
 
 	public function add_plugin_admin_menu() {
 		add_menu_page( __( 'AI Chatbot & Agents for Amazon Bedrock', 'ai-chat-for-amazon-bedrock' ), __( 'AI Chat Bedrock', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name, array( $this, 'display_plugin_admin_page' ), 'dashicons-format-chat', 100 );
-		add_submenu_page( $this->plugin_name, __( 'Settings', 'ai-chat-for-amazon-bedrock' ), __( 'Settings', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-settings', array( $this, 'display_plugin_admin_settings_page' ) );
+		// The first item opens the menu's own page; named for what it is, not the plugin again.
+		add_submenu_page( $this->plugin_name, __( 'Overview', 'ai-chat-for-amazon-bedrock' ), __( 'Overview', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name, array( $this, 'display_plugin_admin_page' ) );
+		// Daily work first: trying the chat, reading what visitors asked and what they need.
 		add_submenu_page( $this->plugin_name, __( 'Test Chat', 'ai-chat-for-amazon-bedrock' ), __( 'Test Chat', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-test', array( $this, 'display_plugin_admin_test_page' ) );
-		add_submenu_page( $this->plugin_name, __( 'MCP Settings', 'ai-chat-for-amazon-bedrock' ), __( 'MCP Settings', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-mcp', array( $this, 'display_plugin_admin_mcp_page' ) );
-		add_submenu_page( $this->plugin_name, __( 'Content Generator', 'ai-chat-for-amazon-bedrock' ), __( 'Content Generator', 'ai-chat-for-amazon-bedrock' ), 'edit_posts', $this->plugin_name . '-generator', array( $this, 'display_plugin_admin_generator_page' ) );
-		add_submenu_page( $this->plugin_name, __( 'Site Pages', 'ai-chat-for-amazon-bedrock' ), __( 'Site Pages', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_Scaffold::CAPABILITY, $this->plugin_name . '-scaffold', array( $this, 'display_plugin_admin_scaffold_page' ) );
-		add_submenu_page( $this->plugin_name, __( 'Chat Profiles', 'ai-chat-for-amazon-bedrock' ), __( 'Chat Profiles', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-profiles', array( $this, 'display_plugin_admin_profiles_page' ) );
 		add_submenu_page( $this->plugin_name, __( 'Conversations', 'ai-chat-for-amazon-bedrock' ), __( 'Conversations', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-conversations', array( $this, 'display_plugin_admin_conversations_page' ) );
 		// Listed while requests are taken, or while any are still stored.
 		$waiting = AI_Chat_Bedrock_Leads::enabled() ? AI_Chat_Bedrock_Leads::waiting() : 0;
@@ -183,9 +181,16 @@ class AI_Chat_Bedrock_Admin {
 		if ( AI_Chat_Bedrock_Metrics::enabled() ) {
 			add_submenu_page( $this->plugin_name, __( 'Business insights', 'ai-chat-for-amazon-bedrock' ), __( 'Business insights', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_Metrics::CAPABILITY, $this->plugin_name . '-metrics', array( $this, 'display_plugin_admin_metrics_page' ) );
 		}
+		// Making content.
+		add_submenu_page( $this->plugin_name, __( 'Content Generator', 'ai-chat-for-amazon-bedrock' ), __( 'Content Generator', 'ai-chat-for-amazon-bedrock' ), 'edit_posts', $this->plugin_name . '-generator', array( $this, 'display_plugin_admin_generator_page' ) );
+		add_submenu_page( $this->plugin_name, __( 'Site Pages', 'ai-chat-for-amazon-bedrock' ), __( 'Site Pages', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_Scaffold::CAPABILITY, $this->plugin_name . '-scaffold', array( $this, 'display_plugin_admin_scaffold_page' ) );
 		if ( class_exists( 'AI_Chat_Bedrock_YouTube' ) ) {
 			AI_Chat_Bedrock_YouTube::add_page( $this->plugin_name );
 		}
+		// Setting it up.
+		add_submenu_page( $this->plugin_name, __( 'Chat Profiles', 'ai-chat-for-amazon-bedrock' ), __( 'Chat Profiles', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-profiles', array( $this, 'display_plugin_admin_profiles_page' ) );
+		add_submenu_page( $this->plugin_name, __( 'MCP Settings', 'ai-chat-for-amazon-bedrock' ), __( 'MCP Settings', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-mcp', array( $this, 'display_plugin_admin_mcp_page' ) );
+		add_submenu_page( $this->plugin_name, __( 'Settings', 'ai-chat-for-amazon-bedrock' ), __( 'Settings', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-settings', array( $this, 'display_plugin_admin_settings_page' ) );
 		add_submenu_page( $this->plugin_name, __( 'Diagnostics', 'ai-chat-for-amazon-bedrock' ), __( 'Diagnostics', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name . '-diagnostics', array( $this, 'display_plugin_admin_diagnostics_page' ) );
 	}
 
@@ -1060,11 +1065,6 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'temperature', __( 'Temperature', 'ai-chat-for-amazon-bedrock' ), 'temperature_render', 'aicfab_model' );
 		$this->field( 'image_model_id', __( 'Image model', 'ai-chat-for-amazon-bedrock' ), 'image_model_render', 'aicfab_model' );
 
-		add_settings_section( 'aicfab_governance', __( 'Safety and spend controls', 'ai-chat-for-amazon-bedrock' ), array( $this, 'governance_section_callback' ), 'aicfab_tab_governance' );
-		$this->field( 'guardrail_id', __( 'Guardrail identifier', 'ai-chat-for-amazon-bedrock' ), 'guardrail_id_render', 'aicfab_governance' );
-		$this->field( 'guardrail_version', __( 'Guardrail version', 'ai-chat-for-amazon-bedrock' ), 'guardrail_version_render', 'aicfab_governance' );
-		$this->field( 'daily_request_limit', __( 'Daily request limit', 'ai-chat-for-amazon-bedrock' ), 'daily_request_limit_render', 'aicfab_governance' );
-
 		add_settings_section( 'aicfab_knowledge', __( 'Answer grounding', 'ai-chat-for-amazon-bedrock' ), array( $this, 'knowledge_section_callback' ), 'aicfab_tab_knowledge' );
 		$this->field( 'enable_site_context', __( 'Use site content', 'ai-chat-for-amazon-bedrock' ), 'enable_site_context_render', 'aicfab_knowledge' );
 		$this->field( 'context_results', __( 'Passages per answer', 'ai-chat-for-amazon-bedrock' ), 'context_results_render', 'aicfab_knowledge' );
@@ -1074,15 +1074,8 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'vector_store', __( 'Vector store', 'ai-chat-for-amazon-bedrock' ), 'vector_store_render', 'aicfab_knowledge' );
 		$this->field( 'knowledge_base_id', __( 'Bedrock knowledge base ID', 'ai-chat-for-amazon-bedrock' ), 'knowledge_base_id_render', 'aicfab_knowledge' );
 		$this->field( 'rerank_model_id', __( 'Reranking', 'ai-chat-for-amazon-bedrock' ), 'rerank_model_render', 'aicfab_knowledge' );
-		$this->field( 'abilities_tools', __( 'WordPress abilities as tools', 'ai-chat-for-amazon-bedrock' ), 'abilities_tools_render', 'aicfab_knowledge' );
-		$this->field( 'site_abilities', __( 'Site content abilities', 'ai-chat-for-amazon-bedrock' ), 'site_abilities_render', 'aicfab_knowledge' );
-		$this->field( 'site_ontology', __( 'Site description', 'ai-chat-for-amazon-bedrock' ), 'site_ontology_render', 'aicfab_knowledge' );
-		$this->field( 'business_metrics', __( 'Business insights', 'ai-chat-for-amazon-bedrock' ), 'business_metrics_render', 'aicfab_knowledge' );
-		$this->field( 'editor_assistant', __( 'Editor assistant', 'ai-chat-for-amazon-bedrock' ), 'editor_assistant_render', 'aicfab_knowledge' );
-		$this->field( 'log_conversations', __( 'Conversation log', 'ai-chat-for-amazon-bedrock' ), 'log_conversations_render', 'aicfab_knowledge' );
-		$this->field( 'media_assistant', __( 'Media helpers', 'ai-chat-for-amazon-bedrock' ), 'media_assistant_render', 'aicfab_knowledge' );
 
-		add_settings_section( 'aicfab_chat', __( 'Chat security and presentation', 'ai-chat-for-amazon-bedrock' ), '__return_false', 'aicfab_tab_chat' );
+		add_settings_section( 'aicfab_chat', __( 'What visitors see', 'ai-chat-for-amazon-bedrock' ), '__return_false', 'aicfab_tab_chat' );
 		$this->field( 'system_prompt', __( 'System prompt', 'ai-chat-for-amazon-bedrock' ), 'system_prompt_render', 'aicfab_chat' );
 		$this->field( 'prompt_id', __( 'Managed prompt', 'ai-chat-for-amazon-bedrock' ), 'managed_prompt_render', 'aicfab_chat' );
 		$this->field( 'chat_title', __( 'Chat title', 'ai-chat-for-amazon-bedrock' ), 'chat_title_render', 'aicfab_chat' );
@@ -1093,26 +1086,44 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'speech_replies', __( 'Read aloud', 'ai-chat-for-amazon-bedrock' ), 'speech_render', 'aicfab_chat' );
 		$this->field( 'leads_enabled', __( 'Contact requests', 'ai-chat-for-amazon-bedrock' ), 'leads_render', 'aicfab_chat' );
 		$this->field( 'analytics_events', __( 'Analytics events', 'ai-chat-for-amazon-bedrock' ), 'analytics_events_render', 'aicfab_chat' );
-		$this->field( 'wechat_enabled', __( 'WeChat Official Account', 'ai-chat-for-amazon-bedrock' ), 'wechat_render', 'aicfab_chat' );
-		$this->field( 'wxgame_enabled', __( 'WeChat mini game', 'ai-chat-for-amazon-bedrock' ), 'wxgame_render', 'aicfab_chat' );
-		$this->field( 'allow_public_chat', __( 'Guest access', 'ai-chat-for-amazon-bedrock' ), 'allow_public_chat_render', 'aicfab_chat' );
-		$this->field( 'rate_limit_per_minute', __( 'Requests per visitor per minute', 'ai-chat-for-amazon-bedrock' ), 'rate_limit_render', 'aicfab_chat' );
-		$this->field( 'role_limits', __( 'Per-role limits', 'ai-chat-for-amazon-bedrock' ), 'role_limits_render', 'aicfab_chat' );
 		$this->field( 'popup_site_wide', __( 'Floating chat', 'ai-chat-for-amazon-bedrock' ), 'popup_site_wide_render', 'aicfab_chat' );
 		$this->field( 'chat_color_scheme', __( 'Color scheme', 'ai-chat-for-amazon-bedrock' ), 'chat_color_scheme_render', 'aicfab_chat' );
-		$this->field( 'debug_mode', __( 'Debug logging', 'ai-chat-for-amazon-bedrock' ), 'debug_mode_render', 'aicfab_chat' );
+
+		// Tools the chat and editors use, beyond answering from the site's pages.
+		add_settings_section( 'aicfab_agents', __( 'Agents and tools', 'ai-chat-for-amazon-bedrock' ), '__return_false', 'aicfab_tab_agents' );
+		$this->field( 'abilities_tools', __( 'WordPress abilities as tools', 'ai-chat-for-amazon-bedrock' ), 'abilities_tools_render', 'aicfab_agents' );
+		$this->field( 'site_abilities', __( 'Site content abilities', 'ai-chat-for-amazon-bedrock' ), 'site_abilities_render', 'aicfab_agents' );
+		$this->field( 'site_ontology', __( 'Site description', 'ai-chat-for-amazon-bedrock' ), 'site_ontology_render', 'aicfab_agents' );
+		$this->field( 'business_metrics', __( 'Business insights', 'ai-chat-for-amazon-bedrock' ), 'business_metrics_render', 'aicfab_agents' );
+		$this->field( 'editor_assistant', __( 'Editor assistant', 'ai-chat-for-amazon-bedrock' ), 'editor_assistant_render', 'aicfab_agents' );
+		$this->field( 'media_assistant', __( 'Media helpers', 'ai-chat-for-amazon-bedrock' ), 'media_assistant_render', 'aicfab_agents' );
+
+		// The WeChat Official Account and mini game are separate accounts, set up side by side.
+		add_settings_section( 'aicfab_wechat', __( 'WeChat', 'ai-chat-for-amazon-bedrock' ), '__return_false', 'aicfab_tab_publishing' );
+		$this->field( 'wechat_enabled', __( 'WeChat Official Account', 'ai-chat-for-amazon-bedrock' ), 'wechat_render', 'aicfab_wechat' );
+		$this->field( 'wechat_drafts_enabled', __( 'WeChat Official Account drafts', 'ai-chat-for-amazon-bedrock' ), 'wechat_drafts_render', 'aicfab_wechat' );
+		$this->field( 'wxgame_enabled', __( 'WeChat mini game', 'ai-chat-for-amazon-bedrock' ), 'wxgame_render', 'aicfab_wechat' );
+
+		add_settings_section( 'aicfab_publishing', __( 'Video and social platforms', 'ai-chat-for-amazon-bedrock' ), '__return_false', 'aicfab_tab_publishing' );
+		$this->field( 'distribution_enabled', __( 'Publishing record', 'ai-chat-for-amazon-bedrock' ), 'distribution_render', 'aicfab_publishing' );
+		$this->field( 'bilibili_embeds', __( 'Bilibili videos', 'ai-chat-for-amazon-bedrock' ), 'bilibili_embeds_render', 'aicfab_publishing' );
+		$this->field( 'youtube_client_id', __( 'YouTube uploads', 'ai-chat-for-amazon-bedrock' ), 'youtube_render', 'aicfab_publishing' );
+
+		add_settings_section( 'aicfab_governance', __( 'Safety and spend controls', 'ai-chat-for-amazon-bedrock' ), array( $this, 'governance_section_callback' ), 'aicfab_tab_governance' );
+		$this->field( 'allow_public_chat', __( 'Guest access', 'ai-chat-for-amazon-bedrock' ), 'allow_public_chat_render', 'aicfab_governance' );
+		$this->field( 'rate_limit_per_minute', __( 'Requests per visitor per minute', 'ai-chat-for-amazon-bedrock' ), 'rate_limit_render', 'aicfab_governance' );
+		$this->field( 'role_limits', __( 'Per-role limits', 'ai-chat-for-amazon-bedrock' ), 'role_limits_render', 'aicfab_governance' );
+		$this->field( 'daily_request_limit', __( 'Daily request limit', 'ai-chat-for-amazon-bedrock' ), 'daily_request_limit_render', 'aicfab_governance' );
+		$this->field( 'guardrail_id', __( 'Guardrail identifier', 'ai-chat-for-amazon-bedrock' ), 'guardrail_id_render', 'aicfab_governance' );
+		$this->field( 'guardrail_version', __( 'Guardrail version', 'ai-chat-for-amazon-bedrock' ), 'guardrail_version_render', 'aicfab_governance' );
+		$this->field( 'log_conversations', __( 'Conversation log', 'ai-chat-for-amazon-bedrock' ), 'log_conversations_render', 'aicfab_governance' );
+		$this->field( 'debug_mode', __( 'Debug logging', 'ai-chat-for-amazon-bedrock' ), 'debug_mode_render', 'aicfab_governance' );
 
 		add_settings_section( 'aicfab_integrations', __( 'Fixes for other plugins', 'ai-chat-for-amazon-bedrock' ), array( $this, 'integrations_section_callback' ), 'aicfab_tab_integrations' );
 		$this->field( 'github_read_scope', __( 'GitHub sign-in scope', 'ai-chat-for-amazon-bedrock' ), 'github_read_scope_render', 'aicfab_integrations' );
 		$this->field( 'social_only_registration', __( 'Registration', 'ai-chat-for-amazon-bedrock' ), 'social_only_registration_render', 'aicfab_integrations' );
 		$this->field( 'hreflang_x_default', __( 'Default language for search engines', 'ai-chat-for-amazon-bedrock' ), 'hreflang_x_default_render', 'aicfab_integrations' );
 		$this->field( 'organization_author', __( 'Article author', 'ai-chat-for-amazon-bedrock' ), 'organization_author_render', 'aicfab_integrations' );
-
-		add_settings_section( 'aicfab_publishing', __( 'Publishing on video and social platforms', 'ai-chat-for-amazon-bedrock' ), '__return_false', 'aicfab_tab_publishing' );
-		$this->field( 'distribution_enabled', __( 'Publishing record', 'ai-chat-for-amazon-bedrock' ), 'distribution_render', 'aicfab_publishing' );
-		$this->field( 'bilibili_embeds', __( 'Bilibili videos', 'ai-chat-for-amazon-bedrock' ), 'bilibili_embeds_render', 'aicfab_publishing' );
-		$this->field( 'youtube_client_id', __( 'YouTube uploads', 'ai-chat-for-amazon-bedrock' ), 'youtube_render', 'aicfab_publishing' );
-		$this->field( 'wechat_drafts_enabled', __( 'WeChat Official Account drafts', 'ai-chat-for-amazon-bedrock' ), 'wechat_drafts_render', 'aicfab_publishing' );
 
 		if ( AI_Chat_Bedrock_WooCommerce::active() ) {
 			add_settings_section( 'aicfab_woocommerce', __( 'WooCommerce', 'ai-chat-for-amazon-bedrock' ), array( $this, 'woocommerce_section_callback' ), 'aicfab_tab_woocommerce' );
@@ -1201,7 +1212,7 @@ class AI_Chat_Bedrock_Admin {
 		}
 	}
 	public function governance_section_callback() {
-		echo '<p>' . esc_html__( 'Apply an Amazon Bedrock guardrail and cap daily requests. Counters store request and token totals only.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<p>' . esc_html__( 'Who may chat and how often, a daily cap, an Amazon Bedrock guardrail, and what is logged. Counters store request and token totals only.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 
 		$today = AI_Chat_Bedrock_Usage::today_totals();
 		$week  = AI_Chat_Bedrock_Usage::totals( 7 );
@@ -1393,7 +1404,7 @@ class AI_Chat_Bedrock_Admin {
 		echo '<p><strong>' . esc_html( '' !== $contact ? $contact : __( 'WeChat has not reached this address yet.', 'ai-chat-for-amazon-bedrock' ) ) . '</strong></p>';
 		/* translators: %s: the address WeChat sends messages to. */
 		echo '<p class="description">' . esc_html( sprintf( __( 'Off by default. In the WeChat Official Accounts Platform, under Settings and Development > Basic Configuration, enable the server configuration with the URL %s and the token entered here. Plaintext mode needs only the token; compatible and safe mode also need the EncodingAESKey and AppID. No AppSecret is needed.', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_WeChat::url() ) ) . '</p>';
-		echo '<p class="description">' . esc_html__( 'With message push on, WeChat turns off the menu set in its console, and an account that is not verified cannot set one through its API, so followers write a word instead: 菜单 gets the menu above, and 精选 or 最新 the newest featured posts (the category chosen for WeChat drafts under Publishing) with their addresses. Neither calls the model.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'With message push on, WeChat turns off the menu set in its console, and an account that is not verified cannot set one through its API, so followers write a word instead: 菜单 gets the menu above, and 精选 or 最新 the newest featured posts (the category chosen for WeChat drafts below) with their addresses. Neither calls the model.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'The chat answers each text message from the site\'s pages, in plain text with its sources. WeChat waits about fifteen seconds in all; a longer answer is kept and the follower is told to send 1 to see it, so choose a fast model for WeChat if the chat\'s takes longer. A new follower gets the welcome message and suggested questions. Every answer counts towards the daily request limit, and the conversation log records them when it is on.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function wechat_drafts_render() {
@@ -1433,7 +1444,7 @@ class AI_Chat_Bedrock_Admin {
 		if ( '' !== $status ) {
 			echo '<p><strong>' . esc_html( $status ) . '</strong></p>';
 		}
-		echo '<p class="description">' . esc_html__( 'Off by default. Uses the AppID entered under Chat > WeChat Official Account, and the AppSecret and IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform. Each post becomes an article with its title, excerpt, the featured image as cover, the text and images a signed-out visitor sees, and the post as "Read more"; links in the text become plain text, as WeChat does not open them. Posts are sent from the Published elsewhere box, by an agent, or on the schedule, which takes featured posts of the last 60 days not sent before, in Chinese when the site has it.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Off by default. Uses the AppID entered for the WeChat Official Account above, and the AppSecret and IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform. Each post becomes an article with its title, excerpt, the featured image as cover, the text and images a signed-out visitor sees, and the post as "Read more"; links in the text become plain text, as WeChat does not open them. Posts are sent from the Published elsewhere box, by an agent, or on the schedule, which takes featured posts of the last 60 days not sent before, in Chinese when the site has it.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'Only drafts are made: WeChat lets only verified company accounts publish through its API. Check each draft and publish it in the Official Accounts Platform.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 	}
 	public function wxgame_render() {
@@ -2201,6 +2212,7 @@ class AI_Chat_Bedrock_Admin {
 			$output['wxgame_app_id'] = '';
 			$this->notice( 'wxgame_app_id', __( 'The mini game has its own AppID, not the Official Account\'s; it was not saved.', 'ai-chat-for-amazon-bedrock' ) );
 		}
+		$aicfab_shared = false;
 		foreach ( array(
 			'wxgame_token'   => array( 'wechat_token', 'clean_token' ),
 			'wxgame_aes_key' => array( 'wechat_aes_key', 'clean_aes_key' ),
@@ -2208,8 +2220,11 @@ class AI_Chat_Bedrock_Admin {
 			$game     = '' !== $output[ $aicfab_key ] ? call_user_func( array( 'AI_Chat_Bedrock_WeChat', $aicfab_pair[1] ), AI_Chat_Bedrock_Security::decrypt_secret( $output[ $aicfab_key ] ) ) : '';
 			$official = isset( $output[ $aicfab_pair[0] ] ) && '' !== $output[ $aicfab_pair[0] ] ? call_user_func( array( 'AI_Chat_Bedrock_WeChat', $aicfab_pair[1] ), AI_Chat_Bedrock_Security::decrypt_secret( $output[ $aicfab_pair[0] ] ) ) : '';
 			if ( '' !== $game && $game === $official ) {
-				$this->notice( $aicfab_key, __( 'The mini game uses the same token or EncodingAESKey as the Official Account. It was saved; choose safe mode in both, so each message is checked against its own AppID, and consider separate values.', 'ai-chat-for-amazon-bedrock' ) );
+				$aicfab_shared = true;
 			}
+		}
+		if ( ! empty( $aicfab_shared ) ) {
+			$this->notice( 'wxgame_token', __( 'The mini game uses the same token or EncodingAESKey as the Official Account. It was saved; choose safe mode in both, so each message is checked against its own AppID, and consider separate values.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 
 		$output['leads_enabled'] = ! empty( $input['leads_enabled'] );
@@ -2389,6 +2404,8 @@ class AI_Chat_Bedrock_Admin {
 			'aicfab_chat'         => 'aicfab_tab_chat',
 			'aicfab_integrations' => 'aicfab_tab_integrations',
 			'aicfab_publishing'   => 'aicfab_tab_publishing',
+			'aicfab_wechat'       => 'aicfab_tab_publishing',
+			'aicfab_agents'       => 'aicfab_tab_agents',
 			'aicfab_woocommerce'  => 'aicfab_tab_woocommerce',
 		);
 		$page  = isset( $pages[ $section ] ) ? $pages[ $section ] : 'aicfab_tab_chat';
@@ -2408,6 +2425,8 @@ class AI_Chat_Bedrock_Admin {
 	 * @return array
 	 */
 	public static function tabs() {
+		// In the order a site is set up: connect, choose the model, ground and shape the chat,
+		// add tools and channels, then limit what it may spend.
 		return array(
 			'aws'          => array(
 				'page'  => 'aicfab_tab_aws',
@@ -2417,13 +2436,22 @@ class AI_Chat_Bedrock_Admin {
 				'page'  => 'aicfab_tab_model',
 				'label' => __( 'Model', 'ai-chat-for-amazon-bedrock' ),
 			),
+			'knowledge'    => array(
+				'page'  => 'aicfab_tab_knowledge',
+				'label' => __( 'Grounding', 'ai-chat-for-amazon-bedrock' ),
+			),
 			'chat'         => array(
 				'page'  => 'aicfab_tab_chat',
 				'label' => __( 'Chat', 'ai-chat-for-amazon-bedrock' ),
 			),
-			'knowledge'    => array(
-				'page'  => 'aicfab_tab_knowledge',
-				'label' => __( 'Grounding', 'ai-chat-for-amazon-bedrock' ),
+			'agents'       => array(
+				'page'  => 'aicfab_tab_agents',
+				'label' => __( 'Agents and tools', 'ai-chat-for-amazon-bedrock' ),
+			),
+			// The slug stays publishing, so links to it keep working.
+			'publishing'   => array(
+				'page'  => 'aicfab_tab_publishing',
+				'label' => __( 'Channels', 'ai-chat-for-amazon-bedrock' ),
 			),
 			'governance'   => array(
 				'page'  => 'aicfab_tab_governance',
@@ -2432,10 +2460,6 @@ class AI_Chat_Bedrock_Admin {
 			'integrations' => array(
 				'page'  => 'aicfab_tab_integrations',
 				'label' => __( 'Integrations', 'ai-chat-for-amazon-bedrock' ),
-			),
-			'publishing'   => array(
-				'page'  => 'aicfab_tab_publishing',
-				'label' => __( 'Publishing', 'ai-chat-for-amazon-bedrock' ),
 			),
 		) + ( class_exists( 'AI_Chat_Bedrock_WooCommerce' ) && AI_Chat_Bedrock_WooCommerce::active()
 			? array(

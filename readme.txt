@@ -357,19 +357,19 @@ Yes, under Chat > Analytics events, off by default. Opens, questions, answers, f
 
 = Can it answer my WeChat Official Account? =
 
-Yes, under Chat > WeChat Official Account, off by default. Followers' text messages are answered from your pages in plain text with sources, in plaintext or safe mode, within the time WeChat waits, and a new follower gets the welcome message. It works with unverified personal subscription accounts and needs no AppSecret. [Setup and limits](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-answer-my-wechat-official-account).
+Yes, under Channels > WeChat Official Account, off by default. Followers' text messages are answered from your pages in plain text with sources, in plaintext or safe mode, within the time WeChat waits, and a new follower gets the welcome message. It works with unverified personal subscription accounts and needs no AppSecret. [Setup and limits](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-answer-my-wechat-official-account).
 
 = Can it post to my WeChat Official Account? =
 
-It makes drafts, under Settings > Publishing, off by default: featured posts become articles in the account's draft box, from the editor, by an agent or on a schedule, and you publish them in the Official Accounts Platform, since WeChat lets only verified company accounts publish through its API. Followers who write 菜单 get your menu text instead of a menu. [How it works](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-post-to-my-wechat-official-account).
+It makes drafts, under Settings > Channels, off by default: featured posts become articles in the account's draft box, from the editor, by an agent or on a schedule, and you publish them in the Official Accounts Platform, since WeChat lets only verified company accounts publish through its API. Followers who write 菜单 get your menu text instead of a menu. [How it works](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-post-to-my-wechat-official-account).
 
 = Can it handle my WeChat mini game's customer service? =
 
-Yes, under Chat > WeChat mini game, off by default. Players who open the game's customer service chat are welcomed and get your set answers by keyword, without AI, and the site counts players, chats, scenes and subscription choices a day without keeping their IDs. [Setup and limits](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-handle-my-wechat-mini-games-customer-service).
+Yes, under Channels > WeChat mini game, off by default. Players who open the game's customer service chat are welcomed and get your set answers by keyword, without AI, and the site counts players, chats, scenes and subscription choices a day without keeping their IDs. [Setup and limits](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-handle-my-wechat-mini-games-customer-service).
 
 = Can it publish to Bilibili, YouTube or Xiaohongshu? =
 
-It keeps the record, under Settings > Publishing, off by default: your agents publish with the platforms' creator tools and record each item through abilities and MCP, since Bilibili and Xiaohongshu offer individual creators no publishing API. YouTube uploads go through its API once a channel is connected. [The record, embeds and uploads](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-publish-to-bilibili-youtube-or-xiaohongshu).
+It keeps the record, under Settings > Channels, off by default: your agents publish with the platforms' creator tools and record each item through abilities and MCP, since Bilibili and Xiaohongshu offer individual creators no publishing API. YouTube uploads go through its API once a channel is connected. [The record, embeds and uploads](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#can-it-publish-to-bilibili-youtube-or-xiaohongshu).
 
 = Can the chat float instead of sitting in the page? =
 
@@ -489,11 +489,12 @@ what a good answer says.
 == Changelog ==
 
 = 1.66.0 =
-* Publishing record, under Settings > Publishing and off by default: where each post is published on Bilibili, YouTube or Xiaohongshu, with the item's ID, address, account, language, status and the edition it replaces. Agents read a post's publishing package and record what they published through abilities and the MCP server, with their account's permissions; the record shows when editing a post and, optionally, as links under it.
+* Publishing record, under Settings > Channels and off by default: where each post is published on Bilibili, YouTube or Xiaohongshu, with the item's ID, address, account, language, status and the edition it replaces. Agents read a post's publishing package and record what they published through abilities and the MCP server, with their account's permissions; the record shows when editing a post and, optionally, as links under it.
 * Bilibili videos embed from their links, as YouTube's do, when turned on.
 * Uploads to YouTube through its API, after connecting a channel with Google's sign-in: resumable, in the background, added to the record and followed until YouTube says whether the video is public. Uploads default to private and are limited per day.
 * WeChat mini game customer service, under Chat and off by default: the game's message push comes to its own address, in JSON or XML, plaintext or safe mode. Players who open the chat are welcomed, and questions get the site owner's set answers, matched by keyword, through WeChat's customer service API; nothing is generated, as an AI answer in a mini game needs an AI category and an algorithm filing. Daily totals show players, chats opened by scene, messages, how many questions matched an answer and how players answered subscription prompts, without keeping any OpenID.
-* WeChat Official Account drafts, under Settings > Publishing and off by default: featured posts become articles in the account's draft box, with cover, text, images and a Read more link to the post, sent from the editor, by an agent or on a daily or weekly schedule that emails the site. Only verified company accounts may publish through WeChat's API, so the owner publishes them. Followers who write 菜单 get the site's menu, and 精选 the newest featured posts, without the model.
+* WeChat Official Account drafts, under Settings > Channels and off by default: featured posts become articles in the account's draft box, with cover, text, images and a Read more link to the post, sent from the editor, by an agent or on a daily or weekly schedule that emails the site. Only verified company accounts may publish through WeChat's API, so the owner publishes them. Followers who write 菜单 get the site's menu, and 精选 the newest featured posts, without the model.
+* Settings grouped by task: a Channels tab holds the WeChat Official Account, its drafts and the mini game beside the video platforms; Agents and tools has its own tab; guest access, rate limits, the conversation log and debug logging are under Safety and spend. The menu lists daily work first, starting with Overview. Old tab links still work.
 
 = 1.65.0 =
 * WeChat Official Account, under Chat and off by default: followers' text messages are answered from the site's pages in plain text with sources and a note that AI wrote them, in plaintext, compatible or safe mode, optionally by a faster model than the site's. WeChat's retries give an answer about fifteen seconds; a slower one is kept until the follower sends 1. Works with unverified personal subscription accounts, needs no AppSecret, and limits each follower per hour.

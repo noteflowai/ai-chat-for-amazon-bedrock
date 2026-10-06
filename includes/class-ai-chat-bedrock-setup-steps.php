@@ -299,7 +299,7 @@ class AI_Chat_Bedrock_Setup_Steps {
 			$next[] = array(
 				'label' => __( 'Record conversations to see what visitors ask', 'ai-chat-for-amazon-bedrock' ),
 				'help'  => __( 'Off by default. With it on, the Conversations screen reports the questions your site does not answer. Disclose the recording to visitors.', 'ai-chat-for-amazon-bedrock' ),
-				'url'   => $settings . '&tab=chat',
+				'url'   => $settings . '&tab=governance',
 			);
 		}
 
@@ -321,7 +321,7 @@ class AI_Chat_Bedrock_Setup_Steps {
 					__( '%s register abilities with WordPress. Signed-in users can then get answers from their live data. Read-only abilities are offered, and ones that change data stay off until you allow them.', 'ai-chat-for-amazon-bedrock' ),
 					AI_Chat_Bedrock_Translation::items( array_slice( $sources, 0, 4 ) )
 				),
-				'url'   => $settings . '&tab=knowledge',
+				'url'   => $settings . '&tab=agents',
 			);
 		}
 
@@ -332,7 +332,7 @@ class AI_Chat_Bedrock_Setup_Steps {
 				$next[] = array(
 					'label' => __( 'Set a limit for visitors who are not signed in', 'ai-chat-for-amazon-bedrock' ),
 					'help'  => __( 'Guest chat is on. A per-role limit for guests caps what an anonymous visitor can spend.', 'ai-chat-for-amazon-bedrock' ),
-					'url'   => $settings . '&tab=chat',
+					'url'   => $settings . '&tab=governance',
 				);
 			}
 		}
