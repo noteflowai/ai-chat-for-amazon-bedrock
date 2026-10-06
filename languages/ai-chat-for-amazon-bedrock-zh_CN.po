@@ -529,7 +529,7 @@ msgstr "IAM 角色凭证"
 
 #: admin/class-ai-chat-bedrock-admin.php:1061
 #: admin/class-ai-chat-bedrock-admin.php:1062
-#: admin/class-ai-chat-bedrock-admin.php:2437
+#: admin/class-ai-chat-bedrock-admin.php:2438
 #: admin/partials/ai-chat-bedrock-admin-display.php:67
 #: admin/partials/ai-chat-bedrock-admin-display.php:217
 #: admin/partials/ai-chat-bedrock-admin-eval.php:97
@@ -703,7 +703,7 @@ msgid "Article author"
 msgstr "文章作者"
 
 #: admin/class-ai-chat-bedrock-admin.php:1129
-#: admin/class-ai-chat-bedrock-admin.php:2468
+#: admin/class-ai-chat-bedrock-admin.php:2469
 msgid "WooCommerce"
 msgstr "WooCommerce"
 
@@ -1194,19 +1194,19 @@ msgstr "Amazon S3 Vectors 需要存储桶和索引名称。在两者都设置之
 msgid "The managed prompt identifier contained unsupported characters and was cleared."
 msgstr "托管提示词标识符包含不支持的字符，已被清除。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2243
+#: admin/class-ai-chat-bedrock-admin.php:2244
 msgid "The knowledge base ID must be alphanumeric; the value was cleared."
 msgstr "知识库 ID 只能包含字母和数字，该值已被清除。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2303
+#: admin/class-ai-chat-bedrock-admin.php:2304
 msgid "Settings saved."
 msgstr "设置已保存。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2433
+#: admin/class-ai-chat-bedrock-admin.php:2434
 msgid "AWS"
 msgstr "AWS"
 
-#: admin/class-ai-chat-bedrock-admin.php:2445
+#: admin/class-ai-chat-bedrock-admin.php:2446
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:36
 #: includes/class-ai-chat-bedrock-chat-history.php:381
 #: public/class-ai-chat-bedrock-public.php:289
@@ -1215,20 +1215,20 @@ msgstr "AWS"
 msgid "Chat"
 msgstr "对话"
 
-#: admin/class-ai-chat-bedrock-admin.php:2441
+#: admin/class-ai-chat-bedrock-admin.php:2442
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:66
 msgid "Grounding"
 msgstr "回答依据"
 
-#: admin/class-ai-chat-bedrock-admin.php:2458
+#: admin/class-ai-chat-bedrock-admin.php:2459
 msgid "Safety and spend"
 msgstr "安全与费用"
 
-#: admin/class-ai-chat-bedrock-admin.php:2462
+#: admin/class-ai-chat-bedrock-admin.php:2463
 msgid "Integrations"
 msgstr "集成"
 
-#: admin/class-ai-chat-bedrock-admin.php:2498
+#: admin/class-ai-chat-bedrock-admin.php:2499
 msgid "Configured — enter a value to replace"
 msgstr "已配置 — 输入新值以替换"
 
@@ -2557,7 +2557,7 @@ msgid "Clear anything you do not want, edit the titles if you like, then create 
 msgstr "取消勾选不需要的页面，可根据需要编辑标题，然后创建草稿。"
 
 #: admin/partials/ai-chat-bedrock-admin-scaffold.php:52
-#: includes/class-ai-chat-bedrock-youtube.php:976
+#: includes/class-ai-chat-bedrock-youtube.php:1003
 #: blocks/chat/editor.js:54
 msgid "Title"
 msgstr "标题"
@@ -4410,7 +4410,7 @@ msgstr "提示词中没有消息。"
 msgid "The Amazon Bedrock request failed."
 msgstr "Amazon Bedrock 请求失败。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:712
+#: includes/class-ai-chat-bedrock-wechat.php:722
 #: public/class-ai-chat-bedrock-public.php:99
 #: public/partials/ai-chat-bedrock-public-display.php:15
 msgid "Hello! How can I help you today?"
@@ -4462,7 +4462,7 @@ msgstr "智能体步骤（%d）"
 msgid "succeeded"
 msgstr "成功"
 
-#: includes/class-ai-chat-bedrock-distribution.php:592
+#: includes/class-ai-chat-bedrock-distribution.php:620
 #: public/class-ai-chat-bedrock-public.php:133
 msgid "failed"
 msgstr "失败"
@@ -4880,7 +4880,7 @@ msgstr "重排序"
 msgid "Optional. Gathers more passages from site content and the knowledge base, then has a reranking model keep the ones that best answer the question. It adds one rerank request per question, billed per query, and the passages are used in their original order if it fails. Requires bedrock:Rerank, and bedrock:InvokeModel on the reranking model, in the chat region."
 msgstr "可选。从站点内容和知识库中收集更多段落，再由重排序模型保留最能回答问题的那些。每个问题会增加一次按查询计费的重排序请求；如果重排序失败，则按原有顺序使用这些段落。需要在聊天所用区域拥有 bedrock:Rerank 权限，以及对重排序模型的 bedrock:InvokeModel 权限。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2248
+#: admin/class-ai-chat-bedrock-admin.php:2249
 msgid "That reranking model is not supported; reranking was left off."
 msgstr "不支持该重排序模型，重排序保持关闭。"
 
@@ -5841,7 +5841,7 @@ msgstr "Joinchat 已启用：链接留空时，会提供其 WhatsApp 号码。"
 msgid "Off by default. A Contact a person button appears below the chat, and the assistant points to it when it cannot help. Visitors give an email address or phone number and must agree before anything is stored. Requests are kept on this site and listed under Contact requests, where they can be exported. The link can be a web, mailto: or tel: address. Disclose this in your privacy policy."
 msgstr "默认关闭。对话下方会出现“联系人工”按钮，助手无法解答时会引导访客使用它。访客需提供邮箱或电话号码，并在同意后才会保存任何内容。请求保存在本站，列在“联系请求”页面中，可在那里导出。链接可以是网址、mailto: 或 tel: 地址。请在隐私政策中说明这一点。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2235
+#: admin/class-ai-chat-bedrock-admin.php:2236
 msgid "The contact link must be a web, mailto: or tel: address; it was cleared."
 msgstr "联系链接必须是网址、mailto: 或 tel: 地址，已被清空。"
 
@@ -6325,39 +6325,39 @@ msgstr "微信令牌必须是 3 到 32 位字母或数字，与公众平台一�
 msgid "The EncodingAESKey must be 43 letters and digits; it was not saved."
 msgstr "EncodingAESKey 必须是 43 位字母或数字；未保存。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:373
+#: includes/class-ai-chat-bedrock-wechat.php:383
 msgid "I can only read text messages for now. Please type your question."
 msgstr "目前只能读取文字消息，请输入你的问题。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:399
+#: includes/class-ai-chat-bedrock-wechat.php:409
 msgid "The answer is still being written. Please send 1 again in a moment."
 msgstr "回答还在生成中，请稍后再发送 1。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:411
+#: includes/class-ai-chat-bedrock-wechat.php:421
 msgid "You have sent a lot of questions this hour. Please try again later."
 msgstr "你这一小时内提问较多，请稍后再试。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:550
+#: includes/class-ai-chat-bedrock-wechat.php:560
 msgid "This one needs a little longer. Send 1 in a moment to see the answer."
 msgstr "这个问题需要多一点时间，请稍后发送 1 查看回答。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:578
+#: includes/class-ai-chat-bedrock-wechat.php:588
 msgid "You are replying in a WeChat Official Account chat. Reply in the language of the follower's latest message. Write plain text without Markdown, such as asterisks, hashes or tables, and keep the answer under 300 words. Put any web address on a line of its own."
 msgstr "你正在微信公众号的对话中回复。请使用粉丝最新一条消息的语言回答。只写纯文本，不要使用星号、井号或表格等 Markdown，回答控制在 300 字以内。网址请单独占一行。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:584
+#: includes/class-ai-chat-bedrock-wechat.php:594
 msgid "The assistant has answered as many questions as it can today. Please try again tomorrow."
 msgstr "助手今天已经回答了能回答的全部问题，请明天再试。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:677
+#: includes/class-ai-chat-bedrock-wechat.php:687
 msgid "Sources:"
 msgstr "来源："
 
-#: includes/class-ai-chat-bedrock-wechat.php:715
+#: includes/class-ai-chat-bedrock-wechat.php:725
 msgid "You could ask:"
 msgstr "你可以问："
 
-#: includes/class-ai-chat-bedrock-wechat.php:725
+#: includes/class-ai-chat-bedrock-wechat.php:735
 msgid "Sorry, the answer could not be written right now. Please try again in a moment."
 msgstr "抱歉，暂时无法生成回答，请稍后再试。"
 
@@ -6377,7 +6377,7 @@ msgstr "与对话相同"
 msgid "The chat answers each text message from the site's pages, in plain text with its sources. WeChat waits about fifteen seconds in all; a longer answer is kept and the follower is told to send 1 to see it, so choose a fast model for WeChat if the chat's takes longer. A new follower gets the welcome message and suggested questions. Every answer counts towards the daily request limit, and the conversation log records them when it is on."
 msgstr "对话会根据网站页面回答每条文字消息，以纯文本形式附上来源。微信总共等待约 15 秒；更久的回答会被保存，并提示粉丝发送 1 查看，因此如果对话使用的模型较慢，请为微信选择一个更快的模型。新粉丝会收到欢迎语和推荐问题。每个回答都计入每日请求上限，开启对话日志时也会记录。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:645
+#: includes/class-ai-chat-bedrock-wechat.php:655
 msgid "Generated by AI. Check the linked pages for anything important."
 msgstr "以上内容由 AI 生成，重要信息请以链接的文章为准。"
 
@@ -6392,8 +6392,8 @@ msgstr "B 站视频"
 
 #: admin/class-ai-chat-bedrock-admin.php:1110
 #: admin/class-ai-chat-bedrock-admin.php:1757
-#: includes/class-ai-chat-bedrock-youtube.php:907
-#: includes/class-ai-chat-bedrock-youtube.php:922
+#: includes/class-ai-chat-bedrock-youtube.php:934
+#: includes/class-ai-chat-bedrock-youtube.php:949
 msgid "YouTube uploads"
 msgstr "YouTube 上传"
 
@@ -6426,7 +6426,7 @@ msgid "The sign-in did not come back from the request this site made, so it was 
 msgstr "这次登录不是本站发起的请求返回的，已忽略。请重试。"
 
 #: admin/class-ai-chat-bedrock-admin.php:1750
-#: includes/class-ai-chat-bedrock-youtube.php:306
+#: includes/class-ai-chat-bedrock-youtube.php:312
 msgid "Google did not grant access to the channel."
 msgstr "Google 未授予访问该频道的权限。"
 
@@ -6523,78 +6523,78 @@ msgstr "这个地址不在该平台上，或者不是 https。"
 msgid "The status is not one the record knows."
 msgstr "记录中没有这个状态。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:354
+#: includes/class-ai-chat-bedrock-distribution.php:382
 msgid "Get a post's publishing package"
 msgstr "获取文章的发布素材包"
 
-#: includes/class-ai-chat-bedrock-distribution.php:355
+#: includes/class-ai-chat-bedrock-distribution.php:383
 msgid "Return what is needed to publish a post on another platform: title, address, plain text, excerpt, tags, image, translations and where it is already published. Read only."
 msgstr "返回在其他平台发布文章所需的内容：标题、地址、纯文本、摘要、标签、图片、译文以及已发布的平台。只读。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:373
+#: includes/class-ai-chat-bedrock-distribution.php:401
 msgid "Record where a post was published"
 msgstr "记录文章在哪里发布"
 
-#: includes/class-ai-chat-bedrock-distribution.php:374
+#: includes/class-ai-chat-bedrock-distribution.php:402
 msgid "Record or update one item a post was published as on Bilibili, YouTube or Xiaohongshu: its ID, address, account, language and status. Naming the record it replaces marks that edition replaced. Changes only this record, never the post."
 msgstr "记录或更新文章在 B 站、YouTube 或小红书上的一条稿件：ID、地址、账号、语言和状态。指明它替换的记录，会把那个版本标记为已替换。只修改这条记录，不修改文章。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:394
+#: includes/class-ai-chat-bedrock-distribution.php:422
 msgid "List where posts are published"
 msgstr "列出文章的发布位置"
 
-#: includes/class-ai-chat-bedrock-distribution.php:395
+#: includes/class-ai-chat-bedrock-distribution.php:423
 msgid "List publishing records across posts, filtered by platform, status, language or post, such as editions still public after being replaced. Read only."
 msgstr "按平台、状态、语言或文章筛选，列出各文章的发布记录，例如被替换后仍然公开的版本。只读。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:525
+#: includes/class-ai-chat-bedrock-distribution.php:553
 msgid "Published elsewhere"
 msgstr "已在其他平台发布"
 
-#: includes/class-ai-chat-bedrock-distribution.php:549
+#: includes/class-ai-chat-bedrock-distribution.php:577
 msgid "Not published on another platform yet. Agents record it here through the publishing abilities."
 msgstr "尚未在其他平台发布。智能体会通过发布能力在这里记录。"
 
 #. translators: %s: the record that replaced this one, as platform:id.
-#: includes/class-ai-chat-bedrock-distribution.php:562
+#: includes/class-ai-chat-bedrock-distribution.php:590
 #, php-format
 msgid "Replaced by %s"
 msgstr "已被 %s 替换"
 
-#: includes/class-ai-chat-bedrock-distribution.php:584
+#: includes/class-ai-chat-bedrock-distribution.php:612
 msgid "planned"
 msgstr "计划中"
 
-#: includes/class-ai-chat-bedrock-distribution.php:585
+#: includes/class-ai-chat-bedrock-distribution.php:613
 msgid "submitted"
 msgstr "已提交"
 
-#: includes/class-ai-chat-bedrock-distribution.php:586
+#: includes/class-ai-chat-bedrock-distribution.php:614
 msgid "processing"
 msgstr "处理中"
 
-#: includes/class-ai-chat-bedrock-distribution.php:587
+#: includes/class-ai-chat-bedrock-distribution.php:615
 msgid "public"
 msgstr "公开"
 
-#: includes/class-ai-chat-bedrock-distribution.php:588
+#: includes/class-ai-chat-bedrock-distribution.php:616
 msgid "unlisted"
 msgstr "不公开列出"
 
-#: includes/class-ai-chat-bedrock-distribution.php:589
+#: includes/class-ai-chat-bedrock-distribution.php:617
 msgid "private"
 msgstr "私享"
 
-#: includes/class-ai-chat-bedrock-distribution.php:590
+#: includes/class-ai-chat-bedrock-distribution.php:618
 msgid "replaced"
 msgstr "已替换"
 
-#: includes/class-ai-chat-bedrock-distribution.php:591
+#: includes/class-ai-chat-bedrock-distribution.php:619
 msgid "removed"
 msgstr "已删除"
 
 #. translators: %s: links to platforms, such as Bilibili and YouTube.
-#: includes/class-ai-chat-bedrock-distribution.php:625
+#: includes/class-ai-chat-bedrock-distribution.php:653
 #, php-format
 msgid "Also on %s"
 msgstr "也在 %s 上"
@@ -6611,192 +6611,192 @@ msgstr "这个账号无法读取发布记录。"
 msgid "This account cannot edit that post."
 msgstr "这个账号无法编辑那篇文章。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:168
-#: includes/class-ai-chat-bedrock-youtube.php:989
+#: includes/class-ai-chat-bedrock-youtube.php:174
+#: includes/class-ai-chat-bedrock-youtube.php:1016
 msgid "Sorry, you are not allowed to do that."
 msgstr "抱歉，你不能执行此操作。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:259
+#: includes/class-ai-chat-bedrock-youtube.php:265
 msgid "No YouTube channel is connected."
 msgstr "没有连接 YouTube 频道。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:377
-#: includes/class-ai-chat-bedrock-youtube.php:931
+#: includes/class-ai-chat-bedrock-youtube.php:383
+#: includes/class-ai-chat-bedrock-youtube.php:958
 msgid "You cannot upload a video for this post."
 msgstr "你不能为这篇文章上传视频。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:384
-#: includes/class-ai-chat-bedrock-youtube.php:932
+#: includes/class-ai-chat-bedrock-youtube.php:390
+#: includes/class-ai-chat-bedrock-youtube.php:959
 msgid "A video for this post is already being uploaded."
 msgstr "这篇文章的视频已在上传中。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:387
+#: includes/class-ai-chat-bedrock-youtube.php:393
 msgid "Today's uploads are used up. Each one costs 1,600 of the 10,000 quota units Google gives a project a day."
 msgstr "今天的上传次数已用完。每次上传消耗 Google 每天给项目的 10,000 配额单位中的 1,600 个。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:395
-#: includes/class-ai-chat-bedrock-youtube.php:934
+#: includes/class-ai-chat-bedrock-youtube.php:405
+#: includes/class-ai-chat-bedrock-youtube.php:961
 msgid "Choose a video in the Media Library whose file is on this server."
 msgstr "请从媒体库中选择一个文件存放在本服务器上的视频。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:400
-#: includes/class-ai-chat-bedrock-youtube.php:935
+#: includes/class-ai-chat-bedrock-youtube.php:410
+#: includes/class-ai-chat-bedrock-youtube.php:962
 msgid "Say whether the video is made for children."
 msgstr "请说明视频是否为儿童制作。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:430
+#: includes/class-ai-chat-bedrock-youtube.php:440
 msgid "Untitled video"
 msgstr "未命名视频"
 
-#: includes/class-ai-chat-bedrock-youtube.php:512
+#: includes/class-ai-chat-bedrock-youtube.php:539
 msgid "The video file is gone or has changed since the upload was queued."
 msgstr "视频文件已不存在，或在排队上传后被改动。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:516
+#: includes/class-ai-chat-bedrock-youtube.php:543
 msgid "The YouTube channel is no longer connected."
 msgstr "YouTube 频道已不再连接。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:544
+#: includes/class-ai-chat-bedrock-youtube.php:571
 msgid "The video file could not be read."
 msgstr "无法读取视频文件。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:651
+#: includes/class-ai-chat-bedrock-youtube.php:678
 msgid "YouTube did not say which video was made."
 msgstr "YouTube 没有返回生成的是哪个视频。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:657
+#: includes/class-ai-chat-bedrock-youtube.php:684
 msgid "The upload session expired, so the upload starts again."
 msgstr "上传会话已过期，上传将重新开始。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:661
+#: includes/class-ai-chat-bedrock-youtube.php:688
 msgid "The access token expired."
 msgstr "访问令牌已过期。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:712
+#: includes/class-ai-chat-bedrock-youtube.php:739
 msgid "The Google Cloud project has used up its YouTube quota for today. Uploads can start again after midnight Pacific time."
 msgstr "该 Google Cloud 项目今天的 YouTube 配额已用完，太平洋时间午夜后才能再次上传。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:713
+#: includes/class-ai-chat-bedrock-youtube.php:740
 msgid "The channel has reached YouTube's limit on uploads for now."
 msgstr "该频道暂时已达到 YouTube 的上传上限。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:714
+#: includes/class-ai-chat-bedrock-youtube.php:741
 msgid "YouTube refused the upload for this channel. Check that the channel can upload videos and that the account is in good standing."
 msgstr "YouTube 拒绝了此频道的上传。请检查频道能否上传视频、账号状态是否正常。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:791
+#: includes/class-ai-chat-bedrock-youtube.php:818
 msgid "Kept private by YouTube: uploads from a Google Cloud project that has not passed YouTube's audit stay private."
 msgstr "被 YouTube 保持为私享：未通过 YouTube 审核的 Google Cloud 项目上传的视频会一直是私享。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:842
+#: includes/class-ai-chat-bedrock-youtube.php:869
 msgid "Upload a video to YouTube"
 msgstr "上传视频到 YouTube"
 
-#: includes/class-ai-chat-bedrock-youtube.php:854
+#: includes/class-ai-chat-bedrock-youtube.php:881
 msgid "YouTube upload queued."
 msgstr "YouTube 上传已排队。"
 
 #. translators: %d: percentage uploaded.
-#: includes/class-ai-chat-bedrock-youtube.php:857
+#: includes/class-ai-chat-bedrock-youtube.php:884
 #, php-format
 msgid "Uploading to YouTube: %d%%."
 msgstr "正在上传到 YouTube：%d%%。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:859
+#: includes/class-ai-chat-bedrock-youtube.php:886
 msgid "Uploaded; YouTube is processing the video."
 msgstr "已上传，YouTube 正在处理视频。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:861
+#: includes/class-ai-chat-bedrock-youtube.php:888
 msgid "Uploaded to YouTube. Its status is in the record above."
 msgstr "已上传到 YouTube，状态见上方的记录。"
 
 #. translators: %s: reason the upload failed.
-#: includes/class-ai-chat-bedrock-youtube.php:864
+#: includes/class-ai-chat-bedrock-youtube.php:891
 #, php-format
 msgid "The YouTube upload failed: %s"
 msgstr "YouTube 上传失败：%s"
 
 #. translators: %s: YouTube channel name.
-#: includes/class-ai-chat-bedrock-youtube.php:925
+#: includes/class-ai-chat-bedrock-youtube.php:952
 #, php-format
 msgid "Videos are uploaded to the channel %s."
 msgstr "视频会上传到频道 %s。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:928
+#: includes/class-ai-chat-bedrock-youtube.php:955
 msgid "The upload is queued and runs in the background. You can leave this page."
 msgstr "上传已排队，会在后台进行。你可以离开此页面。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:933
+#: includes/class-ai-chat-bedrock-youtube.php:960
 msgid "Today's uploads are used up."
 msgstr "今天的上传次数已用完。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:944
+#: includes/class-ai-chat-bedrock-youtube.php:971
 msgid "Open a post and choose Upload a video to YouTube in its Published elsewhere box."
 msgstr "请打开一篇文章，在“已在其他平台发布”框中选择“上传视频到 YouTube”。"
 
 #. translators: %s: post title.
-#: includes/class-ai-chat-bedrock-youtube.php:963
+#: includes/class-ai-chat-bedrock-youtube.php:990
 #, php-format
 msgid "Upload a video for %s"
 msgstr "为 %s 上传视频"
 
-#: includes/class-ai-chat-bedrock-youtube.php:971
+#: includes/class-ai-chat-bedrock-youtube.php:998
 msgid "Video"
 msgstr "视频"
 
-#: includes/class-ai-chat-bedrock-youtube.php:971
+#: includes/class-ai-chat-bedrock-youtube.php:998
 msgid "Choose a video"
 msgstr "选择视频"
 
-#: includes/class-ai-chat-bedrock-youtube.php:977
+#: includes/class-ai-chat-bedrock-youtube.php:1004
 msgid "Description"
 msgstr "简介"
 
-#: includes/class-ai-chat-bedrock-youtube.php:978
+#: includes/class-ai-chat-bedrock-youtube.php:1005
 msgid "Tags"
 msgstr "标签"
 
-#: includes/class-ai-chat-bedrock-youtube.php:979
+#: includes/class-ai-chat-bedrock-youtube.php:1006
 msgid "Visibility"
 msgstr "可见性"
 
-#: includes/class-ai-chat-bedrock-youtube.php:979
+#: includes/class-ai-chat-bedrock-youtube.php:1006
 msgid "Private"
 msgstr "私享"
 
-#: includes/class-ai-chat-bedrock-youtube.php:979
+#: includes/class-ai-chat-bedrock-youtube.php:1006
 msgid "Unlisted"
 msgstr "不公开列出"
 
-#: includes/class-ai-chat-bedrock-youtube.php:979
+#: includes/class-ai-chat-bedrock-youtube.php:1006
 msgid "Public"
 msgstr "公开"
 
-#: includes/class-ai-chat-bedrock-youtube.php:979
+#: includes/class-ai-chat-bedrock-youtube.php:1006
 msgid "YouTube keeps uploads from a Google Cloud project that has not passed its audit private, whatever is chosen here."
 msgstr "未通过审核的 Google Cloud 项目上传的视频，无论这里选什么，YouTube 都会保持为私享。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:980
+#: includes/class-ai-chat-bedrock-youtube.php:1007
 msgid "Audience"
 msgstr "观众"
 
-#: includes/class-ai-chat-bedrock-youtube.php:980
+#: includes/class-ai-chat-bedrock-youtube.php:1007
 msgid "Not made for children"
 msgstr "不是为儿童制作"
 
-#: includes/class-ai-chat-bedrock-youtube.php:980
+#: includes/class-ai-chat-bedrock-youtube.php:1007
 msgid "Made for children"
 msgstr "为儿童制作"
 
-#: includes/class-ai-chat-bedrock-youtube.php:981
+#: includes/class-ai-chat-bedrock-youtube.php:1008
 msgid "Altered or synthetic content"
 msgstr "经过修改或合成的内容"
 
-#: includes/class-ai-chat-bedrock-youtube.php:981
+#: includes/class-ai-chat-bedrock-youtube.php:1008
 msgid "The video has realistic altered or synthetic content, such as an AI voice or generated footage"
 msgstr "视频包含逼真的修改或合成内容，例如 AI 配音或生成的画面"
 
-#: includes/class-ai-chat-bedrock-youtube.php:983
+#: includes/class-ai-chat-bedrock-youtube.php:1010
 msgid "Upload to YouTube"
 msgstr "上传到 YouTube"
 
@@ -6813,33 +6813,33 @@ msgstr "这不是 Google Cloud 的 OAuth 客户端 ID，未保存。"
 msgid "WeChat has not reached this address yet."
 msgstr "微信还没有访问过这个地址。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:264
+#: includes/class-ai-chat-bedrock-wechat.php:273
 msgid "the address was called while answering was off, so nothing was answered"
 msgstr "调用了该地址，但当时回复功能是关闭的，所以没有回复"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:630
-#: includes/class-ai-chat-bedrock-wechat.php:265
+#: includes/class-ai-chat-bedrock-wechat-game.php:649
+#: includes/class-ai-chat-bedrock-wechat.php:274
 msgid "a request came without a current timestamp, so it was refused"
 msgstr "收到的请求没有有效的时间戳，已拒绝"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:631
-#: includes/class-ai-chat-bedrock-wechat.php:266
+#: includes/class-ai-chat-bedrock-wechat-game.php:650
+#: includes/class-ai-chat-bedrock-wechat.php:275
 msgid "the signature did not match the token, so the request was refused; enter the same token here as in WeChat"
 msgstr "签名与令牌不匹配，请求已被拒绝；请在这里填写与微信后台相同的令牌"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:633
-#: includes/class-ai-chat-bedrock-wechat.php:267
+#: includes/class-ai-chat-bedrock-wechat-game.php:653
+#: includes/class-ai-chat-bedrock-wechat.php:276
 msgid "WeChat checked the address, and the signature matched"
 msgstr "微信校验了该地址，签名一致"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:634
-#: includes/class-ai-chat-bedrock-wechat.php:268
+#: includes/class-ai-chat-bedrock-wechat-game.php:654
+#: includes/class-ai-chat-bedrock-wechat.php:277
 msgid "a signed message arrived from WeChat"
 msgstr "收到了一条来自微信的已签名消息"
 
 #. translators: 1: how long ago, such as 5 mins, 2: what happened.
-#: includes/class-ai-chat-bedrock-wechat-game.php:638
-#: includes/class-ai-chat-bedrock-wechat.php:272
+#: includes/class-ai-chat-bedrock-wechat-game.php:658
+#: includes/class-ai-chat-bedrock-wechat.php:282
 #, php-format
 msgid "Last contact %1$s ago: %2$s."
 msgstr "最近一次联系在 %1$s前：%2$s。"
@@ -6923,36 +6923,36 @@ msgstr "小游戏令牌必须是 3 到 32 位字母和数字；未保存。"
 msgid "The AppSecret must be 32 letters and digits; it was not saved."
 msgstr "AppSecret 必须是 32 位字母和数字；未保存。"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:629
+#: includes/class-ai-chat-bedrock-wechat-game.php:648
 msgid "the address was called while the game was off, so nothing was taken"
 msgstr "小游戏关闭时访问了该地址，因此没有接收任何内容"
 
 #. translators: 1: how long ago, 2: the server's IP address.
-#: includes/class-ai-chat-bedrock-wechat-game.php:646
+#: includes/class-ai-chat-bedrock-wechat-game.php:666
 #, php-format
 msgid "An answer could not be sent %1$s ago because WeChat does not accept this server's address. Add %2$s to the IP whitelist under Development Management > Development Settings in the mini game's console."
 msgstr "%1$s前有一条回答未能发送，因为微信不接受本服务器的地址。请在小游戏后台“开发管理 > 开发设置”的 IP 白名单中加入 %2$s。"
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-game.php:649
+#: includes/class-ai-chat-bedrock-wechat-game.php:669
 #, php-format
 msgid "An answer could not be sent %s ago: WeChat did not accept the AppID and AppSecret. Enter them again from the mini game's console."
 msgstr "%s前有一条回答未能发送：微信不接受 AppID 和 AppSecret。请从小游戏后台重新填写。"
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-game.php:652
+#: includes/class-ai-chat-bedrock-wechat-game.php:672
 #, php-format
 msgid "An answer could not be sent %s ago: WeChat allows answers only for 48 hours after a player writes, and a few at a time."
 msgstr "%s前有一条回答未能发送：微信只允许在玩家发消息后 48 小时内回复，且条数有限。"
 
 #. translators: 1: how long ago, 2: error code.
-#: includes/class-ai-chat-bedrock-wechat-game.php:655
+#: includes/class-ai-chat-bedrock-wechat-game.php:675
 #, php-format
 msgid "An answer could not be sent %1$s ago (%2$s)."
 msgstr "%1$s前有一条回答未能发送（%2$s）。"
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-game.php:659
+#: includes/class-ai-chat-bedrock-wechat-game.php:679
 #, php-format
 msgid "The last answer was sent %s ago."
 msgstr "最近一条回答在 %s前发送。"
@@ -7072,144 +7072,144 @@ msgstr "删除已保存的 AppSecret"
 msgid "Only drafts are made: WeChat lets only verified company accounts publish through its API. Check each draft and publish it in the Official Accounts Platform."
 msgstr "只会生成草稿：微信只允许已认证的企业账号通过接口发表。请检查每份草稿，并在公众平台中发表。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:196
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:208
 msgid "Drafts for the WeChat Official Account are off, or its AppID or AppSecret is missing."
 msgstr "微信公众号草稿功能未开启，或缺少 AppID 或 AppSecret。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:217
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:229
 msgid "No post could be made into an article."
 msgstr "没有文章能生成图文。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:234
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:249
 msgid "In the WeChat Official Account's draft box; publish it from the Official Accounts Platform."
 msgstr "已在微信公众号草稿箱中；请在公众平台中发表。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:315
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:327
 msgid "Tap \"Read more\" for the full article on the site."
 msgstr "点击“阅读原文”查看网站上的完整文章。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:399
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:408
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:687
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:446
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:455
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:734
 msgid "The post needs a featured image in JPEG or PNG for the cover."
 msgstr "文章需要一张 JPEG 或 PNG 格式的特色图片作为封面。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:415
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:462
 msgid "WeChat did not take the cover image."
 msgstr "微信没有接受封面图片。"
 
 #. translators: %d: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:496
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:543
 #, php-format
 msgid "%d article is ready in the WeChat draft box"
 msgid_plural "%d articles are ready in the WeChat draft box"
 msgstr[0] "微信草稿箱中已有 %d 篇文章待发表"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:497
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:544
 msgid "Check them and publish in the WeChat Official Accounts Platform: https://mp.weixin.qq.com/"
 msgstr "请检查后在微信公众平台中发表：https://mp.weixin.qq.com/"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:542
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:589
 msgid "You cannot send this post."
 msgstr "你不能发送这篇文章。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:545
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:592
 msgid "The post is in the WeChat draft box. Publish it from the Official Accounts Platform."
 msgstr "文章已在微信草稿箱中。请在公众平台中发表。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:565
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:612
 msgid "Published posts that anyone can read can be sent to the WeChat draft box."
 msgstr "所有人都能阅读的已发布文章才能发送到微信草稿箱。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:568
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:615
 msgid "Send to the WeChat draft box again"
 msgstr "再次发送到微信草稿箱"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:568
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:615
 msgid "Send to the WeChat draft box"
 msgstr "发送到微信草稿箱"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:582
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:629
 msgid "Send posts to the WeChat draft box"
 msgstr "把文章发送到微信草稿箱"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:583
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:630
 msgid "Make one draft in the WeChat Official Account from up to eight published posts, in order, and note it in their publishing records. Nothing is published: the owner publishes the draft in the Official Accounts Platform."
 msgstr "用最多八篇已发布文章按顺序在微信公众号中生成一份草稿，并记入它们的发布记录。不会发表任何内容：由所有者在公众平台中发表草稿。"
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:678
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:725
 #, php-format
 msgid "WeChat does not accept calls from %s. Add it to the IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform."
 msgstr "微信不接受来自 %s 的调用。请在微信开发者平台“基础信息 > 开发密钥”的 IP 白名单中加入它。"
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:678
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:725
 msgid "this server's address"
 msgstr "本服务器的地址"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:681
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:728
 msgid "The AppID or AppSecret is missing."
 msgstr "缺少 AppID 或 AppSecret。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:682
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:729
 msgid "WeChat did not accept the AppSecret. Reset it in the WeChat Developers Platform and enter the new one."
 msgstr "微信不接受该 AppSecret。请在微信开发者平台重置并填写新的 AppSecret。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:683
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:730
 msgid "WeChat did not accept the AppID."
 msgstr "微信不接受该 AppID。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:684
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:731
 msgid "The AppSecret is frozen in the WeChat Developers Platform."
 msgstr "该 AppSecret 已在微信开发者平台中冻结。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:685
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:732
 msgid "This account may not use that WeChat interface."
 msgstr "该账号无权使用这个微信接口。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:686
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:733
 msgid "The account reached WeChat's daily limit for this interface. Try again tomorrow."
 msgstr "该账号已达到这个接口的每日调用上限。请明天再试。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:688
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:735
 msgid "Only published posts that anyone can read are sent."
 msgstr "只发送所有人都能阅读的已发布文章。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:689
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:736
 msgid "No post could be made into an article; each needs a featured image in JPEG or PNG."
 msgstr "没有文章能生成图文；每篇都需要一张 JPEG 或 PNG 格式的特色图片。"
 
 #. translators: %s: error code.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:695
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:742
 #, php-format
 msgid "WeChat refused the draft (%s)."
 msgstr "微信拒绝了草稿（%s）。"
 
 #. translators: 1: how long ago, 2: what went wrong.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:712
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:759
 #, php-format
 msgid "Last draft %1$s ago failed: %2$s"
 msgstr "%1$s前的草稿失败：%2$s"
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:716
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:763
 #, php-format
 msgid "Last scheduled run %s ago: no new featured post to send."
 msgstr "%s前的定时任务：没有新的精选文章需要发送。"
 
 #. translators: 1: how long ago, 2: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:719
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:766
 #, php-format
 msgid "Last draft %1$s ago: %2$s article is in the WeChat draft box."
 msgid_plural "Last draft %1$s ago: %2$s articles are in the WeChat draft box."
 msgstr[0] "%1$s前的草稿：%2$s 篇文章已在微信草稿箱中。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:504
+#: includes/class-ai-chat-bedrock-wechat.php:514
 msgid "There are no featured articles yet."
 msgstr "暂时还没有精选文章。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:506
+#: includes/class-ai-chat-bedrock-wechat.php:516
 msgid "Featured articles:"
 msgstr "精选文章："
 
@@ -7221,11 +7221,11 @@ msgstr "该账号不能发送这些文章。"
 msgid "The mini game has its own AppID, not the Official Account's; it was not saved."
 msgstr "小游戏有自己的 AppID，不能用公众号的；未保存。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2227
+#: admin/class-ai-chat-bedrock-admin.php:2228
 msgid "The mini game uses the same token or EncodingAESKey as the Official Account. It was saved; choose safe mode in both, so each message is checked against its own AppID, and consider separate values."
 msgstr "小游戏使用了与公众号相同的令牌或 EncodingAESKey。已保存；请在两边都选择安全模式，这样每条消息都会按各自的 AppID 校验，并建议改用不同的值。"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:632
+#: includes/class-ai-chat-bedrock-wechat-game.php:651
 msgid "a plaintext message was refused, because the mini game shares the Official Account's token; choose safe mode for the mini game"
 msgstr "一条明文消息被拒绝，因为小游戏与公众号使用相同的令牌；请为小游戏选择安全模式"
 
@@ -7234,7 +7234,7 @@ msgid "What visitors see"
 msgstr "访客看到的内容"
 
 #: admin/class-ai-chat-bedrock-admin.php:1093
-#: admin/class-ai-chat-bedrock-admin.php:2449
+#: admin/class-ai-chat-bedrock-admin.php:2450
 msgid "Agents and tools"
 msgstr "Agent 与工具"
 
@@ -7258,15 +7258,28 @@ msgstr "开启消息推送后，微信会停用后台设置的自定义菜单，
 msgid "Off by default. Uses the AppID entered for the WeChat Official Account above, and the AppSecret and IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform. Each post becomes an article with its title, excerpt, the featured image as cover, the text and images a signed-out visitor sees, and the post as \"Read more\"; links in the text become plain text, as WeChat does not open them. Posts are sent from the Published elsewhere box, by an agent, or on the schedule, which takes featured posts of the last 60 days not sent before, in Chinese when the site has it."
 msgstr "默认关闭。使用上方为微信公众号填写的 AppID，以及微信开发者平台“基础信息 > 开发密钥”中的 AppSecret 和 IP 白名单。每篇文章会成为一篇图文：标题、摘要、以特色图片为封面、未登录访客可见的正文和图片，并以文章地址作为“阅读原文”；正文中的链接会变成纯文本，因为微信不打开外部链接。可以从“已发布到其他平台”框、由 Agent 或按计划发送；计划任务会选取最近 60 天内未发送过的精选文章，站点有中文时选中文版。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2454
+#: admin/class-ai-chat-bedrock-admin.php:2455
 msgid "Channels"
 msgstr "渠道"
 
-#: includes/class-ai-chat-bedrock-youtube.php:380
-#: includes/class-ai-chat-bedrock-youtube.php:936
+#: includes/class-ai-chat-bedrock-youtube.php:386
+#: includes/class-ai-chat-bedrock-youtube.php:963
 msgid "Connect a YouTube channel under Settings > Channels first."
 msgstr "请先在“设置 > 渠道”中连接 YouTube 频道。"
 
 #: admin/class-ai-chat-bedrock-admin.php:170
 msgid "Overview"
 msgstr "概览"
+
+#: includes/class-ai-chat-bedrock-distribution.php:262
+msgid "You cannot edit that translation."
+msgstr "你不能编辑该翻译。"
+
+#: includes/class-ai-chat-bedrock-wechat-game.php:652
+#: includes/class-ai-chat-bedrock-wechat.php:278
+msgid "a signed address was used again with a different message, so it was refused"
+msgstr "有人用同一个已签名地址发送了不同的消息，已拒绝"
+
+#: includes/class-ai-chat-bedrock-youtube.php:399
+msgid "You cannot upload that video."
+msgstr "你不能上传这个视频。"

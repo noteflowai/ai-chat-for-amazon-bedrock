@@ -52,6 +52,11 @@ function ai_chat_bedrock_uninstall_site() {
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( $ai_chat_bedrock_key_prefix ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 	}
 
+	// Locks of YouTube uploads, and anything WeChat left that has not expired yet.
+	foreach ( array( 'aicfab_youtube_lock_', '_transient_aicfab_wxg_', '_transient_timeout_aicfab_wxg_', '_transient_aicfab_youtube_', '_transient_timeout_aicfab_youtube_', '_transient_aicfab_wechat_draft_notice_', '_transient_timeout_aicfab_wechat_draft_notice_' ) as $ai_chat_bedrock_key_prefix ) {
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( $ai_chat_bedrock_key_prefix ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+	}
+
 	$ai_chat_bedrock_model_pattern = $wpdb->esc_like( '_transient_aicfab_models_' ) . '%';
 	$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $ai_chat_bedrock_model_pattern ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 	$ai_chat_bedrock_model_timeout_pattern = $wpdb->esc_like( '_transient_timeout_aicfab_models_' ) . '%';
@@ -112,7 +117,8 @@ function ai_chat_bedrock_uninstall_site() {
 
 	// Any scheduled index run or chat history pruning is removed with the plugin data.
 	foreach ( array( 'ai_chat_bedrock_index_embeddings', 'ai_chat_bedrock_prune_chat_history', 'ai_chat_bedrock_prune_leads', 'ai_chat_bedrock_wechat_drafts', 'ai_chat_bedrock_youtube_upload', 'ai_chat_bedrock_youtube_status' ) as $ai_chat_bedrock_cron_hook ) {
-		wp_clear_scheduled_hook( $ai_chat_bedrock_cron_hook );
+		// Whatever their arguments: the YouTube events carry the post.
+		wp_unschedule_hook( $ai_chat_bedrock_cron_hook );
 	}
 }
 

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-06T01:37:57+00:00\n"
+"POT-Creation-Date: 2026-10-06T02:56:36+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -597,7 +597,7 @@ msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:1061
 #: admin/class-ai-chat-bedrock-admin.php:1062
-#: admin/class-ai-chat-bedrock-admin.php:2437
+#: admin/class-ai-chat-bedrock-admin.php:2438
 #: admin/partials/ai-chat-bedrock-admin-display.php:67
 #: admin/partials/ai-chat-bedrock-admin-display.php:217
 #: admin/partials/ai-chat-bedrock-admin-eval.php:97
@@ -723,7 +723,7 @@ msgid "Color scheme"
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:1093
-#: admin/class-ai-chat-bedrock-admin.php:2449
+#: admin/class-ai-chat-bedrock-admin.php:2450
 msgid "Agents and tools"
 msgstr ""
 
@@ -786,8 +786,8 @@ msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:1110
 #: admin/class-ai-chat-bedrock-admin.php:1757
-#: includes/class-ai-chat-bedrock-youtube.php:907
-#: includes/class-ai-chat-bedrock-youtube.php:922
+#: includes/class-ai-chat-bedrock-youtube.php:934
+#: includes/class-ai-chat-bedrock-youtube.php:949
 msgid "YouTube uploads"
 msgstr ""
 
@@ -853,7 +853,7 @@ msgid "Article author"
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:1129
-#: admin/class-ai-chat-bedrock-admin.php:2468
+#: admin/class-ai-chat-bedrock-admin.php:2469
 msgid "WooCommerce"
 msgstr ""
 
@@ -1584,7 +1584,7 @@ msgid "The sign-in did not come back from the request this site made, so it was 
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:1750
-#: includes/class-ai-chat-bedrock-youtube.php:306
+#: includes/class-ai-chat-bedrock-youtube.php:312
 msgid "Google did not grant access to the channel."
 msgstr ""
 
@@ -1842,36 +1842,36 @@ msgstr ""
 msgid "The mini game has its own AppID, not the Official Account's; it was not saved."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:2227
+#: admin/class-ai-chat-bedrock-admin.php:2228
 msgid "The mini game uses the same token or EncodingAESKey as the Official Account. It was saved; choose safe mode in both, so each message is checked against its own AppID, and consider separate values."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:2235
+#: admin/class-ai-chat-bedrock-admin.php:2236
 msgid "The contact link must be a web, mailto: or tel: address; it was cleared."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:2243
+#: admin/class-ai-chat-bedrock-admin.php:2244
 msgid "The knowledge base ID must be alphanumeric; the value was cleared."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:2248
+#: admin/class-ai-chat-bedrock-admin.php:2249
 msgid "That reranking model is not supported; reranking was left off."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:2303
+#: admin/class-ai-chat-bedrock-admin.php:2304
 msgid "Settings saved."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:2433
+#: admin/class-ai-chat-bedrock-admin.php:2434
 msgid "AWS"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:2441
+#: admin/class-ai-chat-bedrock-admin.php:2442
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:66
 msgid "Grounding"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:2445
+#: admin/class-ai-chat-bedrock-admin.php:2446
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:36
 #: includes/class-ai-chat-bedrock-chat-history.php:381
 #: public/class-ai-chat-bedrock-public.php:289
@@ -1880,19 +1880,19 @@ msgstr ""
 msgid "Chat"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:2454
+#: admin/class-ai-chat-bedrock-admin.php:2455
 msgid "Channels"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:2458
+#: admin/class-ai-chat-bedrock-admin.php:2459
 msgid "Safety and spend"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:2462
+#: admin/class-ai-chat-bedrock-admin.php:2463
 msgid "Integrations"
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:2498
+#: admin/class-ai-chat-bedrock-admin.php:2499
 msgid "Configured — enter a value to replace"
 msgstr ""
 
@@ -3588,7 +3588,7 @@ msgid "Clear anything you do not want, edit the titles if you like, then create 
 msgstr ""
 
 #: admin/partials/ai-chat-bedrock-admin-scaffold.php:52
-#: includes/class-ai-chat-bedrock-youtube.php:976
+#: includes/class-ai-chat-bedrock-youtube.php:1003
 #: blocks/chat/editor.js:54
 msgid "Title"
 msgstr ""
@@ -4591,83 +4591,87 @@ msgstr ""
 msgid "The status is not one the record knows."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:354
+#: includes/class-ai-chat-bedrock-distribution.php:262
+msgid "You cannot edit that translation."
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-distribution.php:382
 msgid "Get a post's publishing package"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:355
+#: includes/class-ai-chat-bedrock-distribution.php:383
 msgid "Return what is needed to publish a post on another platform: title, address, plain text, excerpt, tags, image, translations and where it is already published. Read only."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:373
+#: includes/class-ai-chat-bedrock-distribution.php:401
 msgid "Record where a post was published"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:374
+#: includes/class-ai-chat-bedrock-distribution.php:402
 msgid "Record or update one item a post was published as on Bilibili, YouTube or Xiaohongshu: its ID, address, account, language and status. Naming the record it replaces marks that edition replaced. Changes only this record, never the post."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:394
+#: includes/class-ai-chat-bedrock-distribution.php:422
 msgid "List where posts are published"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:395
+#: includes/class-ai-chat-bedrock-distribution.php:423
 msgid "List publishing records across posts, filtered by platform, status, language or post, such as editions still public after being replaced. Read only."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:525
+#: includes/class-ai-chat-bedrock-distribution.php:553
 msgid "Published elsewhere"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:549
+#: includes/class-ai-chat-bedrock-distribution.php:577
 msgid "Not published on another platform yet. Agents record it here through the publishing abilities."
 msgstr ""
 
 #. translators: %s: the record that replaced this one, as platform:id.
-#: includes/class-ai-chat-bedrock-distribution.php:562
+#: includes/class-ai-chat-bedrock-distribution.php:590
 #, php-format
 msgid "Replaced by %s"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:584
+#: includes/class-ai-chat-bedrock-distribution.php:612
 msgid "planned"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:585
+#: includes/class-ai-chat-bedrock-distribution.php:613
 msgid "submitted"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:586
+#: includes/class-ai-chat-bedrock-distribution.php:614
 msgid "processing"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:587
+#: includes/class-ai-chat-bedrock-distribution.php:615
 msgid "public"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:588
+#: includes/class-ai-chat-bedrock-distribution.php:616
 msgid "unlisted"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:589
+#: includes/class-ai-chat-bedrock-distribution.php:617
 msgid "private"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:590
+#: includes/class-ai-chat-bedrock-distribution.php:618
 msgid "replaced"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:591
+#: includes/class-ai-chat-bedrock-distribution.php:619
 msgid "removed"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:592
+#: includes/class-ai-chat-bedrock-distribution.php:620
 #: public/class-ai-chat-bedrock-public.php:133
 msgid "failed"
 msgstr ""
 
 #. translators: %s: links to platforms, such as Bilibili and YouTube.
-#: includes/class-ai-chat-bedrock-distribution.php:625
+#: includes/class-ai-chat-bedrock-distribution.php:653
 #, php-format
 msgid "Also on %s"
 msgstr ""
@@ -6270,261 +6274,266 @@ msgctxt "between the items of a list"
 msgid ", "
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:196
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:208
 msgid "Drafts for the WeChat Official Account are off, or its AppID or AppSecret is missing."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:217
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:229
 msgid "No post could be made into an article."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:234
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:249
 msgid "In the WeChat Official Account's draft box; publish it from the Official Accounts Platform."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:315
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:327
 msgid "Tap \"Read more\" for the full article on the site."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:399
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:408
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:687
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:446
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:455
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:734
 msgid "The post needs a featured image in JPEG or PNG for the cover."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:415
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:462
 msgid "WeChat did not take the cover image."
 msgstr ""
 
 #. translators: %d: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:496
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:543
 #, php-format
 msgid "%d article is ready in the WeChat draft box"
 msgid_plural "%d articles are ready in the WeChat draft box"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:497
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:544
 msgid "Check them and publish in the WeChat Official Accounts Platform: https://mp.weixin.qq.com/"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:542
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:589
 msgid "You cannot send this post."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:545
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:592
 msgid "The post is in the WeChat draft box. Publish it from the Official Accounts Platform."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:565
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:612
 msgid "Published posts that anyone can read can be sent to the WeChat draft box."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:568
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:615
 msgid "Send to the WeChat draft box again"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:568
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:615
 msgid "Send to the WeChat draft box"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:582
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:629
 msgid "Send posts to the WeChat draft box"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:583
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:630
 msgid "Make one draft in the WeChat Official Account from up to eight published posts, in order, and note it in their publishing records. Nothing is published: the owner publishes the draft in the Official Accounts Platform."
 msgstr ""
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:678
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:725
 #, php-format
 msgid "WeChat does not accept calls from %s. Add it to the IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform."
 msgstr ""
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:678
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:725
 msgid "this server's address"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:681
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:728
 msgid "The AppID or AppSecret is missing."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:682
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:729
 msgid "WeChat did not accept the AppSecret. Reset it in the WeChat Developers Platform and enter the new one."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:683
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:730
 msgid "WeChat did not accept the AppID."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:684
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:731
 msgid "The AppSecret is frozen in the WeChat Developers Platform."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:685
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:732
 msgid "This account may not use that WeChat interface."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:686
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:733
 msgid "The account reached WeChat's daily limit for this interface. Try again tomorrow."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:688
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:735
 msgid "Only published posts that anyone can read are sent."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:689
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:736
 msgid "No post could be made into an article; each needs a featured image in JPEG or PNG."
 msgstr ""
 
 #. translators: %s: error code.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:695
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:742
 #, php-format
 msgid "WeChat refused the draft (%s)."
 msgstr ""
 
 #. translators: 1: how long ago, 2: what went wrong.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:712
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:759
 #, php-format
 msgid "Last draft %1$s ago failed: %2$s"
 msgstr ""
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:716
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:763
 #, php-format
 msgid "Last scheduled run %s ago: no new featured post to send."
 msgstr ""
 
 #. translators: 1: how long ago, 2: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:719
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:766
 #, php-format
 msgid "Last draft %1$s ago: %2$s article is in the WeChat draft box."
 msgid_plural "Last draft %1$s ago: %2$s articles are in the WeChat draft box."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:629
+#: includes/class-ai-chat-bedrock-wechat-game.php:648
 msgid "the address was called while the game was off, so nothing was taken"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:630
-#: includes/class-ai-chat-bedrock-wechat.php:265
+#: includes/class-ai-chat-bedrock-wechat-game.php:649
+#: includes/class-ai-chat-bedrock-wechat.php:274
 msgid "a request came without a current timestamp, so it was refused"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:631
-#: includes/class-ai-chat-bedrock-wechat.php:266
+#: includes/class-ai-chat-bedrock-wechat-game.php:650
+#: includes/class-ai-chat-bedrock-wechat.php:275
 msgid "the signature did not match the token, so the request was refused; enter the same token here as in WeChat"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:632
+#: includes/class-ai-chat-bedrock-wechat-game.php:651
 msgid "a plaintext message was refused, because the mini game shares the Official Account's token; choose safe mode for the mini game"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:633
-#: includes/class-ai-chat-bedrock-wechat.php:267
+#: includes/class-ai-chat-bedrock-wechat-game.php:652
+#: includes/class-ai-chat-bedrock-wechat.php:278
+msgid "a signed address was used again with a different message, so it was refused"
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-wechat-game.php:653
+#: includes/class-ai-chat-bedrock-wechat.php:276
 msgid "WeChat checked the address, and the signature matched"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:634
-#: includes/class-ai-chat-bedrock-wechat.php:268
+#: includes/class-ai-chat-bedrock-wechat-game.php:654
+#: includes/class-ai-chat-bedrock-wechat.php:277
 msgid "a signed message arrived from WeChat"
 msgstr ""
 
 #. translators: 1: how long ago, such as 5 mins, 2: what happened.
-#: includes/class-ai-chat-bedrock-wechat-game.php:638
-#: includes/class-ai-chat-bedrock-wechat.php:272
+#: includes/class-ai-chat-bedrock-wechat-game.php:658
+#: includes/class-ai-chat-bedrock-wechat.php:282
 #, php-format
 msgid "Last contact %1$s ago: %2$s."
 msgstr ""
 
 #. translators: 1: how long ago, 2: the server's IP address.
-#: includes/class-ai-chat-bedrock-wechat-game.php:646
+#: includes/class-ai-chat-bedrock-wechat-game.php:666
 #, php-format
 msgid "An answer could not be sent %1$s ago because WeChat does not accept this server's address. Add %2$s to the IP whitelist under Development Management > Development Settings in the mini game's console."
 msgstr ""
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-game.php:649
+#: includes/class-ai-chat-bedrock-wechat-game.php:669
 #, php-format
 msgid "An answer could not be sent %s ago: WeChat did not accept the AppID and AppSecret. Enter them again from the mini game's console."
 msgstr ""
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-game.php:652
+#: includes/class-ai-chat-bedrock-wechat-game.php:672
 #, php-format
 msgid "An answer could not be sent %s ago: WeChat allows answers only for 48 hours after a player writes, and a few at a time."
 msgstr ""
 
 #. translators: 1: how long ago, 2: error code.
-#: includes/class-ai-chat-bedrock-wechat-game.php:655
+#: includes/class-ai-chat-bedrock-wechat-game.php:675
 #, php-format
 msgid "An answer could not be sent %1$s ago (%2$s)."
 msgstr ""
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-game.php:659
+#: includes/class-ai-chat-bedrock-wechat-game.php:679
 #, php-format
 msgid "The last answer was sent %s ago."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat.php:264
+#: includes/class-ai-chat-bedrock-wechat.php:273
 msgid "the address was called while answering was off, so nothing was answered"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat.php:373
+#: includes/class-ai-chat-bedrock-wechat.php:383
 msgid "I can only read text messages for now. Please type your question."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat.php:399
+#: includes/class-ai-chat-bedrock-wechat.php:409
 msgid "The answer is still being written. Please send 1 again in a moment."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat.php:411
+#: includes/class-ai-chat-bedrock-wechat.php:421
 msgid "You have sent a lot of questions this hour. Please try again later."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat.php:504
+#: includes/class-ai-chat-bedrock-wechat.php:514
 msgid "There are no featured articles yet."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat.php:506
+#: includes/class-ai-chat-bedrock-wechat.php:516
 msgid "Featured articles:"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat.php:550
+#: includes/class-ai-chat-bedrock-wechat.php:560
 msgid "This one needs a little longer. Send 1 in a moment to see the answer."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat.php:578
+#: includes/class-ai-chat-bedrock-wechat.php:588
 msgid "You are replying in a WeChat Official Account chat. Reply in the language of the follower's latest message. Write plain text without Markdown, such as asterisks, hashes or tables, and keep the answer under 300 words. Put any web address on a line of its own."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat.php:584
+#: includes/class-ai-chat-bedrock-wechat.php:594
 msgid "The assistant has answered as many questions as it can today. Please try again tomorrow."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat.php:645
+#: includes/class-ai-chat-bedrock-wechat.php:655
 msgid "Generated by AI. Check the linked pages for anything important."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat.php:677
+#: includes/class-ai-chat-bedrock-wechat.php:687
 msgid "Sources:"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat.php:712
+#: includes/class-ai-chat-bedrock-wechat.php:722
 #: public/class-ai-chat-bedrock-public.php:99
 #: public/partials/ai-chat-bedrock-public-display.php:15
 msgid "Hello! How can I help you today?"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat.php:715
+#: includes/class-ai-chat-bedrock-wechat.php:725
 msgid "You could ask:"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat.php:725
+#: includes/class-ai-chat-bedrock-wechat.php:735
 msgid "Sorry, the answer could not be written right now. Please try again in a moment."
 msgstr ""
 
@@ -6806,197 +6815,201 @@ msgstr ""
 msgid "Published post not found."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:168
-#: includes/class-ai-chat-bedrock-youtube.php:989
+#: includes/class-ai-chat-bedrock-youtube.php:174
+#: includes/class-ai-chat-bedrock-youtube.php:1016
 msgid "Sorry, you are not allowed to do that."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:259
+#: includes/class-ai-chat-bedrock-youtube.php:265
 msgid "No YouTube channel is connected."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:377
-#: includes/class-ai-chat-bedrock-youtube.php:931
+#: includes/class-ai-chat-bedrock-youtube.php:383
+#: includes/class-ai-chat-bedrock-youtube.php:958
 msgid "You cannot upload a video for this post."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:380
-#: includes/class-ai-chat-bedrock-youtube.php:936
+#: includes/class-ai-chat-bedrock-youtube.php:386
+#: includes/class-ai-chat-bedrock-youtube.php:963
 msgid "Connect a YouTube channel under Settings > Channels first."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:384
-#: includes/class-ai-chat-bedrock-youtube.php:932
+#: includes/class-ai-chat-bedrock-youtube.php:390
+#: includes/class-ai-chat-bedrock-youtube.php:959
 msgid "A video for this post is already being uploaded."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:387
+#: includes/class-ai-chat-bedrock-youtube.php:393
 msgid "Today's uploads are used up. Each one costs 1,600 of the 10,000 quota units Google gives a project a day."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:395
-#: includes/class-ai-chat-bedrock-youtube.php:934
+#: includes/class-ai-chat-bedrock-youtube.php:399
+msgid "You cannot upload that video."
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-youtube.php:405
+#: includes/class-ai-chat-bedrock-youtube.php:961
 msgid "Choose a video in the Media Library whose file is on this server."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:400
-#: includes/class-ai-chat-bedrock-youtube.php:935
+#: includes/class-ai-chat-bedrock-youtube.php:410
+#: includes/class-ai-chat-bedrock-youtube.php:962
 msgid "Say whether the video is made for children."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:430
+#: includes/class-ai-chat-bedrock-youtube.php:440
 msgid "Untitled video"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:512
+#: includes/class-ai-chat-bedrock-youtube.php:539
 msgid "The video file is gone or has changed since the upload was queued."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:516
+#: includes/class-ai-chat-bedrock-youtube.php:543
 msgid "The YouTube channel is no longer connected."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:544
+#: includes/class-ai-chat-bedrock-youtube.php:571
 msgid "The video file could not be read."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:651
+#: includes/class-ai-chat-bedrock-youtube.php:678
 msgid "YouTube did not say which video was made."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:657
+#: includes/class-ai-chat-bedrock-youtube.php:684
 msgid "The upload session expired, so the upload starts again."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:661
+#: includes/class-ai-chat-bedrock-youtube.php:688
 msgid "The access token expired."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:712
+#: includes/class-ai-chat-bedrock-youtube.php:739
 msgid "The Google Cloud project has used up its YouTube quota for today. Uploads can start again after midnight Pacific time."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:713
+#: includes/class-ai-chat-bedrock-youtube.php:740
 msgid "The channel has reached YouTube's limit on uploads for now."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:714
+#: includes/class-ai-chat-bedrock-youtube.php:741
 msgid "YouTube refused the upload for this channel. Check that the channel can upload videos and that the account is in good standing."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:791
+#: includes/class-ai-chat-bedrock-youtube.php:818
 msgid "Kept private by YouTube: uploads from a Google Cloud project that has not passed YouTube's audit stay private."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:842
+#: includes/class-ai-chat-bedrock-youtube.php:869
 msgid "Upload a video to YouTube"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:854
+#: includes/class-ai-chat-bedrock-youtube.php:881
 msgid "YouTube upload queued."
 msgstr ""
 
 #. translators: %d: percentage uploaded.
-#: includes/class-ai-chat-bedrock-youtube.php:857
+#: includes/class-ai-chat-bedrock-youtube.php:884
 #, php-format
 msgid "Uploading to YouTube: %d%%."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:859
+#: includes/class-ai-chat-bedrock-youtube.php:886
 msgid "Uploaded; YouTube is processing the video."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:861
+#: includes/class-ai-chat-bedrock-youtube.php:888
 msgid "Uploaded to YouTube. Its status is in the record above."
 msgstr ""
 
 #. translators: %s: reason the upload failed.
-#: includes/class-ai-chat-bedrock-youtube.php:864
+#: includes/class-ai-chat-bedrock-youtube.php:891
 #, php-format
 msgid "The YouTube upload failed: %s"
 msgstr ""
 
 #. translators: %s: YouTube channel name.
-#: includes/class-ai-chat-bedrock-youtube.php:925
+#: includes/class-ai-chat-bedrock-youtube.php:952
 #, php-format
 msgid "Videos are uploaded to the channel %s."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:928
+#: includes/class-ai-chat-bedrock-youtube.php:955
 msgid "The upload is queued and runs in the background. You can leave this page."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:933
+#: includes/class-ai-chat-bedrock-youtube.php:960
 msgid "Today's uploads are used up."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:944
+#: includes/class-ai-chat-bedrock-youtube.php:971
 msgid "Open a post and choose Upload a video to YouTube in its Published elsewhere box."
 msgstr ""
 
 #. translators: %s: post title.
-#: includes/class-ai-chat-bedrock-youtube.php:963
+#: includes/class-ai-chat-bedrock-youtube.php:990
 #, php-format
 msgid "Upload a video for %s"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:971
+#: includes/class-ai-chat-bedrock-youtube.php:998
 msgid "Video"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:971
+#: includes/class-ai-chat-bedrock-youtube.php:998
 msgid "Choose a video"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:977
+#: includes/class-ai-chat-bedrock-youtube.php:1004
 msgid "Description"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:978
+#: includes/class-ai-chat-bedrock-youtube.php:1005
 msgid "Tags"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:979
+#: includes/class-ai-chat-bedrock-youtube.php:1006
 msgid "Visibility"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:979
+#: includes/class-ai-chat-bedrock-youtube.php:1006
 msgid "Private"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:979
+#: includes/class-ai-chat-bedrock-youtube.php:1006
 msgid "Unlisted"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:979
+#: includes/class-ai-chat-bedrock-youtube.php:1006
 msgid "Public"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:979
+#: includes/class-ai-chat-bedrock-youtube.php:1006
 msgid "YouTube keeps uploads from a Google Cloud project that has not passed its audit private, whatever is chosen here."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:980
+#: includes/class-ai-chat-bedrock-youtube.php:1007
 msgid "Audience"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:980
+#: includes/class-ai-chat-bedrock-youtube.php:1007
 msgid "Not made for children"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:980
+#: includes/class-ai-chat-bedrock-youtube.php:1007
 msgid "Made for children"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:981
+#: includes/class-ai-chat-bedrock-youtube.php:1008
 msgid "Altered or synthetic content"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:981
+#: includes/class-ai-chat-bedrock-youtube.php:1008
 msgid "The video has realistic altered or synthetic content, such as an AI voice or generated footage"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-youtube.php:983
+#: includes/class-ai-chat-bedrock-youtube.php:1010
 msgid "Upload to YouTube"
 msgstr ""
 

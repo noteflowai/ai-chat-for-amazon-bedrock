@@ -20,7 +20,7 @@ $GLOBALS['aicfab_meta']       = array();
 $GLOBALS['aicfab_requests']   = array();
 $GLOBALS['aicfab_responses']  = array();
 $GLOBALS['aicfab_cron']       = array();
-$GLOBALS['aicfab_can']        = array( 'manage_options', 'upload_files', 'edit_post:7' );
+$GLOBALS['aicfab_can']        = array( 'manage_options', 'upload_files', 'edit_post:7', 'edit_post:41', 'edit_post:42' );
 $GLOBALS['aicfab_redirect']   = '';
 $GLOBALS['aicfab_records']    = array();
 
@@ -57,6 +57,13 @@ function is_wp_error( $value ) {
 }
 function get_option( $name, $fallback = false ) {
 	return array_key_exists( $name, $GLOBALS['aicfab_options'] ) ? $GLOBALS['aicfab_options'][ $name ] : $fallback;
+}
+function add_option( $name, $value, $deprecated = '', $autoload = null ) {
+	if ( array_key_exists( $name, $GLOBALS['aicfab_options'] ) ) {
+		return false;
+	}
+	$GLOBALS['aicfab_options'][ $name ] = $value;
+	return true;
 }
 function update_option( $name, $value, $autoload = null ) {
 	$GLOBALS['aicfab_options'][ $name ] = $value;
@@ -295,6 +302,7 @@ $GLOBALS['aicfab_mimes'] = array( 41 => 'video/mp4', 42 => 'text/x-php' );
 $input                   = array( 'attachment' => 41, 'title' => '', 'description' => "Watch it <script>\nhttps://example.test/lesson/", 'tags' => 'robots, kinematics, ', 'privacy' => 'public', 'made_for_kids' => 'no', 'synthetic' => true, 'language' => 'zh' );
 
 check_yt( 'aicfab_youtube_file' === AI_Chat_Bedrock_YouTube::queue( 7, array( 'attachment' => 42 ) + $input )->get_error_code(), 'Only a video can be uploaded.' );
+check_yt( 'aicfab_youtube_forbidden' === AI_Chat_Bedrock_YouTube::queue( 7, array( 'attachment' => 43 ) + $input )->get_error_code(), 'A video the user may not edit, such as another author\'s, cannot be uploaded.' );
 check_yt( 'aicfab_youtube_audience' === AI_Chat_Bedrock_YouTube::queue( 7, array( 'made_for_kids' => '' ) + $input )->get_error_code(), 'The audience must be declared.' );
 check_yt( 'aicfab_youtube_forbidden' === AI_Chat_Bedrock_YouTube::queue( 8, $input )->get_error_code(), 'A post the user cannot edit is refused.' );
 $job = AI_Chat_Bedrock_YouTube::queue( 7, $input );
@@ -393,11 +401,15 @@ check_yt( 'failed' === AI_Chat_Bedrock_YouTube::job( 7 )['state'], 'A file that 
 $GLOBALS['aicfab_meta'][7] = array();
 file_put_contents( $file, str_repeat( 'v', 1000 ) );
 AI_Chat_Bedrock_YouTube::queue( 7, $input );
-set_transient( 'aicfab_youtube_lock_7', 1, 60 );
+update_option( 'aicfab_youtube_lock_7', time() + 300 );
 $GLOBALS['aicfab_requests'] = array();
 AI_Chat_Bedrock_YouTube::run( 7 );
 check_yt( array() === $GLOBALS['aicfab_requests'], 'A second run while one is under way does nothing.' );
-delete_transient( 'aicfab_youtube_lock_7' );
+update_option( 'aicfab_youtube_lock_7', time() - 1 );
+AI_Chat_Bedrock_YouTube::run( 7 );
+check_yt( array() !== $GLOBALS['aicfab_requests'] && false === get_option( 'aicfab_youtube_lock_7', false ), 'A lock left by a run that died is taken over once it expires, and released after.' );
+$GLOBALS['aicfab_meta'][7] = array();
+AI_Chat_Bedrock_YouTube::queue( 7, $input );
 
 // Refresh refused: the channel must be connected again.
 unset( $GLOBALS['aicfab_transients']['aicfab_youtube_access'] );

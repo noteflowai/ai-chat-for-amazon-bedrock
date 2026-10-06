@@ -227,6 +227,7 @@ function get_permalink( $post ) {
 
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat-api.php';
 
 $failures = array();
 function check_wx( $condition, $message ) {
@@ -367,6 +368,20 @@ check_wx( wx_content( $again ) === $fields['Content'] && 1 === count( $GLOBALS['
 
 wx_post( wx_message( 'And on Mondays?', 1002 ) );
 check_wx( array( array( 'role' => 'user', 'content' => 'Do you deliver on Sundays?' ), array( 'role' => 'assistant', 'content' => 'We **deliver** on Sundays from 9 to 12.' ) ) === $GLOBALS['aicfab_built']['history'], 'A follow-up question carries the conversation so far.' );
+
+// --- A signed address used again ----------------------------------------------------------
+
+wx_reset();
+wx_settings();
+$aicfab_ts    = (string) time();
+$aicfab_parts = array( AICFAB_TOKEN, $aicfab_ts, 'nreplay' );
+sort( $aicfab_parts, SORT_STRING );
+$aicfab_query = array( 'timestamp' => $aicfab_ts, 'nonce' => 'nreplay', 'signature' => sha1( implode( '', $aicfab_parts ) ) );
+$first        = wx_serve( new WP_REST_Request( 'POST', $aicfab_query, wx_message( 'Do you deliver?', 8101 ) ) );
+$again        = wx_serve( new WP_REST_Request( 'POST', $aicfab_query, wx_message( 'Do you deliver?', 8101 ) ) );
+$swapped      = wx_serve( new WP_REST_Request( 'POST', $aicfab_query, str_replace( 'oFollower1', 'oSomeoneElse', wx_message( 'Spend money', 8102 ) ) ) );
+check_wx( 200 === $first->get_status() && 200 === $again->get_status() && 403 === $swapped->get_status() && 1 === count( $GLOBALS['aicfab_runs'] ), 'WeChat sending the same request again is answered; another message under the same signature is refused.' );
+wx_reset();
 
 // --- The menu and featured posts ------------------------------------------------------------
 

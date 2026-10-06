@@ -362,6 +362,20 @@ sort( $parts, SORT_STRING );
 $refused = game_serve( new WP_REST_Request( 'POST', array( 'timestamp' => $timestamp, 'nonce' => 'nsafe2', 'encrypt_type' => 'aes', 'msg_signature' => sha1( implode( '', $parts ) ) ), '<xml><ToUserName>gh</ToUserName><Encrypt><![CDATA[' . $other . ']]></Encrypt></xml>' ) );
 check_game( 403 === $refused->get_status() && 1 === count( game_sent() ), 'A message for another AppID, such as the Official Account\'s, is refused.' );
 
+// --- A signed address used again ----------------------------------------------------------
+
+game_reset();
+$aicfab_ts    = (string) time();
+$aicfab_parts = array( AICFAB_TOKEN, $aicfab_ts, 'nreplay' );
+sort( $aicfab_parts, SORT_STRING );
+$aicfab_query = array( 'timestamp' => $aicfab_ts, 'nonce' => 'nreplay', 'signature' => sha1( implode( '', $aicfab_parts ) ) );
+$body         = game_json( array( 'MsgType' => 'text', 'Content' => 'pay', 'MsgId' => 9140 ) );
+$first        = game_serve( new WP_REST_Request( 'POST', $aicfab_query, $body ) );
+$again        = game_serve( new WP_REST_Request( 'POST', $aicfab_query, $body ) );
+$swapped      = game_serve( new WP_REST_Request( 'POST', $aicfab_query, str_replace( 'oPlayer1', 'oVictim', $body ) ) );
+check_game( 'success' === $first->get_data() && 'success' === $again->get_data() && 403 === $swapped->get_status() && 1 === count( game_sent() ), 'A repeat of WeChat\'s request is taken once; a different message under the same signature, to send to another player, is refused.' );
+check_game( AI_Chat_Bedrock_WeChat_Game::SEEN_TTL >= AI_Chat_Bedrock_WeChat_Game::MAX_AGE, 'A message is remembered for as long as its signature is accepted.' );
+
 // --- Sharing the Official Account's token ---------------------------------------------------
 
 game_reset();

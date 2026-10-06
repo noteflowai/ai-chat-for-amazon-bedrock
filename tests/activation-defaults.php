@@ -58,6 +58,10 @@ function wp_clear_scheduled_hook( $hook ) {
 	unset( $GLOBALS['aicfab_schedule'][ $hook ] );
 	return true;
 }
+function wp_unschedule_hook( $hook ) {
+	unset( $GLOBALS['aicfab_schedule'][ $hook ] );
+	return 0;
+}
 function __( $text, $domain = null ) {
 	return $text;
 }

@@ -257,7 +257,11 @@ class AI_Chat_Bedrock_Distribution {
 		$language = sanitize_key( (string) $language );
 		if ( '' !== $language && function_exists( 'pll_get_post' ) ) {
 			$translated = (int) pll_get_post( $post->ID, $language );
-			$post       = $translated > 0 ? get_post( $translated ) : $post;
+			// The translation may be another author's draft: it is checked on its own.
+			if ( $translated > 0 && $translated !== $post->ID && ! current_user_can( 'edit_post', $translated ) ) {
+				return new WP_Error( 'aicfab_distribution_forbidden', __( 'You cannot edit that translation.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 403 ) );
+			}
+			$post = $translated > 0 ? get_post( $translated ) : $post;
 		}
 
 		// The text as a signed-out visitor reads it, so a section kept for members is never
@@ -282,7 +286,7 @@ class AI_Chat_Bedrock_Distribution {
 			'title'        => html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ),
 			'url'          => (string) get_permalink( $post ),
 			'language'     => class_exists( 'AI_Chat_Bedrock_Content' ) ? AI_Chat_Bedrock_Content::language( $post ) : '',
-			'excerpt'      => trim( wp_strip_all_tags( (string) get_the_excerpt( $post ) ) ),
+			'excerpt'      => self::public_excerpt( $post ),
 			'text'         => AI_Chat_Bedrock_Security::string_substr( (string) $text, 0, 20000 ),
 			'tags'         => is_wp_error( $tags ) ? array() : array_values( $tags ),
 			'categories'   => is_wp_error( $cats ) ? array() : array_values( $cats ),
@@ -291,6 +295,30 @@ class AI_Chat_Bedrock_Distribution {
 			'translations' => $translations,
 			'published'    => self::entries( $post->ID ),
 		);
+	}
+
+	/**
+	 * A post's excerpt as a signed-out visitor could read it.
+	 *
+	 * A written excerpt is the author's. Without one, WordPress makes it from the content as the
+	 * current user sees it, which can include a section kept for members, so it is made here from
+	 * the text a guest sees instead.
+	 *
+	 * @param WP_Post $post  Post.
+	 * @param int     $chars Longest excerpt made from the text.
+	 * @return string
+	 */
+	public static function public_excerpt( $post, $chars = 200 ) {
+		if ( '' !== trim( (string) $post->post_excerpt ) ) {
+			return trim( wp_strip_all_tags( (string) $post->post_excerpt ) );
+		}
+		$text  = class_exists( 'AI_Chat_Bedrock_Content' ) ? AI_Chat_Bedrock_Content::public_text( $post ) : '';
+		$title = class_exists( 'AI_Chat_Bedrock_Content' ) ? AI_Chat_Bedrock_Content::title( $post ) : '';
+		if ( '' !== $title && 0 === strpos( $text, $title ) ) {
+			$text = substr( $text, strlen( $title ) );
+		}
+		$text = trim( preg_replace( '/\s+/u', ' ', (string) $text ) );
+		return AI_Chat_Bedrock_Security::string_length( $text ) > $chars ? rtrim( AI_Chat_Bedrock_Security::string_substr( $text, 0, $chars - 1 ) ) . '…' : $text;
 	}
 
 	/**

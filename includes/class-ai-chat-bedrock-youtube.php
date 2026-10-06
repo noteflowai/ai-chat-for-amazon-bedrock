@@ -44,6 +44,12 @@ class AI_Chat_Bedrock_YouTube {
 	// Seconds one background run uploads for before it hands over to the next.
 	const BUDGET = 20;
 
+	/*
+	 * A run's lock outlasts its longest run: a token request, a status check after an error,
+	 * the budget, and one last part at its timeout.
+	 */
+	const LOCK_TTL = 300;
+
 	const MAX_RETRIES    = 8;
 	const MAX_POLLS      = 30;
 	const DEFAULT_DAILY  = 5;
@@ -388,8 +394,12 @@ class AI_Chat_Bedrock_YouTube {
 		}
 
 		$attachment = isset( $input['attachment'] ) ? absint( $input['attachment'] ) : 0;
-		$file       = $attachment ? get_attached_file( $attachment ) : '';
-		$mime       = $attachment ? (string) get_post_mime_type( $attachment ) : '';
+		// The video must be one this user may edit, not any file in the Media Library.
+		if ( $attachment && ! current_user_can( 'edit_post', $attachment ) ) {
+			return new WP_Error( 'aicfab_youtube_forbidden', __( 'You cannot upload that video.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+		$file = $attachment ? get_attached_file( $attachment ) : '';
+		$mime = $attachment ? (string) get_post_mime_type( $attachment ) : '';
 		clearstatcache( true, (string) $file );
 		if ( '' === (string) $file || 0 !== strpos( $mime, 'video/' ) || ! is_readable( $file ) ) {
 			return new WP_Error( 'aicfab_youtube_file', __( 'Choose a video in the Media Library whose file is on this server.', 'ai-chat-for-amazon-bedrock' ) );
@@ -463,6 +473,24 @@ class AI_Chat_Bedrock_YouTube {
 	}
 
 	/**
+	 * Take a run's lock, which add_option() gives to one caller only. A lock left by a run that
+	 * died is taken over once it has expired.
+	 *
+	 * @param string $name Option name.
+	 * @return bool Whether this run holds it.
+	 */
+	private static function lock( $name ) {
+		if ( add_option( $name, time() + self::LOCK_TTL, '', false ) ) {
+			return true;
+		}
+		if ( (int) get_option( $name, 0 ) > time() ) {
+			return false;
+		}
+		update_option( $name, time() + self::LOCK_TTL, false );
+		return true;
+	}
+
+	/**
 	 * Upload what can be uploaded within one background run.
 	 *
 	 * @param int $post_id Post ID.
@@ -475,18 +503,17 @@ class AI_Chat_Bedrock_YouTube {
 		}
 		// One run at a time per post: cron can start a second while the first is still uploading.
 		$lock = 'aicfab_youtube_lock_' . $post_id;
-		if ( false !== get_transient( $lock ) ) {
+		if ( ! self::lock( $lock ) ) {
 			return;
 		}
-		set_transient( $lock, 1, self::BUDGET * 3 );
 		// Should this run be cut short, by a time limit or a restart, the next one is already due.
 		wp_clear_scheduled_hook( self::CRON, array( $post_id ) );
-		wp_schedule_single_event( time() + self::BUDGET * 6, self::CRON, array( $post_id ) );
+		wp_schedule_single_event( time() + self::LOCK_TTL + 60, self::CRON, array( $post_id ) );
 
 		$job   = self::upload_step( $job, $post_id );
 		$state = $job['state'];
 		update_post_meta( $post_id, self::JOB_META, $job );
-		delete_transient( $lock );
+		delete_option( $lock );
 
 		wp_clear_scheduled_hook( self::CRON, array( $post_id ) );
 		if ( 'uploading' === $state || 'queued' === $state ) {

@@ -34,6 +34,7 @@ class WP_Post {
 	public $post_content = '';
 	public $post_modified_gmt = '2026-10-05 00:00:00';
 	public $post_password = '';
+	public $post_excerpt  = '';
 	public function __construct( $id, $title, $status = 'publish' ) {
 		$this->ID          = $id;
 		$this->post_title  = $title;
@@ -162,6 +163,9 @@ class AI_Chat_Bedrock_Security {
 	public static function string_substr( $value, $start, $length ) {
 		return mb_substr( (string) $value, $start, $length );
 	}
+	public static function string_length( $value ) {
+		return mb_strlen( (string) $value );
+	}
 }
 class AI_Chat_Bedrock_Abilities {
 	const CATEGORY = 'ai-chat-bedrock';
@@ -173,6 +177,9 @@ class AI_Chat_Bedrock_Content {
 	}
 	public static function language( $post ) {
 		return isset( $GLOBALS['aicfab_languages'][ $post->ID ] ) ? $GLOBALS['aicfab_languages'][ $post->ID ] : '';
+	}
+	public static function title( $post ) {
+		return $post->post_title;
 	}
 	public static function is_rendering() {
 		return false;
@@ -262,6 +269,20 @@ check_dist( 'Lesson 1.1: kinematics' === $package['title'] && 'https://example.t
 check_dist( "Lesson 1.1: kinematics\n\nThe public part." === $package['text'], 'Its text is what a signed-out visitor reads, so a members-only section is never published elsewhere.' );
 check_dist( array( 'robots', 'kinematics' ) === $package['tags'] && 'https://example.test/cover.png' === $package['image'] && 4 === count( $package['published'] ), 'It carries the tags, the image and where the post is already published.' );
 check_dist( is_wp_error_like( AI_Chat_Bedrock_Distribution::package( 404 ) ), 'A missing post has no package.' );
+check_dist( 'The public part.' === $package['excerpt'], 'Without a written excerpt, the excerpt is made from what a guest reads, not from the whole content.' );
+get_post( 7 )->post_excerpt = 'Written <b>by hand</b>.';
+check_dist( 'Written by hand.' === AI_Chat_Bedrock_Distribution::package( 7 )['excerpt'], 'A written excerpt is used as it is.' );
+get_post( 7 )->post_excerpt = '';
+if ( ! function_exists( 'pll_get_post' ) ) {
+	function pll_get_post( $id, $language ) {
+		return 'ja' === $language ? 8 : $id;
+	}
+}
+$GLOBALS['aicfab_can'] = array( 'edit_post:7' );
+check_dist( is_wp_error_like( AI_Chat_Bedrock_Distribution::package( 7, 'ja' ) ), 'A translation the user may not edit is not handed over.' );
+$GLOBALS['aicfab_can'][] = 'edit_post:8';
+check_dist( 8 === AI_Chat_Bedrock_Distribution::package( 7, 'ja' )['id'], 'One they may edit is.' );
+$GLOBALS['aicfab_can'] = array();
 
 // --- Search and permissions ----------------------------------------------------------------------
 

@@ -301,6 +301,12 @@ class AI_Chat_Bedrock_Content {
 	public static function language( $post ) {
 		return $post->language;
 	}
+	public static function public_text( $post ) {
+		return $post->post_title . "\n\n" . trim( strip_tags( $post->post_content ) );
+	}
+	public static function title( $post ) {
+		return $post->post_title;
+	}
 }
 class AI_Chat_Bedrock_Abilities {
 	const CATEGORY = 'ai-chat-bedrock';
@@ -425,10 +431,13 @@ check_drafts( array( 'draft/add' ) === array_slice( drafts_paths(), $calls ), 'S
 $skip = AI_Chat_Bedrock_WeChat_Drafts::create( array( 3, 4 ), null, 'manual' );
 check_drafts( is_wp_error( $skip ) && 'wx_nothing' === $skip->get_error_code() && array( 3 => 'no_cover', 4 => 'not_public' ) === $skip->get_error_data()['skipped'], 'A post without any image, or not public, is skipped with the reason.' );
 
-$long                                  = new WP_Post( array( 'ID' => 5, 'post_title' => 'Long', 'thumbnail' => 7, 'post_content' => str_repeat( '<p>' . str_repeat( '字', 300 ) . '</p>', 40 ) ) );
+$long                                  = new WP_Post( array( 'ID' => 5, 'post_title' => 'Long', 'thumbnail' => 7, 'post_content' => str_repeat( '<p>' . str_repeat( '字', 300 ) . '</p>', 80 ) ) );
 $GLOBALS['aicfab_posts'][5]            = $long;
 $article                               = AI_Chat_Bedrock_WeChat_Drafts::article( $long, $GLOBALS['aicfab_options'] );
-check_drafts( strlen( $article['content'] ) <= AI_Chat_Bedrock_WeChat_Drafts::MAX_CONTENT && '</p>' === substr( $article['content'], -4 ) && false !== strpos( $article['content'], 'Read more' ), 'A long post is cut at a paragraph, under WeChat\'s limit.' );
+check_drafts( mb_strlen( $article['content'] ) <= AI_Chat_Bedrock_WeChat_Drafts::MAX_CONTENT && mb_strlen( $article['content'] ) > 18000 && false !== strpos( $article['content'], '字字</p><p>Tap' ), 'A long Chinese post is cut at a paragraph, counting characters, near WeChat\'s limit.' );
+check_drafts( 0 === strpos( $article['digest'], '字字' ) && 120 === mb_strlen( $article['digest'] ), 'Without a written excerpt, the digest comes from what a guest reads.' );
+$list = AI_Chat_Bedrock_WeChat_Drafts::fit( '<ul><li>' . str_repeat( '项', 25000 ) . '</li></ul>', '<p>Read more</p>' );
+check_drafts( 0 === strpos( $list, '<p>项项' ) && false !== strpos( $list, '…</p><p>Read more</p>' ) && mb_strlen( $list ) <= AI_Chat_Bedrock_WeChat_Drafts::MAX_CONTENT, 'Content with no whole block that fits keeps its text instead of going empty.' );
 
 // --- The editor's box ---------------------------------------------------------------------
 

@@ -529,7 +529,7 @@ msgstr "IAM ロールの認証情報"
 
 #: admin/class-ai-chat-bedrock-admin.php:1061
 #: admin/class-ai-chat-bedrock-admin.php:1062
-#: admin/class-ai-chat-bedrock-admin.php:2437
+#: admin/class-ai-chat-bedrock-admin.php:2438
 #: admin/partials/ai-chat-bedrock-admin-display.php:67
 #: admin/partials/ai-chat-bedrock-admin-display.php:217
 #: admin/partials/ai-chat-bedrock-admin-eval.php:97
@@ -703,7 +703,7 @@ msgid "Article author"
 msgstr "記事の著者"
 
 #: admin/class-ai-chat-bedrock-admin.php:1129
-#: admin/class-ai-chat-bedrock-admin.php:2468
+#: admin/class-ai-chat-bedrock-admin.php:2469
 msgid "WooCommerce"
 msgstr "WooCommerce"
 
@@ -1194,19 +1194,19 @@ msgstr "Amazon S3 Vectors にはバケット名とインデックス名が必要
 msgid "The managed prompt identifier contained unsupported characters and was cleared."
 msgstr "マネージドプロンプトの識別子にサポートされていない文字が含まれていたため、クリアしました。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2243
+#: admin/class-ai-chat-bedrock-admin.php:2244
 msgid "The knowledge base ID must be alphanumeric; the value was cleared."
 msgstr "ナレッジベース ID は英数字のみで指定する必要があるため、値をクリアしました。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2303
+#: admin/class-ai-chat-bedrock-admin.php:2304
 msgid "Settings saved."
 msgstr "設定を保存しました。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2433
+#: admin/class-ai-chat-bedrock-admin.php:2434
 msgid "AWS"
 msgstr "AWS"
 
-#: admin/class-ai-chat-bedrock-admin.php:2445
+#: admin/class-ai-chat-bedrock-admin.php:2446
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:36
 #: includes/class-ai-chat-bedrock-chat-history.php:381
 #: public/class-ai-chat-bedrock-public.php:289
@@ -1215,20 +1215,20 @@ msgstr "AWS"
 msgid "Chat"
 msgstr "チャット"
 
-#: admin/class-ai-chat-bedrock-admin.php:2441
+#: admin/class-ai-chat-bedrock-admin.php:2442
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:66
 msgid "Grounding"
 msgstr "根拠付け"
 
-#: admin/class-ai-chat-bedrock-admin.php:2458
+#: admin/class-ai-chat-bedrock-admin.php:2459
 msgid "Safety and spend"
 msgstr "安全性と費用"
 
-#: admin/class-ai-chat-bedrock-admin.php:2462
+#: admin/class-ai-chat-bedrock-admin.php:2463
 msgid "Integrations"
 msgstr "連携"
 
-#: admin/class-ai-chat-bedrock-admin.php:2498
+#: admin/class-ai-chat-bedrock-admin.php:2499
 msgid "Configured — enter a value to replace"
 msgstr "設定済み — 置き換えるには値を入力"
 
@@ -2557,7 +2557,7 @@ msgid "Clear anything you do not want, edit the titles if you like, then create 
 msgstr "不要なもののチェックを外し、必要に応じてタイトルを編集してから、下書きを作成してください。"
 
 #: admin/partials/ai-chat-bedrock-admin-scaffold.php:52
-#: includes/class-ai-chat-bedrock-youtube.php:976
+#: includes/class-ai-chat-bedrock-youtube.php:1003
 #: blocks/chat/editor.js:54
 msgid "Title"
 msgstr "タイトル"
@@ -4410,7 +4410,7 @@ msgstr "プロンプトにメッセージが含まれていません。"
 msgid "The Amazon Bedrock request failed."
 msgstr "Amazon Bedrock へのリクエストに失敗しました。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:712
+#: includes/class-ai-chat-bedrock-wechat.php:722
 #: public/class-ai-chat-bedrock-public.php:99
 #: public/partials/ai-chat-bedrock-public-display.php:15
 msgid "Hello! How can I help you today?"
@@ -4462,7 +4462,7 @@ msgstr "エージェントの手順（%d）"
 msgid "succeeded"
 msgstr "成功"
 
-#: includes/class-ai-chat-bedrock-distribution.php:592
+#: includes/class-ai-chat-bedrock-distribution.php:620
 #: public/class-ai-chat-bedrock-public.php:133
 msgid "failed"
 msgstr "失敗"
@@ -4880,7 +4880,7 @@ msgstr "リランキング"
 msgid "Optional. Gathers more passages from site content and the knowledge base, then has a reranking model keep the ones that best answer the question. It adds one rerank request per question, billed per query, and the passages are used in their original order if it fails. Requires bedrock:Rerank, and bedrock:InvokeModel on the reranking model, in the chat region."
 msgstr "オプションです。サイトのコンテンツとナレッジベースからより多くのパッセージを集め、リランキングモデルが質問に最もよく答えるものを残します。質問ごとにクエリ単位で課金されるリランクリクエストが 1 回追加され、失敗した場合はパッセージが元の順序で使われます。チャットのリージョンで bedrock:Rerank と、リランキングモデルに対する bedrock:InvokeModel が必要です。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2248
+#: admin/class-ai-chat-bedrock-admin.php:2249
 msgid "That reranking model is not supported; reranking was left off."
 msgstr "そのリランキングモデルはサポートされていないため、リランキングはオフのままです。"
 
@@ -5841,7 +5841,7 @@ msgstr "Joinchat が有効です。リンクが空の間は、その WhatsApp �
 msgid "Off by default. A Contact a person button appears below the chat, and the assistant points to it when it cannot help. Visitors give an email address or phone number and must agree before anything is stored. Requests are kept on this site and listed under Contact requests, where they can be exported. The link can be a web, mailto: or tel: address. Disclose this in your privacy policy."
 msgstr "初期設定ではオフです。チャットの下に「担当者に連絡」ボタンが表示され、アシスタントは回答できないときにこのボタンを案内します。訪問者はメールアドレスか電話番号を入力し、同意するまで何も保存されません。問い合わせはこのサイトに保存され、「問い合わせ」画面に一覧表示され、エクスポートできます。リンクには Web、mailto:、tel: のアドレスを使えます。プライバシーポリシーに記載してください。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2235
+#: admin/class-ai-chat-bedrock-admin.php:2236
 msgid "The contact link must be a web, mailto: or tel: address; it was cleared."
 msgstr "連絡用リンクは Web、mailto:、tel: のアドレスである必要があるため、クリアしました。"
 
@@ -6325,39 +6325,39 @@ msgstr "WeChat のトークンは公式アカウントプラットフォーム�
 msgid "The EncodingAESKey must be 43 letters and digits; it was not saved."
 msgstr "EncodingAESKey は 43 文字の英数字である必要があります。保存されませんでした。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:373
+#: includes/class-ai-chat-bedrock-wechat.php:383
 msgid "I can only read text messages for now. Please type your question."
 msgstr "現在はテキストメッセージのみ読み取れます。質問を入力してください。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:399
+#: includes/class-ai-chat-bedrock-wechat.php:409
 msgid "The answer is still being written. Please send 1 again in a moment."
 msgstr "回答を作成中です。少し待ってからもう一度 1 を送ってください。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:411
+#: includes/class-ai-chat-bedrock-wechat.php:421
 msgid "You have sent a lot of questions this hour. Please try again later."
 msgstr "この 1 時間に多くの質問が送られました。しばらくしてからお試しください。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:550
+#: includes/class-ai-chat-bedrock-wechat.php:560
 msgid "This one needs a little longer. Send 1 in a moment to see the answer."
 msgstr "この質問には少し時間がかかります。少し待ってから 1 を送ると回答が表示されます。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:578
+#: includes/class-ai-chat-bedrock-wechat.php:588
 msgid "You are replying in a WeChat Official Account chat. Reply in the language of the follower's latest message. Write plain text without Markdown, such as asterisks, hashes or tables, and keep the answer under 300 words. Put any web address on a line of its own."
 msgstr "WeChat 公式アカウントのチャットで返信しています。フォロワーの最新のメッセージと同じ言語で答えてください。アスタリスク、シャープ、表などの Markdown を使わずプレーンテキストで書き、300 語以内にまとめてください。URL は 1 行に 1 つだけ書いてください。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:584
+#: includes/class-ai-chat-bedrock-wechat.php:594
 msgid "The assistant has answered as many questions as it can today. Please try again tomorrow."
 msgstr "アシスタントは今日回答できる数の質問に答えました。明日もう一度お試しください。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:677
+#: includes/class-ai-chat-bedrock-wechat.php:687
 msgid "Sources:"
 msgstr "出典:"
 
-#: includes/class-ai-chat-bedrock-wechat.php:715
+#: includes/class-ai-chat-bedrock-wechat.php:725
 msgid "You could ask:"
 msgstr "こんな質問ができます:"
 
-#: includes/class-ai-chat-bedrock-wechat.php:725
+#: includes/class-ai-chat-bedrock-wechat.php:735
 msgid "Sorry, the answer could not be written right now. Please try again in a moment."
 msgstr "申し訳ありません。今は回答を作成できませんでした。少ししてからお試しください。"
 
@@ -6377,7 +6377,7 @@ msgstr "チャットと同じ"
 msgid "The chat answers each text message from the site's pages, in plain text with its sources. WeChat waits about fifteen seconds in all; a longer answer is kept and the follower is told to send 1 to see it, so choose a fast model for WeChat if the chat's takes longer. A new follower gets the welcome message and suggested questions. Every answer counts towards the daily request limit, and the conversation log records them when it is on."
 msgstr "チャットはサイトのページをもとに、各テキストメッセージに出典付きのプレーンテキストで回答します。WeChat の待ち時間は合計約 15 秒で、それより長くかかる回答は保存され、フォロワーには 1 を送ると表示されると伝えます。チャットのモデルが遅い場合は、WeChat 用に速いモデルを選んでください。新しいフォロワーにはウェルカムメッセージとおすすめの質問が届きます。すべての回答は 1 日のリクエスト上限に数えられ、会話ログがオンなら記録されます。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:645
+#: includes/class-ai-chat-bedrock-wechat.php:655
 msgid "Generated by AI. Check the linked pages for anything important."
 msgstr "この回答は AI が生成しました。重要な点はリンク先のページでご確認ください。"
 
@@ -6392,8 +6392,8 @@ msgstr "Bilibili 動画"
 
 #: admin/class-ai-chat-bedrock-admin.php:1110
 #: admin/class-ai-chat-bedrock-admin.php:1757
-#: includes/class-ai-chat-bedrock-youtube.php:907
-#: includes/class-ai-chat-bedrock-youtube.php:922
+#: includes/class-ai-chat-bedrock-youtube.php:934
+#: includes/class-ai-chat-bedrock-youtube.php:949
 msgid "YouTube uploads"
 msgstr "YouTube へのアップロード"
 
@@ -6426,7 +6426,7 @@ msgid "The sign-in did not come back from the request this site made, so it was 
 msgstr "このサイトが送ったリクエストからのサインインではなかったため、無視しました。もう一度お試しください。"
 
 #: admin/class-ai-chat-bedrock-admin.php:1750
-#: includes/class-ai-chat-bedrock-youtube.php:306
+#: includes/class-ai-chat-bedrock-youtube.php:312
 msgid "Google did not grant access to the channel."
 msgstr "Google はチャンネルへのアクセスを許可しませんでした。"
 
@@ -6523,78 +6523,78 @@ msgstr "そのプラットフォームのアドレスではないか、https で
 msgid "The status is not one the record knows."
 msgstr "記録が扱っていない状態です。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:354
+#: includes/class-ai-chat-bedrock-distribution.php:382
 msgid "Get a post's publishing package"
 msgstr "投稿の公開パッケージを取得"
 
-#: includes/class-ai-chat-bedrock-distribution.php:355
+#: includes/class-ai-chat-bedrock-distribution.php:383
 msgid "Return what is needed to publish a post on another platform: title, address, plain text, excerpt, tags, image, translations and where it is already published. Read only."
 msgstr "投稿を他のプラットフォームで公開するのに必要なもの（タイトル、アドレス、テキスト、抜粋、タグ、画像、翻訳、公開済みの場所）を返します。読み取り専用です。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:373
+#: includes/class-ai-chat-bedrock-distribution.php:401
 msgid "Record where a post was published"
 msgstr "投稿の公開先を記録"
 
-#: includes/class-ai-chat-bedrock-distribution.php:374
+#: includes/class-ai-chat-bedrock-distribution.php:402
 msgid "Record or update one item a post was published as on Bilibili, YouTube or Xiaohongshu: its ID, address, account, language and status. Naming the record it replaces marks that edition replaced. Changes only this record, never the post."
 msgstr "投稿を Bilibili、YouTube、小紅書で公開した 1 件（ID、アドレス、アカウント、言語、状態）を記録または更新します。置き換える記録を指定すると、その版は置き換え済みになります。変更するのはこの記録だけで、投稿は変更しません。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:394
+#: includes/class-ai-chat-bedrock-distribution.php:422
 msgid "List where posts are published"
 msgstr "投稿の公開先を一覧表示"
 
-#: includes/class-ai-chat-bedrock-distribution.php:395
+#: includes/class-ai-chat-bedrock-distribution.php:423
 msgid "List publishing records across posts, filtered by platform, status, language or post, such as editions still public after being replaced. Read only."
 msgstr "プラットフォーム、状態、言語、投稿で絞り込んで、投稿全体の公開記録を一覧表示します。置き換え後も公開されたままの版などです。読み取り専用です。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:525
+#: includes/class-ai-chat-bedrock-distribution.php:553
 msgid "Published elsewhere"
 msgstr "他で公開"
 
-#: includes/class-ai-chat-bedrock-distribution.php:549
+#: includes/class-ai-chat-bedrock-distribution.php:577
 msgid "Not published on another platform yet. Agents record it here through the publishing abilities."
 msgstr "まだ他のプラットフォームで公開されていません。エージェントが公開アビリティでここに記録します。"
 
 #. translators: %s: the record that replaced this one, as platform:id.
-#: includes/class-ai-chat-bedrock-distribution.php:562
+#: includes/class-ai-chat-bedrock-distribution.php:590
 #, php-format
 msgid "Replaced by %s"
 msgstr "%s に置き換え済み"
 
-#: includes/class-ai-chat-bedrock-distribution.php:584
+#: includes/class-ai-chat-bedrock-distribution.php:612
 msgid "planned"
 msgstr "予定"
 
-#: includes/class-ai-chat-bedrock-distribution.php:585
+#: includes/class-ai-chat-bedrock-distribution.php:613
 msgid "submitted"
 msgstr "提出済み"
 
-#: includes/class-ai-chat-bedrock-distribution.php:586
+#: includes/class-ai-chat-bedrock-distribution.php:614
 msgid "processing"
 msgstr "処理中"
 
-#: includes/class-ai-chat-bedrock-distribution.php:587
+#: includes/class-ai-chat-bedrock-distribution.php:615
 msgid "public"
 msgstr "公開"
 
-#: includes/class-ai-chat-bedrock-distribution.php:588
+#: includes/class-ai-chat-bedrock-distribution.php:616
 msgid "unlisted"
 msgstr "限定公開"
 
-#: includes/class-ai-chat-bedrock-distribution.php:589
+#: includes/class-ai-chat-bedrock-distribution.php:617
 msgid "private"
 msgstr "非公開"
 
-#: includes/class-ai-chat-bedrock-distribution.php:590
+#: includes/class-ai-chat-bedrock-distribution.php:618
 msgid "replaced"
 msgstr "置き換え済み"
 
-#: includes/class-ai-chat-bedrock-distribution.php:591
+#: includes/class-ai-chat-bedrock-distribution.php:619
 msgid "removed"
 msgstr "削除済み"
 
 #. translators: %s: links to platforms, such as Bilibili and YouTube.
-#: includes/class-ai-chat-bedrock-distribution.php:625
+#: includes/class-ai-chat-bedrock-distribution.php:653
 #, php-format
 msgid "Also on %s"
 msgstr "%s でも公開中"
@@ -6611,192 +6611,192 @@ msgstr "このアカウントは公開記録を読み取れません。"
 msgid "This account cannot edit that post."
 msgstr "このアカウントはその投稿を編集できません。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:168
-#: includes/class-ai-chat-bedrock-youtube.php:989
+#: includes/class-ai-chat-bedrock-youtube.php:174
+#: includes/class-ai-chat-bedrock-youtube.php:1016
 msgid "Sorry, you are not allowed to do that."
 msgstr "この操作を行う権限がありません。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:259
+#: includes/class-ai-chat-bedrock-youtube.php:265
 msgid "No YouTube channel is connected."
 msgstr "YouTube チャンネルが接続されていません。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:377
-#: includes/class-ai-chat-bedrock-youtube.php:931
+#: includes/class-ai-chat-bedrock-youtube.php:383
+#: includes/class-ai-chat-bedrock-youtube.php:958
 msgid "You cannot upload a video for this post."
 msgstr "この投稿の動画をアップロードすることはできません。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:384
-#: includes/class-ai-chat-bedrock-youtube.php:932
+#: includes/class-ai-chat-bedrock-youtube.php:390
+#: includes/class-ai-chat-bedrock-youtube.php:959
 msgid "A video for this post is already being uploaded."
 msgstr "この投稿の動画はすでにアップロード中です。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:387
+#: includes/class-ai-chat-bedrock-youtube.php:393
 msgid "Today's uploads are used up. Each one costs 1,600 of the 10,000 quota units Google gives a project a day."
 msgstr "今日のアップロード数を使い切りました。1 回ごとに、Google がプロジェクトに与える 1 日 10,000 ユニットのうち 1,600 ユニットを使います。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:395
-#: includes/class-ai-chat-bedrock-youtube.php:934
+#: includes/class-ai-chat-bedrock-youtube.php:405
+#: includes/class-ai-chat-bedrock-youtube.php:961
 msgid "Choose a video in the Media Library whose file is on this server."
 msgstr "ファイルがこのサーバーにある、メディアライブラリの動画を選んでください。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:400
-#: includes/class-ai-chat-bedrock-youtube.php:935
+#: includes/class-ai-chat-bedrock-youtube.php:410
+#: includes/class-ai-chat-bedrock-youtube.php:962
 msgid "Say whether the video is made for children."
 msgstr "動画が子ども向けかどうかを選んでください。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:430
+#: includes/class-ai-chat-bedrock-youtube.php:440
 msgid "Untitled video"
 msgstr "無題の動画"
 
-#: includes/class-ai-chat-bedrock-youtube.php:512
+#: includes/class-ai-chat-bedrock-youtube.php:539
 msgid "The video file is gone or has changed since the upload was queued."
 msgstr "アップロードを予約した後に、動画ファイルがなくなったか変更されました。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:516
+#: includes/class-ai-chat-bedrock-youtube.php:543
 msgid "The YouTube channel is no longer connected."
 msgstr "YouTube チャンネルの接続が切れています。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:544
+#: includes/class-ai-chat-bedrock-youtube.php:571
 msgid "The video file could not be read."
 msgstr "動画ファイルを読み取れませんでした。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:651
+#: includes/class-ai-chat-bedrock-youtube.php:678
 msgid "YouTube did not say which video was made."
 msgstr "YouTube から作成された動画が返されませんでした。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:657
+#: includes/class-ai-chat-bedrock-youtube.php:684
 msgid "The upload session expired, so the upload starts again."
 msgstr "アップロードセッションの期限が切れたため、最初からアップロードし直します。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:661
+#: includes/class-ai-chat-bedrock-youtube.php:688
 msgid "The access token expired."
 msgstr "アクセストークンの期限が切れました。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:712
+#: includes/class-ai-chat-bedrock-youtube.php:739
 msgid "The Google Cloud project has used up its YouTube quota for today. Uploads can start again after midnight Pacific time."
 msgstr "Google Cloud プロジェクトの今日の YouTube 割り当てを使い切りました。太平洋時間の午前 0 時以降に再びアップロードできます。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:713
+#: includes/class-ai-chat-bedrock-youtube.php:740
 msgid "The channel has reached YouTube's limit on uploads for now."
 msgstr "このチャンネルは現在 YouTube のアップロード上限に達しています。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:714
+#: includes/class-ai-chat-bedrock-youtube.php:741
 msgid "YouTube refused the upload for this channel. Check that the channel can upload videos and that the account is in good standing."
 msgstr "YouTube がこのチャンネルへのアップロードを拒否しました。チャンネルが動画をアップロードでき、アカウントに問題がないか確認してください。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:791
+#: includes/class-ai-chat-bedrock-youtube.php:818
 msgid "Kept private by YouTube: uploads from a Google Cloud project that has not passed YouTube's audit stay private."
 msgstr "YouTube により非公開のままです。YouTube の審査を通っていない Google Cloud プロジェクトからのアップロードは非公開のままになります。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:842
+#: includes/class-ai-chat-bedrock-youtube.php:869
 msgid "Upload a video to YouTube"
 msgstr "動画を YouTube にアップロード"
 
-#: includes/class-ai-chat-bedrock-youtube.php:854
+#: includes/class-ai-chat-bedrock-youtube.php:881
 msgid "YouTube upload queued."
 msgstr "YouTube へのアップロードを予約しました。"
 
 #. translators: %d: percentage uploaded.
-#: includes/class-ai-chat-bedrock-youtube.php:857
+#: includes/class-ai-chat-bedrock-youtube.php:884
 #, php-format
 msgid "Uploading to YouTube: %d%%."
 msgstr "YouTube にアップロード中: %d%%。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:859
+#: includes/class-ai-chat-bedrock-youtube.php:886
 msgid "Uploaded; YouTube is processing the video."
 msgstr "アップロード済み。YouTube が動画を処理しています。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:861
+#: includes/class-ai-chat-bedrock-youtube.php:888
 msgid "Uploaded to YouTube. Its status is in the record above."
 msgstr "YouTube にアップロードしました。状態は上の記録にあります。"
 
 #. translators: %s: reason the upload failed.
-#: includes/class-ai-chat-bedrock-youtube.php:864
+#: includes/class-ai-chat-bedrock-youtube.php:891
 #, php-format
 msgid "The YouTube upload failed: %s"
 msgstr "YouTube へのアップロードに失敗しました: %s"
 
 #. translators: %s: YouTube channel name.
-#: includes/class-ai-chat-bedrock-youtube.php:925
+#: includes/class-ai-chat-bedrock-youtube.php:952
 #, php-format
 msgid "Videos are uploaded to the channel %s."
 msgstr "動画はチャンネル %s にアップロードされます。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:928
+#: includes/class-ai-chat-bedrock-youtube.php:955
 msgid "The upload is queued and runs in the background. You can leave this page."
 msgstr "アップロードを予約しました。バックグラウンドで実行されるので、このページを離れてもかまいません。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:933
+#: includes/class-ai-chat-bedrock-youtube.php:960
 msgid "Today's uploads are used up."
 msgstr "今日のアップロード数を使い切りました。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:944
+#: includes/class-ai-chat-bedrock-youtube.php:971
 msgid "Open a post and choose Upload a video to YouTube in its Published elsewhere box."
 msgstr "投稿を開き、「他で公開」ボックスで「動画を YouTube にアップロード」を選んでください。"
 
 #. translators: %s: post title.
-#: includes/class-ai-chat-bedrock-youtube.php:963
+#: includes/class-ai-chat-bedrock-youtube.php:990
 #, php-format
 msgid "Upload a video for %s"
 msgstr "%s の動画をアップロード"
 
-#: includes/class-ai-chat-bedrock-youtube.php:971
+#: includes/class-ai-chat-bedrock-youtube.php:998
 msgid "Video"
 msgstr "動画"
 
-#: includes/class-ai-chat-bedrock-youtube.php:971
+#: includes/class-ai-chat-bedrock-youtube.php:998
 msgid "Choose a video"
 msgstr "動画を選択"
 
-#: includes/class-ai-chat-bedrock-youtube.php:977
+#: includes/class-ai-chat-bedrock-youtube.php:1004
 msgid "Description"
 msgstr "説明"
 
-#: includes/class-ai-chat-bedrock-youtube.php:978
+#: includes/class-ai-chat-bedrock-youtube.php:1005
 msgid "Tags"
 msgstr "タグ"
 
-#: includes/class-ai-chat-bedrock-youtube.php:979
+#: includes/class-ai-chat-bedrock-youtube.php:1006
 msgid "Visibility"
 msgstr "公開設定"
 
-#: includes/class-ai-chat-bedrock-youtube.php:979
+#: includes/class-ai-chat-bedrock-youtube.php:1006
 msgid "Private"
 msgstr "非公開"
 
-#: includes/class-ai-chat-bedrock-youtube.php:979
+#: includes/class-ai-chat-bedrock-youtube.php:1006
 msgid "Unlisted"
 msgstr "限定公開"
 
-#: includes/class-ai-chat-bedrock-youtube.php:979
+#: includes/class-ai-chat-bedrock-youtube.php:1006
 msgid "Public"
 msgstr "公開"
 
-#: includes/class-ai-chat-bedrock-youtube.php:979
+#: includes/class-ai-chat-bedrock-youtube.php:1006
 msgid "YouTube keeps uploads from a Google Cloud project that has not passed its audit private, whatever is chosen here."
 msgstr "審査を通っていない Google Cloud プロジェクトからのアップロードは、ここでの選択にかかわらず YouTube で非公開のままになります。"
 
-#: includes/class-ai-chat-bedrock-youtube.php:980
+#: includes/class-ai-chat-bedrock-youtube.php:1007
 msgid "Audience"
 msgstr "視聴者"
 
-#: includes/class-ai-chat-bedrock-youtube.php:980
+#: includes/class-ai-chat-bedrock-youtube.php:1007
 msgid "Not made for children"
 msgstr "子ども向けではない"
 
-#: includes/class-ai-chat-bedrock-youtube.php:980
+#: includes/class-ai-chat-bedrock-youtube.php:1007
 msgid "Made for children"
 msgstr "子ども向け"
 
-#: includes/class-ai-chat-bedrock-youtube.php:981
+#: includes/class-ai-chat-bedrock-youtube.php:1008
 msgid "Altered or synthetic content"
 msgstr "改変または合成されたコンテンツ"
 
-#: includes/class-ai-chat-bedrock-youtube.php:981
+#: includes/class-ai-chat-bedrock-youtube.php:1008
 msgid "The video has realistic altered or synthetic content, such as an AI voice or generated footage"
 msgstr "AI 音声や生成映像など、リアルな改変または合成コンテンツを含む"
 
-#: includes/class-ai-chat-bedrock-youtube.php:983
+#: includes/class-ai-chat-bedrock-youtube.php:1010
 msgid "Upload to YouTube"
 msgstr "YouTube にアップロード"
 
@@ -6813,33 +6813,33 @@ msgstr "Google Cloud の OAuth クライアント ID ではないため、保存
 msgid "WeChat has not reached this address yet."
 msgstr "WeChat はまだこのアドレスにアクセスしていません。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:264
+#: includes/class-ai-chat-bedrock-wechat.php:273
 msgid "the address was called while answering was off, so nothing was answered"
 msgstr "回答がオフの間にアドレスが呼び出されたため、何も回答しませんでした"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:630
-#: includes/class-ai-chat-bedrock-wechat.php:265
+#: includes/class-ai-chat-bedrock-wechat-game.php:649
+#: includes/class-ai-chat-bedrock-wechat.php:274
 msgid "a request came without a current timestamp, so it was refused"
 msgstr "現在のタイムスタンプがないリクエストが届いたため、拒否しました"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:631
-#: includes/class-ai-chat-bedrock-wechat.php:266
+#: includes/class-ai-chat-bedrock-wechat-game.php:650
+#: includes/class-ai-chat-bedrock-wechat.php:275
 msgid "the signature did not match the token, so the request was refused; enter the same token here as in WeChat"
 msgstr "署名がトークンと一致しないため、リクエストを拒否しました。WeChat と同じトークンをここに入力してください"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:633
-#: includes/class-ai-chat-bedrock-wechat.php:267
+#: includes/class-ai-chat-bedrock-wechat-game.php:653
+#: includes/class-ai-chat-bedrock-wechat.php:276
 msgid "WeChat checked the address, and the signature matched"
 msgstr "WeChat がアドレスを確認し、署名が一致しました"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:634
-#: includes/class-ai-chat-bedrock-wechat.php:268
+#: includes/class-ai-chat-bedrock-wechat-game.php:654
+#: includes/class-ai-chat-bedrock-wechat.php:277
 msgid "a signed message arrived from WeChat"
 msgstr "WeChat から署名付きのメッセージが届きました"
 
 #. translators: 1: how long ago, such as 5 mins, 2: what happened.
-#: includes/class-ai-chat-bedrock-wechat-game.php:638
-#: includes/class-ai-chat-bedrock-wechat.php:272
+#: includes/class-ai-chat-bedrock-wechat-game.php:658
+#: includes/class-ai-chat-bedrock-wechat.php:282
 #, php-format
 msgid "Last contact %1$s ago: %2$s."
 msgstr "最後の連絡は %1$s前: %2$s。"
@@ -6923,36 +6923,36 @@ msgstr "ミニゲームのトークンは 3〜32 文字の英数字にしてく�
 msgid "The AppSecret must be 32 letters and digits; it was not saved."
 msgstr "AppSecret は 32 文字の英数字です。保存しませんでした。"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:629
+#: includes/class-ai-chat-bedrock-wechat-game.php:648
 msgid "the address was called while the game was off, so nothing was taken"
 msgstr "ミニゲームがオフの間にアドレスが呼ばれたため、何も受け取りませんでした"
 
 #. translators: 1: how long ago, 2: the server's IP address.
-#: includes/class-ai-chat-bedrock-wechat-game.php:646
+#: includes/class-ai-chat-bedrock-wechat-game.php:666
 #, php-format
 msgid "An answer could not be sent %1$s ago because WeChat does not accept this server's address. Add %2$s to the IP whitelist under Development Management > Development Settings in the mini game's console."
 msgstr "%1$s前、WeChat がこのサーバーのアドレスを受け付けなかったため回答を送れませんでした。ミニゲームの管理画面の「開発管理 > 開発設定」で IP ホワイトリストに %2$s を追加してください。"
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-game.php:649
+#: includes/class-ai-chat-bedrock-wechat-game.php:669
 #, php-format
 msgid "An answer could not be sent %s ago: WeChat did not accept the AppID and AppSecret. Enter them again from the mini game's console."
 msgstr "%s前に回答を送れませんでした。WeChat が AppID と AppSecret を受け付けませんでした。ミニゲームの管理画面から入力し直してください。"
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-game.php:652
+#: includes/class-ai-chat-bedrock-wechat-game.php:672
 #, php-format
 msgid "An answer could not be sent %s ago: WeChat allows answers only for 48 hours after a player writes, and a few at a time."
 msgstr "%s前に回答を送れませんでした。WeChat はプレイヤーのメッセージから 48 時間以内、少数の回答しか許可していません。"
 
 #. translators: 1: how long ago, 2: error code.
-#: includes/class-ai-chat-bedrock-wechat-game.php:655
+#: includes/class-ai-chat-bedrock-wechat-game.php:675
 #, php-format
 msgid "An answer could not be sent %1$s ago (%2$s)."
 msgstr "%1$s前に回答を送れませんでした（%2$s）。"
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-game.php:659
+#: includes/class-ai-chat-bedrock-wechat-game.php:679
 #, php-format
 msgid "The last answer was sent %s ago."
 msgstr "最後の回答は %s前に送信されました。"
@@ -7072,144 +7072,144 @@ msgstr "保存した AppSecret を削除する"
 msgid "Only drafts are made: WeChat lets only verified company accounts publish through its API. Check each draft and publish it in the Official Accounts Platform."
 msgstr "作るのは下書きだけです。WeChat は API での公開を認証済みの企業アカウントにしか認めていません。下書きを確認して、公式アカウントプラットフォームで公開してください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:196
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:208
 msgid "Drafts for the WeChat Official Account are off, or its AppID or AppSecret is missing."
 msgstr "WeChat 公式アカウントの下書きがオフか、AppID または AppSecret がありません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:217
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:229
 msgid "No post could be made into an article."
 msgstr "記事にできる投稿がありませんでした。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:234
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:249
 msgid "In the WeChat Official Account's draft box; publish it from the Official Accounts Platform."
 msgstr "WeChat 公式アカウントの下書きボックスにあります。公式アカウントプラットフォームから公開してください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:315
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:327
 msgid "Tap \"Read more\" for the full article on the site."
 msgstr "サイトで全文を読むには「原文を読む」をタップしてください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:399
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:408
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:687
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:446
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:455
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:734
 msgid "The post needs a featured image in JPEG or PNG for the cover."
 msgstr "カバーには JPEG または PNG のアイキャッチ画像が必要です。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:415
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:462
 msgid "WeChat did not take the cover image."
 msgstr "WeChat がカバー画像を受け付けませんでした。"
 
 #. translators: %d: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:496
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:543
 #, php-format
 msgid "%d article is ready in the WeChat draft box"
 msgid_plural "%d articles are ready in the WeChat draft box"
 msgstr[0] "WeChat の下書きボックスに %d 件の記事があります"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:497
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:544
 msgid "Check them and publish in the WeChat Official Accounts Platform: https://mp.weixin.qq.com/"
 msgstr "確認して WeChat 公式アカウントプラットフォームで公開してください：https://mp.weixin.qq.com/"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:542
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:589
 msgid "You cannot send this post."
 msgstr "この投稿を送る権限がありません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:545
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:592
 msgid "The post is in the WeChat draft box. Publish it from the Official Accounts Platform."
 msgstr "投稿を WeChat の下書きボックスに入れました。公式アカウントプラットフォームから公開してください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:565
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:612
 msgid "Published posts that anyone can read can be sent to the WeChat draft box."
 msgstr "誰でも読める公開済みの投稿だけを WeChat の下書きボックスに送れます。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:568
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:615
 msgid "Send to the WeChat draft box again"
 msgstr "もう一度 WeChat の下書きボックスに送る"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:568
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:615
 msgid "Send to the WeChat draft box"
 msgstr "WeChat の下書きボックスに送る"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:582
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:629
 msgid "Send posts to the WeChat draft box"
 msgstr "投稿を WeChat の下書きボックスに送る"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:583
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:630
 msgid "Make one draft in the WeChat Official Account from up to eight published posts, in order, and note it in their publishing records. Nothing is published: the owner publishes the draft in the Official Accounts Platform."
 msgstr "公開済みの投稿最大 8 件から、順番どおりに WeChat 公式アカウントの下書きを 1 つ作り、各投稿の公開記録に残します。公開はしません。所有者が公式アカウントプラットフォームで公開します。"
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:678
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:725
 #, php-format
 msgid "WeChat does not accept calls from %s. Add it to the IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform."
 msgstr "WeChat は %s からの呼び出しを受け付けません。WeChat 開発者プラットフォームの「基本情報 > 開発者キー」で IP ホワイトリストに追加してください。"
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:678
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:725
 msgid "this server's address"
 msgstr "このサーバーのアドレス"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:681
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:728
 msgid "The AppID or AppSecret is missing."
 msgstr "AppID または AppSecret がありません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:682
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:729
 msgid "WeChat did not accept the AppSecret. Reset it in the WeChat Developers Platform and enter the new one."
 msgstr "WeChat が AppSecret を受け付けませんでした。WeChat 開発者プラットフォームでリセットし、新しいものを入力してください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:683
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:730
 msgid "WeChat did not accept the AppID."
 msgstr "WeChat が AppID を受け付けませんでした。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:684
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:731
 msgid "The AppSecret is frozen in the WeChat Developers Platform."
 msgstr "AppSecret が WeChat 開発者プラットフォームで凍結されています。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:685
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:732
 msgid "This account may not use that WeChat interface."
 msgstr "このアカウントはその WeChat インターフェースを使えません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:686
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:733
 msgid "The account reached WeChat's daily limit for this interface. Try again tomorrow."
 msgstr "このインターフェースの 1 日の上限に達しました。明日もう一度お試しください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:688
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:735
 msgid "Only published posts that anyone can read are sent."
 msgstr "誰でも読める公開済みの投稿だけを送ります。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:689
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:736
 msgid "No post could be made into an article; each needs a featured image in JPEG or PNG."
 msgstr "記事にできる投稿がありませんでした。それぞれ JPEG または PNG のアイキャッチ画像が必要です。"
 
 #. translators: %s: error code.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:695
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:742
 #, php-format
 msgid "WeChat refused the draft (%s)."
 msgstr "WeChat が下書きを拒否しました（%s）。"
 
 #. translators: 1: how long ago, 2: what went wrong.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:712
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:759
 #, php-format
 msgid "Last draft %1$s ago failed: %2$s"
 msgstr "%1$s前の下書きは失敗しました：%2$s"
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:716
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:763
 #, php-format
 msgid "Last scheduled run %s ago: no new featured post to send."
 msgstr "%s前の定期実行：送る新しいおすすめ記事はありませんでした。"
 
 #. translators: 1: how long ago, 2: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:719
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:766
 #, php-format
 msgid "Last draft %1$s ago: %2$s article is in the WeChat draft box."
 msgid_plural "Last draft %1$s ago: %2$s articles are in the WeChat draft box."
 msgstr[0] "%1$s前の下書き：%2$s 件の記事が WeChat の下書きボックスにあります。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:504
+#: includes/class-ai-chat-bedrock-wechat.php:514
 msgid "There are no featured articles yet."
 msgstr "おすすめ記事はまだありません。"
 
-#: includes/class-ai-chat-bedrock-wechat.php:506
+#: includes/class-ai-chat-bedrock-wechat.php:516
 msgid "Featured articles:"
 msgstr "おすすめ記事："
 
@@ -7221,11 +7221,11 @@ msgstr "このアカウントはそれらの投稿を送れません。"
 msgid "The mini game has its own AppID, not the Official Account's; it was not saved."
 msgstr "ミニゲームには公式アカウントとは別の AppID があります。保存しませんでした。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2227
+#: admin/class-ai-chat-bedrock-admin.php:2228
 msgid "The mini game uses the same token or EncodingAESKey as the Official Account. It was saved; choose safe mode in both, so each message is checked against its own AppID, and consider separate values."
 msgstr "ミニゲームが公式アカウントと同じトークンまたは EncodingAESKey を使っています。保存しました。各メッセージが自分の AppID で確認されるよう両方で安全モードを選び、別の値にすることも検討してください。"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:632
+#: includes/class-ai-chat-bedrock-wechat-game.php:651
 msgid "a plaintext message was refused, because the mini game shares the Official Account's token; choose safe mode for the mini game"
 msgstr "ミニゲームが公式アカウントと同じトークンを使っているため、平文のメッセージを拒否しました。ミニゲームでは安全モードを選んでください"
 
@@ -7234,7 +7234,7 @@ msgid "What visitors see"
 msgstr "訪問者に表示する内容"
 
 #: admin/class-ai-chat-bedrock-admin.php:1093
-#: admin/class-ai-chat-bedrock-admin.php:2449
+#: admin/class-ai-chat-bedrock-admin.php:2450
 msgid "Agents and tools"
 msgstr "エージェントとツール"
 
@@ -7258,15 +7258,28 @@ msgstr "メッセージプッシュをオンにすると、WeChat は管理画�
 msgid "Off by default. Uses the AppID entered for the WeChat Official Account above, and the AppSecret and IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform. Each post becomes an article with its title, excerpt, the featured image as cover, the text and images a signed-out visitor sees, and the post as \"Read more\"; links in the text become plain text, as WeChat does not open them. Posts are sent from the Published elsewhere box, by an agent, or on the schedule, which takes featured posts of the last 60 days not sent before, in Chinese when the site has it."
 msgstr "初期設定ではオフです。上で WeChat 公式アカウント用に入力した AppID と、WeChat 開発者プラットフォームの「基本情報 > 開発者キー」の AppSecret と IP ホワイトリストを使います。各投稿は、タイトル、抜粋、アイキャッチ画像のカバー、ログインしていない訪問者が見る本文と画像を含む記事になり、投稿のアドレスが「原文を読む」になります。WeChat は外部リンクを開かないため、本文のリンクはテキストになります。投稿は「他の場所での公開」ボックス、エージェント、またはスケジュールから送られます。スケジュールは過去 60 日間のまだ送っていないおすすめ記事を選び、サイトに中国語があれば中国語版を使います。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2454
+#: admin/class-ai-chat-bedrock-admin.php:2455
 msgid "Channels"
 msgstr "チャネル"
 
-#: includes/class-ai-chat-bedrock-youtube.php:380
-#: includes/class-ai-chat-bedrock-youtube.php:936
+#: includes/class-ai-chat-bedrock-youtube.php:386
+#: includes/class-ai-chat-bedrock-youtube.php:963
 msgid "Connect a YouTube channel under Settings > Channels first."
 msgstr "先に「設定 > チャネル」で YouTube チャンネルを接続してください。"
 
 #: admin/class-ai-chat-bedrock-admin.php:170
 msgid "Overview"
 msgstr "概要"
+
+#: includes/class-ai-chat-bedrock-distribution.php:262
+msgid "You cannot edit that translation."
+msgstr "その翻訳を編集する権限がありません。"
+
+#: includes/class-ai-chat-bedrock-wechat-game.php:652
+#: includes/class-ai-chat-bedrock-wechat.php:278
+msgid "a signed address was used again with a different message, so it was refused"
+msgstr "署名済みのアドレスが別のメッセージで再利用されたため、拒否しました"
+
+#: includes/class-ai-chat-bedrock-youtube.php:399
+msgid "You cannot upload that video."
+msgstr "その動画はアップロードできません。"

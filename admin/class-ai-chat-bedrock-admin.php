@@ -2223,7 +2223,8 @@ class AI_Chat_Bedrock_Admin {
 				$aicfab_shared = true;
 			}
 		}
-		if ( ! empty( $aicfab_shared ) ) {
+		// Said when the mini game's token or key is entered, not on every later save.
+		if ( ! empty( $aicfab_shared ) && ( ! empty( $input['wxgame_token'] ) || ! empty( $input['wxgame_aes_key'] ) ) ) {
 			$this->notice( 'wxgame_token', __( 'The mini game uses the same token or EncodingAESKey as the Official Account. It was saved; choose safe mode in both, so each message is checked against its own AppID, and consider separate values.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 

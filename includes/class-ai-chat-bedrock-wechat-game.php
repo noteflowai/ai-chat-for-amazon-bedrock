@@ -54,8 +54,12 @@ class AI_Chat_Bedrock_WeChat_Game {
 	// A player who opens the chat again within this time is not welcomed again.
 	const WELCOME_EVERY = 43200;
 
-	// A request WeChat sends again, because the first took too long, is handled once.
-	const SEEN_TTL = 600;
+	// A request WeChat sends again, because the first took too long, is handled once, for as long
+	// as its signature is accepted.
+	const SEEN_TTL = 960;
+
+	// WeChat waits five seconds; an answer is not tried again after four.
+	const SEND_SECONDS = 4.0;
 
 	const MAX_BODY_BYTES = 65536;
 	const MAX_AGE        = 900;
@@ -236,6 +240,10 @@ class AI_Chat_Bedrock_WeChat_Game {
 		} else {
 			$valid = AI_Chat_Bedrock_WeChat::signature_matches( (string) $request->get_param( 'signature' ), array( $token, $timestamp, $nonce ) );
 		}
+		if ( $valid && 'POST' === $method && ! AI_Chat_Bedrock_WeChat_API::fresh( self::REST_ROUTE, (string) $request->get_param( $safe ? 'msg_signature' : 'signature' ), $timestamp, $nonce, (string) $request->get_body(), self::MAX_AGE ) ) {
+			self::note_contact( 'replay' );
+			return $denied;
+		}
 		self::note_contact( $valid ? ( 'GET' === $method ? 'checked' : 'message' ) : 'signature' );
 		return $valid ? true : $denied;
 	}
@@ -339,12 +347,18 @@ class AI_Chat_Bedrock_WeChat_Game {
 			}
 		}
 
-		if ( '' !== $reply && self::can_reply( $options ) ) {
-			$sent = self::send( $player, $reply, $options );
-			self::bump( $today, true === $sent ? 'replies' : 'failed' );
-		}
+		// Counted before the answer is sent, which can take seconds, so a message that arrives
+		// meanwhile is not counted over.
 		$stats[ $day ] = $today;
 		self::save_stats( $stats );
+		if ( '' !== $reply && self::can_reply( $options ) ) {
+			$sent  = self::send( $player, $reply, $options );
+			$stats = self::stats();
+			$today = isset( $stats[ $day ] ) ? $stats[ $day ] : array();
+			self::bump( $today, true === $sent ? 'replies' : 'failed' );
+			$stats[ $day ] = $today;
+			self::save_stats( $stats );
+		}
 	}
 
 	/**
@@ -415,26 +429,28 @@ class AI_Chat_Bedrock_WeChat_Game {
 	/**
 	 * Count a player once a day, without keeping who they are.
 	 *
-	 * The key is a hash with a salt made for the day, and both go when the day does.
+	 * Each player seen today is a transient named by a hash with a salt made for the day; the
+	 * salt and the names expire when the day ends, so no list of players is kept or rewritten.
 	 *
 	 * @param array  $today  Today's counts.
 	 * @param string $player OpenID.
 	 */
 	private static function count_player( &$today, $player ) {
-		$key  = 'aicfab_wxg_players_' . wp_date( 'Ymd' );
-		$seen = get_transient( $key );
-		if ( ! is_array( $seen ) || empty( $seen['salt'] ) ) {
-			$seen = array(
-				'salt' => bin2hex( random_bytes( 16 ) ),
-				'ids'  => array(),
-			);
-		}
-		$id = substr( hash_hmac( 'sha256', $player, $seen['salt'] ), 0, 16 );
-		if ( isset( $seen['ids'][ $id ] ) || count( $seen['ids'] ) >= self::MAX_PLAYERS ) {
+		if ( isset( $today['players'] ) && (int) $today['players'] >= self::MAX_PLAYERS ) {
 			return;
 		}
-		$seen['ids'][ $id ] = 1;
-		set_transient( $key, $seen, 2 * DAY_IN_SECONDS );
+		$zone = function_exists( 'wp_timezone' ) ? wp_timezone() : new DateTimeZone( 'UTC' );
+		$left = max( 60, ( new DateTime( 'tomorrow', $zone ) )->getTimestamp() - time() );
+		$salt = get_transient( 'aicfab_wxg_salt_' . wp_date( 'Ymd' ) );
+		if ( ! is_string( $salt ) || '' === $salt ) {
+			$salt = bin2hex( random_bytes( 16 ) );
+			set_transient( 'aicfab_wxg_salt_' . wp_date( 'Ymd' ), $salt, $left );
+		}
+		$key = 'aicfab_wxg_p_' . substr( hash_hmac( 'sha256', $player, $salt ), 0, 32 );
+		if ( false !== get_transient( $key ) ) {
+			return;
+		}
+		set_transient( $key, 1, $left );
 		self::bump( $today, 'players' );
 	}
 
@@ -557,8 +573,10 @@ class AI_Chat_Bedrock_WeChat_Game {
 				'secret' => self::app_secret( $options ),
 				'cache'  => self::ACCESS_KEY,
 			),
+			2,
+			'application/json',
 			// WeChat waits five seconds for the request this answers.
-			3
+			( isset( $_SERVER['REQUEST_TIME_FLOAT'] ) ? (float) $_SERVER['REQUEST_TIME_FLOAT'] : microtime( true ) ) + self::SEND_SECONDS
 		);
 		if ( is_wp_error( $result ) ) {
 			return self::note_error( $result );
@@ -573,8 +591,9 @@ class AI_Chat_Bedrock_WeChat_Game {
 	 * @param string $result off, stale, signature, checked or message.
 	 */
 	public static function note_contact( $result ) {
-		$last = self::contact();
-		if ( isset( $last['result'], $last['time'] ) && $last['result'] === $result && time() - (int) $last['time'] < MINUTE_IN_SECONDS ) {
+		$last    = self::contact();
+		$refused = array( 'stale', 'signature', 'plaintext', 'replay' );
+		if ( isset( $last['result'], $last['time'] ) && time() - (int) $last['time'] < MINUTE_IN_SECONDS && ( $last['result'] === $result || ( in_array( $last['result'], $refused, true ) && in_array( $result, $refused, true ) ) ) ) {
 			return;
 		}
 		$last['result'] = $result;
@@ -630,6 +649,7 @@ class AI_Chat_Bedrock_WeChat_Game {
 				'stale'     => __( 'a request came without a current timestamp, so it was refused', 'ai-chat-for-amazon-bedrock' ),
 				'signature' => __( 'the signature did not match the token, so the request was refused; enter the same token here as in WeChat', 'ai-chat-for-amazon-bedrock' ),
 				'plaintext' => __( 'a plaintext message was refused, because the mini game shares the Official Account\'s token; choose safe mode for the mini game', 'ai-chat-for-amazon-bedrock' ),
+				'replay'    => __( 'a signed address was used again with a different message, so it was refused', 'ai-chat-for-amazon-bedrock' ),
 				'checked'   => __( 'WeChat checked the address, and the signature matched', 'ai-chat-for-amazon-bedrock' ),
 				'message'   => __( 'a signed message arrived from WeChat', 'ai-chat-for-amazon-bedrock' ),
 			);

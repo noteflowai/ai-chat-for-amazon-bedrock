@@ -41,8 +41,17 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	const IMAGE_BYTES = 1048576;
 	const COVER_BYTES = 10485760;
 
-	// WeChat takes less than 20,000 characters of article HTML.
+	// WeChat takes less than 20,000 characters, and less than 1 MB, of article HTML.
 	const MAX_CONTENT = 19000;
+	const MAX_BYTES   = 1000000;
+
+	// Images uploaded for one draft, and the seconds spent on them; the rest are left out, so
+	// one request from the editor or an agent ends well within PHP's and the browser's limits.
+	const DRAFT_IMAGES  = 40;
+	const IMAGE_SECONDS = 60;
+
+	private static $images_left  = self::DRAFT_IMAGES;
+	private static $images_until = 0;
 
 	// A scheduled run looks at posts this recent.
 	const RECENT_DAYS = 60;
@@ -192,6 +201,9 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		$articles = array();
 		$posts    = array();
 		$skipped  = array();
+
+		self::$images_left  = self::DRAFT_IMAGES;
+		self::$images_until = microtime( true ) + self::IMAGE_SECONDS;
 		if ( ! self::enabled( $options ) ) {
 			return self::note( new WP_Error( 'wx_secret', __( 'Drafts for the WeChat Official Account are off, or its AppID or AppSecret is missing.', 'ai-chat-for-amazon-bedrock' ) ), $source );
 		}
@@ -222,6 +234,9 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			return self::note( $result, $source, $skipped );
 		}
 		$media_id = isset( $result['media_id'] ) ? (string) $result['media_id'] : '';
+		if ( '' === $media_id ) {
+			return self::note( new WP_Error( 'wx_http', 'No media_id' ), $source, $skipped );
+		}
 		foreach ( $posts as $post ) {
 			AI_Chat_Bedrock_Distribution::record(
 				$post->ID,
@@ -258,7 +273,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( is_wp_error( $cover ) ) {
 			return $cover;
 		}
-		$excerpt = trim( wp_strip_all_tags( html_entity_decode( (string) get_the_excerpt( $post ), ENT_QUOTES, 'UTF-8' ) ) );
+		$excerpt = html_entity_decode( AI_Chat_Bedrock_Distribution::public_excerpt( $post, 120 ), ENT_QUOTES, 'UTF-8' );
 		return array(
 			'article_type'          => 'news',
 			'title'                 => self::cut( html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ), 32 ),
@@ -282,17 +297,15 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 */
 	public static function content( $post, $account ) {
 		$html = self::clean_html( AI_Chat_Bedrock_Content::render_as_guest( $post ) );
-		$seen = get_post_meta( $post->ID, self::IMAGES_META, true );
-		$seen = is_array( $seen ) ? $seen : array();
 		$left = self::MAX_IMAGES;
 		$html = preg_replace_callback(
 			'#<img\b[^>]*>#i',
-			function ( $tag ) use ( $account, &$seen, &$left ) {
+			function ( $tag ) use ( $post, $account, &$left ) {
 				$src = preg_match( '#\ssrc="([^"]+)"#i', $tag[0], $found ) ? html_entity_decode( $found[1], ENT_QUOTES, 'UTF-8' ) : '';
 				if ( $left < 1 || '' === $src ) {
 					return '';
 				}
-				$url = self::upload_image( $src, $account, $seen );
+				$url = self::upload_image( $src, $account, $post->ID );
 				if ( '' === $url ) {
 					return '';
 				}
@@ -302,7 +315,6 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			},
 			$html
 		);
-		update_post_meta( $post->ID, self::IMAGES_META, array_slice( $seen, -50, null, true ) );
 
 		// In the post's language, which may not be the site's.
 		$locales  = array(
@@ -316,12 +328,42 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( $switched ) {
 			restore_previous_locale();
 		}
-		if ( strlen( $html ) + strlen( $more ) > self::MAX_CONTENT ) {
-			$cut  = substr( $html, 0, self::MAX_CONTENT - strlen( $more ) );
-			$end  = strrpos( $cut, '</p>' );
-			$html = false !== $end ? substr( $cut, 0, $end + 4 ) : '';
+		return self::fit( $html, $more );
+	}
+
+	/**
+	 * The article's HTML within WeChat's limits, cut after the last whole block that fits.
+	 *
+	 * @param string $html HTML.
+	 * @param string $more Last line.
+	 * @return string
+	 */
+	public static function fit( $html, $more ) {
+		$room = self::MAX_CONTENT - AI_Chat_Bedrock_Security::string_length( $more );
+		if ( AI_Chat_Bedrock_Security::string_length( $html ) <= $room && strlen( $html ) + strlen( $more ) <= self::MAX_BYTES ) {
+			return $html . $more;
 		}
-		return $html . $more;
+		$cut  = AI_Chat_Bedrock_Security::string_substr( $html, 0, $room );
+		$over = strlen( $cut ) + strlen( $more ) - self::MAX_BYTES;
+		// Characters of up to four bytes: cutting a quarter of the excess in characters per round
+		// keeps whole characters and ends within the bytes allowed.
+		while ( $over > 0 ) {
+			$cut  = AI_Chat_Bedrock_Security::string_substr( $cut, 0, max( 0, AI_Chat_Bedrock_Security::string_length( $cut ) - (int) ceil( $over / 4 ) ) );
+			$over = strlen( $cut ) + strlen( $more ) - self::MAX_BYTES;
+		}
+		$end = 0;
+		foreach ( array( '</p>', '</ul>', '</ol>', '</table>', '</blockquote>', '</figure>', '</pre>', '</h2>', '</h3>', '</h4>' ) as $close ) {
+			$at = strrpos( $cut, $close );
+			if ( false !== $at ) {
+				$end = max( $end, $at + strlen( $close ) );
+			}
+		}
+		if ( $end > 0 ) {
+			return substr( $cut, 0, $end ) . $more;
+		}
+		// No whole block fits, as in one long list item: its text, without the markup.
+		$text = trim( wp_strip_all_tags( $cut ) );
+		return ( '' !== $text ? '<p>' . esc_html( $text ) . '…</p>' : '' ) . $more;
 	}
 
 	/**
@@ -360,24 +402,33 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 *
 	 * @param string $src     Image address in the post.
 	 * @param array  $account Account.
-	 * @param array  $seen    Uploaded before: file key to WeChat address.
+	 * @param int    $post_id Post, whose uploads are remembered.
 	 * @return string Address, or an empty string when the image cannot be used.
 	 */
-	private static function upload_image( $src, $account, &$seen ) {
+	private static function upload_image( $src, $account, $post_id ) {
 		$file = self::local_image( $src, self::IMAGE_BYTES );
 		if ( null === $file ) {
 			return '';
 		}
-		$key = md5( $file['path'] . '|' . filemtime( $file['path'] ) );
+		$seen = get_post_meta( $post_id, self::IMAGES_META, true );
+		$seen = is_array( $seen ) ? $seen : array();
+		$key  = md5( $account['app_id'] . '|' . $file['path'] . '|' . filemtime( $file['path'] ) );
 		if ( isset( $seen[ $key ] ) ) {
 			return (string) $seen[ $key ];
 		}
+		// Past the draft's share of images or time, the rest are left out.
+		if ( self::$images_left < 1 || ( self::$images_until && microtime( true ) > self::$images_until ) ) {
+			return '';
+		}
+		--self::$images_left;
 		$form = AI_Chat_Bedrock_WeChat_API::multipart( $file['path'], $file['mime'] );
-		$sent = null === $form ? null : AI_Chat_Bedrock_WeChat_API::call( 'media/uploadimg', $form['body'], $account, 30, $form['type'] );
+		$sent = null === $form ? null : AI_Chat_Bedrock_WeChat_API::call( 'media/uploadimg', $form['body'], $account, 20, $form['type'] );
 		if ( ! is_array( $sent ) || empty( $sent['url'] ) ) {
 			return '';
 		}
+		// Kept at once, so a request cut short does not upload it again.
 		$seen[ $key ] = (string) $sent['url'];
+		update_post_meta( $post_id, self::IMAGES_META, array_slice( $seen, -50, null, true ) );
 		return $seen[ $key ];
 	}
 
@@ -407,7 +458,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( null === $form ) {
 			return new WP_Error( 'no_cover', __( 'The post needs a featured image in JPEG or PNG for the cover.', 'ai-chat-for-amazon-bedrock' ) );
 		}
-		$sent = AI_Chat_Bedrock_WeChat_API::call( 'material/add_material?type=image', $form['body'], $account, 30, $form['type'] );
+		$sent = AI_Chat_Bedrock_WeChat_API::call( 'material/add_material?type=image', $form['body'], $account, 20, $form['type'] );
 		if ( is_wp_error( $sent ) ) {
 			return $sent;
 		}

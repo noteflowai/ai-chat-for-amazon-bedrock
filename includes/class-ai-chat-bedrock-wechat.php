@@ -211,12 +211,18 @@ class AI_Chat_Bedrock_WeChat {
 			self::note_contact( 'stale', $method );
 			return $denied;
 		}
-		if ( 'POST' === $method && 'aes' === strtolower( (string) $request->get_param( 'encrypt_type' ) ) ) {
+		$safe = 'aes' === strtolower( (string) $request->get_param( 'encrypt_type' ) );
+		if ( 'POST' === $method && $safe ) {
 			$body  = (string) $request->get_body();
 			$outer = strlen( $body ) <= self::MAX_BODY_BYTES ? self::parse( $body ) : null;
 			$valid = null !== $outer && ! empty( $outer['Encrypt'] ) && self::signature_matches( (string) $request->get_param( 'msg_signature' ), array( $token, $timestamp, $nonce, $outer['Encrypt'] ) );
 		} else {
 			$valid = self::signature_matches( (string) $request->get_param( 'signature' ), array( $token, $timestamp, $nonce ) );
+		}
+		// WeChat's repeats carry the same message; another message under a used signature is not WeChat's.
+		if ( $valid && 'POST' === $method && class_exists( 'AI_Chat_Bedrock_WeChat_API' ) && ! AI_Chat_Bedrock_WeChat_API::fresh( self::REST_ROUTE, (string) $request->get_param( $safe ? 'msg_signature' : 'signature' ), $timestamp, $nonce, (string) $request->get_body(), self::MAX_AGE ) ) {
+			self::note_contact( 'replay', $method );
+			return $denied;
 		}
 		self::note_contact( $valid ? ( 'GET' === $method ? 'checked' : 'message' ) : 'signature', $method );
 		return $valid ? true : $denied;
@@ -236,7 +242,10 @@ class AI_Chat_Bedrock_WeChat {
 	public static function note_contact( $result, $method ) {
 		$last = get_option( self::CONTACT_OPTION, array() );
 		$last = is_array( $last ) ? $last : array();
-		if ( isset( $last['result'], $last['time'] ) && $last['result'] === $result && time() - (int) $last['time'] < MINUTE_IN_SECONDS ) {
+		// The same outcome, or one refusal after another, is written at most once a minute, so a
+		// stream of bad requests does not write on every one.
+		$refused = array( 'stale', 'signature', 'replay' );
+		if ( isset( $last['result'], $last['time'] ) && time() - (int) $last['time'] < MINUTE_IN_SECONDS && ( $last['result'] === $result || ( in_array( $last['result'], $refused, true ) && in_array( $result, $refused, true ) ) ) ) {
 			return;
 		}
 		update_option(
@@ -266,6 +275,7 @@ class AI_Chat_Bedrock_WeChat {
 			'signature' => __( 'the signature did not match the token, so the request was refused; enter the same token here as in WeChat', 'ai-chat-for-amazon-bedrock' ),
 			'checked'   => __( 'WeChat checked the address, and the signature matched', 'ai-chat-for-amazon-bedrock' ),
 			'message'   => __( 'a signed message arrived from WeChat', 'ai-chat-for-amazon-bedrock' ),
+			'replay'    => __( 'a signed address was used again with a different message, so it was refused', 'ai-chat-for-amazon-bedrock' ),
 		);
 		$result = isset( $what[ $last['result'] ] ) ? $what[ $last['result'] ] : (string) $last['result'];
 		/* translators: 1: how long ago, such as 5 mins, 2: what happened. */

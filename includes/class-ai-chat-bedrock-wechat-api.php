@@ -26,12 +26,16 @@ class AI_Chat_Bedrock_WeChat_API {
 	 * @param string $path    Path and query after cgi-bin/.
 	 * @param string $body    Request body.
 	 * @param array  $account app_id, secret, and cache: the transient that keeps the token.
-	 * @param int    $timeout Seconds.
-	 * @param string $type    Content type of the body.
+	 * @param int    $timeout  Seconds.
+	 * @param string $type     Content type of the body.
+	 * @param float  $deadline Time after which a stale token is not fetched again; 0 for none.
 	 * @return array|WP_Error The response, or an error named wx_ and WeChat's error code.
 	 */
-	public static function call( $path, $body, $account, $timeout = 3, $type = 'application/json' ) {
+	public static function call( $path, $body, $account, $timeout = 3, $type = 'application/json', $deadline = 0.0 ) {
 		foreach ( array( false, true ) as $fresh ) {
+			if ( $fresh && $deadline > 0 && microtime( true ) > $deadline ) {
+				return new WP_Error( 'wx_timeout', 'Out of time' );
+			}
 			$token = self::access_token( $account, $fresh );
 			if ( is_wp_error( $token ) ) {
 				return $token;
@@ -146,6 +150,34 @@ class AI_Chat_Bedrock_WeChat_API {
 			'body' => '--' . $boundary . "\r\nContent-Disposition: form-data; name=\"media\"; filename=\"" . $name . "\"\r\nContent-Type: " . $mime . "\r\n\r\n" . $data . "\r\n--" . $boundary . "--\r\n",
 			'type' => 'multipart/form-data; boundary=' . $boundary,
 		);
+	}
+
+	/**
+	 * Whether a signed request is new, or WeChat sending the same request again.
+	 *
+	 * In plaintext mode the signature covers the token, timestamp and nonce but not the message,
+	 * so anyone who saw one signed address, in a log for instance, could send other messages with
+	 * it until the timestamp is too old. Each signed address is kept with its message's hash for
+	 * as long as it is accepted: WeChat's own repeats carry the same message and pass; a different
+	 * message under the same signature is refused.
+	 *
+	 * @param string $route     Route.
+	 * @param string $signature Signature or msg_signature.
+	 * @param string $timestamp Timestamp.
+	 * @param string $nonce     Nonce.
+	 * @param string $body      Body.
+	 * @param int    $ttl       Seconds the signature is accepted.
+	 * @return bool False for a different message under a signature already used.
+	 */
+	public static function fresh( $route, $signature, $timestamp, $nonce, $body, $ttl ) {
+		$key  = 'aicfab_wxn_' . md5( $route . '|' . $signature . '|' . $timestamp . '|' . $nonce );
+		$hash = sha1( (string) $body );
+		$seen = get_transient( $key );
+		if ( false !== $seen ) {
+			return hash_equals( (string) $seen, $hash );
+		}
+		set_transient( $key, $hash, $ttl + 60 );
+		return true;
 	}
 
 	/**
