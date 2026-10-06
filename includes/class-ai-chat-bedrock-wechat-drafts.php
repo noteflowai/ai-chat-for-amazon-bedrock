@@ -849,6 +849,21 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		);
 		register_rest_route(
 			AI_Chat_Bedrock_WP_MCP_Server::NAMESPACE_V1,
+			'/wechat-drafts/scan',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'handle_scan' ),
+				'permission_callback' => array( $this, 'can_find_video_ids' ),
+				'args'                => array(
+					'text' => array(
+						'required' => true,
+						'type'     => 'string',
+					),
+				),
+			)
+		);
+		register_rest_route(
+			AI_Chat_Bedrock_WP_MCP_Server::NAMESPACE_V1,
 			self::VIDEO_ROUTE . '/ids',
 			array(
 				'methods'             => 'POST',
@@ -931,6 +946,89 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			}
 		}
 		return rest_ensure_response( array( 'deleted' => $media_id ) );
+	}
+
+	/**
+	 * Which drafts in the account contain a text, with each article's title and whether a post
+	 * of this site sent it: for an administrator tracing an old line left in a draft.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function handle_scan( $request ) {
+		$text  = sanitize_text_field( (string) $request->get_param( 'text' ) );
+		$found = array();
+		for ( $offset = 0; '' !== $text && $offset < 200; $offset += 20 ) {
+			$page = AI_Chat_Bedrock_WeChat_API::call(
+				'draft/batchget',
+				wp_json_encode(
+					array(
+						'offset'     => $offset,
+						'count'      => 20,
+						'no_content' => 0,
+					)
+				),
+				self::account( self::options( null ) ),
+				30
+			);
+			if ( is_wp_error( $page ) ) {
+				return new WP_Error( $page->get_error_code(), self::describe( $page ), array( 'status' => 502 ) );
+			}
+			$items = isset( $page['item'] ) && is_array( $page['item'] ) ? $page['item'] : array();
+			foreach ( $items as $item ) {
+				$articles = isset( $item['content']['news_item'] ) && is_array( $item['content']['news_item'] ) ? $item['content']['news_item'] : array();
+				foreach ( $articles as $index => $article ) {
+					$body = isset( $article['content'] ) ? html_entity_decode( wp_strip_all_tags( (string) $article['content'] ), ENT_QUOTES, 'UTF-8' ) : '';
+					if ( false === strpos( $body, $text ) ) {
+						continue;
+					}
+					$media_id = isset( $item['media_id'] ) ? (string) $item['media_id'] : '';
+					$found[]  = array(
+						'media_id'    => $media_id,
+						'index'       => (int) $index,
+						'title'       => isset( $article['title'] ) ? sanitize_text_field( (string) $article['title'] ) : '',
+						'update_time' => isset( $item['update_time'] ) ? (int) $item['update_time'] : 0,
+						'sent_by'     => self::post_of_draft( $media_id ),
+					);
+				}
+			}
+			if ( count( $items ) < 20 ) {
+				break;
+			}
+		}
+		return rest_ensure_response( $found );
+	}
+
+	/**
+	 * The post whose current draft this is, or 0.
+	 *
+	 * @param string $media_id Draft.
+	 * @return int
+	 */
+	private static function post_of_draft( $media_id ) {
+		$posts = get_posts(
+			array(
+				'post_type'      => 'any',
+				'post_status'    => 'any',
+				'posts_per_page' => 5,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- an administrator's diagnosis.
+					array(
+						'key'     => AI_Chat_Bedrock_Distribution::META,
+						'value'   => $media_id,
+						'compare' => 'LIKE',
+					),
+				),
+			)
+		);
+		foreach ( (array) $posts as $post_id ) {
+			$draft = self::draft_of( (int) $post_id );
+			if ( null !== $draft && $media_id === $draft['media_id'] ) {
+				return (int) $post_id;
+			}
+		}
+		return 0;
 	}
 
 	/**
