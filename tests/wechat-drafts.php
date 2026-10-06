@@ -86,6 +86,9 @@ function get_option( $name, $fallback = false ) {
 	if ( 'ai_chat_bedrock_settings' === $name ) {
 		return $GLOBALS['aicfab_options'];
 	}
+	if ( 'date_format' === $name || 'time_format' === $name ) {
+		return 'date_format' === $name ? 'Y-m-d' : 'H:i';
+	}
 	if ( 'admin_email' === $name ) {
 		return 'owner@example.test';
 	}
@@ -696,8 +699,9 @@ AI_Chat_Bedrock_WeChat_Drafts::run();
 check_drafts( array() === $GLOBALS['aicfab_http'], 'Nothing runs while the schedule is off.' );
 drafts_settings( array( 'wechat_drafts_schedule' => 'daily', 'wechat_drafts_notify' => true, 'wechat_drafts_count' => 2 ) );
 AI_Chat_Bedrock_WeChat_Drafts::run();
-$body = drafts_sent_body();
-check_drafts( 2 === count( $body['articles'] ) && 'Long' === $body['articles'][0]['title'], 'A scheduled run sends the newest featured posts, as many as set.' );
+$aicfab_adds = array_values( array_filter( $GLOBALS['aicfab_http'], function ( $c ) { return 'draft/add' === $c['path']; } ) );
+$aicfab_firsts = array_map( function ( $c ) { return json_decode( $c['body'], true )['articles']; }, $aicfab_adds );
+check_drafts( 2 === count( $aicfab_adds ) && 1 === count( $aicfab_firsts[0] ) && 1 === count( $aicfab_firsts[1] ) && 'Long' === $aicfab_firsts[1][0]['title'], 'A scheduled run sends the newest featured posts, as many as set, each as a draft of its own, the newest last so it lists first.' );
 check_drafts( 1 === count( $GLOBALS['aicfab_mail'] ) && 'owner@example.test' === $GLOBALS['aicfab_mail'][0]['to'] && false !== strpos( $GLOBALS['aicfab_mail'][0]['body'], '· Long' ) && false !== strpos( $GLOBALS['aicfab_mail'][0]['body'], 'mp.weixin.qq.com' ), 'The site is emailed to check and publish them.' );
 $GLOBALS['aicfab_posts'] = array_intersect_key( $GLOBALS['aicfab_posts'], array( 2 => 1, 4 => 1 ) );
 $calls                   = count( $GLOBALS['aicfab_http'] );
@@ -715,6 +719,18 @@ drafts_settings( array( 'wechat_drafts_schedule' => 'daily', 'wechat_drafts_enab
 AI_Chat_Bedrock_WeChat_Drafts::sync_schedule();
 check_drafts( ! isset( $GLOBALS['aicfab_cron'][ AI_Chat_Bedrock_WeChat_Drafts::CRON ] ), 'Turning drafts off removes the schedule.' );
 drafts_settings();
+
+// --- The schedule, as the settings screen shows it ----------------------------------------------
+
+function wp_date( $format, $timestamp = null ) {
+	return gmdate( 'Y-m-d H:i', null === $timestamp ? time() : $timestamp );
+}
+$GLOBALS['aicfab_cron'][ AI_Chat_Bedrock_WeChat_Drafts::CRON ] = array( time() + 3600, 'daily' );
+check_drafts( 0 === strpos( AI_Chat_Bedrock_WeChat_Drafts::schedule_summary(), 'Next scheduled run: ' ) && false === strpos( AI_Chat_Bedrock_WeChat_Drafts::schedule_summary(), 'overdue' ), 'The settings screen says when the next run is due.' );
+$GLOBALS['aicfab_cron'][ AI_Chat_Bedrock_WeChat_Drafts::CRON ] = array( time() - 7200, 'daily' );
+check_drafts( false !== strpos( AI_Chat_Bedrock_WeChat_Drafts::schedule_summary(), 'overdue' ), 'And that WordPress\'s scheduler is not running when the run is long overdue.' );
+unset( $GLOBALS['aicfab_cron'][ AI_Chat_Bedrock_WeChat_Drafts::CRON ] );
+check_drafts( '' === AI_Chat_Bedrock_WeChat_Drafts::schedule_summary(), 'Nothing while there is no schedule.' );
 
 // --- Agents ---------------------------------------------------------------------------------
 

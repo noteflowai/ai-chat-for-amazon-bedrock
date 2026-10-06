@@ -285,6 +285,7 @@ class AI_Chat_Bedrock {
 		$this->loader->add_action( 'init', 'AI_Chat_Bedrock_WeChat_Drafts', 'sync_schedule' );
 		$this->loader->add_action( 'ai_chat_bedrock_wechat_drafts', 'AI_Chat_Bedrock_WeChat_Drafts', 'run' );
 		$this->loader->add_action( 'admin_post_ai_chat_bedrock_wechat_draft', 'AI_Chat_Bedrock_WeChat_Drafts', 'handle_send' );
+		$this->loader->add_action( 'admin_post_ai_chat_bedrock_wechat_drafts_run', 'AI_Chat_Bedrock_WeChat_Drafts', 'handle_run_now' );
 		$this->loader->add_action( 'ai_chat_bedrock_distribution_box', 'AI_Chat_Bedrock_WeChat_Drafts', 'render_box_section' );
 		$this->loader->add_action( 'save_post', 'AI_Chat_Bedrock_Distribution', 'save_manual_record' );
 
