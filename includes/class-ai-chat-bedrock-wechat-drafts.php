@@ -174,6 +174,72 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	}
 
 	/**
+	 * Delete a post's older drafts in WeChat and mark them removed in its record.
+	 *
+	 * Only drafts, never a published article, which is no longer a draft; and only a draft no
+	 * other post was sent in.
+	 *
+	 * @param int    $post_id Post ID.
+	 * @param string $current The draft the post is in now.
+	 * @param array  $options Settings.
+	 * @return int Drafts deleted.
+	 */
+	public static function retire( $post_id, $current, $options ) {
+		$deleted = 0;
+		foreach ( AI_Chat_Bedrock_Distribution::entries( $post_id ) as $entry ) {
+			if ( ! isset( $entry['platform'], $entry['status'], $entry['item_id'] ) || 'wechat' !== $entry['platform'] || 'planned' !== $entry['status'] || $current === $entry['item_id'] ) {
+				continue;
+			}
+			if ( self::shared( $entry['item_id'], $post_id ) ) {
+				continue;
+			}
+			$gone = AI_Chat_Bedrock_WeChat_API::call( 'draft/delete', wp_json_encode( array( 'media_id' => $entry['item_id'] ) ), self::account( $options ), 10 );
+			if ( is_wp_error( $gone ) && ! in_array( $gone->get_error_code(), self::DRAFT_GONE, true ) ) {
+				continue;
+			}
+			AI_Chat_Bedrock_Distribution::record(
+				$post_id,
+				array(
+					'platform' => 'wechat',
+					'item_id'  => $entry['item_id'],
+					'status'   => 'removed',
+					'note'     => __( 'An older draft of this post, deleted when it was sent again.', 'ai-chat-for-amazon-bedrock' ),
+				),
+				'wechat'
+			);
+			++$deleted;
+		}
+		return $deleted;
+	}
+
+	/**
+	 * Whether another post was sent in a draft.
+	 *
+	 * @param string $media_id Draft.
+	 * @param int    $post_id  The post asking.
+	 * @return bool
+	 */
+	private static function shared( $media_id, $post_id ) {
+		$others = get_posts(
+			array(
+				'post_type'      => 'any',
+				'post_status'    => 'any',
+				'posts_per_page' => 2,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- only when a post is sent again.
+					array(
+						'key'     => AI_Chat_Bedrock_Distribution::META,
+						'value'   => $media_id,
+						'compare' => 'LIKE',
+					),
+				),
+			)
+		);
+		return (bool) array_diff( array_map( 'intval', (array) $others ), array( (int) $post_id ) );
+	}
+
+	/**
 	 * The draft a post was last sent to, while it is still a draft.
 	 *
 	 * @param int $post_id Post ID.
@@ -265,7 +331,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		$media_id = '';
 		$earlier  = 1 === count( $posts ) ? self::draft_of( $posts[0]->ID ) : null;
 		if ( null !== $earlier ) {
-			$updated  = AI_Chat_Bedrock_WeChat_API::call(
+			$updated = AI_Chat_Bedrock_WeChat_API::call(
 				'draft/update',
 				wp_json_encode(
 					array(
@@ -311,6 +377,11 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				),
 				'wechat'
 			);
+		}
+		// Older drafts of a post sent on its own are stale copies: they go, unless another post
+		// shares them.
+		if ( 1 === count( $posts ) ) {
+			self::retire( $posts[0]->ID, $media_id, $options );
 		}
 		$done = array(
 			'updated'  => null !== $earlier,

@@ -107,6 +107,15 @@ function get_post( $id = null ) {
 	return isset( $GLOBALS['aicfab_posts'][ (int) $id ] ) ? $GLOBALS['aicfab_posts'][ (int) $id ] : null;
 }
 function get_posts( $args ) {
+	if ( isset( $args['meta_query'][0]['key'] ) ) {
+		$ids = array();
+		foreach ( $GLOBALS['aicfab_meta'] as $id => $meta ) {
+			if ( isset( $meta[ $args['meta_query'][0]['key'] ] ) && false !== strpos( serialize( $meta[ $args['meta_query'][0]['key'] ] ), $args['meta_query'][0]['value'] ) ) {
+				$ids[] = $id;
+			}
+		}
+		return $ids;
+	}
 	$GLOBALS['aicfab_queries'][] = $args;
 	$posts                       = array_values( $GLOBALS['aicfab_posts'] );
 	usort(
@@ -167,6 +176,7 @@ function wp_safe_remote_post( $url, $args ) {
 		'material/add_material' => '{"media_id":"COVER_MEDIA_' . $n . '","url":"http://mmbiz.qpic.cn/c"}',
 		'draft/add'             => '{"media_id":"DRAFT_MEDIA_ID_' . $n . '"}',
 		'draft/update'          => '{"errcode":0,"errmsg":"ok"}',
+		'draft/delete'          => '{"errcode":0,"errmsg":"ok"}',
 	);
 	return array( 'body' => $replies[ $path ] );
 }
@@ -449,6 +459,26 @@ check_drafts( 1 === count( array_filter( AI_Chat_Bedrock_Distribution::entries( 
 $GLOBALS['aicfab_replies']['draft/update'] = array( '{"errcode":40007,"errmsg":"invalid media_id"}' );
 $anew = AI_Chat_Bedrock_WeChat_Drafts::create( array( 1 ), null, 'manual' );
 check_drafts( false === $anew['updated'] && $done['media_id'] !== $anew['media_id'] && 'draft/add' === end( $GLOBALS['aicfab_http'] )['path'], 'A draft already published or deleted is made anew.' );
+// Two drafts of one post, as when an update failed before: the older one goes.
+drafts_reset();
+AI_Chat_Bedrock_Distribution::record( 2, array( 'platform' => 'wechat', 'item_id' => 'OLDCOPY_A1', 'status' => 'planned', 'version' => 'idx:0' ), 'wechat' );
+AI_Chat_Bedrock_Distribution::record( 2, array( 'platform' => 'wechat', 'item_id' => 'NEWCOPY_B2', 'status' => 'planned', 'version' => 'idx:0' ), 'wechat' );
+AI_Chat_Bedrock_Distribution::record( 3, array( 'platform' => 'wechat', 'item_id' => 'SHARED_C3', 'status' => 'planned', 'version' => 'idx:1' ), 'wechat' );
+AI_Chat_Bedrock_Distribution::record( 2, array( 'platform' => 'wechat', 'item_id' => 'SHARED_C3', 'status' => 'planned', 'version' => 'idx:0' ), 'wechat' );
+AI_Chat_Bedrock_Distribution::record( 2, array( 'platform' => 'wechat', 'item_id' => 'NEWCOPY_B2', 'status' => 'planned', 'version' => 'idx:0' ), 'wechat' );
+$GLOBALS['aicfab_meta'][2][ AI_Chat_Bedrock_Distribution::META ] = array_values( array_merge( array_filter( AI_Chat_Bedrock_Distribution::entries( 2 ), function ( $e ) { return 'NEWCOPY_B2' === $e['item_id']; } ), array_filter( AI_Chat_Bedrock_Distribution::entries( 2 ), function ( $e ) { return 'NEWCOPY_B2' !== $e['item_id']; } ) ) );
+$sent    = AI_Chat_Bedrock_WeChat_Drafts::create( array( 2 ), null, 'manual' );
+$deletes = array_values( array_filter( $GLOBALS['aicfab_http'], function ( $c ) { return 'draft/delete' === $c['path']; } ) );
+$status  = array();
+foreach ( AI_Chat_Bedrock_Distribution::entries( 2 ) as $e ) {
+	$status[ $e['item_id'] ] = $e['status'];
+}
+check_drafts( true === $sent['updated'] && 'NEWCOPY_B2' === $sent['media_id'] && 1 === count( $deletes ) && false !== strpos( $deletes[0]['body'], 'OLDCOPY_A1' ), 'The older copy of a post is deleted in WeChat once it is sent again.' );
+ksort( $status );
+check_drafts( array( 'NEWCOPY_B2' => 'planned', 'OLDCOPY_A1' => 'removed', 'SHARED_C3' => 'planned' ) === $status, 'It is marked removed, and a draft another post shares is kept.' );
+drafts_reset();
+AI_Chat_Bedrock_WeChat_Drafts::create( array( 1 ), null, 'manual' );
+
 $GLOBALS['aicfab_replies']['draft/update'] = array( '{"errcode":45003,"errmsg":"title size out of limit"}' );
 $calls   = count( $GLOBALS['aicfab_http'] );
 $refused = AI_Chat_Bedrock_WeChat_Drafts::create( array( 1 ), null, 'manual' );
