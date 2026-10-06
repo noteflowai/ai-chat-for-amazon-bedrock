@@ -429,7 +429,7 @@ msgstr "请先选择嵌入模型。"
 #: includes/class-ai-chat-bedrock-mcp-integration.php:393
 #: includes/class-ai-chat-bedrock-review-prompt.php:120
 #: includes/class-ai-chat-bedrock-stream.php:74
-#: public/class-ai-chat-bedrock-public.php:368
+#: public/class-ai-chat-bedrock-public.php:370
 msgid "Security check failed."
 msgstr "安全校验失败。"
 
@@ -647,7 +647,7 @@ msgstr "欢迎语"
 
 #: admin/class-ai-chat-bedrock-admin.php:1084
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:137
-#: public/partials/ai-chat-bedrock-public-display.php:60
+#: public/partials/ai-chat-bedrock-public-display.php:69
 msgid "Suggested questions"
 msgstr "推荐问题"
 
@@ -1207,9 +1207,9 @@ msgstr "AWS"
 #: admin/class-ai-chat-bedrock-admin.php:2480
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:36
 #: includes/class-ai-chat-bedrock-chat-history.php:381
-#: public/class-ai-chat-bedrock-public.php:289
-#: public/class-ai-chat-bedrock-public.php:310
-#: public/partials/ai-chat-bedrock-public-display.php:20
+#: public/class-ai-chat-bedrock-public.php:291
+#: public/class-ai-chat-bedrock-public.php:312
+#: public/partials/ai-chat-bedrock-public-display.php:21
 msgid "Chat"
 msgstr "对话"
 
@@ -1407,13 +1407,13 @@ msgstr "所有评价"
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:267
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:327
 #: includes/class-ai-chat-bedrock-metrics.php:1294
-#: public/class-ai-chat-bedrock-public.php:122
+#: public/class-ai-chat-bedrock-public.php:124
 msgid "Helpful"
 msgstr "有帮助"
 
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:268
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:327
-#: public/class-ai-chat-bedrock-public.php:123
+#: public/class-ai-chat-bedrock-public.php:125
 msgid "Not helpful"
 msgstr "没有帮助"
 
@@ -2671,7 +2671,7 @@ msgid "Apply configuration"
 msgstr "应用配置"
 
 #: admin/partials/ai-chat-bedrock-admin-test.php:14
-#: public/class-ai-chat-bedrock-public.php:290
+#: public/class-ai-chat-bedrock-public.php:292
 msgid "Chat with AI"
 msgstr "与 AI 对话"
 
@@ -3430,7 +3430,7 @@ msgstr "请先添加一些文本。"
 
 #. translators: 1: input tokens, 2: output tokens.
 #: includes/class-ai-chat-bedrock-editor-assistant.php:248
-#: public/class-ai-chat-bedrock-public.php:140
+#: public/class-ai-chat-bedrock-public.php:142
 #, php-format
 msgid "Tokens: %1$d in / %2$d out"
 msgstr "Token：输入 %1$d / 输出 %2$d"
@@ -4151,7 +4151,7 @@ msgstr "流已打开"
 #: includes/class-ai-chat-bedrock-chat-history.php:284
 #: includes/class-ai-chat-bedrock-speech.php:438
 #: includes/class-ai-chat-bedrock-stream.php:80
-#: public/class-ai-chat-bedrock-public.php:382
+#: public/class-ai-chat-bedrock-public.php:384
 msgid "Please sign in to use the chat."
 msgstr "请登录后使用对话。"
 
@@ -4160,8 +4160,8 @@ msgid "Streaming is disabled on this site."
 msgstr "本站未启用流式回答。"
 
 #: includes/class-ai-chat-bedrock-stream.php:91
-#: public/class-ai-chat-bedrock-public.php:351
-#: public/class-ai-chat-bedrock-public.php:390
+#: public/class-ai-chat-bedrock-public.php:353
+#: public/class-ai-chat-bedrock-public.php:392
 msgid "Too many requests. Please wait a minute and try again."
 msgstr "请求过于频繁，请一分钟后再试。"
 
@@ -4279,7 +4279,7 @@ msgid "Generated text"
 msgstr "生成的文字"
 
 #: includes/class-ai-chat-bedrock-woocommerce.php:1319
-#: public/class-ai-chat-bedrock-public.php:118
+#: public/class-ai-chat-bedrock-public.php:120
 msgid "Copy"
 msgstr "复制"
 
@@ -4309,7 +4309,7 @@ msgid "Inserted. Update the product to save it."
 msgstr "已插入。更新商品即可保存。"
 
 #: includes/class-ai-chat-bedrock-woocommerce.php:1351
-#: public/class-ai-chat-bedrock-public.php:119
+#: public/class-ai-chat-bedrock-public.php:121
 msgid "Copied"
 msgstr "已复制"
 
@@ -4424,156 +4424,156 @@ msgstr "已停止回答。"
 msgid "Clear this conversation?"
 msgstr "要清空这次对话吗？"
 
-#: public/class-ai-chat-bedrock-public.php:120
+#: public/class-ai-chat-bedrock-public.php:122
 msgid "Try again"
 msgstr "重试"
 
-#: public/class-ai-chat-bedrock-public.php:121
+#: public/class-ai-chat-bedrock-public.php:123
 msgid "Was this helpful?"
 msgstr "这条回答有帮助吗？"
 
-#: public/class-ai-chat-bedrock-public.php:124
+#: public/class-ai-chat-bedrock-public.php:126
 msgid "Thanks for the feedback."
 msgstr "感谢你的反馈。"
 
-#: public/class-ai-chat-bedrock-public.php:125
+#: public/class-ai-chat-bedrock-public.php:127
 msgid "Your message is too long."
 msgstr "你的消息太长了。"
 
 #. translators: %d: number of tools being used.
-#: public/class-ai-chat-bedrock-public.php:127
+#: public/class-ai-chat-bedrock-public.php:129
 #, php-format
 msgid "Using %d tool(s) to gather information…"
 msgstr "正在使用 %d 个工具收集信息…"
 
 #. translators: %s: comma separated list of tool names.
-#: public/class-ai-chat-bedrock-public.php:129
+#: public/class-ai-chat-bedrock-public.php:131
 #, php-format
 msgid "Using %s…"
 msgstr "正在使用 %s…"
 
 #. translators: %d: number of tool calls the agent made.
-#: public/class-ai-chat-bedrock-public.php:131
+#: public/class-ai-chat-bedrock-public.php:133
 #, php-format
 msgid "Agent steps (%d)"
 msgstr "智能体步骤（%d）"
 
-#: public/class-ai-chat-bedrock-public.php:132
+#: public/class-ai-chat-bedrock-public.php:134
 msgid "succeeded"
 msgstr "成功"
 
 #: includes/class-ai-chat-bedrock-distribution.php:620
-#: public/class-ai-chat-bedrock-public.php:133
+#: public/class-ai-chat-bedrock-public.php:135
 msgid "failed"
 msgstr "失败"
 
 #. translators: %d: tool round number.
-#: public/class-ai-chat-bedrock-public.php:135
+#: public/class-ai-chat-bedrock-public.php:137
 #, php-format
 msgid "round %d"
 msgstr "第 %d 轮"
 
-#: public/class-ai-chat-bedrock-public.php:136
+#: public/class-ai-chat-bedrock-public.php:138
 msgid "The round limit was reached, so the answer was written with the information gathered so far."
 msgstr "已达到轮次上限，回答基于目前收集到的信息。"
 
 #. translators: %s: model identifier that answered instead of the main model.
-#: public/class-ai-chat-bedrock-public.php:138
+#: public/class-ai-chat-bedrock-public.php:140
 #, php-format
 msgid "The main model was unavailable, so %s answered."
 msgstr "主模型暂不可用，由 %s 作答。"
 
-#: public/class-ai-chat-bedrock-public.php:141
+#: public/class-ai-chat-bedrock-public.php:143
 msgctxt "chat avatar for the visitor"
 msgid "You"
 msgstr "你"
 
 #: admin/partials/ai-chat-bedrock-admin-leads.php:152
 #: includes/class-ai-chat-bedrock-leads.php:578
-#: public/class-ai-chat-bedrock-public.php:142
+#: public/class-ai-chat-bedrock-public.php:144
 msgctxt "chat avatar for the assistant"
 msgid "AI"
 msgstr "AI"
 
-#: public/class-ai-chat-bedrock-public.php:143
+#: public/class-ai-chat-bedrock-public.php:145
 msgid "Sources"
 msgstr "来源"
 
-#: public/class-ai-chat-bedrock-public.php:144
+#: public/class-ai-chat-bedrock-public.php:146
 msgid "(opens in a new tab)"
 msgstr "（在新标签页中打开）"
 
 #: includes/class-ai-chat-bedrock-ontology.php:246
-#: public/class-ai-chat-bedrock-public.php:145
+#: public/class-ai-chat-bedrock-public.php:147
 msgid "Products"
 msgstr "商品"
 
-#: public/class-ai-chat-bedrock-public.php:146
+#: public/class-ai-chat-bedrock-public.php:148
 msgid "View product"
 msgstr "查看商品"
 
-#: public/class-ai-chat-bedrock-public.php:147
+#: public/class-ai-chat-bedrock-public.php:149
 msgid "Add to cart"
 msgstr "加入购物车"
 
-#: public/class-ai-chat-bedrock-public.php:148
+#: public/class-ai-chat-bedrock-public.php:150
 msgid "Original price:"
 msgstr "原价："
 
-#: public/class-ai-chat-bedrock-public.php:149
+#: public/class-ai-chat-bedrock-public.php:151
 msgid "Current price:"
 msgstr "现价："
 
 #. translators: %s: average rating, such as 4.5.
-#: public/class-ai-chat-bedrock-public.php:151
+#: public/class-ai-chat-bedrock-public.php:153
 #, php-format
 msgid "Rated %s out of 5"
 msgstr "评分 %s / 5"
 
-#: public/class-ai-chat-bedrock-public.php:270
+#: public/class-ai-chat-bedrock-public.php:272
 msgid "The chat is not shown to visitors yet: Amazon Bedrock credentials or a model are still missing. Only administrators see this message."
 msgstr "访客暂时看不到对话：仍缺少 Amazon Bedrock 凭证或模型。只有管理员能看到此消息。"
 
-#: public/class-ai-chat-bedrock-public.php:272
+#: public/class-ai-chat-bedrock-public.php:274
 msgid "Finish the setup"
 msgstr "完成设置"
 
-#: public/class-ai-chat-bedrock-public.php:291
+#: public/class-ai-chat-bedrock-public.php:293
 msgid "Type your message here…"
 msgstr "在这里输入消息…"
 
 #: includes/class-ai-chat-bedrock-leads.php:187
-#: public/class-ai-chat-bedrock-public.php:292
+#: public/class-ai-chat-bedrock-public.php:294
 msgid "Send"
 msgstr "发送"
 
-#: public/class-ai-chat-bedrock-public.php:293
+#: public/class-ai-chat-bedrock-public.php:295
 msgid "Clear chat"
 msgstr "清空对话"
 
-#: public/class-ai-chat-bedrock-public.php:348
-#: public/class-ai-chat-bedrock-public.php:363
+#: public/class-ai-chat-bedrock-public.php:350
+#: public/class-ai-chat-bedrock-public.php:365
 msgid "Method not allowed."
 msgstr "不允许的请求方法。"
 
-#: public/partials/ai-chat-bedrock-public-display.php:55
+#: public/partials/ai-chat-bedrock-public-display.php:64
 msgid "Sign in to chat with the assistant."
 msgstr "登录后即可与助手对话。"
 
-#: public/partials/ai-chat-bedrock-public-display.php:56
+#: public/partials/ai-chat-bedrock-public-display.php:65
 msgid "Sign in"
 msgstr "登录"
 
-#: public/partials/ai-chat-bedrock-public-display.php:68
+#: public/partials/ai-chat-bedrock-public-display.php:77
 msgid "Chat message"
 msgstr "对话消息"
 
 #: includes/class-ai-chat-bedrock-speech.php:677
-#: public/partials/ai-chat-bedrock-public-display.php:77
+#: public/partials/ai-chat-bedrock-public-display.php:86
 msgid "Stop"
 msgstr "停止"
 
-#: public/partials/ai-chat-bedrock-public-display.php:86
+#: public/partials/ai-chat-bedrock-public-display.php:95
 msgid "Powered by Amazon Bedrock"
 msgstr "由 Amazon Bedrock 提供支持"
 
@@ -5918,6 +5918,7 @@ msgstr "（未填姓名）"
 #: admin/partials/ai-chat-bedrock-admin-leads.php:150
 #: includes/class-ai-chat-bedrock-leads.php:557
 #: includes/class-ai-chat-bedrock-leads.php:919
+#: public/partials/ai-chat-bedrock-public-display.php:54
 msgid "Conversation"
 msgstr "对话"
 
@@ -7387,3 +7388,15 @@ msgstr "对话会根据网站页面回答每条文字消息，以纯文本形式
 #, php-format
 msgid "The last signed request from WeChat came %s ago."
 msgstr "微信上一次带有效签名的请求在 %s 前。"
+
+#: public/class-ai-chat-bedrock-public.php:118
+msgid "You said:"
+msgstr "你说："
+
+#: public/class-ai-chat-bedrock-public.php:119
+msgid "Assistant:"
+msgstr "助手："
+
+#: public/partials/ai-chat-bedrock-public-display.php:42
+msgid "Close chat"
+msgstr "关闭对话"

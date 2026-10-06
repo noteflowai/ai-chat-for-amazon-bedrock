@@ -18,12 +18,81 @@
     }
 
     function formatMessage(value) {
-        let text = escapeHtml(value);
-        text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-        text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-        return text.replace(/\n/g, '<br>');
+        return renderMarkdown(escapeHtml(value));
+    }
+
+    /**
+     * The Markdown a model writes, from text that is already escaped: code, emphasis,
+     * headings, lists and web links. A link's address may hold no quote, space or angle
+     * bracket, so it cannot leave its attribute, and only http and https are linked.
+     */
+    function renderMarkdown(escaped) {
+        const blocks = [];
+        let text = String(escaped).replace(/```[^\n]*\n?([\s\S]*?)```/g, function (match, code) {
+            blocks.push('<pre><code>' + code.replace(/\n$/, '') + '</code></pre>');
+            return '\u0000' + (blocks.length - 1) + '\u0000';
+        });
+
+        function inline(line) {
+            return line
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s<>"'()]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/(^|[^*\w])\*(?!\s)([^*\n]+?)\*(?!\w)/g, '$1<em>$2</em>');
+        }
+
+        const out = [];
+        let list = null;
+        let lines = [];
+        function flushLines() {
+            if (lines.length) {
+                out.push('<p>' + lines.join('<br>') + '</p>');
+                lines = [];
+            }
+        }
+        function flushList() {
+            if (list) {
+                out.push('<' + list.tag + '>' + list.items.map(function (item) {
+                    return '<li>' + item + '</li>';
+                }).join('') + '</' + list.tag + '>');
+                list = null;
+            }
+        }
+
+        text.split('\n').forEach(function (line) {
+            const bullet = /^\s{0,3}[-*+]\s+(.*)$/.exec(line);
+            const number = /^\s{0,3}\d{1,3}[.)]\s+(.*)$/.exec(line);
+            const heading = /^\s{0,3}#{1,6}\s+(.*?)\s*#*\s*$/.exec(line);
+            const item = bullet || number;
+            if (item) {
+                const tag = bullet ? 'ul' : 'ol';
+                flushLines();
+                if (list && list.tag !== tag) {
+                    flushList();
+                }
+                list = list || { tag: tag, items: [] };
+                list.items.push(inline(item[1]));
+                return;
+            }
+            flushList();
+            if (/^\u0000\d+\u0000$/.test(line.trim())) {
+                flushLines();
+                out.push(line.trim());
+            } else if (heading) {
+                flushLines();
+                out.push('<p class="ai-chat-bedrock-heading"><strong>' + inline(heading[1]) + '</strong></p>');
+            } else if ('' === line.trim()) {
+                flushLines();
+            } else {
+                lines.push(inline(line));
+            }
+        });
+        flushLines();
+        flushList();
+
+        return out.join('').replace(/\u0000(\d+)\u0000/g, function (match, index) {
+            return blocks[Number(index)];
+        });
     }
 
     function avatar(isUser) {
@@ -119,6 +188,17 @@
             });
         }
         return nonceRequest;
+    }
+
+    /**
+     * Whether a key press sends the message: Enter without Shift, and not the Enter that
+     * picks a candidate in a Chinese or Japanese input method, which would send half a word.
+     */
+    function isSendKey(event) {
+        if ('Enter' !== event.key || event.shiftKey) {
+            return false;
+        }
+        return !event.isComposing && 229 !== event.keyCode;
     }
 
     /**
@@ -247,11 +327,19 @@
             // Ignore storage failures.
         }
 
+        function close() {
+            setOpen(false);
+            remember(false);
+            $launcher.trigger('focus');
+        }
+
+        $popup.find('.ai-chat-bedrock-close').on('click', close);
+
+        // Only while focus is in the chat, so Escape still closes a theme's menu or dialog
+        // without closing the chat behind it.
         $(document).on('keydown', function (event) {
-            if ('Escape' === event.key && 'open' === $popup.attr('data-state')) {
-                setOpen(false);
-                remember(false);
-                $launcher.trigger('focus');
+            if ('Escape' === event.key && 'open' === $popup.attr('data-state') && $popup[0].contains(document.activeElement)) {
+                close();
             }
         });
     });
@@ -302,7 +390,8 @@
             }).text(label);
 
             $button.on('click', function () {
-                const text = String($content.text() || '');
+                // innerText keeps the breaks between paragraphs and list items; text() runs them together.
+                const text = String(($content[0] && $content[0].innerText) || $content.text() || '');
                 const done = function () {
                     $button.text(params.i18n.copied || label);
                     window.setTimeout(function () {
@@ -792,7 +881,11 @@
                 $meta.append(copyButton($content));
             }
 
-            $body.append($content, $meta);
+            // The avatar is hidden from screen readers, so who is speaking is said in words.
+            const i18n = params.i18n || {};
+            const $speaker = $('<span>', { 'class': 'screen-reader-text' }).text(isUser ? (i18n.you_said || 'You said:') : (i18n.assistant_said || 'Assistant:'));
+            $content.attr('dir', 'auto');
+            $body.append($speaker, $content, $meta);
             $message.append(avatar(isUser), $body);
             $messages.find('.ai-chat-bedrock-welcome-message').remove();
             $messages.append($message);
@@ -1013,7 +1106,10 @@
             pending = value;
             $textarea.prop('disabled', value);
             $submit.prop('disabled', value);
-            $container.attr('aria-busy', value ? 'true' : 'false');
+            // Busy is the message list, not the whole chat: the announcement region is outside
+            // it, as some screen readers hold back what changes inside a busy element.
+            $messages.attr('aria-busy', value ? 'true' : 'false');
+            $container.toggleClass('is-busy', !!value);
             refreshStop();
         }
 
@@ -1476,7 +1572,7 @@
         $submit.on('click', submitMessage);
         $textarea.on('input', autoGrow);
         $textarea.on('keydown', function (event) {
-            if ('Enter' === event.key && !event.shiftKey) {
+            if (isSendKey(event.originalEvent || event)) {
                 submitMessage(event);
             }
         });

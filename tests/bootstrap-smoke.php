@@ -127,7 +127,7 @@ expect_true(
 // without touching CSS.
 $aicfab_chat_view = file_get_contents( __DIR__ . '/../public/partials/ai-chat-bedrock-public-display.php' );
 expect_true(
-	false !== strpos( $aicfab_chat_view, '<h2 class="ai-chat-bedrock-title">' ),
+	false !== strpos( $aicfab_chat_view, '<h2 class="ai-chat-bedrock-title"' ),
 	'the chat title is an h2 so it does not skip a level under the page title'
 );
 expect_true(
