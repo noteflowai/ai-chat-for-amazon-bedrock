@@ -938,6 +938,33 @@ $aicfab_built = AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]
 check_pub( ! is_wp_error( $aicfab_built ) && $GLOBALS['aicfab_sources'] === $aicfab_built['sources'], 'Another question keeps its sources.' );
 $GLOBALS['aicfab_sources'] = array();
 
+// --- Each visitor's share of the daily cap ---------------------------------------------
+
+// A cap of 100 a day gives each visitor 20 (a tenth, but at least 20). Without a share one
+// visitor, or one script, could use up the whole day for everyone else.
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-usage.php';
+aicfab_reset_pub( array( 'daily_request_limit' => 100 ) );
+$GLOBALS['aicfab_logged_in'] = false;
+$_SERVER['REMOTE_ADDR']      = '10.4.4.4';
+$aicfab_share_opts           = $GLOBALS['aicfab_opts']['ai_chat_bedrock_settings'];
+for ( $aicfab_i = 0; $aicfab_i < 20; $aicfab_i++ ) {
+	$aicfab_built = AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]', $aicfab_share_opts );
+}
+check_pub( ! is_wp_error( $aicfab_built ), 'A visitor can ask up to their share.' );
+$aicfab_built = AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]', $aicfab_share_opts );
+check_pub( is_wp_error( $aicfab_built ) && 'aicfab_visitor_daily_limit' === $aicfab_built->get_error_code(), 'The question after a visitor\'s share is refused.' );
+check_pub( is_wp_error( $aicfab_built ) && 429 === $aicfab_built->get_error_data()['status'], 'It is refused as too many requests.' );
+$_SERVER['REMOTE_ADDR'] = '10.4.4.5';
+check_pub( ! is_wp_error( AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]', $aicfab_share_opts ) ), 'Another visitor still has their own share.' );
+$_SERVER['REMOTE_ADDR'] = '10.4.4.4';
+check_pub( ! is_wp_error( AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]', array_merge( $aicfab_share_opts, array( '_shared_client' => true ) ) ) ), 'A shared client such as WeChat, where every follower has one address, is not held to one visitor\'s share.' );
+$GLOBALS['aicfab_logged_in'] = true;
+check_pub( ! is_wp_error( AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]', $aicfab_share_opts ) ), 'An administrator is not held to a visitor\'s share.' );
+$GLOBALS['aicfab_logged_in'] = false;
+$GLOBALS['aicfab_filtered']['ai_chat_bedrock_visitor_daily_requests'] = 0;
+check_pub( ! is_wp_error( AI_Chat_Bedrock_Chat_Request::build( 'What is a VLA model?', '[]', $aicfab_share_opts ) ), 'A site can turn the share off with the filter.' );
+unset( $GLOBALS['aicfab_filtered']['ai_chat_bedrock_visitor_daily_requests'] );
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

@@ -94,6 +94,17 @@ function get_option( $name, $fallback = false ) {
 	}
 	return array_key_exists( $name, $GLOBALS['aicfab_store'] ) ? $GLOBALS['aicfab_store'][ $name ] : $fallback;
 }
+function add_option( $name, $value, $deprecated = '', $autoload = null ) {
+	if ( array_key_exists( $name, $GLOBALS['aicfab_store'] ) ) {
+		return false;
+	}
+	$GLOBALS['aicfab_store'][ $name ] = $value;
+	return true;
+}
+function delete_option( $name ) {
+	unset( $GLOBALS['aicfab_store'][ $name ] );
+	return true;
+}
 function update_option( $name, $value, $autoload = null ) {
 	$GLOBALS['aicfab_store'][ $name ] = $value;
 	return true;
@@ -719,6 +730,20 @@ drafts_settings( array( 'wechat_drafts_schedule' => 'daily', 'wechat_drafts_enab
 AI_Chat_Bedrock_WeChat_Drafts::sync_schedule();
 check_drafts( ! isset( $GLOBALS['aicfab_cron'][ AI_Chat_Bedrock_WeChat_Drafts::CRON ] ), 'Turning drafts off removes the schedule.' );
 drafts_settings();
+
+// --- One run at a time ------------------------------------------------------------------------
+
+drafts_reset();
+drafts_settings( array( 'wechat_drafts_schedule' => 'daily', 'wechat_drafts_count' => 2 ) );
+$GLOBALS['aicfab_posts'][5] = $long;
+$GLOBALS['aicfab_store'][ AI_Chat_Bedrock_WeChat_Drafts::LOCK_OPTION ] = time() + 600;
+AI_Chat_Bedrock_WeChat_Drafts::run();
+check_drafts( array() === $GLOBALS['aicfab_http'], 'A run while another holds the lock does nothing, so no post gets two drafts.' );
+$GLOBALS['aicfab_store'][ AI_Chat_Bedrock_WeChat_Drafts::LOCK_OPTION ] = time() - 1;
+AI_Chat_Bedrock_WeChat_Drafts::run();
+check_drafts( array() !== $GLOBALS['aicfab_http'] && ! isset( $GLOBALS['aicfab_store'][ AI_Chat_Bedrock_WeChat_Drafts::LOCK_OPTION ] ), 'A lock left by a run that died is taken over once expired, and released after.' );
+drafts_settings();
+drafts_reset();
 
 // --- The schedule, as the settings screen shows it ----------------------------------------------
 

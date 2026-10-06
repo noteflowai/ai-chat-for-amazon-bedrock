@@ -136,6 +136,46 @@ $_SERVER['REMOTE_ADDR'] = '10.0.0.1';
 check_rl( 40 === AI_Chat_Bedrock_Security::daily_spent( 'speech' ), 'A signed-in user is counted by account, wherever they connect from.' );
 check_rl( false === strpos( implode( '', array_keys( $GLOBALS['aicfab_transients'] ) ), '10.0.0' ), 'No address is kept in a key.' );
 
+// --- With a persistent object cache --------------------------------------------------
+
+// Counters there are one atomic increment, so simultaneous requests cannot all read the same
+// count and slip under the limit together.
+$GLOBALS['aicfab_ext_cache']  = true;
+$GLOBALS['aicfab_cache']      = array();
+$GLOBALS['aicfab_transients'] = array();
+$GLOBALS['aicfab_user']       = 0;
+function wp_using_ext_object_cache() {
+	return ! empty( $GLOBALS['aicfab_ext_cache'] );
+}
+function wp_cache_add( $key, $value, $group = '', $ttl = 0 ) {
+	if ( isset( $GLOBALS['aicfab_cache'][ $group ][ $key ] ) ) {
+		return false;
+	}
+	$GLOBALS['aicfab_cache'][ $group ][ $key ] = $value;
+	$GLOBALS['aicfab_cache_ttls'][ $key ]      = $ttl;
+	return true;
+}
+function wp_cache_incr( $key, $offset = 1, $group = '' ) {
+	if ( ! isset( $GLOBALS['aicfab_cache'][ $group ][ $key ] ) ) {
+		return false;
+	}
+	$GLOBALS['aicfab_cache'][ $group ][ $key ] += $offset;
+	return $GLOBALS['aicfab_cache'][ $group ][ $key ];
+}
+function wp_cache_get( $key, $group = '' ) {
+	return isset( $GLOBALS['aicfab_cache'][ $group ][ $key ] ) ? $GLOBALS['aicfab_cache'][ $group ][ $key ] : false;
+}
+$_SERVER['REMOTE_ADDR'] = '10.7.7.7';
+check_rl( AI_Chat_Bedrock_Security::check_rate_limit( 'chat', 2 ) && AI_Chat_Bedrock_Security::check_rate_limit( 'chat', 2 ), 'The atomic counter allows up to the limit.' );
+check_rl( ! AI_Chat_Bedrock_Security::check_rate_limit( 'chat', 2 ), 'The atomic counter stops the request over the limit.' );
+AI_Chat_Bedrock_Security::spend_daily( 'chat', 1 );
+AI_Chat_Bedrock_Security::spend_daily( 'chat', 2 );
+check_rl( 3 === AI_Chat_Bedrock_Security::daily_spent( 'chat' ), 'A daily allowance adds up in the object cache.' );
+check_rl( array() === $GLOBALS['aicfab_transients'], 'With an object cache nothing is written as a transient.' );
+check_rl( in_array( DAY_IN_SECONDS, $GLOBALS['aicfab_cache_ttls'], true ) && in_array( 60, $GLOBALS['aicfab_cache_ttls'], true ), 'Cached counters expire with their window or their day.' );
+$GLOBALS['aicfab_ext_cache'] = false;
+check_rl( 0 === AI_Chat_Bedrock_Security::daily_spent( 'chat' ) && AI_Chat_Bedrock_Security::check_rate_limit( 'chat', 2 ), 'Without the cache the transient counters are used, as before.' );
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

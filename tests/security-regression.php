@@ -194,6 +194,16 @@ foreach ( array_merge( glob( __DIR__ . '/../includes/*.php' ), glob( __DIR__ . '
 	}
 }
 
+// Only callers that are not one visitor skip the per-visitor share: WeChat, whose followers
+// all arrive from WeChat's servers, and an evaluation the operator runs. The public chat and
+// the stream must never set it, or every visitor escapes the share.
+$aicfab_shared = array();
+foreach ( array( 'includes/class-ai-chat-bedrock-wechat.php', 'includes/class-ai-chat-bedrock-eval.php', 'includes/class-ai-chat-bedrock-stream.php', 'public/class-ai-chat-bedrock-public.php' ) as $aicfab_file ) {
+	$aicfab_shared[ $aicfab_file ] = false !== strpos( file_get_contents( dirname( __DIR__ ) . '/' . $aicfab_file ), "\$options['_shared_client'] = true;" );
+}
+check( $aicfab_shared['includes/class-ai-chat-bedrock-wechat.php'] && $aicfab_shared['includes/class-ai-chat-bedrock-eval.php'], 'WeChat and evaluations are not held to one visitor\'s share' );
+check( ! $aicfab_shared['includes/class-ai-chat-bedrock-stream.php'] && ! $aicfab_shared['public/class-ai-chat-bedrock-public.php'], 'the visitor-facing chat never skips the per-visitor share' );
+
 $aicfab_uninstall = file_get_contents( __DIR__ . '/../uninstall.php' );
 check( count( $aicfab_meta_written ) >= 3, 'meta keys were found in the source, got ' . count( $aicfab_meta_written ) );
 
