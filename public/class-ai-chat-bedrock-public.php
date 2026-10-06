@@ -46,6 +46,11 @@ class AI_Chat_Bedrock_Public {
 	 */
 	private static function early_script() {
 		$path = plugin_dir_path( __FILE__ ) . 'js/ai-chat-bedrock-early.js';
+		// Printed on every page with a chat, so the package's minified copy when there is one.
+		$min = plugin_dir_path( __FILE__ ) . 'js/ai-chat-bedrock-early.min.js';
+		if ( ! ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) && is_readable( $min ) ) {
+			$path = $min;
+		}
 		return is_readable( $path ) ? trim( (string) file_get_contents( $path ) ) : ''; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 	}
 

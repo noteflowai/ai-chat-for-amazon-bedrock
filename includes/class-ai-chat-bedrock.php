@@ -97,6 +97,9 @@ class AI_Chat_Bedrock {
 
 	private function set_locale() {
 		$this->loader->add_filter( 'lang_dir_for_domain', 'AI_Chat_Bedrock_Translation', 'bundled_languages', 10, 3 );
+		// Minified scripts and styles, where the package carries them.
+		$this->loader->add_filter( 'script_loader_src', 'AI_Chat_Bedrock', 'minified_src' );
+		$this->loader->add_filter( 'style_loader_src', 'AI_Chat_Bedrock', 'minified_src' );
 	}
 
 	private function define_admin_hooks() {
@@ -330,6 +333,35 @@ class AI_Chat_Bedrock {
 
 	public function get_loader() {
 		return $this->loader;
+	}
+
+	/**
+	 * Point one of this plugin's scripts or styles at its minified copy.
+	 *
+	 * The package carries a .min file beside each readable one; the source tree does not.
+	 * So the readable file is used while developing, with SCRIPT_DEBUG on, and wherever no
+	 * minified copy was built, and every enqueue keeps naming the readable file.
+	 *
+	 * @param string $src Asset URL, with its version.
+	 * @return string
+	 */
+	public static function minified_src( $src ) {
+		static $exists = array();
+
+		$base = defined( 'AI_CHAT_BEDROCK_PLUGIN_URL' ) ? AI_CHAT_BEDROCK_PLUGIN_URL : '';
+		if ( ! is_string( $src ) || '' === $base || 0 !== strpos( $src, $base ) || ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ) {
+			return $src;
+		}
+		$parts    = explode( '?', $src, 2 );
+		$relative = substr( $parts[0], strlen( $base ) );
+		if ( ! preg_match( '#^(?:public|admin)/(?:js|css)/[a-z0-9-]+\.(js|css)$#', $relative, $type ) ) {
+			return $src;
+		}
+		$minified = substr( $relative, 0, -strlen( $type[1] ) ) . 'min.' . $type[1];
+		if ( ! isset( $exists[ $minified ] ) ) {
+			$exists[ $minified ] = file_exists( AI_CHAT_BEDROCK_PLUGIN_DIR . $minified );
+		}
+		return $exists[ $minified ] ? $base . $minified . ( isset( $parts[1] ) ? '?' . $parts[1] : '' ) : $src;
 	}
 
 	/**
