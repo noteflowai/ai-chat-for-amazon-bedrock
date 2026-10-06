@@ -559,8 +559,9 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		$language = AI_Chat_Bedrock_Content::language( $post );
 		$switched = isset( $locales[ $language ] ) && function_exists( 'switch_to_locale' ) && switch_to_locale( $locales[ $language ] );
 		$video    = self::video_id( $post->ID );
-		$material = get_post_meta( $post->ID, self::MATERIAL_META, true );
-		$material = is_array( $material ) && ! empty( $material['title'] ) ? (string) $material['title'] : '';
+		// A video sent to the material API is never reviewed by WeChat and cannot be placed in an
+		// article, even in its editor, so the note asks for the video to be uploaded there.
+		$material = '';
 		$html     = self::clean_html( self::without_players( AI_Chat_Bedrock_Content::render_as_guest( $post ), $video, $material ) );
 		$more     = self::style( '<p>' . esc_html__( 'Tap "Read more" for the full article on the site.', 'ai-chat-for-amazon-bedrock' ) . '</p>' );
 		/* translators: %s: the video's title in the material library. */
@@ -647,9 +648,11 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	/**
 	 * Upload a post's video to the account's material library.
 	 *
-	 * WeChat's API takes an MP4 of at most 10 MB, so this is a copy made small for WeChat,
-	 * kept in the Media Library; the article itself cannot hold it, and the editor inserts it
-	 * from the library.
+	 * WeChat's API takes an MP4 of at most 10 MB, so this is a copy made small for WeChat, kept
+	 * in the Media Library. Such a video is for replying to followers with a video message:
+	 * WeChat never reviews videos sent to the API, so they cannot go into an article, not even
+	 * in its editor, and cannot be sent to all followers (48022). Videos for articles are
+	 * uploaded in the Official Accounts Platform.
 	 *
 	 * @param int $post_id    Post the video belongs to.
 	 * @param int $attachment The MP4 in the Media Library.
@@ -849,12 +852,40 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				$updated[] = $post_id;
 			}
 		}
-		// How many drafts WeChat lists, which the scheduled update reads to leave edited ones alone.
-		$times = self::draft_times( self::options( null ) );
+		// How many drafts WeChat lists, which the scheduled update reads to leave edited ones alone,
+		// and which posts' drafts were edited in WeChat.
+		$times  = self::draft_times( self::options( null ) );
+		$edited = array();
+		if ( ! is_wp_error( $times ) ) {
+			self::$draft_times = $times;
+			$sent              = get_posts(
+				array(
+					'post_type'      => 'post',
+					'post_status'    => 'publish',
+					'posts_per_page' => 100,
+					'fields'         => 'ids',
+					'no_found_rows'  => true,
+					'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- an administrator's diagnosis.
+						array(
+							'key'     => AI_Chat_Bedrock_Distribution::META,
+							'value'   => '"wechat"',
+							'compare' => 'LIKE',
+						),
+					),
+				)
+			);
+			foreach ( (array) $sent as $post_id ) {
+				$draft = self::draft_of( (int) $post_id );
+				if ( null !== $draft && self::edited_in_wechat( $draft, self::options( null ) ) ) {
+					$edited[] = (int) $post_id;
+				}
+			}
+		}
 		return rest_ensure_response(
 			$done + array(
 				'drafts_updated' => $updated,
 				'drafts_listed'  => is_wp_error( $times ) ? $times->get_error_code() : count( $times ),
+				'drafts_edited'  => $edited,
 			)
 		);
 	}
@@ -1547,7 +1578,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		$material = get_post_meta( $post->ID, self::MATERIAL_META, true );
 		if ( is_array( $material ) && ! empty( $material['title'] ) ) {
 			/* translators: %s: the video's title in the material library. */
-			echo '<p>' . esc_html( sprintf( __( 'Video uploaded to the material library as "%s".', 'ai-chat-for-amazon-bedrock' ), $material['title'] ) ) . '</p>';
+			echo '<p>' . esc_html( sprintf( __( 'A small copy of the video is in the material library as "%s", for replying to followers with a video message. WeChat takes no API-uploaded video into an article: upload the video in the Official Accounts Platform to insert it.', 'ai-chat-for-amazon-bedrock' ), $material['title'] ) ) . '</p>';
 		}
 		wp_nonce_field( 'aicfab_wechat_video_' . $post->ID, 'aicfab_wechat_video_nonce' );
 		echo '<label for="aicfab_wechat_video">' . esc_html__( 'WeChat video ID', 'ai-chat-for-amazon-bedrock' ) . '</label><input type="text" id="aicfab_wechat_video" class="widefat" name="aicfab_wechat_video" value="' . esc_attr( self::video_id( $post->ID ) ) . '" placeholder="wxv_…">';

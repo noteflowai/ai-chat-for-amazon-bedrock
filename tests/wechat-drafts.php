@@ -665,7 +665,7 @@ check_drafts( false !== strpos( $call['body'], 'name="description"' ) && false !
 check_drafts( is_array( $material ) && 0 === strpos( $material['media_id'], 'COVER_MEDIA_' ) && $material === get_post_meta( 6, AI_Chat_Bedrock_WeChat_Drafts::MATERIAL_META, true ), 'Its media_id is kept with the post.' );
 check_drafts( 'aicfab_wechat_video_file' === AI_Chat_Bedrock_WeChat_Drafts::upload_video( 6, 51 )->get_error_code() && 'aicfab_wechat_video_file' === AI_Chat_Bedrock_WeChat_Drafts::upload_video( 6, 52 )->get_error_code(), 'A video over 10 MB, or a file that is not an MP4, is refused before WeChat is asked.' );
 $html = AI_Chat_Bedrock_WeChat_Drafts::content( $GLOBALS['aicfab_posts'][6], array( 'app_id' => AICFAB_APP_ID, 'secret' => AICFAB_SECRET, 'cache' => 'aicfab_wechat_access' ) );
-check_drafts( false !== strpos( html_entity_decode( $html, ENT_QUOTES ), 'video is in the account\'s material library as "物理AI实验室 0.5：人形机器人热潮"' ), 'The draft names the video to insert from the material library.' );
+check_drafts( false === strpos( html_entity_decode( $html, ENT_QUOTES ), 'material library as' ) && false !== strpos( $html, 'upload the MP4 to the material library first' ), 'The draft does not point to the API-uploaded copy, which WeChat never reviews for articles, but asks for the video to be uploaded in its platform.' );
 $drafts = new AI_Chat_Bedrock_WeChat_Drafts();
 $GLOBALS['aicfab_caps']['upload_files'] = true;
 check_drafts( $drafts->can_upload_video( new WP_REST_Request_Stub( array( 'post' => 6, 'attachment' => 50 ) ) ) && ! $drafts->can_upload_video( new WP_REST_Request_Stub( array( 'post' => 99, 'attachment' => 50 ) ) ), 'Uploading needs permission to edit the post.' );
