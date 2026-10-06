@@ -661,7 +661,7 @@ class AI_Chat_Bedrock_Speech {
 			return;
 		}
 		$base    = plugin_dir_url( __DIR__ ) . 'public/';
-		$version = defined( 'AI_CHAT_BEDROCK_VERSION' ) ? AI_CHAT_BEDROCK_VERSION : false;
+		$version = defined( 'AI_CHAT_BEDROCK_ASSET_VERSION' ) ? AI_CHAT_BEDROCK_ASSET_VERSION : ( defined( 'AI_CHAT_BEDROCK_VERSION' ) ? AI_CHAT_BEDROCK_VERSION : false );
 		wp_register_script( 'ai-chat-bedrock-speech', $base . 'js/ai-chat-bedrock-speech.js', array(), $version, true );
 		wp_register_style( 'ai-chat-bedrock-speech', $base . 'css/ai-chat-bedrock-speech.css', array(), $version );
 		wp_localize_script(

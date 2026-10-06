@@ -1334,7 +1334,7 @@ class AI_Chat_Bedrock_WooCommerce {
 			return;
 		}
 		$handle = 'ai-chat-for-amazon-bedrock-woocommerce';
-		wp_enqueue_script( $handle, AI_CHAT_BEDROCK_PLUGIN_URL . 'admin/js/ai-chat-bedrock-woocommerce.js', array( 'wp-api-fetch' ), AI_CHAT_BEDROCK_VERSION, true );
+		wp_enqueue_script( $handle, AI_CHAT_BEDROCK_PLUGIN_URL . 'admin/js/ai-chat-bedrock-woocommerce.js', array( 'wp-api-fetch' ), defined( 'AI_CHAT_BEDROCK_ASSET_VERSION' ) ? AI_CHAT_BEDROCK_ASSET_VERSION : AI_CHAT_BEDROCK_VERSION, true );
 		wp_localize_script(
 			$handle,
 			'aicfabProductAssistant',

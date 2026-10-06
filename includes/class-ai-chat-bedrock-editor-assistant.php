@@ -215,7 +215,7 @@ class AI_Chat_Bedrock_Editor_Assistant {
 			$handle,
 			plugin_dir_url( __DIR__ ) . 'admin/js/ai-chat-bedrock-editor.js',
 			array( 'wp-plugins', 'wp-editor', 'wp-edit-post', 'wp-element', 'wp-components', 'wp-data', 'wp-i18n', 'wp-api-fetch' ),
-			AI_CHAT_BEDROCK_VERSION,
+			defined( 'AI_CHAT_BEDROCK_ASSET_VERSION' ) ? AI_CHAT_BEDROCK_ASSET_VERSION : AI_CHAT_BEDROCK_VERSION,
 			true
 		);
 

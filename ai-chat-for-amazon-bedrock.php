@@ -23,6 +23,9 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 define( 'AI_CHAT_BEDROCK_VERSION', '1.66.0' );
+// Scripts and styles carry the build as well as the version. A CDN may keep them as immutable,
+// and a build installed again under the same version would otherwise get its old assets.
+define( 'AI_CHAT_BEDROCK_ASSET_VERSION', AI_CHAT_BEDROCK_VERSION . '.' . (int) filemtime( __FILE__ ) );
 define( 'AI_CHAT_BEDROCK_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AI_CHAT_BEDROCK_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'AI_CHAT_BEDROCK_PLUGIN_FILE', __FILE__ );

@@ -99,7 +99,7 @@ class AI_Chat_Bedrock {
 	}
 
 	private function define_admin_hooks() {
-		$admin    = new AI_Chat_Bedrock_Admin( $this->plugin_name, $this->version );
+		$admin    = new AI_Chat_Bedrock_Admin( $this->plugin_name, self::asset_version() );
 		$security = new AI_Chat_Bedrock_Security();
 		$this->loader->add_action( 'admin_enqueue_scripts', $admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $admin, 'enqueue_scripts' );
@@ -159,7 +159,7 @@ class AI_Chat_Bedrock {
 	}
 
 	private function define_public_hooks() {
-		$public = new AI_Chat_Bedrock_Public( $this->plugin_name, $this->version );
+		$public = new AI_Chat_Bedrock_Public( $this->plugin_name, self::asset_version() );
 		$this->loader->add_action( 'wp_enqueue_scripts', $public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $public, 'enqueue_scripts' );
 		$this->loader->add_filter( 'wp_inline_script_attributes', $public, 'early_script_attributes' );
@@ -320,6 +320,18 @@ class AI_Chat_Bedrock {
 
 	public function get_loader() {
 		return $this->loader;
+	}
+
+	/**
+	 * The version scripts and styles are registered with: the plugin version and its build.
+	 *
+	 * @return string
+	 */
+	public static function asset_version() {
+		if ( defined( 'AI_CHAT_BEDROCK_ASSET_VERSION' ) ) {
+			return AI_CHAT_BEDROCK_ASSET_VERSION;
+		}
+		return defined( 'AI_CHAT_BEDROCK_VERSION' ) ? AI_CHAT_BEDROCK_VERSION : '1.1.0';
 	}
 
 	public function get_version() {
