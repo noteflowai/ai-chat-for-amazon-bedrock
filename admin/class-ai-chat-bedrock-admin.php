@@ -58,6 +58,13 @@ class AI_Chat_Bedrock_Admin {
 						'minRelevance'   => __( 'Minimum match, 0 to 1', 'ai-chat-for-amazon-bedrock' ),
 						'tokenCeiling'   => __( 'Output token ceiling', 'ai-chat-for-amazon-bedrock' ),
 						'remove'         => __( 'Remove', 'ai-chat-for-amazon-bedrock' ),
+						/* translators: %s: the question of an answer-check case. */
+						'removeCase'     => __( 'Remove the case: %s', 'ai-chat-for-amazon-bedrock' ),
+						'expectLabels'   => array(
+							'grounded'    => __( 'grounded: from the site', 'ai-chat-for-amazon-bedrock' ),
+							'unsupported' => __( 'unsupported: nothing on it', 'ai-chat-for-amazon-bedrock' ),
+							'tool'        => __( 'tool: calls a tool', 'ai-chat-for-amazon-bedrock' ),
+						),
 						'removed'        => __( 'Case removed. Save to keep the change.', 'ai-chat-for-amazon-bedrock' ),
 						'saving'         => __( 'Saving cases…', 'ai-chat-for-amazon-bedrock' ),
 						'saved'          => __( 'Cases saved.', 'ai-chat-for-amazon-bedrock' ),
@@ -142,6 +149,7 @@ class AI_Chat_Bedrock_Admin {
 					'status_warn'           => __( 'Review', 'ai-chat-for-amazon-bedrock' ),
 					'status_fail'           => __( 'Action required', 'ai-chat-for-amazon-bedrock' ),
 					'no_servers'            => __( 'No MCP servers registered.', 'ai-chat-for-amazon-bedrock' ),
+					'no_servers_hint'       => __( 'Add one below to let the chat call its tools, such as an Amazon Bedrock AgentCore Gateway.', 'ai-chat-for-amazon-bedrock' ),
 					'missing_fields'        => __( 'A server name and HTTPS URL are required.', 'ai-chat-for-amazon-bedrock' ),
 					'adding'                => __( 'Adding…', 'ai-chat-for-amazon-bedrock' ),
 					'add_server'            => __( 'Add server', 'ai-chat-for-amazon-bedrock' ),

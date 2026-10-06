@@ -16,7 +16,7 @@
 
 	var FIELDS = [
 		{ key: 'question', type: 'textarea', label: config.i18n.question },
-		{ key: 'expect', type: 'select', label: config.i18n.expect, options: [ 'grounded', 'unsupported', 'tool' ] },
+		{ key: 'expect', type: 'select', label: config.i18n.expect, options: [ 'grounded', 'unsupported', 'tool' ], labels: config.i18n.expectLabels || {} },
 		{ key: 'must_include', type: 'text', label: config.i18n.mustInclude },
 		{ key: 'must_not_include', type: 'text', label: config.i18n.mustNotInclude },
 		{ key: 'cite', type: 'text', label: config.i18n.cite },
@@ -40,7 +40,8 @@
 			field.options.forEach( function ( option ) {
 				var element = document.createElement( 'option' );
 				element.value = option;
-				element.textContent = option;
+				// The keyword the help text and the command line use, with what it means.
+				element.textContent = field.labels && field.labels[ option ] ? field.labels[ option ] : option;
 				if ( option === value ) {
 					element.selected = true;
 				}
@@ -82,8 +83,16 @@
 		var actions = document.createElement( 'td' );
 		var remove = document.createElement( 'button' );
 		remove.type = 'button';
-		remove.className = 'button-link delete';
+		remove.className = 'button-link button-link-delete';
 		remove.textContent = config.i18n.remove;
+		// Every row's button says Remove; its name says which case, for a screen reader's list
+		// of buttons, and follows the question as it is edited.
+		var name = function () {
+			var question = row.querySelector( 'textarea, input[type="text"]' );
+			var text = question ? String( question.value || '' ).trim() : '';
+			remove.setAttribute( 'aria-label', text && config.i18n.removeCase ? config.i18n.removeCase.replace( '%s', text.slice( 0, 80 ) ) : config.i18n.remove );
+		};
+		row.addEventListener( 'input', name );
 		remove.addEventListener( 'click', function () {
 			row.remove();
 			say( config.i18n.removed );
@@ -91,6 +100,7 @@
 		actions.appendChild( remove );
 		row.appendChild( actions );
 		rows.appendChild( row );
+		name();
 		return row;
 	}
 

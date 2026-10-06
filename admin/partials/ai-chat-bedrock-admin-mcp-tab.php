@@ -46,6 +46,18 @@ $mcp_client = class_exists( 'AI_Chat_Bedrock_MCP_Client' ) ? new AI_Chat_Bedrock
 
 		<div id="ai-chat-bedrock-mcp-servers-section" class="<?php echo esc_attr( get_option( 'ai_chat_bedrock_enable_mcp', false ) ? '' : 'hidden' ); ?>">
 			<h3><?php esc_html_e( 'External MCP servers', 'ai-chat-for-amazon-bedrock' ); ?></h3>
+			<div class="aicfab-table-scroll">
+			<table class="widefat striped" id="ai-chat-bedrock-mcp-servers-table">
+				<thead><tr><th scope="col"><?php esc_html_e( 'Name', 'ai-chat-for-amazon-bedrock' ); ?></th><th scope="col"><?php esc_html_e( 'URL', 'ai-chat-for-amazon-bedrock' ); ?></th><th scope="col"><?php esc_html_e( 'Status', 'ai-chat-for-amazon-bedrock' ); ?></th><th scope="col"><?php esc_html_e( 'Tools', 'ai-chat-for-amazon-bedrock' ); ?></th><th scope="col"><?php esc_html_e( 'Actions', 'ai-chat-for-amazon-bedrock' ); ?></th></tr></thead>
+				<tbody><tr class="no-items"><td colspan="5"><?php esc_html_e( 'No MCP servers registered.', 'ai-chat-for-amazon-bedrock' ); ?> <?php esc_html_e( 'Add one below to let the chat call its tools, such as an Amazon Bedrock AgentCore Gateway.', 'ai-chat-for-amazon-bedrock' ); ?></td></tr></tbody>
+			</table>
+			</div>
+			<?php
+			// The list first, as on every WordPress list screen; adding is a step it leads to.
+			$aicfab_servers = get_option( 'ai_chat_bedrock_mcp_servers', array() );
+			?>
+			<details class="aicfab-add-server"<?php echo empty( $aicfab_servers ) ? ' open' : ''; ?>>
+			<summary class="button"><?php esc_html_e( 'Add an MCP server', 'ai-chat-for-amazon-bedrock' ); ?></summary>
 			<div class="ai-chat-bedrock-mcp-add-server">
 				<table class="form-table" role="presentation">
 					<tr><th scope="row"><label for="ai_chat_bedrock_mcp_server_name"><?php esc_html_e( 'Server name', 'ai-chat-for-amazon-bedrock' ); ?></label></th><td><input type="text" id="ai_chat_bedrock_mcp_server_name" class="regular-text" maxlength="64" placeholder="my-server"></td></tr>
@@ -81,12 +93,7 @@ $mcp_client = class_exists( 'AI_Chat_Bedrock_MCP_Client' ) ? new AI_Chat_Bedrock
 				</table>
 				<p><button type="button" id="ai_chat_bedrock_add_mcp_server" class="button button-primary"><?php esc_html_e( 'Add server', 'ai-chat-for-amazon-bedrock' ); ?></button></p>
 			</div>
-			<div class="aicfab-table-scroll">
-			<table class="widefat striped" id="ai-chat-bedrock-mcp-servers-table">
-				<thead><tr><th scope="col"><?php esc_html_e( 'Name', 'ai-chat-for-amazon-bedrock' ); ?></th><th scope="col"><?php esc_html_e( 'URL', 'ai-chat-for-amazon-bedrock' ); ?></th><th scope="col"><?php esc_html_e( 'Status', 'ai-chat-for-amazon-bedrock' ); ?></th><th scope="col"><?php esc_html_e( 'Tools', 'ai-chat-for-amazon-bedrock' ); ?></th><th scope="col"><?php esc_html_e( 'Actions', 'ai-chat-for-amazon-bedrock' ); ?></th></tr></thead>
-				<tbody><tr class="no-items"><td colspan="5"><?php esc_html_e( 'No MCP servers registered.', 'ai-chat-for-amazon-bedrock' ); ?></td></tr></tbody>
-			</table>
-			</div>
+			</details>
 		</div>
 
 		<div id="ai-chat-bedrock-mcp-tools-modal" class="ai-chat-bedrock-modal" role="dialog" aria-modal="true" aria-labelledby="aicfab-mcp-tools-title" style="display:none">

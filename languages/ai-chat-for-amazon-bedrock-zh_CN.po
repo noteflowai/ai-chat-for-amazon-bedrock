@@ -69,120 +69,120 @@ msgid "Output token ceiling"
 msgstr "输出 Token 上限"
 
 #: admin/class-ai-chat-bedrock-admin.php:60
-#: admin/class-ai-chat-bedrock-admin.php:149
+#: admin/class-ai-chat-bedrock-admin.php:157
 msgid "Remove"
 msgstr "移除"
 
-#: admin/class-ai-chat-bedrock-admin.php:61
+#: admin/class-ai-chat-bedrock-admin.php:68
 msgid "Case removed. Save to keep the change."
 msgstr "已移除用例。保存后此更改才会保留。"
 
-#: admin/class-ai-chat-bedrock-admin.php:62
+#: admin/class-ai-chat-bedrock-admin.php:69
 msgid "Saving cases…"
 msgstr "正在保存用例…"
 
-#: admin/class-ai-chat-bedrock-admin.php:63
+#: admin/class-ai-chat-bedrock-admin.php:70
 msgid "Cases saved."
 msgstr "用例已保存。"
 
 #. translators: %d: number of cases that were dropped.
-#: admin/class-ai-chat-bedrock-admin.php:65
+#: admin/class-ai-chat-bedrock-admin.php:72
 #, php-format
 msgid "Cases saved. %d could not be run and were dropped: a question and an expectation are both required."
 msgstr "用例已保存。%d 个用例无法运行，已被丢弃：问题和预期都必须填写。"
 
-#: admin/class-ai-chat-bedrock-admin.php:66
+#: admin/class-ai-chat-bedrock-admin.php:73
 msgid "Reading recorded questions…"
 msgstr "正在读取已记录的问题…"
 
 #. translators: %d: number of proposed questions.
-#: admin/class-ai-chat-bedrock-admin.php:68
+#: admin/class-ai-chat-bedrock-admin.php:75
 #, php-format
 msgid "%d question(s) proposed. Add the ones you want, then state what a good answer contains."
 msgstr "已提议 %d 个问题。添加你需要的问题，然后说明好的回答应包含哪些内容。"
 
-#: admin/class-ai-chat-bedrock-admin.php:69
+#: admin/class-ai-chat-bedrock-admin.php:76
 msgid "Add as a case"
 msgstr "添加为用例"
 
-#: admin/class-ai-chat-bedrock-admin.php:70
+#: admin/class-ai-chat-bedrock-admin.php:77
 msgid "Added to the table. Save to keep it."
 msgstr "已添加到表格。保存后才会保留。"
 
-#: admin/class-ai-chat-bedrock-admin.php:71
+#: admin/class-ai-chat-bedrock-admin.php:78
 msgid "Running the checks. One Amazon Bedrock request per case."
 msgstr "正在运行检查。每个用例发送一次 Amazon Bedrock 请求。"
 
-#: admin/class-ai-chat-bedrock-admin.php:72
+#: admin/class-ai-chat-bedrock-admin.php:79
 msgid "Run finished."
 msgstr "运行完成。"
 
-#: admin/class-ai-chat-bedrock-admin.php:73
+#: admin/class-ai-chat-bedrock-admin.php:80
 #: includes/class-ai-chat-bedrock-eval.php:426
 msgid "The request failed."
 msgstr "请求失败。"
 
-#: admin/class-ai-chat-bedrock-admin.php:74
-#: admin/class-ai-chat-bedrock-admin.php:140
+#: admin/class-ai-chat-bedrock-admin.php:81
+#: admin/class-ai-chat-bedrock-admin.php:147
 #: admin/partials/ai-chat-bedrock-admin-diagnostics.php:25
 msgid "Pass"
 msgstr "通过"
 
-#: admin/class-ai-chat-bedrock-admin.php:75
+#: admin/class-ai-chat-bedrock-admin.php:82
 msgid "Fail"
 msgstr "未通过"
 
-#: admin/class-ai-chat-bedrock-admin.php:76
+#: admin/class-ai-chat-bedrock-admin.php:83
 msgid "cases passed"
 msgstr "个用例通过"
 
-#: admin/class-ai-chat-bedrock-admin.php:77
+#: admin/class-ai-chat-bedrock-admin.php:84
 msgid "Never checked in this run:"
 msgstr "本次运行中从未检查的项目："
 
-#: admin/class-ai-chat-bedrock-admin.php:78
+#: admin/class-ai-chat-bedrock-admin.php:85
 msgid "not comparable with the previous run, the number of checks changed"
 msgstr "检查项数量已变化，无法与上次运行比较"
 
-#: admin/class-ai-chat-bedrock-admin.php:79
+#: admin/class-ai-chat-bedrock-admin.php:86
 msgid "since the previous run"
 msgstr "（与上次运行相比）"
 
-#: admin/class-ai-chat-bedrock-admin.php:94
+#: admin/class-ai-chat-bedrock-admin.php:101
 msgid "Describe the site first."
 msgstr "请先描述站点。"
 
-#: admin/class-ai-chat-bedrock-admin.php:95
+#: admin/class-ai-chat-bedrock-admin.php:102
 msgid "Working out which pages this site needs…"
 msgstr "正在确定此站点需要哪些页面…"
 
-#: admin/class-ai-chat-bedrock-admin.php:96
+#: admin/class-ai-chat-bedrock-admin.php:103
 #: includes/class-ai-chat-bedrock-woocommerce.php:1344
 msgid "Writing…"
 msgstr "正在撰写…"
 
-#: admin/class-ai-chat-bedrock-admin.php:97
+#: admin/class-ai-chat-bedrock-admin.php:104
 msgid "Skipped."
 msgstr "已跳过。"
 
-#: admin/class-ai-chat-bedrock-admin.php:98
+#: admin/class-ai-chat-bedrock-admin.php:105
 msgid "Edit the draft"
 msgstr "编辑草稿"
 
 #. translators: 1: pages handled so far, 2: pages in total.
-#: admin/class-ai-chat-bedrock-admin.php:100
+#: admin/class-ai-chat-bedrock-admin.php:107
 #, php-format
 msgid "%1$d of %2$d done…"
 msgstr "已完成 %1$d / %2$d…"
 
 #. translators: 1: drafts created, 2: pages skipped, 3: pages that failed.
-#: admin/class-ai-chat-bedrock-admin.php:102
+#: admin/class-ai-chat-bedrock-admin.php:109
 #, php-format
 msgid "Finished. Drafts created: %1$d. Skipped: %2$d. Failed: %3$d."
 msgstr "已完成。已创建草稿：%1$d。已跳过：%2$d。失败：%3$d。"
 
-#: admin/class-ai-chat-bedrock-admin.php:103
-#: admin/class-ai-chat-bedrock-admin.php:138
+#: admin/class-ai-chat-bedrock-admin.php:110
+#: admin/class-ai-chat-bedrock-admin.php:145
 #: admin/partials/ai-chat-bedrock-admin-metrics.php:122
 #: includes/class-ai-chat-bedrock-abilities.php:279
 #: includes/class-ai-chat-bedrock-content-generator.php:79
@@ -199,219 +199,219 @@ msgstr "已完成。已创建草稿：%1$d。已跳过：%2$d。失败：%3$d。
 msgid "The request could not be completed."
 msgstr "无法完成请求。"
 
-#: admin/class-ai-chat-bedrock-admin.php:104
+#: admin/class-ai-chat-bedrock-admin.php:111
 #: admin/partials/ai-chat-bedrock-admin-scaffold.php:51
 msgid "Include"
 msgstr "包含"
 
-#: admin/class-ai-chat-bedrock-admin.php:105
+#: admin/class-ai-chat-bedrock-admin.php:112
 msgid "Page title"
 msgstr "页面标题"
 
-#: admin/class-ai-chat-bedrock-admin.php:121
+#: admin/class-ai-chat-bedrock-admin.php:128
 #: includes/class-ai-chat-bedrock-mcp-integration.php:42
 msgid "Setting saved."
 msgstr "设置已保存。"
 
-#: admin/class-ai-chat-bedrock-admin.php:122
+#: admin/class-ai-chat-bedrock-admin.php:129
 msgid "Writing the draft…"
 msgstr "正在撰写草稿…"
 
-#: admin/class-ai-chat-bedrock-admin.php:123
+#: admin/class-ai-chat-bedrock-admin.php:130
 msgid "Indexing…"
 msgstr "正在建立索引…"
 
-#: admin/class-ai-chat-bedrock-admin.php:124
-#: admin/class-ai-chat-bedrock-admin.php:1700
+#: admin/class-ai-chat-bedrock-admin.php:131
+#: admin/class-ai-chat-bedrock-admin.php:1708
 msgid "Index content now"
 msgstr "立即为内容建立索引"
 
 #. translators: 1: items indexed so far, 2: items still pending.
-#: admin/class-ai-chat-bedrock-admin.php:126
+#: admin/class-ai-chat-bedrock-admin.php:133
 #, php-format
 msgid "%1$d indexed, %2$d remaining…"
 msgstr "已建立索引 %1$d 项，剩余 %2$d 项…"
 
 #. translators: 1: items indexed, 2: items skipped, 3: items that failed.
-#: admin/class-ai-chat-bedrock-admin.php:128
+#: admin/class-ai-chat-bedrock-admin.php:135
 #, php-format
 msgid "Finished: %1$d indexed, %2$d already current, %3$d failed."
 msgstr "完成：已建立索引 %1$d 项，%2$d 项已是最新，%3$d 项失败。"
 
 #. translators: %s: title the model chose for the draft.
-#: admin/class-ai-chat-bedrock-admin.php:130
+#: admin/class-ai-chat-bedrock-admin.php:137
 #, php-format
 msgid "Writing “%s”…"
 msgstr "正在撰写“%s”…"
 
-#: admin/class-ai-chat-bedrock-admin.php:131
+#: admin/class-ai-chat-bedrock-admin.php:138
 #: admin/partials/ai-chat-bedrock-admin-generator.php:109
 msgid "Generate draft"
 msgstr "生成草稿"
 
-#: admin/class-ai-chat-bedrock-admin.php:132
+#: admin/class-ai-chat-bedrock-admin.php:139
 #: admin/partials/ai-chat-bedrock-admin-generator.php:45
 #: includes/class-ai-chat-bedrock-content-generator.php:114
 msgid "Enter a topic first."
 msgstr "请先输入主题。"
 
 #. translators: 1: draft title, 2: word count.
-#: admin/class-ai-chat-bedrock-admin.php:134
+#: admin/class-ai-chat-bedrock-admin.php:141
 #, php-format
 msgid "Draft \"%1$s\" created with about %2$d words."
 msgstr "已创建草稿“%1$s”，约 %2$d 字。"
 
-#: admin/class-ai-chat-bedrock-admin.php:135
+#: admin/class-ai-chat-bedrock-admin.php:142
 msgid "Open the draft"
 msgstr "打开草稿"
 
 #. translators: %s: model identifier that answered instead of the main model.
-#: admin/class-ai-chat-bedrock-admin.php:137
+#: admin/class-ai-chat-bedrock-admin.php:144
 #, php-format
 msgid "The main model was unavailable, so %s wrote this draft."
 msgstr "主模型不可用，因此此草稿由 %s 撰写。"
 
-#: admin/class-ai-chat-bedrock-admin.php:139
+#: admin/class-ai-chat-bedrock-admin.php:146
 msgid "Testing…"
 msgstr "正在测试…"
 
-#: admin/class-ai-chat-bedrock-admin.php:142
-#: admin/class-ai-chat-bedrock-admin.php:1408
+#: admin/class-ai-chat-bedrock-admin.php:149
+#: admin/class-ai-chat-bedrock-admin.php:1416
 #: admin/partials/ai-chat-bedrock-admin-diagnostics.php:27
 msgid "Review"
 msgstr "需检查"
 
-#: admin/class-ai-chat-bedrock-admin.php:143
+#: admin/class-ai-chat-bedrock-admin.php:150
 #: admin/partials/ai-chat-bedrock-admin-diagnostics.php:28
 msgid "Action required"
 msgstr "需要处理"
 
-#: admin/class-ai-chat-bedrock-admin.php:144
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:87
+#: admin/class-ai-chat-bedrock-admin.php:151
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:52
 msgid "No MCP servers registered."
 msgstr "尚未注册 MCP 服务器。"
 
-#: admin/class-ai-chat-bedrock-admin.php:145
+#: admin/class-ai-chat-bedrock-admin.php:153
 #: includes/class-ai-chat-bedrock-mcp-integration.php:50
 msgid "A server name and HTTPS URL are required."
 msgstr "必须填写服务器名称和 HTTPS URL。"
 
-#: admin/class-ai-chat-bedrock-admin.php:146
+#: admin/class-ai-chat-bedrock-admin.php:154
 msgid "Adding…"
 msgstr "正在添加…"
 
-#: admin/class-ai-chat-bedrock-admin.php:147
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:82
+#: admin/class-ai-chat-bedrock-admin.php:155
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:94
 msgid "Add server"
 msgstr "添加服务器"
 
-#: admin/class-ai-chat-bedrock-admin.php:148
+#: admin/class-ai-chat-bedrock-admin.php:156
 msgid "Removing…"
 msgstr "正在移除…"
 
-#: admin/class-ai-chat-bedrock-admin.php:150
+#: admin/class-ai-chat-bedrock-admin.php:158
 msgid "Refreshing…"
 msgstr "正在刷新…"
 
-#: admin/class-ai-chat-bedrock-admin.php:151
+#: admin/class-ai-chat-bedrock-admin.php:159
 msgid "Refresh"
 msgstr "刷新"
 
-#: admin/class-ai-chat-bedrock-admin.php:152
+#: admin/class-ai-chat-bedrock-admin.php:160
 msgid "Loading tools…"
 msgstr "正在加载工具…"
 
-#: admin/class-ai-chat-bedrock-admin.php:153
+#: admin/class-ai-chat-bedrock-admin.php:161
 msgid "No tools found."
 msgstr "未找到工具。"
 
-#: admin/class-ai-chat-bedrock-admin.php:154
+#: admin/class-ai-chat-bedrock-admin.php:162
 msgid "No parameters required."
 msgstr "无需参数。"
 
-#: admin/class-ai-chat-bedrock-admin.php:155
+#: admin/class-ai-chat-bedrock-admin.php:163
 msgid "Available"
 msgstr "可用"
 
-#: admin/class-ai-chat-bedrock-admin.php:156
+#: admin/class-ai-chat-bedrock-admin.php:164
 msgid "Unavailable"
 msgstr "不可用"
 
-#: admin/class-ai-chat-bedrock-admin.php:157
+#: admin/class-ai-chat-bedrock-admin.php:165
 msgid "Remove this MCP server?"
 msgstr "移除此 MCP 服务器？"
 
-#: admin/class-ai-chat-bedrock-admin.php:158
+#: admin/class-ai-chat-bedrock-admin.php:166
 msgid "View tools"
 msgstr "查看工具"
 
-#: admin/class-ai-chat-bedrock-admin.php:159
+#: admin/class-ai-chat-bedrock-admin.php:167
 msgid "Parameters"
 msgstr "参数"
 
-#: admin/class-ai-chat-bedrock-admin.php:169
+#: admin/class-ai-chat-bedrock-admin.php:177
 #: includes/class-ai-chat-bedrock-diagnostics.php:50
 msgid "AI Chat Bedrock"
 msgstr "AI Chat Bedrock"
 
-#: admin/class-ai-chat-bedrock-admin.php:194
+#: admin/class-ai-chat-bedrock-admin.php:202
 #: ai-chat-for-amazon-bedrock.php:59
 msgid "Settings"
 msgstr "设置"
 
-#: admin/class-ai-chat-bedrock-admin.php:173
+#: admin/class-ai-chat-bedrock-admin.php:181
 msgid "Test Chat"
 msgstr "测试对话"
 
-#: admin/class-ai-chat-bedrock-admin.php:193
+#: admin/class-ai-chat-bedrock-admin.php:201
 msgid "MCP Settings"
 msgstr "MCP 设置"
 
-#: admin/class-ai-chat-bedrock-admin.php:186
+#: admin/class-ai-chat-bedrock-admin.php:194
 msgid "Content Generator"
 msgstr "内容生成器"
 
-#: admin/class-ai-chat-bedrock-admin.php:187
+#: admin/class-ai-chat-bedrock-admin.php:195
 msgid "Site Pages"
 msgstr "站点页面"
 
-#: admin/class-ai-chat-bedrock-admin.php:192
+#: admin/class-ai-chat-bedrock-admin.php:200
 msgid "Chat Profiles"
 msgstr "对话配置"
 
-#: admin/class-ai-chat-bedrock-admin.php:174
+#: admin/class-ai-chat-bedrock-admin.php:182
 msgid "Conversations"
 msgstr "对话记录"
 
-#: admin/class-ai-chat-bedrock-admin.php:181
+#: admin/class-ai-chat-bedrock-admin.php:189
 #: admin/partials/ai-chat-bedrock-admin-eval.php:18
 msgid "Answer checks"
 msgstr "回答检查"
 
-#: admin/class-ai-chat-bedrock-admin.php:195
+#: admin/class-ai-chat-bedrock-admin.php:203
 #: ai-chat-for-amazon-bedrock.php:60
 msgid "Diagnostics"
 msgstr "诊断"
 
-#: admin/class-ai-chat-bedrock-admin.php:271
-#: admin/class-ai-chat-bedrock-admin.php:648
+#: admin/class-ai-chat-bedrock-admin.php:279
+#: admin/class-ai-chat-bedrock-admin.php:656
 msgid "Generate alt text"
 msgstr "生成替代文本"
 
-#: admin/class-ai-chat-bedrock-admin.php:331
-#: admin/class-ai-chat-bedrock-admin.php:381
-#: admin/class-ai-chat-bedrock-admin.php:397
-#: admin/class-ai-chat-bedrock-admin.php:468
-#: admin/class-ai-chat-bedrock-admin.php:509
-#: admin/class-ai-chat-bedrock-admin.php:569
-#: admin/class-ai-chat-bedrock-admin.php:591
-#: admin/class-ai-chat-bedrock-admin.php:760
-#: admin/class-ai-chat-bedrock-admin.php:858
-#: admin/class-ai-chat-bedrock-admin.php:896
-#: admin/class-ai-chat-bedrock-admin.php:916
-#: admin/class-ai-chat-bedrock-admin.php:931
-#: admin/class-ai-chat-bedrock-admin.php:952
-#: admin/class-ai-chat-bedrock-admin.php:986
+#: admin/class-ai-chat-bedrock-admin.php:339
+#: admin/class-ai-chat-bedrock-admin.php:389
+#: admin/class-ai-chat-bedrock-admin.php:405
+#: admin/class-ai-chat-bedrock-admin.php:476
+#: admin/class-ai-chat-bedrock-admin.php:517
+#: admin/class-ai-chat-bedrock-admin.php:577
+#: admin/class-ai-chat-bedrock-admin.php:599
+#: admin/class-ai-chat-bedrock-admin.php:768
+#: admin/class-ai-chat-bedrock-admin.php:866
+#: admin/class-ai-chat-bedrock-admin.php:904
+#: admin/class-ai-chat-bedrock-admin.php:924
+#: admin/class-ai-chat-bedrock-admin.php:939
+#: admin/class-ai-chat-bedrock-admin.php:960
+#: admin/class-ai-chat-bedrock-admin.php:994
 #: includes/class-ai-chat-bedrock-mcp-integration.php:282
 #: includes/class-ai-chat-bedrock-mcp-integration.php:343
 #: includes/class-ai-chat-bedrock-mcp-integration.php:357
@@ -419,69 +419,69 @@ msgstr "生成替代文本"
 msgid "Permission denied."
 msgstr "权限不足。"
 
-#: admin/class-ai-chat-bedrock-admin.php:386
+#: admin/class-ai-chat-bedrock-admin.php:394
 msgid "Choose an embedding model first."
 msgstr "请先选择嵌入模型。"
 
-#: admin/class-ai-chat-bedrock-admin.php:425
-#: admin/class-ai-chat-bedrock-admin.php:847
-#: admin/class-ai-chat-bedrock-admin.php:999
-#: admin/class-ai-chat-bedrock-admin.php:1034
+#: admin/class-ai-chat-bedrock-admin.php:433
+#: admin/class-ai-chat-bedrock-admin.php:855
+#: admin/class-ai-chat-bedrock-admin.php:1007
+#: admin/class-ai-chat-bedrock-admin.php:1042
 #: includes/class-ai-chat-bedrock-mcp-integration.php:393
 #: includes/class-ai-chat-bedrock-review-prompt.php:120
 #: includes/class-ai-chat-bedrock-stream.php:74
-#: public/class-ai-chat-bedrock-public.php:370
+#: public/class-ai-chat-bedrock-public.php:397
 msgid "Security check failed."
 msgstr "安全校验失败。"
 
-#: admin/class-ai-chat-bedrock-admin.php:431
+#: admin/class-ai-chat-bedrock-admin.php:439
 msgid "Choose an embedding model, Amazon S3 Vectors, a bucket and an index, and save first."
 msgstr "请先选择嵌入模型、Amazon S3 Vectors、存储桶和索引，然后保存。"
 
-#: admin/class-ai-chat-bedrock-admin.php:445
+#: admin/class-ai-chat-bedrock-admin.php:453
 msgid "The index does not exist yet. Create it here, or in the Amazon S3 console with the cosine metric and text and title as non-filterable metadata."
 msgstr "索引尚不存在。请在此处创建，或在 Amazon S3 控制台中创建，度量选择余弦，并将 text 和 title 设为不可筛选的元数据。"
 
 #. translators: %d: vector dimension.
-#: admin/class-ai-chat-bedrock-admin.php:456
+#: admin/class-ai-chat-bedrock-admin.php:464
 #, php-format
 msgid "The index is ready: %d dimensions, cosine metric."
 msgstr "索引已就绪：%d 维，余弦度量。"
 
-#: admin/class-ai-chat-bedrock-admin.php:485
-#: admin/class-ai-chat-bedrock-admin.php:525
-#: admin/class-ai-chat-bedrock-admin.php:616
+#: admin/class-ai-chat-bedrock-admin.php:493
+#: admin/class-ai-chat-bedrock-admin.php:533
+#: admin/class-ai-chat-bedrock-admin.php:624
 msgid "The export could not be created."
 msgstr "无法创建导出文件。"
 
-#: admin/class-ai-chat-bedrock-admin.php:716
+#: admin/class-ai-chat-bedrock-admin.php:724
 msgid "Alt text generated and saved."
 msgstr "已生成并保存替代文本。"
 
-#: admin/class-ai-chat-bedrock-admin.php:719
+#: admin/class-ai-chat-bedrock-admin.php:727
 msgid "That image already has alt text, so it was left unchanged."
 msgstr "该图片已有替代文本，因此未作更改。"
 
-#: admin/class-ai-chat-bedrock-admin.php:722
+#: admin/class-ai-chat-bedrock-admin.php:730
 msgid "Alt text could not be generated for that image."
 msgstr "无法为该图片生成替代文本。"
 
 #. translators: 1: number of images described, 2: number skipped, 3: number that failed.
-#: admin/class-ai-chat-bedrock-admin.php:743
+#: admin/class-ai-chat-bedrock-admin.php:751
 #, php-format
 msgid "Alt text generated for %1$d image(s). Skipped %2$d that already had alt text, and %3$d could not be processed."
 msgstr "已为 %1$d 张图片生成替代文本。跳过了 %2$d 张已有替代文本的图片，另有 %3$d 张无法处理。"
 
-#: admin/class-ai-chat-bedrock-admin.php:794
+#: admin/class-ai-chat-bedrock-admin.php:802
 msgid "no usable AWS credentials were found, so the chat cannot answer yet. An Amazon Bedrock API key is the quickest way to connect."
 msgstr "未找到可用的 AWS 凭证，因此对话暂时无法回答。使用 Amazon Bedrock API 密钥是最快的连接方式。"
 
-#: admin/class-ai-chat-bedrock-admin.php:796
+#: admin/class-ai-chat-bedrock-admin.php:804
 msgid "Finish setup"
 msgstr "完成设置"
 
-#: admin/class-ai-chat-bedrock-admin.php:1002
-#: admin/class-ai-chat-bedrock-admin.php:1037
+#: admin/class-ai-chat-bedrock-admin.php:1010
+#: admin/class-ai-chat-bedrock-admin.php:1045
 #: admin/partials/ai-chat-bedrock-admin-metrics.php:58
 #: includes/class-ai-chat-bedrock-abilities.php:258
 #: includes/class-ai-chat-bedrock-chat-history.php:287
@@ -498,722 +498,722 @@ msgid "Too many requests. Please wait a moment."
 msgstr "请求过于频繁，请稍候。"
 
 #. translators: %d: number of models discovered.
-#: admin/class-ai-chat-bedrock-admin.php:1022
+#: admin/class-ai-chat-bedrock-admin.php:1030
 #, php-format
 msgid "%d model available. The model menus are up to date."
 msgid_plural "%d models available. The model menus are up to date."
 msgstr[0] "有 %d 个可用模型。模型菜单已是最新。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1054
+#: admin/class-ai-chat-bedrock-admin.php:1062
 msgid "AWS authentication"
 msgstr "AWS 身份验证"
 
-#: admin/class-ai-chat-bedrock-admin.php:1055
+#: admin/class-ai-chat-bedrock-admin.php:1063
 msgid "AWS Region"
 msgstr "AWS 区域"
 
-#: admin/class-ai-chat-bedrock-admin.php:1056
+#: admin/class-ai-chat-bedrock-admin.php:1064
 msgid "Amazon Bedrock API key"
 msgstr "Amazon Bedrock API 密钥"
 
-#: admin/class-ai-chat-bedrock-admin.php:1057
+#: admin/class-ai-chat-bedrock-admin.php:1065
 msgid "AWS Access Key ID"
 msgstr "AWS 访问密钥 ID"
 
-#: admin/class-ai-chat-bedrock-admin.php:1058
+#: admin/class-ai-chat-bedrock-admin.php:1066
 msgid "AWS Secret Access Key"
 msgstr "AWS 秘密访问密钥"
 
-#: admin/class-ai-chat-bedrock-admin.php:1059
+#: admin/class-ai-chat-bedrock-admin.php:1067
 msgid "AWS Session Token"
 msgstr "AWS 会话令牌"
 
-#: admin/class-ai-chat-bedrock-admin.php:1060
+#: admin/class-ai-chat-bedrock-admin.php:1068
 msgid "IAM role credentials"
 msgstr "IAM 角色凭证"
 
-#: admin/class-ai-chat-bedrock-admin.php:1062
-#: admin/class-ai-chat-bedrock-admin.php:1063
-#: admin/class-ai-chat-bedrock-admin.php:2505
+#: admin/class-ai-chat-bedrock-admin.php:1070
+#: admin/class-ai-chat-bedrock-admin.php:1071
+#: admin/class-ai-chat-bedrock-admin.php:2513
 #: admin/partials/ai-chat-bedrock-admin-display.php:67
 #: admin/partials/ai-chat-bedrock-admin-display.php:217
 #: admin/partials/ai-chat-bedrock-admin-eval.php:97
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:64
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:114
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:75
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:126
 #: admin/partials/ai-chat-bedrock-admin-test.php:27
 #: includes/class-ai-chat-bedrock-conversations.php:378
 #: includes/class-ai-chat-bedrock-metrics.php:240
 msgid "Model"
 msgstr "模型"
 
-#: admin/class-ai-chat-bedrock-admin.php:1064
+#: admin/class-ai-chat-bedrock-admin.php:1072
 msgid "Fallback model"
 msgstr "备用模型"
 
-#: admin/class-ai-chat-bedrock-admin.php:1065
+#: admin/class-ai-chat-bedrock-admin.php:1073
 msgid "Maximum output tokens"
 msgstr "最大输出 Token 数"
 
-#: admin/class-ai-chat-bedrock-admin.php:1066
+#: admin/class-ai-chat-bedrock-admin.php:1074
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:40
 #: admin/partials/ai-chat-bedrock-admin-test.php:29
 msgid "Temperature"
 msgstr "温度"
 
-#: admin/class-ai-chat-bedrock-admin.php:1119
+#: admin/class-ai-chat-bedrock-admin.php:1127
 msgid "Safety and spend controls"
 msgstr "安全与费用控制"
 
-#: admin/class-ai-chat-bedrock-admin.php:1124
+#: admin/class-ai-chat-bedrock-admin.php:1132
 msgid "Guardrail identifier"
 msgstr "护栏标识符"
 
-#: admin/class-ai-chat-bedrock-admin.php:1125
+#: admin/class-ai-chat-bedrock-admin.php:1133
 msgid "Guardrail version"
 msgstr "护栏版本"
 
-#: admin/class-ai-chat-bedrock-admin.php:1123
+#: admin/class-ai-chat-bedrock-admin.php:1131
 msgid "Daily request limit"
 msgstr "每日请求上限"
 
-#: admin/class-ai-chat-bedrock-admin.php:1069
+#: admin/class-ai-chat-bedrock-admin.php:1077
 msgid "Answer grounding"
 msgstr "回答依据"
 
-#: admin/class-ai-chat-bedrock-admin.php:1070
+#: admin/class-ai-chat-bedrock-admin.php:1078
 msgid "Use site content"
 msgstr "使用站点内容"
 
-#: admin/class-ai-chat-bedrock-admin.php:1071
+#: admin/class-ai-chat-bedrock-admin.php:1079
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:42
 msgid "Passages per answer"
 msgstr "每个回答的段落数"
 
-#: admin/class-ai-chat-bedrock-admin.php:1072
+#: admin/class-ai-chat-bedrock-admin.php:1080
 msgid "Show sources"
 msgstr "显示来源"
 
-#: admin/class-ai-chat-bedrock-admin.php:1074
+#: admin/class-ai-chat-bedrock-admin.php:1082
 msgid "Semantic search"
 msgstr "语义搜索"
 
-#: admin/class-ai-chat-bedrock-admin.php:1075
-#: admin/class-ai-chat-bedrock-admin.php:1720
+#: admin/class-ai-chat-bedrock-admin.php:1083
+#: admin/class-ai-chat-bedrock-admin.php:1728
 msgid "Vector store"
 msgstr "向量存储"
 
-#: admin/class-ai-chat-bedrock-admin.php:1076
+#: admin/class-ai-chat-bedrock-admin.php:1084
 msgid "Bedrock knowledge base ID"
 msgstr "Bedrock 知识库 ID"
 
-#: admin/class-ai-chat-bedrock-admin.php:1096
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:256
+#: admin/class-ai-chat-bedrock-admin.php:1104
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:263
 msgid "WordPress abilities as tools"
 msgstr "将 WordPress 能力用作工具"
 
-#: admin/class-ai-chat-bedrock-admin.php:1097
+#: admin/class-ai-chat-bedrock-admin.php:1105
 msgid "Site content abilities"
 msgstr "站点内容能力"
 
-#: admin/class-ai-chat-bedrock-admin.php:1100
+#: admin/class-ai-chat-bedrock-admin.php:1108
 msgid "Editor assistant"
 msgstr "编辑器助手"
 
-#: admin/class-ai-chat-bedrock-admin.php:1126
-#: admin/class-ai-chat-bedrock-admin.php:1339
+#: admin/class-ai-chat-bedrock-admin.php:1134
+#: admin/class-ai-chat-bedrock-admin.php:1347
 msgid "Conversation log"
 msgstr "对话记录"
 
-#: admin/class-ai-chat-bedrock-admin.php:1101
+#: admin/class-ai-chat-bedrock-admin.php:1109
 msgid "Media helpers"
 msgstr "媒体助手"
 
-#: admin/class-ai-chat-bedrock-admin.php:1080
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:125
+#: admin/class-ai-chat-bedrock-admin.php:1088
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:137
 msgid "System prompt"
 msgstr "系统提示词"
 
-#: admin/class-ai-chat-bedrock-admin.php:1081
-#: admin/class-ai-chat-bedrock-admin.php:1625
+#: admin/class-ai-chat-bedrock-admin.php:1089
+#: admin/class-ai-chat-bedrock-admin.php:1633
 msgid "Managed prompt"
 msgstr "托管提示词"
 
-#: admin/class-ai-chat-bedrock-admin.php:1082
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:129
+#: admin/class-ai-chat-bedrock-admin.php:1090
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:141
 msgid "Chat title"
 msgstr "对话标题"
 
-#: admin/class-ai-chat-bedrock-admin.php:1083
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:133
+#: admin/class-ai-chat-bedrock-admin.php:1091
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:145
 msgid "Welcome message"
 msgstr "欢迎语"
 
-#: admin/class-ai-chat-bedrock-admin.php:1084
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:137
+#: admin/class-ai-chat-bedrock-admin.php:1092
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:149
 #: public/partials/ai-chat-bedrock-public-display.php:70
 msgid "Suggested questions"
 msgstr "推荐问题"
 
-#: admin/class-ai-chat-bedrock-admin.php:1085
+#: admin/class-ai-chat-bedrock-admin.php:1093
 msgid "Streaming responses"
 msgstr "流式回答"
 
-#: admin/class-ai-chat-bedrock-admin.php:1120
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:65
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:164
+#: admin/class-ai-chat-bedrock-admin.php:1128
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:76
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:176
 #: includes/class-ai-chat-bedrock-diagnostics.php:202
 #: includes/class-ai-chat-bedrock-diagnostics.php:218
 msgid "Guest access"
 msgstr "访客访问"
 
-#: admin/class-ai-chat-bedrock-admin.php:1121
+#: admin/class-ai-chat-bedrock-admin.php:1129
 msgid "Requests per visitor per minute"
 msgstr "每位访客每分钟请求数"
 
-#: admin/class-ai-chat-bedrock-admin.php:1122
+#: admin/class-ai-chat-bedrock-admin.php:1130
 msgid "Per-role limits"
 msgstr "按角色限制"
 
-#: admin/class-ai-chat-bedrock-admin.php:1090
-#: admin/class-ai-chat-bedrock-admin.php:1936
+#: admin/class-ai-chat-bedrock-admin.php:1098
+#: admin/class-ai-chat-bedrock-admin.php:1944
 msgid "Floating chat"
 msgstr "浮动对话"
 
-#: admin/class-ai-chat-bedrock-admin.php:1091
+#: admin/class-ai-chat-bedrock-admin.php:1099
 msgid "Color scheme"
 msgstr "配色"
 
-#: admin/class-ai-chat-bedrock-admin.php:1127
+#: admin/class-ai-chat-bedrock-admin.php:1135
 msgid "Debug logging"
 msgstr "调试日志"
 
-#: admin/class-ai-chat-bedrock-admin.php:1129
+#: admin/class-ai-chat-bedrock-admin.php:1137
 msgid "Fixes for other plugins"
 msgstr "针对其他插件的修正"
 
-#: admin/class-ai-chat-bedrock-admin.php:1130
+#: admin/class-ai-chat-bedrock-admin.php:1138
 msgid "GitHub sign-in scope"
 msgstr "GitHub 登录权限范围"
 
-#: admin/class-ai-chat-bedrock-admin.php:1131
+#: admin/class-ai-chat-bedrock-admin.php:1139
 msgid "Registration"
 msgstr "注册"
 
-#: admin/class-ai-chat-bedrock-admin.php:1132
+#: admin/class-ai-chat-bedrock-admin.php:1140
 msgid "Default language for search engines"
 msgstr "搜索引擎的默认语言"
 
-#: admin/class-ai-chat-bedrock-admin.php:1133
+#: admin/class-ai-chat-bedrock-admin.php:1141
 msgid "Article author"
 msgstr "文章作者"
 
-#: admin/class-ai-chat-bedrock-admin.php:1136
-#: admin/class-ai-chat-bedrock-admin.php:2551
+#: admin/class-ai-chat-bedrock-admin.php:1144
+#: admin/class-ai-chat-bedrock-admin.php:2559
 msgid "WooCommerce"
 msgstr "WooCommerce"
 
-#: admin/class-ai-chat-bedrock-admin.php:1137
+#: admin/class-ai-chat-bedrock-admin.php:1145
 msgid "Product answers"
 msgstr "商品问答"
 
-#: admin/class-ai-chat-bedrock-admin.php:1138
+#: admin/class-ai-chat-bedrock-admin.php:1146
 msgid "Products per answer"
 msgstr "每次回答的商品数"
 
-#: admin/class-ai-chat-bedrock-admin.php:1139
+#: admin/class-ai-chat-bedrock-admin.php:1147
 msgid "Order questions"
 msgstr "订单查询"
 
-#: admin/class-ai-chat-bedrock-admin.php:1140
+#: admin/class-ai-chat-bedrock-admin.php:1148
 msgid "Product assistant"
 msgstr "商品助手"
 
-#: admin/class-ai-chat-bedrock-admin.php:1158
+#: admin/class-ai-chat-bedrock-admin.php:1166
 msgid "Prefer wp-config.php constants or an IAM role. Database credentials are encrypted with WordPress salts and are never displayed after saving."
 msgstr "建议使用 wp-config.php 常量或 IAM 角色。存储在数据库中的凭证使用 WordPress 盐值加密，保存后不会再显示。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1163
+#: admin/class-ai-chat-bedrock-admin.php:1171
 msgid "Active credential source:"
 msgstr "当前凭证来源："
 
-#: admin/class-ai-chat-bedrock-admin.php:1165
+#: admin/class-ai-chat-bedrock-admin.php:1173
 msgid "(temporary credentials)"
 msgstr "（临时凭证）"
 
-#: admin/class-ai-chat-bedrock-admin.php:1169
+#: admin/class-ai-chat-bedrock-admin.php:1177
 msgid "No usable AWS credentials were found."
 msgstr "未找到可用的 AWS 凭证。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1178
+#: admin/class-ai-chat-bedrock-admin.php:1186
 msgid "The quickest way to connect: create a long-term API key in the Amazon Bedrock console under API keys, choose the same Region as above, and paste it here. It is used for chat, the model list and embeddings. Knowledge Bases, Prompt Management and AgentCore still need access keys or an IAM role."
 msgstr "最快的连接方式：在 Amazon Bedrock 控制台的“API 密钥”下创建一个长期 API 密钥，选择与上方相同的区域，然后粘贴到此处。它用于对话、模型列表和嵌入。知识库、提示词管理和 AgentCore 仍需要访问密钥或 IAM 角色。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1189
+#: admin/class-ai-chat-bedrock-admin.php:1197
 msgid "Remove the stored API key"
 msgstr "移除已存储的 API 密钥"
 
-#: admin/class-ai-chat-bedrock-admin.php:1200
+#: admin/class-ai-chat-bedrock-admin.php:1208
 msgid "Required only for temporary AWS credentials."
 msgstr "仅在使用临时 AWS 凭证时需要。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1206
+#: admin/class-ai-chat-bedrock-admin.php:1214
 msgid "Use the server IAM role when no keys are configured"
 msgstr "未配置密钥时使用服务器的 IAM 角色"
 
-#: admin/class-ai-chat-bedrock-admin.php:1207
+#: admin/class-ai-chat-bedrock-admin.php:1215
 msgid "Supports environment variables, ECS or EKS task roles, and EC2 instance roles, so no long-lived AWS keys are stored in WordPress."
 msgstr "支持环境变量、ECS 或 EKS 任务角色以及 EC2 实例角色，因此无需在 WordPress 中存储长期有效的 AWS 密钥。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1214
+#: admin/class-ai-chat-bedrock-admin.php:1222
 msgid "Stream responses as they are generated (default)"
 msgstr "在生成回答的同时流式输出（默认）"
 
-#: admin/class-ai-chat-bedrock-admin.php:1216
+#: admin/class-ai-chat-bedrock-admin.php:1224
 msgid "Streaming uses one authenticated POST request per message and falls back to a buffered response automatically."
 msgstr "流式回答对每条消息使用一个经过身份验证的 POST 请求，并会在必要时自动回退为缓冲回答。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1218
+#: admin/class-ai-chat-bedrock-admin.php:1226
 msgid "This server cannot stream because the PHP cURL extension is unavailable. Buffered responses will be used."
 msgstr "此服务器缺少 PHP cURL 扩展，因此无法流式输出，将使用缓冲回答。"
 
 #. translators: 1: requests today, 2: input tokens today, 3: output tokens today.
-#: admin/class-ai-chat-bedrock-admin.php:1230
+#: admin/class-ai-chat-bedrock-admin.php:1238
 #, php-format
 msgid "Today: %1$s request, %2$s input tokens, %3$s output tokens."
 msgid_plural "Today: %1$s requests, %2$s input tokens, %3$s output tokens."
 msgstr[0] "今日：%1$s 次请求，%2$s 个输入 Token，%3$s 个输出 Token。"
 
 #. translators: %s: requests in the last seven days.
-#: admin/class-ai-chat-bedrock-admin.php:1237
+#: admin/class-ai-chat-bedrock-admin.php:1245
 #: admin/partials/ai-chat-bedrock-admin-display.php:116
 #, php-format
 msgid "Last 7 days: %s request."
 msgid_plural "Last 7 days: %s requests."
 msgstr[0] "最近 7 天：%s 次请求。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1245
+#: admin/class-ai-chat-bedrock-admin.php:1253
 msgid "Optional. Applies an existing Amazon Bedrock guardrail to every request."
 msgstr "可选。对每个请求应用一个现有的 Amazon Bedrock 护栏。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1249
+#: admin/class-ai-chat-bedrock-admin.php:1257
 msgid "Use DRAFT or a published numeric version."
 msgstr "使用 DRAFT 或已发布的数字版本号。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1257
+#: admin/class-ai-chat-bedrock-admin.php:1265
 msgid "Ground answers in your own content. Retrieved passages are passed to the model as reference data, never as instructions, and only published content is used."
 msgstr "让回答以你自己的内容为依据。检索到的段落会作为参考资料而非指令传给模型，且只使用已发布的内容。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1261
+#: admin/class-ai-chat-bedrock-admin.php:1269
 msgid "Search published posts and pages for each question"
 msgstr "针对每个问题搜索已发布的文章和页面"
 
-#: admin/class-ai-chat-bedrock-admin.php:1262
+#: admin/class-ai-chat-bedrock-admin.php:1270
 msgid "Uses the built-in WordPress search. Password-protected, private and draft content is excluded."
 msgstr "使用 WordPress 内置搜索。受密码保护、私密和草稿内容不包括在内。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1267
+#: admin/class-ai-chat-bedrock-admin.php:1275
 msgid "More passages improve grounding but increase input tokens and cost."
 msgstr "段落越多，回答依据越充分，但输入 Token 和费用也会增加。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1276
+#: admin/class-ai-chat-bedrock-admin.php:1284
 msgid "List links to the pages an answer was drawn from"
 msgstr "列出回答所依据页面的链接"
 
-#: admin/class-ai-chat-bedrock-admin.php:1277
+#: admin/class-ai-chat-bedrock-admin.php:1285
 msgid "Up to three links under each answer, to published pages and knowledge base documents with a web address. Pages that only share a single word with the question are not listed."
 msgstr "每个回答下方最多显示三个链接，指向已发布的页面以及带有网址的知识库文档。仅与问题有一个共同词语的页面不会列出。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1281
+#: admin/class-ai-chat-bedrock-admin.php:1289
 msgid "Optional. Queries an existing Amazon Bedrock knowledge base with the Retrieve API. Requires bedrock:Retrieve permission for that knowledge base."
 msgstr "可选。使用 Retrieve API 查询现有的 Amazon Bedrock 知识库。需要对该知识库拥有 bedrock:Retrieve 权限。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1291
+#: admin/class-ai-chat-bedrock-admin.php:1299
 msgid "Offer abilities registered by other plugins to the chat model"
 msgstr "向对话模型提供其他插件注册的能力"
 
-#: admin/class-ai-chat-bedrock-admin.php:1293
+#: admin/class-ai-chat-bedrock-admin.php:1301
 msgid "Abilities follow the same tool policy: a capability is required, permission callbacks are honored, and abilities that change data need explicit approval."
 msgstr "能力遵循相同的工具策略：需要具备相应权限，会遵守权限回调，更改数据的能力需要明确批准。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1308
+#: admin/class-ai-chat-bedrock-admin.php:1316
 msgid "The WordPress Abilities API is not available on this site, so this option is inactive."
 msgstr "此站点不支持 WordPress Abilities API，因此该选项不起作用。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1314
+#: admin/class-ai-chat-bedrock-admin.php:1322
 msgid "Register read-only content abilities plus draft creation"
 msgstr "注册只读内容能力以及草稿创建能力"
 
-#: admin/class-ai-chat-bedrock-admin.php:1316
+#: admin/class-ai-chat-bedrock-admin.php:1324
 msgid "Registers search, read, SEO suggestion and WooCommerce product lookup as read-only abilities, plus one write ability that creates drafts. Nothing is published, updated or deleted, and orders and customers are never exposed."
 msgstr "将搜索、读取、SEO 建议和 WooCommerce 产品查询注册为只读能力，另加一个创建草稿的写入能力。不会发布、更新或删除任何内容，也绝不会暴露订单和客户信息。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1318
+#: admin/class-ai-chat-bedrock-admin.php:1326
 msgid "Requires the WordPress Abilities API."
 msgstr "需要 WordPress Abilities API。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1333
+#: admin/class-ai-chat-bedrock-admin.php:1341
 msgid "Add a writing assistant sidebar to the block editor"
 msgstr "为区块编辑器添加写作助手侧边栏"
 
-#: admin/class-ai-chat-bedrock-admin.php:1334
+#: admin/class-ai-chat-bedrock-admin.php:1342
 msgid "Improve, shorten, expand, summarize, suggest titles or translate. Suggestions are never saved automatically and require the edit_posts capability."
 msgstr "润色、缩写、扩写、总结、推荐标题或翻译。建议绝不会自动保存，并且需要 edit_posts 权限。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1340
+#: admin/class-ai-chat-bedrock-admin.php:1348
 msgid "Store questions and answers for review"
 msgstr "存储问题和回答以供查看"
 
-#: admin/class-ai-chat-bedrock-admin.php:1341
+#: admin/class-ai-chat-bedrock-admin.php:1349
 msgid "Keep for"
 msgstr "保留"
 
-#: admin/class-ai-chat-bedrock-admin.php:1341
-#: admin/class-ai-chat-bedrock-admin.php:1359
-#: admin/class-ai-chat-bedrock-admin.php:1570
+#: admin/class-ai-chat-bedrock-admin.php:1349
+#: admin/class-ai-chat-bedrock-admin.php:1367
+#: admin/class-ai-chat-bedrock-admin.php:1578
 msgid "days"
 msgstr "天"
 
-#: admin/class-ai-chat-bedrock-admin.php:1343
+#: admin/class-ai-chat-bedrock-admin.php:1351
 msgid "Disabled by default. When enabled, chat content is stored in the database, capped at 200 recent entries, and visible to administrators. Disclose this to your visitors."
 msgstr "默认停用。启用后，对话内容会存储在数据库中，最多保留最近 200 条，管理员可以查看。请告知你的访客。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1591
+#: admin/class-ai-chat-bedrock-admin.php:1599
 msgid "What are your opening hours?"
 msgstr "你们的营业时间是什么时候？"
 
-#: admin/class-ai-chat-bedrock-admin.php:1592
+#: admin/class-ai-chat-bedrock-admin.php:1600
 msgid "One question per line, up to four. They appear as buttons above the input so visitors know what to ask, and disappear once the conversation starts."
 msgstr "每行一个问题，最多四个。它们会以按钮形式显示在输入框上方，让访客知道可以问什么，并在对话开始后消失。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1600
+#: admin/class-ai-chat-bedrock-admin.php:1608
 msgid "Requests per minute for each role"
 msgstr "每个角色的每分钟请求数"
 
-#: admin/class-ai-chat-bedrock-admin.php:1620
+#: admin/class-ai-chat-bedrock-admin.php:1628
 msgid "Optional. Leave a row empty to use the site-wide limit above. A visitor with several roles gets the most permissive of them, and requests are still counted per profile."
 msgstr "可选。某一行留空则使用上方的全站限制。拥有多个角色的访客将采用其中最宽松的限制，且请求仍按对话配置分别计数。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1627
+#: admin/class-ai-chat-bedrock-admin.php:1635
 msgid "Version"
 msgstr "版本"
 
-#: admin/class-ai-chat-bedrock-admin.php:1630
+#: admin/class-ai-chat-bedrock-admin.php:1638
 msgid "Optional. Point at a prompt in Amazon Bedrock Prompt Management and its text replaces the system prompt above, so one prompt can be reviewed in AWS and reused by every site. The prompt must live in the same region as the chat. Leave the version empty to follow the draft."
 msgstr "可选。指向 Amazon Bedrock 提示词管理中的一个提示词，其文本将替换上方的系统提示词，这样同一个提示词可以在 AWS 中审核并被所有站点复用。该提示词必须位于与对话相同的区域。版本留空则跟随草稿。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1639
+#: admin/class-ai-chat-bedrock-admin.php:1647
 msgid "While the prompt cannot be read, the system prompt above is used instead."
 msgstr "无法读取该提示词时，将改用上方的系统提示词。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1643
+#: admin/class-ai-chat-bedrock-admin.php:1651
 msgid "Prompt in use:"
 msgstr "当前使用的提示词："
 
 #. translators: %s: comma separated list of variable names.
-#: admin/class-ai-chat-bedrock-admin.php:1651
+#: admin/class-ai-chat-bedrock-admin.php:1659
 #, php-format
 msgid "These variables are sent literally because this plugin cannot resolve them: %s"
 msgstr "以下变量将按原样发送，因为此插件无法解析它们：%s"
 
-#: admin/class-ai-chat-bedrock-admin.php:1659
+#: admin/class-ai-chat-bedrock-admin.php:1667
 msgid "Off, use keyword search only"
 msgstr "关闭，仅使用关键词搜索"
 
-#: admin/class-ai-chat-bedrock-admin.php:1661
+#: admin/class-ai-chat-bedrock-admin.php:1669
 msgid "Finds content by meaning instead of shared words. It adds one embedding request per question, plus one per passage while indexing. Keyword search still runs when nothing relevant is found. Only what a signed-out visitor can read is indexed."
 msgstr "按含义而非共同词语查找内容。每个问题会增加一次嵌入请求，建立索引时每个段落也会增加一次。找不到相关内容时仍会执行关键词搜索。只有未登录访客可以阅读的内容才会被建立索引。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1665
+#: admin/class-ai-chat-bedrock-admin.php:1673
 msgid "Keep the index up to date in the background"
 msgstr "在后台保持索引为最新"
 
 #. translators: 1: indexed item count, 2: total published item count.
-#: admin/class-ai-chat-bedrock-admin.php:1677
+#: admin/class-ai-chat-bedrock-admin.php:1685
 #, php-format
 msgid "Indexed %1$s of %2$s published item."
 msgid_plural "Indexed %1$s of %2$s published items."
 msgstr[0] "已为 %2$s 个已发布项目中的 %1$s 个建立索引。"
 
 #. translators: %s: number of vectors waiting to be deleted.
-#: admin/class-ai-chat-bedrock-admin.php:1683
+#: admin/class-ai-chat-bedrock-admin.php:1691
 #, php-format
 msgid "%s removed passage is still waiting to be deleted from S3 Vectors."
 msgid_plural "%s removed passages are still waiting to be deleted from S3 Vectors."
 msgstr[0] "仍有 %s 个已移除的段落等待从 S3 Vectors 中删除。"
 
 #. translators: %s: number of items compared per question.
-#: admin/class-ai-chat-bedrock-admin.php:1693
+#: admin/class-ai-chat-bedrock-admin.php:1701
 #, php-format
 msgid "With vectors stored in the WordPress database, each question is compared with the %s most recent items only. Choose Amazon S3 Vectors below to search everything."
 msgstr "向量存储在 WordPress 数据库中时，每个问题只会与最近的 %s 个项目进行比较。在下方选择 Amazon S3 Vectors 即可搜索全部内容。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1700
+#: admin/class-ai-chat-bedrock-admin.php:1708
 msgid "Delete the index"
 msgstr "删除索引"
 
 #. translators: %s: human readable time until the next scheduled run.
-#: admin/class-ai-chat-bedrock-admin.php:1707
+#: admin/class-ai-chat-bedrock-admin.php:1715
 #, php-format
 msgid "Next background batch in %s. On a large site, run wp ai-chat-bedrock index once to finish faster."
 msgstr "下一个后台批次将在 %s 后运行。大型站点可运行一次 wp ai-chat-bedrock index 以更快完成。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1711
+#: admin/class-ai-chat-bedrock-admin.php:1719
 msgid "The background run will be scheduled on the next page load."
 msgstr "后台任务将在下次页面加载时安排。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1715
+#: admin/class-ai-chat-bedrock-admin.php:1723
 msgid "Indexing runs in small batches. Editing a post marks it for re-indexing on the next run."
 msgstr "建立索引以小批次进行。编辑文章后，它会在下次运行时被重新建立索引。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1724
+#: admin/class-ai-chat-bedrock-admin.php:1732
 msgid "WordPress database (small sites)"
 msgstr "WordPress 数据库（小型站点）"
 
-#: admin/class-ai-chat-bedrock-admin.php:1725
+#: admin/class-ai-chat-bedrock-admin.php:1733
 msgid "Amazon S3 Vectors"
 msgstr "Amazon S3 Vectors"
 
-#: admin/class-ai-chat-bedrock-admin.php:1729
+#: admin/class-ai-chat-bedrock-admin.php:1737
 msgid "The database keeps one vector per post and compares a question with the most recent 500. Amazon S3 Vectors stores every passage of every post and searches all of them, at a cost per stored gigabyte and per query."
 msgstr "数据库为每篇文章保存一个向量，并将问题与最近的 500 篇进行比较。Amazon S3 Vectors 会存储每篇文章的每个段落并搜索全部段落，按存储的每 GB 和每次查询计费。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1732
+#: admin/class-ai-chat-bedrock-admin.php:1740
 msgid "Vector bucket"
 msgstr "向量存储桶"
 
-#: admin/class-ai-chat-bedrock-admin.php:1734
+#: admin/class-ai-chat-bedrock-admin.php:1742
 msgid "Vector index"
 msgstr "向量索引"
 
-#: admin/class-ai-chat-bedrock-admin.php:1736
+#: admin/class-ai-chat-bedrock-admin.php:1744
 msgid "Region of the bucket"
 msgstr "存储桶所在区域"
 
-#: admin/class-ai-chat-bedrock-admin.php:1737
+#: admin/class-ai-chat-bedrock-admin.php:1745
 msgid "Same as Amazon Bedrock"
 msgstr "与 Amazon Bedrock 相同"
 
-#: admin/class-ai-chat-bedrock-admin.php:1739
+#: admin/class-ai-chat-bedrock-admin.php:1747
 msgid "Create the vector bucket in the Amazon S3 console, then check or create the index here. Several sites can share one index: each only reads and deletes its own vectors. Needs s3vectors:PutVectors, QueryVectors, GetVectors, DeleteVectors, ListVectors and GetIndex, plus CreateIndex to create it from here."
 msgstr "请先在 Amazon S3 控制台中创建向量存储桶，然后在此处检查或创建索引。多个站点可以共享一个索引：每个站点只读取和删除自己的向量。需要 s3vectors:PutVectors、QueryVectors、GetVectors、DeleteVectors、ListVectors 和 GetIndex 权限；若要在此处创建索引，还需要 CreateIndex。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1742
+#: admin/class-ai-chat-bedrock-admin.php:1750
 msgid "Check the index"
 msgstr "检查索引"
 
-#: admin/class-ai-chat-bedrock-admin.php:1742
+#: admin/class-ai-chat-bedrock-admin.php:1750
 msgid "Create the index"
 msgstr "创建索引"
 
-#: admin/class-ai-chat-bedrock-admin.php:1747
+#: admin/class-ai-chat-bedrock-admin.php:1755
 msgid "Optional adjustments to plugins this site runs. Each is off until you turn it on, and does nothing while the plugin it adjusts is inactive."
 msgstr "对此站点所用插件的可选调整。每项在你开启前均为关闭状态，且在所调整的插件未启用时不起任何作用。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1753
+#: admin/class-ai-chat-bedrock-admin.php:1761
 msgid "Ask GitHub for read-only access when visitors sign in with GitHub"
 msgstr "访客通过 GitHub 登录时仅向 GitHub 请求只读访问权限"
 
-#: admin/class-ai-chat-bedrock-admin.php:1754
+#: admin/class-ai-chat-bedrock-admin.php:1762
 msgid "FluentAuth requests the \"user\" scope, which also lets the site change the visitor's GitHub profile. Signing in only needs read:user and user:email."
 msgstr "FluentAuth 会请求“user”权限范围，这同时允许站点修改访客的 GitHub 个人资料。登录只需要 read:user 和 user:email。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1755
-#: admin/class-ai-chat-bedrock-admin.php:1764
+#: admin/class-ai-chat-bedrock-admin.php:1763
+#: admin/class-ai-chat-bedrock-admin.php:1772
 msgid "Requires FluentAuth."
 msgstr "需要 FluentAuth。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1762
+#: admin/class-ai-chat-bedrock-admin.php:1770
 msgid "Sign up through social login only"
 msgstr "仅允许通过社交登录注册"
 
-#: admin/class-ai-chat-bedrock-admin.php:1763
+#: admin/class-ai-chat-bedrock-admin.php:1771
 msgid "Social sign-up needs \"Anyone can register\", which also opens the WordPress registration form. That form emails a password link and attracts spam accounts. This sends it to the login page, where the social buttons are, and hides the Register link."
 msgstr "社交注册需要开启“任何人都可以注册”，而这也会开放 WordPress 注册表单。该表单会通过电子邮件发送密码链接，并会招来垃圾账户。此选项会将其转到放有社交登录按钮的登录页面，并隐藏“注册”链接。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1775
+#: admin/class-ai-chat-bedrock-admin.php:1783
 msgid "None"
 msgstr "无"
 
-#: admin/class-ai-chat-bedrock-admin.php:1783
+#: admin/class-ai-chat-bedrock-admin.php:1791
 msgid "Polylang lists each translation of a page for search engines but no x-default, so they guess which one to show a reader whose language the site does not have. The edition chosen here is named as the default."
 msgstr "Polylang 会为搜索引擎列出页面的各个翻译版本，但不提供 x-default，因此当站点没有读者所用的语言时，搜索引擎只能猜测该显示哪个版本。此处选择的版本将被指定为默认版本。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1783
+#: admin/class-ai-chat-bedrock-admin.php:1791
 msgid "Requires Polylang."
 msgstr "需要 Polylang。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1837
+#: admin/class-ai-chat-bedrock-admin.php:1845
 msgid "Credit articles to the organization"
 msgstr "将文章作者署名为组织"
 
-#: admin/class-ai-chat-bedrock-admin.php:1838
+#: admin/class-ai-chat-bedrock-admin.php:1846
 msgid "Yoast SEO names the account that published a post as its author. When Yoast is set to represent an organization, this names the organization instead, in structured data, the author meta tag and Slack previews."
 msgstr "Yoast SEO 会将发布文章的账户列为作者。当 Yoast 设置为代表组织时，此选项会改为将组织列为作者，适用于结构化数据、author meta 标签和 Slack 预览。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1839
+#: admin/class-ai-chat-bedrock-admin.php:1847
 msgid "Requires Yoast SEO."
 msgstr "需要 Yoast SEO。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1844
+#: admin/class-ai-chat-bedrock-admin.php:1852
 msgid "Answers about products and orders from the store itself, and help writing product pages. Each is off until you turn it on."
 msgstr "根据商店自身的数据回答商品和订单问题，并协助撰写商品页面。每项功能在您开启前均处于关闭状态。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1848
+#: admin/class-ai-chat-bedrock-admin.php:1856
 msgid "Answer product questions from the live catalog"
 msgstr "根据实时商品目录回答商品问题"
 
-#: admin/class-ai-chat-bedrock-admin.php:1849
+#: admin/class-ai-chat-bedrock-admin.php:1857
 msgid "Matching products are looked up for each question, by name, description, SKU or category, and their current price, stock, rating and attributes are given to the model, so it does not quote an old price. The products are shown as cards under the answer, with a link to add simple products to the cart. On a product page, that product comes first. Products that are not published, are hidden from the shop or search, or are out of stock on a store that hides those, are never used."
 msgstr "每个问题都会按名称、描述、SKU 或分类查找匹配的商品，并将其当前价格、库存、评分和属性提供给模型，因此不会报出过时的价格。商品以卡片形式显示在回答下方，简单商品附有加入购物车的链接。在商品页面上，该商品排在最前。未发布的商品、在商店或搜索中隐藏的商品，以及商店设置为隐藏缺货商品时的缺货商品，均不会被使用。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1854
+#: admin/class-ai-chat-bedrock-admin.php:1862
 msgid "More products give the model more to compare but increase input tokens and cost."
 msgstr "商品越多，模型可比较的内容越多，但输入 Token 和费用也会增加。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1858
+#: admin/class-ai-chat-bedrock-admin.php:1866
 msgid "Let signed-in customers ask about their own orders"
 msgstr "允许已登录的顾客查询自己的订单"
 
-#: admin/class-ai-chat-bedrock-admin.php:1859
+#: admin/class-ai-chat-bedrock-admin.php:1867
 msgid "Only when a question is about orders, shipping or returns, the customer's five latest orders are given to the model: number, dates, status, items, total, shipping method and tracking number. Addresses, email, phone and payment details are never sent, and nobody can see another customer's orders. This sends customer data to Amazon Bedrock, so add the suggested text under Settings, Privacy, Policy Guide to your privacy policy first."
 msgstr "仅当问题涉及订单、配送或退货时，才会将该顾客最近的五个订单提供给模型：订单号、日期、状态、商品、总额、配送方式和运单号。地址、电子邮件、电话和支付信息绝不会发送，任何人都看不到其他顾客的订单。此功能会将顾客数据发送到 Amazon Bedrock，因此请先将“设置 > 隐私 > 政策指南”中的建议文字加入您的隐私政策。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1863
+#: admin/class-ai-chat-bedrock-admin.php:1871
 msgid "Draft product descriptions and summarize reviews"
 msgstr "起草商品描述并汇总评价"
 
-#: admin/class-ai-chat-bedrock-admin.php:1864
+#: admin/class-ai-chat-bedrock-admin.php:1872
 msgid "Adds a box to the product edit screen that writes the short and the full description from the product's own attributes, categories and text, without inventing specifications, and sums up what reviews praise and criticize, without reviewer names. Drafts go into the editor for you to review and are saved only when you update the product."
 msgstr "在商品编辑页面添加一个面板，根据商品自身的属性、分类和文字撰写简短描述和完整描述，不会编造规格；并汇总评价中的好评与批评，不含评价者姓名。草稿会放入编辑器供您审阅，只有在您更新商品时才会保存。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1881
+#: admin/class-ai-chat-bedrock-admin.php:1889
 msgid "Generate image alt text and post excerpts"
 msgstr "生成图片替代文本和文章摘要"
 
-#: admin/class-ai-chat-bedrock-admin.php:1882
+#: admin/class-ai-chat-bedrock-admin.php:1890
 msgid "Adds a Generate alt text action to the media library and an excerpt helper for posts. Alt text needs a model that accepts images, such as Claude. Existing alt text is never replaced unless you ask."
 msgstr "在媒体库中添加“生成替代文本”操作，并为文章添加摘要助手。替代文本需要支持图片输入的模型，例如 Claude。除非你要求，否则绝不会替换已有的替代文本。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1887
+#: admin/class-ai-chat-bedrock-admin.php:1895
 msgid "The list is discovered from your AWS account and region. Many current models require a cross-region inference profile ID."
 msgstr "此列表根据你的 AWS 账户和区域获取。许多最新模型需要使用跨区域推理配置文件 ID。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1888
+#: admin/class-ai-chat-bedrock-admin.php:1896
 msgid "Refresh model list"
 msgstr "刷新模型列表"
 
-#: admin/class-ai-chat-bedrock-admin.php:1891
+#: admin/class-ai-chat-bedrock-admin.php:1899
 msgid "No fallback"
 msgstr "不使用备用模型"
 
-#: admin/class-ai-chat-bedrock-admin.php:1893
+#: admin/class-ai-chat-bedrock-admin.php:1901
 msgid "Used only when the main model cannot answer because access was denied, the request was throttled, or Amazon Bedrock was unreachable. The reply states which model answered. Requests rejected for other reasons are never retried."
 msgstr "仅在主模型因访问被拒绝、请求被限流或无法连接 Amazon Bedrock 而无法回答时使用。回复中会注明由哪个模型回答。因其他原因被拒绝的请求绝不会重试。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1914
+#: admin/class-ai-chat-bedrock-admin.php:1922
 msgid "Not sent to Claude Opus 4.7, Sonnet 5, Opus 5 and newer Claude models, because Amazon Bedrock rejects it for them."
 msgstr "不会发送给 Claude Opus 4.7、Sonnet 5、Opus 5 及更新的 Claude 模型，因为 Amazon Bedrock 会拒绝这些模型的该参数。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1927
+#: admin/class-ai-chat-bedrock-admin.php:1935
 msgid "Allow unauthenticated visitors to use paid Bedrock requests"
 msgstr "允许未登录的访客使用付费的 Bedrock 请求"
 
-#: admin/class-ai-chat-bedrock-admin.php:1928
+#: admin/class-ai-chat-bedrock-admin.php:1936
 msgid "Disabled by default. Enabling this can incur AWS charges even with rate limiting."
 msgstr "默认停用。即使启用了频率限制，开启此选项也可能产生 AWS 费用。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1937
+#: admin/class-ai-chat-bedrock-admin.php:1945
 msgid "Show a floating chat button on every page"
 msgstr "在每个页面显示浮动对话按钮"
 
-#: admin/class-ai-chat-bedrock-admin.php:1939
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:63
+#: admin/class-ai-chat-bedrock-admin.php:1947
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:74
 msgid "Profile"
 msgstr "对话配置"
 
-#: admin/class-ai-chat-bedrock-admin.php:1946
+#: admin/class-ai-chat-bedrock-admin.php:1954
 msgid "Pages that already contain the chat block or shortcode are left unchanged. Use a profile with guest access if visitors should be able to chat."
 msgstr "已包含对话区块或简码的页面保持不变。如果希望访客能够对话，请使用开启了访客访问的对话配置。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1951
+#: admin/class-ai-chat-bedrock-admin.php:1959
 msgid "Light (default)"
 msgstr "浅色（默认）"
 
-#: admin/class-ai-chat-bedrock-admin.php:1952
+#: admin/class-ai-chat-bedrock-admin.php:1960
 msgid "Dark"
 msgstr "深色"
 
-#: admin/class-ai-chat-bedrock-admin.php:1953
+#: admin/class-ai-chat-bedrock-admin.php:1961
 msgid "Follow the visitor's device"
 msgstr "跟随访客的设备"
 
-#: admin/class-ai-chat-bedrock-admin.php:1960
+#: admin/class-ai-chat-bedrock-admin.php:1968
 msgid "Choose what matches your theme. Following the device turns the chat dark for visitors in dark mode, even on a light theme."
 msgstr "请选择与你的主题相匹配的选项。选择跟随设备时，处于深色模式的访客会看到深色的对话界面，即使主题是浅色的。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1968
+#: admin/class-ai-chat-bedrock-admin.php:1976
 msgid "Log redacted request metadata"
 msgstr "记录已脱敏的请求元数据"
 
-#: admin/class-ai-chat-bedrock-admin.php:2006
+#: admin/class-ai-chat-bedrock-admin.php:2014
 msgid "The fallback model must be a valid model that differs from the main model; it was cleared."
 msgstr "备用模型必须是与主模型不同的有效模型，已被清除。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2019
+#: admin/class-ai-chat-bedrock-admin.php:2027
 msgid "The submitted model ID was not valid; the default model was kept."
 msgstr "提交的模型 ID 无效，已保留默认模型。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2033
-#: admin/class-ai-chat-bedrock-admin.php:2048
-#: admin/class-ai-chat-bedrock-admin.php:2202
-#: admin/class-ai-chat-bedrock-admin.php:2229
-#: admin/class-ai-chat-bedrock-admin.php:2260
+#: admin/class-ai-chat-bedrock-admin.php:2041
+#: admin/class-ai-chat-bedrock-admin.php:2056
+#: admin/class-ai-chat-bedrock-admin.php:2210
+#: admin/class-ai-chat-bedrock-admin.php:2237
+#: admin/class-ai-chat-bedrock-admin.php:2268
 msgid "The credential could not be encrypted; the existing value was preserved."
 msgstr "无法加密凭证，已保留现有值。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2055
+#: admin/class-ai-chat-bedrock-admin.php:2063
 msgid "That does not look like an Amazon Bedrock API key, so it was not saved."
 msgstr "这看起来不像 Amazon Bedrock API 密钥，因此未保存。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2086
+#: admin/class-ai-chat-bedrock-admin.php:2094
 msgid "The guardrail identifier contained unsupported characters and was cleared."
 msgstr "护栏标识符包含不支持的字符，已被清除。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2108
+#: admin/class-ai-chat-bedrock-admin.php:2116
 msgid "That embedding model is not supported; semantic search was left off."
 msgstr "不支持该嵌入模型，语义搜索保持关闭。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2120
+#: admin/class-ai-chat-bedrock-admin.php:2128
 msgid "S3 Vectors bucket and index names are 3 to 63 lowercase letters, digits, hyphens or dots; the value was cleared."
 msgstr "S3 Vectors 存储桶和索引名称须为 3 到 63 个小写字母、数字、连字符或点，该值已被清除。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2126
+#: admin/class-ai-chat-bedrock-admin.php:2134
 msgid "Amazon S3 Vectors needs a bucket and an index name. Until both are set, semantic search is off."
 msgstr "Amazon S3 Vectors 需要存储桶和索引名称。在两者都设置之前，语义搜索处于关闭状态。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2160
+#: admin/class-ai-chat-bedrock-admin.php:2168
 msgid "The managed prompt identifier contained unsupported characters and was cleared."
 msgstr "托管提示词标识符包含不支持的字符，已被清除。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2308
+#: admin/class-ai-chat-bedrock-admin.php:2316
 msgid "The knowledge base ID must be alphanumeric; the value was cleared."
 msgstr "知识库 ID 只能包含字母和数字，该值已被清除。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2368
+#: admin/class-ai-chat-bedrock-admin.php:2376
 msgid "Settings saved."
 msgstr "设置已保存。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2513
+#: admin/class-ai-chat-bedrock-admin.php:2521
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:36
 #: includes/class-ai-chat-bedrock-chat-history.php:381
-#: public/class-ai-chat-bedrock-public.php:291
-#: public/class-ai-chat-bedrock-public.php:312
+#: public/class-ai-chat-bedrock-public.php:313
+#: public/class-ai-chat-bedrock-public.php:334
 #: public/partials/ai-chat-bedrock-public-display.php:21
 msgid "Chat"
 msgstr "对话"
 
-#: admin/class-ai-chat-bedrock-admin.php:2509
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:66
+#: admin/class-ai-chat-bedrock-admin.php:2517
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:77
 msgid "Grounding"
 msgstr "回答依据"
 
@@ -1394,13 +1394,13 @@ msgstr "所有评价"
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:267
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:327
 #: includes/class-ai-chat-bedrock-metrics.php:1294
-#: public/class-ai-chat-bedrock-public.php:124
+#: public/class-ai-chat-bedrock-public.php:146
 msgid "Helpful"
 msgstr "有帮助"
 
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:268
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:327
-#: public/class-ai-chat-bedrock-public.php:125
+#: public/class-ai-chat-bedrock-public.php:147
 msgid "Not helpful"
 msgstr "没有帮助"
 
@@ -1438,7 +1438,7 @@ msgid_plural "%1$s matching entries, page %2$s of %3$s."
 msgstr[0] "%1$s 条匹配的记录，第 %2$s 页，共 %3$s 页。"
 
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:313
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:307
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:314
 msgid "Time"
 msgstr "时间"
 
@@ -1492,8 +1492,8 @@ msgstr "检查项"
 
 #: admin/partials/ai-chat-bedrock-admin-diagnostics.php:50
 #: admin/partials/ai-chat-bedrock-admin-leads.php:125
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:86
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:310
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:51
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:317
 #: includes/class-ai-chat-bedrock-distribution.php:608
 msgid "Status"
 msgstr "状态"
@@ -1570,9 +1570,9 @@ msgstr "用你自己的 AWS 账户将 WordPress 连接到 Amazon Bedrock。支�
 msgid "Credentials"
 msgstr "凭证"
 
-#: admin/class-ai-chat-bedrock-admin.php:1410
+#: admin/class-ai-chat-bedrock-admin.php:1418
 #: admin/partials/ai-chat-bedrock-admin-display.php:61
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:141
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:148
 msgid "Connected"
 msgstr "已连接"
 
@@ -1621,7 +1621,7 @@ msgid "Answers appear when generation finishes."
 msgstr "回答会在生成完成后显示。"
 
 #: admin/partials/ai-chat-bedrock-admin-display.php:86
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:93
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:100
 #: includes/class-ai-chat-bedrock-diagnostics.php:399
 #: includes/class-ai-chat-bedrock-diagnostics.php:402
 #: includes/class-ai-chat-bedrock-diagnostics.php:404
@@ -1910,8 +1910,8 @@ msgid "Token ceiling"
 msgstr "Token 上限"
 
 #: admin/partials/ai-chat-bedrock-admin-eval.php:49
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:86
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:68
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:51
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:79
 msgid "Actions"
 msgstr "操作"
 
@@ -2064,7 +2064,7 @@ msgid "AI clients"
 msgstr "AI 客户端"
 
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:23
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:170
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:177
 msgid "Tool policy"
 msgstr "工具策略"
 
@@ -2108,266 +2108,266 @@ msgstr "这两项设置在更改后会立即保存。"
 msgid "External MCP servers"
 msgstr "外部 MCP 服务器"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:51
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:63
 msgid "Server name"
 msgstr "服务器名称"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:52
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:64
 msgid "HTTPS base URL"
 msgstr "HTTPS 基础 URL"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:54
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:66
 msgid "Authentication"
 msgstr "身份验证"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:57
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:69
 msgid "None (public endpoint)"
 msgstr "无（公共端点）"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:58
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:65
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:70
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:77
 msgid "Bearer token"
 msgstr "Bearer 令牌"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:59
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:71
 msgid "AWS SigV4 (Bedrock AgentCore Gateway)"
 msgstr "AWS SigV4（Bedrock AgentCore Gateway）"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:61
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:73
 msgid "SigV4 signs requests with the same AWS credentials used for Bedrock, so an AgentCore Gateway endpoint needs no separate secret."
 msgstr "SigV4 使用与 Bedrock 相同的 AWS 凭证为请求签名，因此 AgentCore Gateway 端点无需单独的密钥。"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:66
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:78
 msgid "Stored encrypted and never displayed again."
 msgstr "加密存储，且不会再次显示。"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:69
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:72
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:81
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:84
 msgid "SigV4 signing"
 msgstr "SigV4 签名"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:73
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:85
 msgid "Service"
 msgstr "服务"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:75
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:87
 msgid "Region"
 msgstr "区域"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:78
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:90
 msgid "Optional. Leave the region empty to use the region configured for Bedrock."
 msgstr "可选。留空则使用为 Bedrock 配置的区域。"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:86
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:110
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:51
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:122
 #: includes/class-ai-chat-bedrock-leads.php:179
 #: includes/class-ai-chat-bedrock-leads.php:548
 #: includes/class-ai-chat-bedrock-leads.php:903
 msgid "Name"
 msgstr "名称"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:86
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:51
 msgid "URL"
 msgstr "URL"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:86
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:51
 msgid "Tools"
 msgstr "工具"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:93
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:100
 msgid "Close"
 msgstr "关闭"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:99
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:106
 msgid "Connect AI clients (OAuth)"
 msgstr "连接 AI 客户端（OAuth）"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:100
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:107
 msgid "Let clients such as Claude Desktop connect by pasting the MCP URL, signing in to WordPress and approving. No WordPress password is shared with the client, and access can be revoked here at any time."
 msgstr "Claude Desktop 等客户端只需粘贴 MCP URL、登录 WordPress 并批准即可连接。客户端不会获得任何 WordPress 密码，你也可以随时在此撤销访问权限。"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:107
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:114
 msgid "OAuth connections"
 msgstr "OAuth 连接"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:109
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:116
 msgid "Allow AI clients to connect with OAuth"
 msgstr "允许 AI 客户端通过 OAuth 连接"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:110
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:117
 msgid "Requires HTTPS in practice: clients only accept HTTPS redirect targets, and WordPress requires HTTPS for application passwords."
 msgstr "实际使用中需要 HTTPS：客户端只接受 HTTPS 重定向目标，而 WordPress 要求使用 HTTPS 才能使用应用程序密码。"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:114
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:121
 msgid "MCP endpoint"
 msgstr "MCP 端点"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:118
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:125
 msgid "Discovery"
 msgstr "发现端点"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:125
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:132
 msgid "Save connection settings"
 msgstr "保存连接设置"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:129
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:136
 msgid "Connected AI clients"
 msgstr "已连接的 AI 客户端"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:131
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:138
 msgid "No AI clients are connected."
 msgstr "没有已连接的 AI 客户端。"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:139
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:146
 msgid "Client"
 msgstr "客户端"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:140
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:147
 msgid "Acts as"
 msgstr "代表用户"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:142
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:149
 msgid "Access token"
 msgstr "访问令牌"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:143
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:155
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:150
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:162
 msgid "Revoke"
 msgstr "撤销"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:153
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:160
 msgid "Active"
 msgstr "有效"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:153
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:160
 msgid "Expired, refreshable"
 msgstr "已过期，可刷新"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:161
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:168
 msgid "Revoke selected"
 msgstr "撤销所选"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:162
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:169
 msgid "Disconnect every AI client? Each one has to be authorised again."
 msgstr "要断开所有 AI 客户端吗？每个客户端都需要重新授权。"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:162
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:169
 msgid "Revoke all connections"
 msgstr "撤销所有连接"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:171
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:178
 msgid "Tools that appear to change data are blocked until you allow them here. Read-only tools are allowed by default."
 msgstr "看起来会更改数据的工具会被阻止，直到你在此处允许。只读工具默认允许。"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:177
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:184
 msgid "Capability required"
 msgstr "所需权限"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:183
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:190
 msgid "Any signed-in user"
 msgstr "任何已登录用户"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:184
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:191
 msgid "Contributors and above (edit_posts)"
 msgstr "投稿者及以上（edit_posts）"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:185
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:192
 msgid "Editors and above (edit_others_posts)"
 msgstr "编辑及以上（edit_others_posts）"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:186
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:193
 msgid "Administrators only (manage_options)"
 msgstr "仅限管理员（manage_options）"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:196
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:203
 msgid "Maximum tool rounds"
 msgstr "最大工具轮次"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:199
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:206
 msgid "How many times the model may call tools and continue reasoning for one visitor message."
 msgstr "针对每条访客消息，模型最多可以调用工具并继续推理的次数。"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:203
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:210
 msgid "Audit log"
 msgstr "审计日志"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:205
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:212
 msgid "Record tool calls (metadata only)"
 msgstr "记录工具调用（仅元数据）"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:218
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:308
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:225
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:315
 msgid "Tool"
 msgstr "工具"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:219
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:265
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:226
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:272
 msgid "Type"
 msgstr "类型"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:220
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:266
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:227
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:273
 msgid "Allowed"
 msgstr "已允许"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:236
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:281
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:243
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:288
 msgid "Changes data"
 msgstr "会更改数据"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:236
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:281
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:243
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:288
 msgid "Read only"
 msgstr "只读"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:237
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:284
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:244
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:291
 msgid "Allow"
 msgstr "允许"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:243
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:250
 msgid "No tools discovered yet. Register an MCP server and refresh its tools."
 msgstr "尚未发现任何工具。请注册一个 MCP 服务器并刷新其工具。"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:293
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:300
 msgid "Save tool policy"
 msgstr "保存工具策略"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:299
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:306
 msgid "Recent tool calls"
 msgstr "最近的工具调用"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:302
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:309
 msgid "No tool calls recorded yet."
 msgstr "尚无工具调用记录。"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:309
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:316
 msgid "Round"
 msgstr "轮次"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:311
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:318
 msgid "Duration"
 msgstr "耗时"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:312
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:319
 msgid "Parameter keys"
 msgstr "参数键"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:322
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:329
 msgid "Success"
 msgstr "成功"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:322
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:329
 msgid "Error"
 msgstr "错误"
 
 #. translators: %s: duration in milliseconds.
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:327
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:334
 #, php-format
 msgid "%s ms"
 msgstr "%s 毫秒"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:335
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:342
 msgid "Parameter values, tool output and chat content are never stored."
 msgstr "参数值、工具输出和对话内容永远不会被存储。"
 
@@ -2379,124 +2379,125 @@ msgstr "最大 Token 数"
 msgid "Requests per minute"
 msgstr "每分钟请求数"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:47
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:58
 msgid "Serve several chats from one plugin. Each profile can use its own model, prompt, presentation, guest access and grounding, and anything left empty falls back to the main settings."
 msgstr "用一个插件提供多个对话。每个对话配置都可以使用自己的模型、提示词、外观、访客访问权限和回答依据，留空的项目将沿用主设置。"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:50
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:61
 msgid "Chat profile saved."
 msgstr "对话配置已保存。"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:52
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:63
 msgid "Chat profile deleted."
 msgstr "对话配置已删除。"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:54
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:65
 #: includes/class-ai-chat-bedrock-profiles.php:71
 msgid "A profile needs a name using letters, numbers or dashes."
 msgstr "对话配置需要一个由字母、数字或短横线组成的名称。"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:56
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:67
 #: includes/class-ai-chat-bedrock-profiles.php:76
 msgid "The maximum number of chat profiles has been reached."
 msgstr "对话配置数量已达上限。"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:67
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:78
 msgid "Shortcode"
 msgstr "简码"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:75
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:117
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:86
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:129
 msgid "Site default"
 msgstr "站点默认"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:76
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:77
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:87
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:88
 msgid "Inherit"
 msgstr "继承"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:76
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:87
 msgid "Guests allowed"
 msgstr "允许访客"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:76
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:87
 msgid "Signed in only"
 msgstr "仅限已登录用户"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:77
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:179
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:88
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:191
 msgid "On"
 msgstr "开启"
 
-#: admin/class-ai-chat-bedrock-admin.php:1284
-#: admin/class-ai-chat-bedrock-admin.php:1412
-#: admin/class-ai-chat-bedrock-admin.php:1896
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:77
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:178
+#: admin/class-ai-chat-bedrock-admin.php:1292
+#: admin/class-ai-chat-bedrock-admin.php:1420
+#: admin/class-ai-chat-bedrock-admin.php:1904
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:88
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:190
 msgid "Off"
 msgstr "关闭"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:81
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:92
 msgid "Edit"
 msgstr "编辑"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:82
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:93
 msgid "Delete this profile? Chats that use it fall back to the main settings."
 msgstr "删除此对话配置？使用它的对话将改用主设置。"
 
 #: admin/partials/ai-chat-bedrock-admin-leads.php:172
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:86
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:97
 msgid "Delete"
 msgstr "删除"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:96
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:108
 msgid "Edit profile"
 msgstr "编辑对话配置"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:96
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:185
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:55
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:108
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:197
 msgid "Add profile"
 msgstr "添加对话配置"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:102
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:114
 msgid "Profile key"
 msgstr "对话配置标识"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:106
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:118
 msgid "Lowercase letters, numbers and dashes. Used in the shortcode and block."
 msgstr "小写字母、数字和短横线。用于简码和区块。"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:140
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:152
 msgid "One per line, up to four. Leave empty to inherit the main settings."
 msgstr "每行一个，最多四个。留空则继承主设置。"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:144
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:147
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:156
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:159
 msgid "Limits"
 msgstr "限制"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:167
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:177
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:179
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:189
 msgid "Inherit main settings"
 msgstr "继承主设置"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:168
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:180
 msgid "Signed-in users only"
 msgstr "仅限已登录用户"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:169
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:181
 msgid "Allow guests (incurs AWS charges)"
 msgstr "允许访客（会产生 AWS 费用）"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:174
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:186
 msgid "Site content grounding"
 msgstr "基于站点内容回答"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:185
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:197
 msgid "Update profile"
 msgstr "更新对话配置"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:187
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:199
 #: includes/class-ai-chat-bedrock-leads.php:188
 msgid "Cancel"
 msgstr "取消"
@@ -2513,7 +2514,7 @@ msgstr "模型被要求不得编造价格、地址、统计数据、客户评价
 msgid "What is this site about?"
 msgstr "这个站点是关于什么的？"
 
-#: admin/class-ai-chat-bedrock-admin.php:1098
+#: admin/class-ai-chat-bedrock-admin.php:1106
 #: admin/partials/ai-chat-bedrock-admin-scaffold.php:28
 msgid "Site description"
 msgstr "站点描述"
@@ -2656,7 +2657,7 @@ msgid "Apply configuration"
 msgstr "应用配置"
 
 #: admin/partials/ai-chat-bedrock-admin-test.php:14
-#: public/class-ai-chat-bedrock-public.php:292
+#: public/class-ai-chat-bedrock-public.php:314
 msgid "Chat with AI"
 msgstr "与 AI 对话"
 
@@ -3415,7 +3416,7 @@ msgstr "请先添加一些文本。"
 
 #. translators: 1: input tokens, 2: output tokens.
 #: includes/class-ai-chat-bedrock-editor-assistant.php:248
-#: public/class-ai-chat-bedrock-public.php:142
+#: public/class-ai-chat-bedrock-public.php:164
 #, php-format
 msgid "Tokens: %1$d in / %2$d out"
 msgstr "Token：输入 %1$d / 输出 %2$d"
@@ -4138,7 +4139,7 @@ msgstr "流已打开"
 #: includes/class-ai-chat-bedrock-chat-history.php:284
 #: includes/class-ai-chat-bedrock-speech.php:438
 #: includes/class-ai-chat-bedrock-stream.php:80
-#: public/class-ai-chat-bedrock-public.php:384
+#: public/class-ai-chat-bedrock-public.php:411
 msgid "Please sign in to use the chat."
 msgstr "请登录后使用对话。"
 
@@ -4147,8 +4148,8 @@ msgid "Streaming is disabled on this site."
 msgstr "本站未启用流式回答。"
 
 #: includes/class-ai-chat-bedrock-stream.php:91
-#: public/class-ai-chat-bedrock-public.php:353
-#: public/class-ai-chat-bedrock-public.php:392
+#: public/class-ai-chat-bedrock-public.php:380
+#: public/class-ai-chat-bedrock-public.php:419
 msgid "Too many requests. Please wait a minute and try again."
 msgstr "请求过于频繁，请一分钟后再试。"
 
@@ -4266,7 +4267,7 @@ msgid "Generated text"
 msgstr "生成的文字"
 
 #: includes/class-ai-chat-bedrock-woocommerce.php:1319
-#: public/class-ai-chat-bedrock-public.php:120
+#: public/class-ai-chat-bedrock-public.php:142
 msgid "Copy"
 msgstr "复制"
 
@@ -4275,7 +4276,7 @@ msgid "Draft ready. Review it, then insert it or copy it."
 msgstr "草稿已就绪。请审阅后插入或复制。"
 
 #: includes/class-ai-chat-bedrock-woocommerce.php:1346
-#: public/class-ai-chat-bedrock-public.php:115
+#: public/class-ai-chat-bedrock-public.php:137
 msgid "The request could not be completed. Please try again."
 msgstr "无法完成请求，请重试。"
 
@@ -4296,7 +4297,7 @@ msgid "Inserted. Update the product to save it."
 msgstr "已插入。更新商品即可保存。"
 
 #: includes/class-ai-chat-bedrock-woocommerce.php:1351
-#: public/class-ai-chat-bedrock-public.php:121
+#: public/class-ai-chat-bedrock-public.php:143
 msgid "Copied"
 msgstr "已复制"
 
@@ -4398,148 +4399,148 @@ msgid "The Amazon Bedrock request failed."
 msgstr "Amazon Bedrock 请求失败。"
 
 #: includes/class-ai-chat-bedrock-wechat.php:741
-#: public/class-ai-chat-bedrock-public.php:99
+#: public/class-ai-chat-bedrock-public.php:121
 #: public/partials/ai-chat-bedrock-public-display.php:15
 msgid "Hello! How can I help you today?"
 msgstr "你好！今天有什么可以帮你？"
 
-#: public/class-ai-chat-bedrock-public.php:116
+#: public/class-ai-chat-bedrock-public.php:138
 msgid "Answer stopped."
 msgstr "已停止回答。"
 
-#: public/class-ai-chat-bedrock-public.php:117
+#: public/class-ai-chat-bedrock-public.php:139
 msgid "Clear this conversation?"
 msgstr "要清空这次对话吗？"
 
-#: public/class-ai-chat-bedrock-public.php:122
+#: public/class-ai-chat-bedrock-public.php:144
 msgid "Try again"
 msgstr "重试"
 
-#: public/class-ai-chat-bedrock-public.php:123
+#: public/class-ai-chat-bedrock-public.php:145
 msgid "Was this helpful?"
 msgstr "这条回答有帮助吗？"
 
-#: public/class-ai-chat-bedrock-public.php:126
+#: public/class-ai-chat-bedrock-public.php:148
 msgid "Thanks for the feedback."
 msgstr "感谢你的反馈。"
 
-#: public/class-ai-chat-bedrock-public.php:127
+#: public/class-ai-chat-bedrock-public.php:149
 msgid "Your message is too long."
 msgstr "你的消息太长了。"
 
 #. translators: %d: number of tools being used.
-#: public/class-ai-chat-bedrock-public.php:129
+#: public/class-ai-chat-bedrock-public.php:151
 #, php-format
 msgid "Using %d tool(s) to gather information…"
 msgstr "正在使用 %d 个工具收集信息…"
 
 #. translators: %s: comma separated list of tool names.
-#: public/class-ai-chat-bedrock-public.php:131
+#: public/class-ai-chat-bedrock-public.php:153
 #, php-format
 msgid "Using %s…"
 msgstr "正在使用 %s…"
 
 #. translators: %d: number of tool calls the agent made.
-#: public/class-ai-chat-bedrock-public.php:133
+#: public/class-ai-chat-bedrock-public.php:155
 #, php-format
 msgid "Agent steps (%d)"
 msgstr "智能体步骤（%d）"
 
-#: public/class-ai-chat-bedrock-public.php:134
+#: public/class-ai-chat-bedrock-public.php:156
 msgid "succeeded"
 msgstr "成功"
 
 #: includes/class-ai-chat-bedrock-distribution.php:708
-#: public/class-ai-chat-bedrock-public.php:135
+#: public/class-ai-chat-bedrock-public.php:157
 msgid "failed"
 msgstr "失败"
 
 #. translators: %d: tool round number.
-#: public/class-ai-chat-bedrock-public.php:137
+#: public/class-ai-chat-bedrock-public.php:159
 #, php-format
 msgid "round %d"
 msgstr "第 %d 轮"
 
-#: public/class-ai-chat-bedrock-public.php:138
+#: public/class-ai-chat-bedrock-public.php:160
 msgid "The round limit was reached, so the answer was written with the information gathered so far."
 msgstr "已达到轮次上限，回答基于目前收集到的信息。"
 
 #. translators: %s: model identifier that answered instead of the main model.
-#: public/class-ai-chat-bedrock-public.php:140
+#: public/class-ai-chat-bedrock-public.php:162
 #, php-format
 msgid "The main model was unavailable, so %s answered."
 msgstr "主模型暂不可用，由 %s 作答。"
 
-#: public/class-ai-chat-bedrock-public.php:143
+#: public/class-ai-chat-bedrock-public.php:165
 msgctxt "chat avatar for the visitor"
 msgid "You"
 msgstr "你"
 
 #: admin/partials/ai-chat-bedrock-admin-leads.php:152
 #: includes/class-ai-chat-bedrock-leads.php:578
-#: public/class-ai-chat-bedrock-public.php:144
+#: public/class-ai-chat-bedrock-public.php:166
 msgctxt "chat avatar for the assistant"
 msgid "AI"
 msgstr "AI"
 
-#: public/class-ai-chat-bedrock-public.php:145
+#: public/class-ai-chat-bedrock-public.php:167
 msgid "Sources"
 msgstr "来源"
 
-#: public/class-ai-chat-bedrock-public.php:146
+#: public/class-ai-chat-bedrock-public.php:168
 msgid "(opens in a new tab)"
 msgstr "（在新标签页中打开）"
 
 #: includes/class-ai-chat-bedrock-ontology.php:246
-#: public/class-ai-chat-bedrock-public.php:147
+#: public/class-ai-chat-bedrock-public.php:169
 msgid "Products"
 msgstr "商品"
 
-#: public/class-ai-chat-bedrock-public.php:148
+#: public/class-ai-chat-bedrock-public.php:170
 msgid "View product"
 msgstr "查看商品"
 
-#: public/class-ai-chat-bedrock-public.php:149
+#: public/class-ai-chat-bedrock-public.php:171
 msgid "Add to cart"
 msgstr "加入购物车"
 
-#: public/class-ai-chat-bedrock-public.php:150
+#: public/class-ai-chat-bedrock-public.php:172
 msgid "Original price:"
 msgstr "原价："
 
-#: public/class-ai-chat-bedrock-public.php:151
+#: public/class-ai-chat-bedrock-public.php:173
 msgid "Current price:"
 msgstr "现价："
 
 #. translators: %s: average rating, such as 4.5.
-#: public/class-ai-chat-bedrock-public.php:153
+#: public/class-ai-chat-bedrock-public.php:175
 #, php-format
 msgid "Rated %s out of 5"
 msgstr "评分 %s / 5"
 
-#: public/class-ai-chat-bedrock-public.php:272
+#: public/class-ai-chat-bedrock-public.php:294
 msgid "The chat is not shown to visitors yet: Amazon Bedrock credentials or a model are still missing. Only administrators see this message."
 msgstr "访客暂时看不到对话：仍缺少 Amazon Bedrock 凭证或模型。只有管理员能看到此消息。"
 
-#: public/class-ai-chat-bedrock-public.php:274
+#: public/class-ai-chat-bedrock-public.php:296
 msgid "Finish the setup"
 msgstr "完成设置"
 
-#: public/class-ai-chat-bedrock-public.php:293
+#: public/class-ai-chat-bedrock-public.php:315
 msgid "Type your message here…"
 msgstr "在这里输入消息…"
 
 #: includes/class-ai-chat-bedrock-leads.php:187
-#: public/class-ai-chat-bedrock-public.php:294
+#: public/class-ai-chat-bedrock-public.php:316
 msgid "Send"
 msgstr "发送"
 
-#: public/class-ai-chat-bedrock-public.php:295
+#: public/class-ai-chat-bedrock-public.php:317
 msgid "Clear chat"
 msgstr "清空对话"
 
-#: public/class-ai-chat-bedrock-public.php:350
-#: public/class-ai-chat-bedrock-public.php:365
+#: public/class-ai-chat-bedrock-public.php:377
+#: public/class-ai-chat-bedrock-public.php:392
 msgid "Method not allowed."
 msgstr "不允许的请求方法。"
 
@@ -4679,45 +4680,45 @@ msgctxt "block keyword"
 msgid "aws"
 msgstr "AWS"
 
-#: admin/class-ai-chat-bedrock-admin.php:293
+#: admin/class-ai-chat-bedrock-admin.php:301
 msgid "Remove background"
 msgstr "移除背景"
 
-#: admin/class-ai-chat-bedrock-admin.php:297
+#: admin/class-ai-chat-bedrock-admin.php:305
 msgid "Upscale 4×"
 msgstr "放大 4 倍"
 
-#: admin/class-ai-chat-bedrock-admin.php:326
+#: admin/class-ai-chat-bedrock-admin.php:334
 msgid "Unknown image edit."
 msgstr "未知的图片编辑操作。"
 
-#: admin/class-ai-chat-bedrock-admin.php:364
+#: admin/class-ai-chat-bedrock-admin.php:372
 msgid "The edited image was saved as a new item in the Media Library. The original is unchanged."
 msgstr "编辑后的图片已作为新项目保存到媒体库，原图未作更改。"
 
-#: admin/class-ai-chat-bedrock-admin.php:366
+#: admin/class-ai-chat-bedrock-admin.php:374
 msgid "Open it"
 msgstr "打开"
 
-#: admin/class-ai-chat-bedrock-admin.php:372
+#: admin/class-ai-chat-bedrock-admin.php:380
 msgid "The image could not be edited."
 msgstr "无法编辑该图片。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1067
+#: admin/class-ai-chat-bedrock-admin.php:1075
 msgid "Image model"
 msgstr "图像模型"
 
-#: admin/class-ai-chat-bedrock-admin.php:1898
+#: admin/class-ai-chat-bedrock-admin.php:1906
 msgid "Lets plugins that use the WordPress AI Client generate images with Stability AI, and adds Remove background and Upscale to images in the Media Library when the media helpers are on. Results are saved as new images; originals are never changed. Each image is one paid request and counts toward the daily limit."
 msgstr "让使用 WordPress AI Client 的插件通过 Stability AI 生成图片；开启媒体助手后，还会在媒体库的图片上添加“移除背景”和“放大”操作。结果保存为新图片，原图绝不会被更改。每张图片都是一次付费请求，并计入每日上限。"
 
 #. translators: %s: AWS region code, such as us-west-2.
-#: admin/class-ai-chat-bedrock-admin.php:1902
+#: admin/class-ai-chat-bedrock-admin.php:1910
 #, php-format
 msgid "The Stability models run in %s, whatever region the chat uses, so prompts and images are processed there. The guardrail, if set, checks each prompt first in your own region."
 msgstr "无论聊天使用哪个区域，Stability 模型都在 %s 运行，因此提示词和图片会在该区域处理。如已设置护栏，每条提示词会先在你自己的区域接受检查。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2013
+#: admin/class-ai-chat-bedrock-admin.php:2021
 msgid "That image model is not supported; image generation was left off."
 msgstr "不支持该图像模型，图片生成保持关闭。"
 
@@ -4855,19 +4856,19 @@ msgstr "图片必须是内联的 JPEG、PNG、GIF 或 WebP 数据，不会获取
 msgid "The model did not return valid JSON."
 msgstr "模型未返回有效的 JSON。"
 
-#: admin/class-ai-chat-bedrock-admin.php:334
+#: admin/class-ai-chat-bedrock-admin.php:342
 msgid "Image editing is off. Turn on the media helpers and choose an image model first."
 msgstr "图片编辑未开启。请先开启媒体助手并选择图像模型。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1077
+#: admin/class-ai-chat-bedrock-admin.php:1085
 msgid "Reranking"
 msgstr "重排序"
 
-#: admin/class-ai-chat-bedrock-admin.php:1286
+#: admin/class-ai-chat-bedrock-admin.php:1294
 msgid "Optional. Gathers more passages from site content and the knowledge base, then has a reranking model keep the ones that best answer the question. It adds one rerank request per question, billed per query, and the passages are used in their original order if it fails. Requires bedrock:Rerank, and bedrock:InvokeModel on the reranking model, in the chat region."
 msgstr "可选。从站点内容和知识库中收集更多段落，再由重排序模型保留最能回答问题的那些。每个问题会增加一次按查询计费的重排序请求；如果重排序失败，则按原有顺序使用这些段落。需要在聊天所用区域拥有 bedrock:Rerank 权限，以及对重排序模型的 bedrock:InvokeModel 权限。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2313
+#: admin/class-ai-chat-bedrock-admin.php:2321
 msgid "That reranking model is not supported; reranking was left off."
 msgstr "不支持该重排序模型，重排序保持关闭。"
 
@@ -4912,28 +4913,28 @@ msgstr "Cohere Rerank 3.5（多语言）"
 msgid "Amazon Rerank 1.0 (not offered in US East, N. Virginia)"
 msgstr "Amazon Rerank 1.0（美国东部（弗吉尼亚北部）不提供）"
 
-#: admin/class-ai-chat-bedrock-admin.php:1086
-#: admin/class-ai-chat-bedrock-admin.php:1353
+#: admin/class-ai-chat-bedrock-admin.php:1094
+#: admin/class-ai-chat-bedrock-admin.php:1361
 msgid "Conversation memory"
 msgstr "对话记忆"
 
-#: admin/class-ai-chat-bedrock-admin.php:1349
+#: admin/class-ai-chat-bedrock-admin.php:1357
 msgid "Off (default): each page starts a new conversation"
 msgstr "关闭（默认）：每个页面都开始新的对话"
 
-#: admin/class-ai-chat-bedrock-admin.php:1350
+#: admin/class-ai-chat-bedrock-admin.php:1358
 msgid "Keep it while the visitor browses, in their browser tab"
 msgstr "在访客浏览期间保留在其浏览器标签页中"
 
-#: admin/class-ai-chat-bedrock-admin.php:1351
+#: admin/class-ai-chat-bedrock-admin.php:1359
 msgid "Also save it for signed-in visitors, across visits and devices"
 msgstr "同时为已登录访客保存，跨访问和设备可用"
 
-#: admin/class-ai-chat-bedrock-admin.php:1359
+#: admin/class-ai-chat-bedrock-admin.php:1367
 msgid "Keep saved conversations for"
 msgstr "已保存对话的保留期限"
 
-#: admin/class-ai-chat-bedrock-admin.php:1361
+#: admin/class-ai-chat-bedrock-admin.php:1369
 msgid "Kept in the browser tab, the conversation is stored only in the visitor's browser and is gone when the tab is closed. Saved for signed-in visitors, it is also stored on this site with their account, included in personal data exports and erasures, and deleted after the days above. Clear in the chat deletes it, and switching saving off deletes every saved conversation. Disclose this to your visitors."
 msgstr "保留在浏览器标签页中时，对话只存储在访客的浏览器里，关闭标签页后即消失。为已登录访客保存时，对话还会随其账户存储在本站，包含在个人数据导出和抹除中，并在上述天数后删除。在聊天中点击清除会删除对话，关闭保存功能会删除所有已保存的对话。请向访客说明这一点。"
 
@@ -4958,36 +4959,36 @@ msgid "If you are signed in, your conversation is also stored on this site with 
 msgid_plural "If you are signed in, your conversation is also stored on this site with your user account, so you can continue it on a later visit or another device. Each message is kept for %d days, and clearing the chat deletes the conversation. You can ask for it to be exported or erased."
 msgstr[0] "如果您已登录，您的对话还会随您的用户账户存储在本站，以便您在之后访问或在其他设备上继续。每条消息保留 %d 天，清除聊天即会删除该对话。您可以要求导出或抹除这些数据。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1087
-#: admin/class-ai-chat-bedrock-admin.php:1370
+#: admin/class-ai-chat-bedrock-admin.php:1095
+#: admin/class-ai-chat-bedrock-admin.php:1378
 msgid "Read aloud"
 msgstr "朗读"
 
-#: admin/class-ai-chat-bedrock-admin.php:1367
+#: admin/class-ai-chat-bedrock-admin.php:1375
 msgid "Neural (default)"
 msgstr "神经网络（默认）"
 
-#: admin/class-ai-chat-bedrock-admin.php:1368
+#: admin/class-ai-chat-bedrock-admin.php:1376
 msgid "Generative: more natural, about twice the price, not every voice or Region"
 msgstr "生成式：更自然，价格约为两倍，并非所有语音或区域都支持"
 
-#: admin/class-ai-chat-bedrock-admin.php:1371
+#: admin/class-ai-chat-bedrock-admin.php:1379
 msgid "Add a Listen button to chat answers"
 msgstr "在聊天回答下添加“收听”按钮"
 
-#: admin/class-ai-chat-bedrock-admin.php:1372
+#: admin/class-ai-chat-bedrock-admin.php:1380
 msgid "Add a Listen to this post button to posts"
 msgstr "在文章中添加“收听本文”按钮"
 
-#: admin/class-ai-chat-bedrock-admin.php:1375
+#: admin/class-ai-chat-bedrock-admin.php:1383
 msgid "Voice engine"
 msgstr "语音引擎"
 
-#: admin/class-ai-chat-bedrock-admin.php:1380
+#: admin/class-ai-chat-bedrock-admin.php:1388
 msgid "Characters read per day, across the site"
 msgstr "全站每日朗读字符数"
 
-#: admin/class-ai-chat-bedrock-admin.php:1383
+#: admin/class-ai-chat-bedrock-admin.php:1391
 msgid "Off by default. Amazon Polly reads the text aloud, in a voice for its language, and is billed per character; 0 removes the daily limit. Only answers this chat gave can be read, by the visitor they were given to. A post is read as a signed-out visitor sees it, so members-only content is never sent; its audio is saved in the uploads folder and made again when the post changes. The AWS identity needs polly:SynthesizeSpeech."
 msgstr "默认关闭。Amazon Polly 以适合文本语言的语音朗读，按字符计费；设为 0 则取消每日上限。只能朗读本聊天给出的回答，且只限收到该回答的访客。文章按未登录访客看到的内容朗读，因此绝不会发送会员专享内容；其音频保存在上传文件夹中，文章变更后会重新生成。AWS 身份需要 polly:SynthesizeSpeech 权限。"
 
@@ -5082,11 +5083,11 @@ msgstr "文章可以由 Amazon Polly 朗读。只会发送文章已发布的文�
 msgid "The audio could not be made right now. Please try again later."
 msgstr "暂时无法生成音频，请稍后再试。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1323
+#: admin/class-ai-chat-bedrock-admin.php:1331
 msgid "Describe the site to agents and label passages with their type and language"
 msgstr "向智能体描述本站，并为段落标注类型和语言"
 
-#: admin/class-ai-chat-bedrock-admin.php:1324
+#: admin/class-ai-chat-bedrock-admin.php:1332
 msgid "Adds a read-only describe-site ability and MCP tool. It lists what the site holds as schema.org types, with counts per language, how they relate and which data an AI may see, using the same IDs as Yoast SEO and WooCommerce. Passages given to the model also say whether they come from a post, page or product, and in which language. Only published, public content is described."
 msgstr "添加只读的 describe-site 能力和 MCP 工具。它以 schema.org 类型列出本站包含的内容，附各语言的数量、类型之间的关系，以及 AI 可以看到哪些数据，并使用与 Yoast SEO 和 WooCommerce 相同的 ID。交给模型的段落也会注明来自文章、页面还是商品，以及使用哪种语言。只描述已发布的公开内容。"
 
@@ -5163,17 +5164,17 @@ msgstr "可选的文章 ID，用于描述一项已发布的内容。"
 msgid "Call describe_site first to learn what the site holds and which data you may see."
 msgstr "请先调用 describe_site，了解本站包含哪些内容以及你可以看到哪些数据。"
 
-#: admin/class-ai-chat-bedrock-admin.php:183
-#: admin/class-ai-chat-bedrock-admin.php:1099
+#: admin/class-ai-chat-bedrock-admin.php:191
+#: admin/class-ai-chat-bedrock-admin.php:1107
 #: admin/partials/ai-chat-bedrock-admin-metrics.php:106
 msgid "Business insights"
 msgstr "业务洞察"
 
-#: admin/class-ai-chat-bedrock-admin.php:1328
+#: admin/class-ai-chat-bedrock-admin.php:1336
 msgid "Show figures for content, questions, AI usage and the store, and let agents query them"
 msgstr "显示内容、提问、AI 用量和商店的数据，并允许智能体查询"
 
-#: admin/class-ai-chat-bedrock-admin.php:1329
+#: admin/class-ai-chat-bedrock-admin.php:1337
 msgid "Adds a Business insights screen with periods, comparisons, charts, a CSV download and questions in words, and a read-only query-metrics ability and MCP tool. Figures are read from data the site already keeps, including WooCommerce Analytics. Figures from fewer than five questions or orders are withheld, question figures stay on the screen, and no figure is sent to Amazon Bedrock."
 msgstr "添加“业务洞察”页面，支持时间段、对比、图表、CSV 下载和用文字提问，并添加只读的 query-metrics 能力和 MCP 工具。数据读取自本站已有的数据，包括 WooCommerce 分析。少于五个提问或订单得出的数据会被隐去，提问相关的数据只在该页面显示，任何数据都不会发送给 Amazon Bedrock。"
 
@@ -5710,24 +5711,24 @@ msgstr "需要某个时间段的订单或销售额等数据时，请调用 query
 
 #. Plugin Name of the plugin
 #: ai-chat-for-amazon-bedrock.php
-#: admin/class-ai-chat-bedrock-admin.php:169
+#: admin/class-ai-chat-bedrock-admin.php:177
 #: includes/class-ai-chat-bedrock-abilities.php:143
 #: includes/class-ai-chat-bedrock-consent.php:42
 #: includes/class-ai-chat-bedrock-woocommerce.php:1443
 msgid "AI Chatbot & Agents for Amazon Bedrock"
 msgstr "AI Chatbot & Agents for Amazon Bedrock"
 
-#: admin/class-ai-chat-bedrock-admin.php:793
+#: admin/class-ai-chat-bedrock-admin.php:801
 msgid "AI Chatbot & Agents for Amazon Bedrock:"
 msgstr "AI Chatbot & Agents for Amazon Bedrock："
 
 #. translators: %s: link to the Settings > Connectors screen.
-#: admin/class-ai-chat-bedrock-admin.php:1183
+#: admin/class-ai-chat-bedrock-admin.php:1191
 #, php-format
 msgid "A key can also be entered under %s, where it is checked with Amazon Bedrock before it is kept. A key here takes precedence."
 msgstr "也可以在%s中输入密钥，保存前会先通过 Amazon Bedrock 验证。此处的密钥优先。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1184
+#: admin/class-ai-chat-bedrock-admin.php:1192
 msgid "Settings > Connectors"
 msgstr "设置 > 连接器"
 
@@ -5769,62 +5770,62 @@ msgstr "撰写评价"
 msgid "Ask for help"
 msgstr "寻求帮助"
 
-#: admin/class-ai-chat-bedrock-admin.php:179
-#: admin/class-ai-chat-bedrock-admin.php:1088
-#: admin/class-ai-chat-bedrock-admin.php:1565
+#: admin/class-ai-chat-bedrock-admin.php:187
+#: admin/class-ai-chat-bedrock-admin.php:1096
+#: admin/class-ai-chat-bedrock-admin.php:1573
 #: includes/class-ai-chat-bedrock-leads.php:205
 msgid "Contact requests"
 msgstr "联系请求"
 
-#: admin/class-ai-chat-bedrock-admin.php:1295
+#: admin/class-ai-chat-bedrock-admin.php:1303
 msgid "MCP > Tool policy"
 msgstr "MCP > 工具策略"
 
 #. translators: 1: names of plugins, 2: link to the tool policy.
-#: admin/class-ai-chat-bedrock-admin.php:1299
+#: admin/class-ai-chat-bedrock-admin.php:1307
 #, php-format
 msgid "Found on this site: %1$s. Choose plugins and abilities under %2$s."
 msgstr "在此站点上找到：%1$s。请在%2$s中选择插件和能力。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1305
+#: admin/class-ai-chat-bedrock-admin.php:1313
 msgid "Tools in chat are switched off on the MCP screen, so no ability is offered until they are switched on there."
 msgstr "MCP 页面上已关闭对话中的工具，因此在那里开启之前不会提供任何能力。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1566
+#: admin/class-ai-chat-bedrock-admin.php:1574
 msgid "Let visitors leave their details for a person to get back to them"
 msgstr "让访客留下联系方式，由人工回复"
 
 #. translators: %s: the site's administration email address.
-#: admin/class-ai-chat-bedrock-admin.php:1569
+#: admin/class-ai-chat-bedrock-admin.php:1577
 #, php-format
 msgid "Email each request to %s"
 msgstr "将每条请求通过邮件发送到 %s"
 
-#: admin/class-ai-chat-bedrock-admin.php:1570
+#: admin/class-ai-chat-bedrock-admin.php:1578
 msgid "Keep requests for"
 msgstr "请求保留"
 
-#: admin/class-ai-chat-bedrock-admin.php:1571
+#: admin/class-ai-chat-bedrock-admin.php:1579
 msgid "Another way to reach you (optional)"
 msgstr "其他联系方式（可选）"
 
-#: admin/class-ai-chat-bedrock-admin.php:1576
+#: admin/class-ai-chat-bedrock-admin.php:1584
 msgid "Flamingo is active, so each request is also filed in its inbox."
 msgstr "Flamingo 已启用，因此每条请求也会存入其收件箱。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1579
+#: admin/class-ai-chat-bedrock-admin.php:1587
 msgid "Akismet is set up, so each request is checked for spam, as a contact form is."
 msgstr "Akismet 已设置，因此每条请求都会像联系表单一样进行垃圾信息检查。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1582
+#: admin/class-ai-chat-bedrock-admin.php:1590
 msgid "Joinchat is active: while the link is empty, its WhatsApp number is offered."
 msgstr "Joinchat 已启用：链接留空时，会提供其 WhatsApp 号码。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1584
+#: admin/class-ai-chat-bedrock-admin.php:1592
 msgid "Off by default. A Contact a person button appears below the chat, and the assistant points to it when it cannot help. Visitors give an email address or phone number and must agree before anything is stored. Requests are kept on this site and listed under Contact requests, where they can be exported. The link can be a web, mailto: or tel: address. Disclose this in your privacy policy."
 msgstr "默认关闭。对话下方会出现“联系人工”按钮，助手无法解答时会引导访客使用它。访客需提供邮箱或电话号码，并在同意后才会保存任何内容。请求保存在本站，列在“联系请求”页面中，可在那里导出。链接可以是网址、mailto: 或 tel: 地址。请在隐私政策中说明这一点。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2300
+#: admin/class-ai-chat-bedrock-admin.php:2308
 msgid "The contact link must be a web, mailto: or tel: address; it was cleared."
 msgstr "联系链接必须是网址、mailto: 或 tel: 地址，已被清空。"
 
@@ -5930,25 +5931,25 @@ msgstr "要永久删除这条请求吗？"
 msgid "No requests here."
 msgstr "这里没有请求。"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:248
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:255
 msgid "Abilities from other plugins"
 msgstr "其他插件的能力"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:250
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:257
 msgid "Plugins can register abilities with WordPress. Switch a plugin off to keep all of its abilities from the chat. Abilities that change data stay off until you allow them one by one, and only administrators can use them."
 msgstr "插件可以向 WordPress 注册能力。关闭某个插件后，它的所有能力都不会提供给对话。更改数据的能力在你逐一允许之前保持关闭，并且只有管理员可以使用。"
 
 #. translators: %s: link to the Agents and tools settings.
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:255
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:262
 #, php-format
 msgid "They are offered to the chat once %s is on."
 msgstr "开启%s后，它们才会提供给对话。"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:264
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:271
 msgid "Ability"
 msgstr "能力"
 
-#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:275
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:282
 msgid "Offer this plugin"
 msgstr "提供此插件"
 
@@ -6148,11 +6149,11 @@ msgstr "选择区域和模型。如果此 AWS 账户之前没用过该模型，�
 msgid "Opens a draft page with the chat on it, ready to publish. Or add the Amazon Bedrock Chat block to any page, use the [ai_chat_bedrock] shortcode, or switch on the floating button."
 msgstr "打开一个放好对话的草稿页面，可直接发布。也可以把 Amazon Bedrock Chat 区块添加到任意页面、使用 [ai_chat_bedrock] 短代码，或开启浮动按钮。"
 
-#: admin/class-ai-chat-bedrock-admin.php:829
+#: admin/class-ai-chat-bedrock-admin.php:837
 msgid "Demo mode: the chat replies with the passage of this site's pages that best matches each question, and no AI model is called. Connect Amazon Bedrock to get written answers, which ends demo mode."
 msgstr "演示模式：对话会用本站页面中与每个问题最匹配的段落来回复，不调用任何 AI 模型。连接 Amazon Bedrock 即可获得由模型撰写的回答，演示模式随之结束。"
 
-#: admin/class-ai-chat-bedrock-admin.php:831
+#: admin/class-ai-chat-bedrock-admin.php:839
 msgid "Connect Amazon Bedrock"
 msgstr "连接 Amazon Bedrock"
 
@@ -6178,20 +6179,20 @@ msgstr "本站的这段内容与问题最匹配："
 msgid "Once Amazon Bedrock is connected, a model writes the answer from passages like this one and links to them."
 msgstr "连接 Amazon Bedrock 后，模型会根据这类段落撰写回答，并附上它们的链接。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1089
+#: admin/class-ai-chat-bedrock-admin.php:1097
 msgid "Analytics events"
 msgstr "分析事件"
 
-#: admin/class-ai-chat-bedrock-admin.php:1552
+#: admin/class-ai-chat-bedrock-admin.php:1560
 msgid "Report chat activity to the analytics already on this site"
 msgstr "将对话活动报告给本站已在使用的分析工具"
 
-#: admin/class-ai-chat-bedrock-admin.php:1553
+#: admin/class-ai-chat-bedrock-admin.php:1561
 msgid "Off by default. The chat tells the site's analytics tag when it is opened, a question is asked or answered, a source or product in an answer is followed, an answer is rated and a contact request is sent, with no message text or contact details. Google Analytics (through Site Kit, MonsterInsights or a gtag snippet), Google Tag Manager, Matomo and Plausible receive the events; mark ai_chat_contact as a key event to count contact requests as conversions. With a consent plugin that uses the WP Consent API, events wait until the visitor allows statistics."
 msgstr "默认关闭。对话被打开、提出或回答问题、点击回答中的来源或商品、评价回答以及发送联系请求时，对话会告知本站的分析代码，但不包含消息内容或联系方式。Google Analytics（通过 Site Kit、MonsterInsights 或 gtag 代码）、Google Tag Manager、Matomo 和 Plausible 都能接收这些事件；将 ai_chat_contact 标记为关键事件，即可把联系请求计为转化。如果同意管理插件使用 WP Consent API，事件会等到访客允许统计后才发送。"
 
 #. translators: %s: comma separated names of analytics plugins.
-#: admin/class-ai-chat-bedrock-admin.php:1557
+#: admin/class-ai-chat-bedrock-admin.php:1565
 #, php-format
 msgid "Found on this site: %s."
 msgstr "本站已安装：%s。"
@@ -6216,17 +6217,17 @@ msgstr "对话消息"
 msgid "This site's analytics records when you open the chat, ask a question and get an answer, follow a link or product in an answer, rate an answer or send a contact request. The text of your messages and your contact details are not included."
 msgstr "本站的分析工具会记录你何时打开对话、提出问题并获得回答、点击回答中的链接或商品、评价回答或发送联系请求。其中不包含你的消息内容和联系方式。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1374
+#: admin/class-ai-chat-bedrock-admin.php:1382
 msgid "Only for signed-in visitors, as on a members site"
 msgstr "仅限已登录访客，适用于会员网站"
 
 #. translators: %s: number of characters.
-#: admin/class-ai-chat-bedrock-admin.php:1388
+#: admin/class-ai-chat-bedrock-admin.php:1396
 #, php-format
 msgid "Saved audio plays for everyone at no cost. Making new audio is limited to %s characters per visitor a day, so one visitor or script cannot use up the day for the rest, and crawlers and scripts cannot have posts read at all. Administrators are not limited."
 msgstr "已保存的音频对所有人播放，不产生费用。每位访客每天最多可生成 %s 个字符的新音频，这样任何一位访客或脚本都无法用完当天的额度；爬虫和脚本完全无法触发文章朗读。管理员不受此限制。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1389
+#: admin/class-ai-chat-bedrock-admin.php:1397
 msgid "Saved audio plays for everyone at no cost. Crawlers and scripts cannot have posts read. Without a daily limit for the site, visitors have none either."
 msgstr "已保存的音频对所有人播放，不产生费用。爬虫和脚本无法触发文章朗读。网站未设置每日上限时，访客也没有上限。"
 
@@ -6242,67 +6243,67 @@ msgstr "文章朗读仅提供给在浏览器中收听的访客。"
 msgid "You have listened to a lot today. Please try again tomorrow."
 msgstr "你今天收听的内容已经很多了，请明天再试。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1073
+#: admin/class-ai-chat-bedrock-admin.php:1081
 msgid "Pages hidden from search"
 msgstr "对搜索引擎隐藏的页面"
 
-#: admin/class-ai-chat-bedrock-admin.php:1271
+#: admin/class-ai-chat-bedrock-admin.php:1279
 msgid "Also answer from pages that search engines are told not to index"
 msgstr "也使用已设置为禁止搜索引擎收录（noindex）的页面来回答"
 
-#: admin/class-ai-chat-bedrock-admin.php:1272
+#: admin/class-ai-chat-bedrock-admin.php:1280
 msgid "Off by default. A page kept out of search engines, such as a thank-you page with a download or a campaign landing page, is usually kept out for a reason, so the chat and agents leave it out too. The noindex settings of Yoast SEO, Rank Math and SEOPress are read for each page and post type; All in One SEO for each page. Reading a post aloud is not affected."
 msgstr "默认关闭。不让搜索引擎收录的页面（例如带下载链接的感谢页或营销落地页）通常有其原因，因此对话和智能体也会跳过它们。会读取 Yoast SEO、Rank Math 和 SEOPress 对每个页面和内容类型的 noindex 设置，以及 All in One SEO 对每个页面的设置。文章朗读不受影响。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1106
-#: admin/class-ai-chat-bedrock-admin.php:1425
-#: admin/class-ai-chat-bedrock-admin.php:2527
+#: admin/class-ai-chat-bedrock-admin.php:1114
+#: admin/class-ai-chat-bedrock-admin.php:1433
+#: admin/class-ai-chat-bedrock-admin.php:2535
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:40
 #: includes/class-ai-chat-bedrock-distribution.php:84
 msgid "WeChat Official Account"
 msgstr "微信公众号"
 
-#: admin/class-ai-chat-bedrock-admin.php:1422
-#: admin/class-ai-chat-bedrock-admin.php:1459
-#: admin/class-ai-chat-bedrock-admin.php:1503
-#: admin/class-ai-chat-bedrock-admin.php:1815
+#: admin/class-ai-chat-bedrock-admin.php:1430
+#: admin/class-ai-chat-bedrock-admin.php:1467
+#: admin/class-ai-chat-bedrock-admin.php:1511
+#: admin/class-ai-chat-bedrock-admin.php:1823
 msgid "Saved — enter a value to replace"
 msgstr "已保存 — 输入新值以替换"
 
-#: admin/class-ai-chat-bedrock-admin.php:1426
+#: admin/class-ai-chat-bedrock-admin.php:1434
 msgid "Answer messages that followers send to the account"
 msgstr "回答粉丝发给公众号的消息"
 
-#: admin/class-ai-chat-bedrock-admin.php:1428
-#: admin/class-ai-chat-bedrock-admin.php:1510
+#: admin/class-ai-chat-bedrock-admin.php:1436
+#: admin/class-ai-chat-bedrock-admin.php:1518
 msgid "Token"
 msgstr "令牌（Token）"
 
-#: admin/class-ai-chat-bedrock-admin.php:1429
-#: admin/class-ai-chat-bedrock-admin.php:1511
+#: admin/class-ai-chat-bedrock-admin.php:1437
+#: admin/class-ai-chat-bedrock-admin.php:1519
 msgid "EncodingAESKey, for safe mode"
 msgstr "消息加解密密钥（EncodingAESKey），用于安全模式"
 
-#: admin/class-ai-chat-bedrock-admin.php:1436
+#: admin/class-ai-chat-bedrock-admin.php:1444
 msgid "Messages per follower per hour"
 msgstr "每位粉丝每小时的消息数"
 
-#: admin/class-ai-chat-bedrock-admin.php:1439
+#: admin/class-ai-chat-bedrock-admin.php:1447
 msgid "Remove the saved token and key"
 msgstr "删除已保存的令牌和密钥"
 
 #. translators: %s: the address WeChat sends messages to.
-#: admin/class-ai-chat-bedrock-admin.php:1444
+#: admin/class-ai-chat-bedrock-admin.php:1452
 #, php-format
 msgid "Off by default. In the WeChat Official Accounts Platform, under Settings and Development > Basic Configuration, enable the server configuration with the URL %s and the token entered here. Plaintext mode needs only the token; compatible and safe mode also need the EncodingAESKey and AppID. No AppSecret is needed."
 msgstr "默认关闭。在微信公众平台的“设置与开发 > 基本配置”中启用服务器配置，URL 填写 %s，令牌填写这里输入的值。明文模式只需要令牌；兼容模式和安全模式还需要 EncodingAESKey 和 AppID。不需要 AppSecret。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2192
+#: admin/class-ai-chat-bedrock-admin.php:2200
 msgid "The WeChat token must be 3 to 32 letters and digits, as in the Official Accounts Platform; it was not saved."
 msgstr "微信令牌必须是 3 到 32 位字母或数字，与公众平台一致；未保存。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2193
-#: admin/class-ai-chat-bedrock-admin.php:2250
+#: admin/class-ai-chat-bedrock-admin.php:2201
+#: admin/class-ai-chat-bedrock-admin.php:2258
 msgid "The EncodingAESKey must be 43 letters and digits; it was not saved."
 msgstr "EncodingAESKey 必须是 43 位字母或数字；未保存。"
 
@@ -6346,11 +6347,11 @@ msgstr "抱歉，暂时无法生成回答，请稍后再试。"
 msgid "If you write to this site's WeChat Official Account, WeChat, a service of Tencent, passes your messages to this site, and they are sent to Amazon Bedrock to write the answer. Your last few messages and the answers are kept on this site for 30 minutes, under a code made from your WeChat ID, so that a follow-up question can be understood. If the site keeps a conversation log, your questions are stored there too, without your WeChat ID."
 msgstr "如果你给本站的微信公众号发消息，腾讯提供的微信服务会把消息转给本站，再发送到 Amazon Bedrock 生成回答。你最近的几条消息和回答会以由你的微信 ID 生成的代码为键，在本站保存 30 分钟，以便理解后续问题。如果本站开启了对话日志，你的问题也会保存在日志中，但不包含你的微信 ID。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1431
+#: admin/class-ai-chat-bedrock-admin.php:1439
 msgid "Model for WeChat"
 msgstr "微信使用的模型"
 
-#: admin/class-ai-chat-bedrock-admin.php:1432
+#: admin/class-ai-chat-bedrock-admin.php:1440
 msgid "Same as the chat"
 msgstr "与对话相同"
 
@@ -6358,105 +6359,105 @@ msgstr "与对话相同"
 msgid "Generated by AI. Check the linked pages for anything important."
 msgstr "以上内容由 AI 生成，重要信息请以链接的文章为准。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1114
-#: admin/class-ai-chat-bedrock-admin.php:1788
+#: admin/class-ai-chat-bedrock-admin.php:1122
+#: admin/class-ai-chat-bedrock-admin.php:1796
 msgid "Publishing record"
 msgstr "发布记录"
 
-#: admin/class-ai-chat-bedrock-admin.php:1115
+#: admin/class-ai-chat-bedrock-admin.php:1123
 msgid "Bilibili videos"
 msgstr "B 站视频"
 
-#: admin/class-ai-chat-bedrock-admin.php:1116
-#: admin/class-ai-chat-bedrock-admin.php:1813
+#: admin/class-ai-chat-bedrock-admin.php:1124
+#: admin/class-ai-chat-bedrock-admin.php:1821
 #: includes/class-ai-chat-bedrock-youtube.php:950
 #: includes/class-ai-chat-bedrock-youtube.php:965
 msgid "YouTube uploads"
 msgstr "YouTube 上传"
 
-#: admin/class-ai-chat-bedrock-admin.php:1789
+#: admin/class-ai-chat-bedrock-admin.php:1797
 msgid "Keep a record of where each post is published on Bilibili, YouTube or Xiaohongshu"
 msgstr "记录每篇文章在 B 站、YouTube 或小红书上的发布情况"
 
-#: admin/class-ai-chat-bedrock-admin.php:1790
+#: admin/class-ai-chat-bedrock-admin.php:1798
 msgid "Link to the public ones under each post"
 msgstr "在每篇文章下方链接到已公开的版本"
 
-#: admin/class-ai-chat-bedrock-admin.php:1792
+#: admin/class-ai-chat-bedrock-admin.php:1800
 msgid "Off by default. Agents read a post's publishing package and record what they published, with the item's ID, address, account, language and status, through the abilities and the MCP server, using the WordPress permissions of their account; a new edition can be marked as replacing the old one. The record shows in the Published elsewhere box when editing a post. The plugin never signs in to Bilibili or Xiaohongshu: neither has a publishing API for individual creators, so publishing there stays with the agent or person using their creator tools."
 msgstr "默认关闭。智能体通过能力接口和 MCP 服务器、以其账号的 WordPress 权限读取文章的发布素材包，并记录发布结果：稿件 ID、地址、账号、语言和状态；新版本可以标记为替换旧版本。编辑文章时，记录显示在“已在其他平台发布”框中。插件从不登录 B 站或小红书：两者都没有面向个人创作者的发布 API，因此在这两个平台上的发布仍由使用创作者后台的智能体或人完成。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1802
+#: admin/class-ai-chat-bedrock-admin.php:1810
 msgid "The YouTube channel is connected."
 msgstr "YouTube 频道已连接。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1803
+#: admin/class-ai-chat-bedrock-admin.php:1811
 msgid "The YouTube channel is disconnected, and the site's access was revoked at Google."
 msgstr "YouTube 频道已断开，并已在 Google 撤销本站的访问权限。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1804
+#: admin/class-ai-chat-bedrock-admin.php:1812
 msgid "Save the OAuth client ID and secret first."
 msgstr "请先保存 OAuth 客户端 ID 和密钥。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1805
+#: admin/class-ai-chat-bedrock-admin.php:1813
 msgid "The sign-in did not come back from the request this site made, so it was ignored. Try again."
 msgstr "这次登录不是本站发起的请求返回的，已忽略。请重试。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1806
+#: admin/class-ai-chat-bedrock-admin.php:1814
 #: includes/class-ai-chat-bedrock-youtube.php:328
 msgid "Google did not grant access to the channel."
 msgstr "Google 未授予访问该频道的权限。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1807
+#: admin/class-ai-chat-bedrock-admin.php:1815
 msgid "Google did not return a lasting token. Check the client secret and the redirect URI, then try again."
 msgstr "Google 没有返回长期令牌。请检查客户端密钥和重定向 URI 后重试。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1808
+#: admin/class-ai-chat-bedrock-admin.php:1816
 msgid "The Google account has no YouTube channel."
 msgstr "该 Google 账号没有 YouTube 频道。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1814
+#: admin/class-ai-chat-bedrock-admin.php:1822
 msgid "OAuth client ID"
 msgstr "OAuth 客户端 ID"
 
-#: admin/class-ai-chat-bedrock-admin.php:1815
+#: admin/class-ai-chat-bedrock-admin.php:1823
 msgid "OAuth client secret"
 msgstr "OAuth 客户端密钥"
 
-#: admin/class-ai-chat-bedrock-admin.php:1816
+#: admin/class-ai-chat-bedrock-admin.php:1824
 msgid "Uploads a day"
 msgstr "每天上传数"
 
 #. translators: %s: YouTube channel name.
-#: admin/class-ai-chat-bedrock-admin.php:1820
+#: admin/class-ai-chat-bedrock-admin.php:1828
 #, php-format
 msgid "Connected to the channel %s."
 msgstr "已连接到频道 %s。"
 
 #. translators: %s: YouTube channel name.
-#: admin/class-ai-chat-bedrock-admin.php:1820
+#: admin/class-ai-chat-bedrock-admin.php:1828
 msgid "Disconnect"
 msgstr "断开连接"
 
-#: admin/class-ai-chat-bedrock-admin.php:1822
+#: admin/class-ai-chat-bedrock-admin.php:1830
 msgid "Connect a YouTube channel"
 msgstr "连接 YouTube 频道"
 
 #. translators: %s: redirect URI to register in Google Cloud.
-#: admin/class-ai-chat-bedrock-admin.php:1825
+#: admin/class-ai-chat-bedrock-admin.php:1833
 #, php-format
 msgid "Off until a channel is connected. In Google Cloud, enable the YouTube Data API v3, create an OAuth client of type Web application with the authorized redirect URI %s, and enter its ID and secret here; then connect the channel. Uploads run in the background from the Published elsewhere box of a post, with the publishing record on, and are added to it. Google keeps videos uploaded from a project that has not passed YouTube's audit private, and each upload uses 1,600 of the 10,000 quota units a project gets a day."
 msgstr "连接频道前不会启用。在 Google Cloud 中启用 YouTube Data API v3，创建一个“Web 应用”类型的 OAuth 客户端，已获授权的重定向 URI 填写 %s，再把它的 ID 和密钥填在这里，然后连接频道。开启发布记录后，可在文章的“已在其他平台发布”框中发起上传，上传在后台进行并加入记录。未通过 YouTube 审核的 Google Cloud 项目上传的视频会被保持为私享；每次上传消耗项目每天 10,000 配额单位中的 1,600 个。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1830
+#: admin/class-ai-chat-bedrock-admin.php:1838
 msgid "Embed Bilibili videos from their links, as WordPress does for YouTube"
 msgstr "像 WordPress 嵌入 YouTube 一样，根据链接嵌入 B 站视频"
 
-#: admin/class-ai-chat-bedrock-admin.php:1831
+#: admin/class-ai-chat-bedrock-admin.php:1839
 msgid "Off by default. A Bilibili video address on a line of its own, or in an Embed block, shows the Bilibili player. The player is loaded from Bilibili, which can then set its own cookies, so add the suggested text from Settings > Privacy to your privacy policy before turning it on."
 msgstr "默认关闭。单独一行的 B 站视频地址，或放在“嵌入”区块中的地址，会显示 B 站播放器。播放器从 B 站加载，B 站随后可以设置自己的 Cookie，因此开启前请把“设置 > 隐私”中的建议文本加入隐私政策。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2145
+#: admin/class-ai-chat-bedrock-admin.php:2153
 msgid "That does not look like an OAuth client secret, so it was not saved."
 msgstr "这看起来不是 OAuth 客户端密钥，未保存。"
 
@@ -6782,15 +6783,15 @@ msgstr "视频包含逼真的修改或合成内容，例如 AI 配音或生成�
 msgid "Upload to YouTube"
 msgstr "上传到 YouTube"
 
-#: admin/class-ai-chat-bedrock-admin.php:1814
+#: admin/class-ai-chat-bedrock-admin.php:1822
 msgid "Client ID from Google Cloud"
 msgstr "Google Cloud 中的客户端 ID"
 
-#: admin/class-ai-chat-bedrock-admin.php:2148
+#: admin/class-ai-chat-bedrock-admin.php:2156
 msgid "That is not an OAuth client ID from Google Cloud, so it was not saved."
 msgstr "这不是 Google Cloud 的 OAuth 客户端 ID，未保存。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1416
+#: admin/class-ai-chat-bedrock-admin.php:1424
 msgid "WeChat has not reached this address yet."
 msgstr "微信还没有访问过这个地址。"
 
@@ -6825,83 +6826,83 @@ msgstr "收到了一条来自微信的已签名消息"
 msgid "Last contact %1$s ago: %2$s."
 msgstr "最近一次联系在 %1$s前：%2$s。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1110
-#: admin/class-ai-chat-bedrock-admin.php:1505
-#: admin/class-ai-chat-bedrock-admin.php:2531
+#: admin/class-ai-chat-bedrock-admin.php:1118
+#: admin/class-ai-chat-bedrock-admin.php:1513
+#: admin/class-ai-chat-bedrock-admin.php:2539
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:41
 msgid "WeChat mini game"
 msgstr "微信小游戏"
 
-#: admin/class-ai-chat-bedrock-admin.php:1506
+#: admin/class-ai-chat-bedrock-admin.php:1514
 msgid "Take the mini game's customer service messages and count what players do there"
 msgstr "接收小游戏的客服消息，并统计玩家在客服中的行为"
 
-#: admin/class-ai-chat-bedrock-admin.php:1508
+#: admin/class-ai-chat-bedrock-admin.php:1516
 msgid "AppID"
 msgstr "AppID"
 
-#: admin/class-ai-chat-bedrock-admin.php:1512
+#: admin/class-ai-chat-bedrock-admin.php:1520
 msgid "AppSecret, to send answers"
 msgstr "AppSecret，用于发送回答"
 
-#: admin/class-ai-chat-bedrock-admin.php:1516
+#: admin/class-ai-chat-bedrock-admin.php:1524
 msgid "Welcome, when a player opens the chat"
 msgstr "玩家打开客服会话时的欢迎语"
 
-#: admin/class-ai-chat-bedrock-admin.php:1517
+#: admin/class-ai-chat-bedrock-admin.php:1525
 msgid "Set answers, one per line as: keywords = answer"
 msgstr "预设回答，每行一条：关键词 = 回答"
 
-#: admin/class-ai-chat-bedrock-admin.php:1517
+#: admin/class-ai-chat-bedrock-admin.php:1525
 msgid "recharge, payment = Payments are handled by WeChat Pay. Send your order number if one is missing."
 msgstr "充值, 支付 = 支付由微信支付处理。如有未到账，请发送订单号。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1518
+#: admin/class-ai-chat-bedrock-admin.php:1526
 msgid "Reply when no answer matches (optional)"
 msgstr "没有匹配回答时的回复（可选）"
 
-#: admin/class-ai-chat-bedrock-admin.php:1520
+#: admin/class-ai-chat-bedrock-admin.php:1528
 msgid "Remove the saved token, key and AppSecret"
 msgstr "删除已保存的令牌、密钥和 AppSecret"
 
 #. translators: 1: player-days, 2: chats opened, 3: messages, 4: share of questions answered, 5: answers sent.
-#: admin/class-ai-chat-bedrock-admin.php:1528
+#: admin/class-ai-chat-bedrock-admin.php:1536
 #, php-format
 msgid "Last 30 days: %1$s players (counted once a day), %2$s chats opened, %3$s messages, %4$s of questions matched a set answer, %5$s answers sent."
 msgstr "最近 30 天：%1$s 位玩家（每天计一次），打开客服 %2$s 次，消息 %3$s 条，%4$s 的问题匹配到预设回答，已发送回答 %5$s 条。"
 
 #. translators: %s: scenes, the sessionFrom the game passed, with counts.
-#: admin/class-ai-chat-bedrock-admin.php:1535
+#: admin/class-ai-chat-bedrock-admin.php:1543
 #, php-format
 msgid "Opened most from: %s."
 msgstr "打开最多的入口：%s。"
 
 #. translators: 1: subscription template ID, 2: share of players who accepted, 3: how many were asked.
-#: admin/class-ai-chat-bedrock-admin.php:1542
+#: admin/class-ai-chat-bedrock-admin.php:1550
 #, php-format
 msgid "Template %1$s: %2$s accepted of %3$s asked."
 msgstr "模板 %1$s：询问 %3$s 次，%2$s 同意。"
 
 #. translators: %s: the address WeChat sends the game's messages to.
-#: admin/class-ai-chat-bedrock-admin.php:1548
+#: admin/class-ai-chat-bedrock-admin.php:1556
 #, php-format
 msgid "Off by default. In the mini game's console, under Development Management > Development Settings > Message Push, enter the URL %s, the token and, for safe mode, the EncodingAESKey; JSON and XML both work. The game opens the chat with wx.openCustomerServiceConversation, and the sessionFrom it passes is counted as the scene."
 msgstr "默认关闭。在小游戏后台的“开发管理 > 开发设置 > 消息推送”中填写 URL %s、令牌，安全模式下还要填写 EncodingAESKey；JSON 和 XML 均可。游戏用 wx.openCustomerServiceConversation 打开客服会话，传入的 sessionFrom 会作为入口统计。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1549
+#: admin/class-ai-chat-bedrock-admin.php:1557
 msgid "Questions are answered with the set answers only, matched by keyword; nothing is generated, as a mini game needs an AI category and an algorithm filing to answer with AI. Answers are sent through WeChat's customer service API, which needs the AppSecret and this server's address in the game's IP whitelist, and allows a few answers within 48 hours of a player's message. Only daily totals are kept, with players counted under a code that changes every day; questions go to the conversation log when it is on. What players do in the game itself is reported by the game with wx.reportEvent and shown in WeChat's own analysis."
 msgstr "问题只用预设回答按关键词回复，不生成内容：小游戏用 AI 回答需要 AI 服务类目和算法备案。回答通过微信客服消息接口发送，需要 AppSecret，并把本服务器地址加入游戏的 IP 白名单；玩家发消息后 48 小时内可回复少量消息。只保留每日汇总，玩家按每天更换的代码计数；对话记录开启时，问题会记入其中。玩家在游戏内的行为由游戏用 wx.reportEvent 上报，在微信自己的数据分析中查看。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2246
+#: admin/class-ai-chat-bedrock-admin.php:2254
 msgid "The mini game AppID starts with wx and has 18 characters; it was not saved."
 msgstr "小游戏 AppID 以 wx 开头，共 18 个字符；未保存。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2249
+#: admin/class-ai-chat-bedrock-admin.php:2257
 msgid "The mini game token must be 3 to 32 letters and digits; it was not saved."
 msgstr "小游戏令牌必须是 3 到 32 位字母和数字；未保存。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2234
-#: admin/class-ai-chat-bedrock-admin.php:2251
+#: admin/class-ai-chat-bedrock-admin.php:2242
+#: admin/class-ai-chat-bedrock-admin.php:2259
 msgid "The AppSecret must be 32 letters and digits; it was not saved."
 msgstr "AppSecret 必须是 32 位字母和数字；未保存。"
 
@@ -6983,15 +6984,15 @@ msgstr[0] "首段文本等待时间（流式回答，近 7 天）：%2$s 次回�
 msgid "Time to first text (streamed, 7 days): unknown, no streamed answers recorded yet."
 msgstr "首段文本等待时间（流式回答，近 7 天）：未知，尚未记录流式回答。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1456
+#: admin/class-ai-chat-bedrock-admin.php:1464
 msgid "WeChat Official Account drafts"
 msgstr "微信公众号草稿"
 
-#: admin/class-ai-chat-bedrock-admin.php:1437
+#: admin/class-ai-chat-bedrock-admin.php:1445
 msgid "Menu, sent to followers who write 菜单, 目录 or menu, and after the welcome"
 msgstr "菜单：粉丝发送“菜单”“目录”或 menu 时回复，也附在欢迎语之后"
 
-#: admin/class-ai-chat-bedrock-admin.php:1437
+#: admin/class-ai-chat-bedrock-admin.php:1445
 msgid ""
 "Courses: https://example.com/courses/\n"
 "News: https://example.com/news/\n"
@@ -7001,55 +7002,55 @@ msgstr ""
 "资讯：https://example.com/news/\n"
 "回复“精选”查看最新精选文章。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1457
+#: admin/class-ai-chat-bedrock-admin.php:1465
 msgid "Send posts to the Official Account's draft box"
 msgstr "把文章发送到公众号草稿箱"
 
-#: admin/class-ai-chat-bedrock-admin.php:1459
+#: admin/class-ai-chat-bedrock-admin.php:1467
 msgid "AppSecret of the Official Account"
 msgstr "公众号的 AppSecret"
 
-#: admin/class-ai-chat-bedrock-admin.php:1460
+#: admin/class-ai-chat-bedrock-admin.php:1468
 msgid "Featured posts"
 msgstr "精选文章"
 
-#: admin/class-ai-chat-bedrock-admin.php:1466
+#: admin/class-ai-chat-bedrock-admin.php:1474
 msgid "All posts"
 msgstr "全部文章"
 
-#: admin/class-ai-chat-bedrock-admin.php:1471
+#: admin/class-ai-chat-bedrock-admin.php:1479
 msgid "Collect the newest featured posts into a draft"
 msgstr "把最新精选文章汇集成草稿"
 
-#: admin/class-ai-chat-bedrock-admin.php:1473
+#: admin/class-ai-chat-bedrock-admin.php:1481
 msgid "Never; only when sent from a post or by an agent"
 msgstr "从不；只在从文章或由 Agent 发送时"
 
-#: admin/class-ai-chat-bedrock-admin.php:1474
+#: admin/class-ai-chat-bedrock-admin.php:1482
 msgid "Every day at 9:00"
 msgstr "每天 9:00"
 
-#: admin/class-ai-chat-bedrock-admin.php:1475
+#: admin/class-ai-chat-bedrock-admin.php:1483
 msgid "Every week"
 msgstr "每周"
 
-#: admin/class-ai-chat-bedrock-admin.php:1480
+#: admin/class-ai-chat-bedrock-admin.php:1488
 msgid "Articles a draft"
 msgstr "每份草稿的文章数"
 
-#: admin/class-ai-chat-bedrock-admin.php:1481
+#: admin/class-ai-chat-bedrock-admin.php:1489
 msgid "Author shown in WeChat"
 msgstr "微信中显示的作者"
 
-#: admin/class-ai-chat-bedrock-admin.php:1482
+#: admin/class-ai-chat-bedrock-admin.php:1490
 msgid "Email the site when a scheduled draft is ready"
 msgstr "定时草稿就绪后发邮件给站点"
 
-#: admin/class-ai-chat-bedrock-admin.php:1485
+#: admin/class-ai-chat-bedrock-admin.php:1493
 msgid "Remove the saved AppSecret"
 msgstr "删除已保存的 AppSecret"
 
-#: admin/class-ai-chat-bedrock-admin.php:1498
+#: admin/class-ai-chat-bedrock-admin.php:1506
 msgid "Only drafts are made: WeChat lets only verified company accounts publish through its API. Check each draft and publish it in the Official Accounts Platform."
 msgstr "只会生成草稿：微信只允许已认证的企业账号通过接口发表。请检查每份草稿，并在公众平台中发表。"
 
@@ -7194,33 +7195,33 @@ msgstr "精选文章："
 msgid "This account cannot send those posts."
 msgstr "该账号不能发送这些文章。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2277
+#: admin/class-ai-chat-bedrock-admin.php:2285
 msgid "The mini game has its own AppID, not the Official Account's; it was not saved."
 msgstr "小游戏有自己的 AppID，不能用公众号的；未保存。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2292
+#: admin/class-ai-chat-bedrock-admin.php:2300
 msgid "The mini game uses the same token or EncodingAESKey as the Official Account. It was saved; choose safe mode in both, so each message is checked against its own AppID, and consider separate values."
 msgstr "小游戏使用了与公众号相同的令牌或 EncodingAESKey。已保存；请在两边都选择安全模式，这样每条消息都会按各自的 AppID 校验，并建议改用不同的值。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1079
+#: admin/class-ai-chat-bedrock-admin.php:1087
 msgid "What visitors see"
 msgstr "访客看到的内容"
 
-#: admin/class-ai-chat-bedrock-admin.php:1095
-#: admin/class-ai-chat-bedrock-admin.php:2517
+#: admin/class-ai-chat-bedrock-admin.php:1103
+#: admin/class-ai-chat-bedrock-admin.php:2525
 msgid "Agents and tools"
 msgstr "Agent 与工具"
 
-#: admin/class-ai-chat-bedrock-admin.php:1113
-#: admin/class-ai-chat-bedrock-admin.php:2535
+#: admin/class-ai-chat-bedrock-admin.php:1121
+#: admin/class-ai-chat-bedrock-admin.php:2543
 msgid "Video and social platforms"
 msgstr "视频与社交平台"
 
-#: admin/class-ai-chat-bedrock-admin.php:1222
+#: admin/class-ai-chat-bedrock-admin.php:1230
 msgid "Who may chat and how often, a daily cap, an Amazon Bedrock guardrail, and what is logged. Counters store request and token totals only."
 msgstr "谁可以聊天、多久一次、每日上限、Amazon Bedrock 防护栏，以及记录哪些内容。计数器只保存请求数和 token 总数。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1445
+#: admin/class-ai-chat-bedrock-admin.php:1453
 msgid "With message push on, WeChat turns off the menu set in its console, and an account that is not verified cannot set one through its API, so followers write a word instead: 菜单 gets the menu above, and 精选 or 最新 the newest featured posts (the category chosen for WeChat drafts below) with their addresses. Neither calls the model."
 msgstr "开启消息推送后，微信会停用后台设置的自定义菜单，而未认证账号又不能通过接口设置菜单，所以改由粉丝发关键词：发“菜单”收到上面的菜单，发“精选”或“最新”收到最新精选文章（即下方为微信草稿选择的分类）及链接。两者都不调用模型。"
 
@@ -7229,7 +7230,7 @@ msgstr "开启消息推送后，微信会停用后台设置的自定义菜单，
 msgid "Connect a YouTube channel under Settings > Channels first."
 msgstr "请先在“设置 > 渠道”中连接 YouTube 频道。"
 
-#: admin/class-ai-chat-bedrock-admin.php:171
+#: admin/class-ai-chat-bedrock-admin.php:179
 msgid "Overview"
 msgstr "概览"
 
@@ -7246,15 +7247,15 @@ msgstr "有人用同一个已签名地址发送了不同的消息，已拒绝"
 msgid "You cannot upload that video."
 msgstr "你不能上传这个视频。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1117
+#: admin/class-ai-chat-bedrock-admin.php:1125
 msgid "Publishing kits"
 msgstr "发布素材包"
 
-#: admin/class-ai-chat-bedrock-admin.php:1450
+#: admin/class-ai-chat-bedrock-admin.php:1458
 msgid "Write each platform's copy for a post with the chat's model"
 msgstr "用对话模型为文章撰写各平台文案"
 
-#: admin/class-ai-chat-bedrock-admin.php:1451
+#: admin/class-ai-chat-bedrock-admin.php:1459
 msgid "Off by default. Bilibili opens its publishing API only to registered companies and Xiaohongshu has none for creators, so there a person publishes. With this on, the Published elsewhere box writes the Bilibili, Xiaohongshu and YouTube title, text, tags and category from the text a signed-out visitor reads, within each platform's limits and in the post's language, with links to each creator page and the cover. After publishing, enter the address in the same box to record it. Each kit is one model request; agents can ask for one through an ability. The copy is an AI draft: check it, and declare AI assistance with the platform's label."
 msgstr "默认关闭。B 站只向已注册企业开放发布接口，小红书没有面向创作者的发布接口，所以这两个平台由人来发布。开启后，“已在其他平台发布”框会根据未登录访客可见的正文，按各平台的限制、用文章的语言，撰写 B 站、小红书和 YouTube 的标题、正文、标签和分区，并附上各平台创作页面和封面的链接。发布后，在同一框中填写地址即可记录。每个素材包调用一次模型；Agent 也可以通过能力（Ability）请求。文案是 AI 草稿：请核对，并用平台自带的标识声明使用了 AI 辅助。"
 
@@ -7348,7 +7349,7 @@ msgstr "撰写文章的平台文案"
 msgid "Write the title, text, tags and category to publish a published post on Bilibili, Xiaohongshu or YouTube, from the text a signed-out visitor reads, with the site's model, and keep it with the post. Publishes nothing."
 msgstr "用本站的模型，根据未登录访客可见的正文，为已发布文章撰写在 B 站、小红书或 YouTube 发布所需的标题、正文、标签和分区，并保存在文章中。不发布任何内容。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1497
+#: admin/class-ai-chat-bedrock-admin.php:1505
 msgid "Off by default. Uses the AppID entered for the WeChat Official Account above, and the AppSecret and IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform. Each post becomes an article with its title, excerpt, the featured image as cover, the text and images a signed-out visitor sees, and the post as \"Read more\"; links in the text become plain text, as WeChat does not open them. Posts are sent from the Published elsewhere box, by an agent, or on the schedule, which takes featured posts of the last 60 days not sent before, in Chinese when the site has it, and only those with a featured image and at least 600 characters of public text."
 msgstr "默认关闭。使用上方为微信公众号填写的 AppID，以及微信开发者平台“基础信息 > 开发密钥”中的 AppSecret 和 IP 白名单。每篇文章会成为一篇图文：标题、摘要、以特色图片为封面、未登录访客可见的正文和图片，并以文章地址作为“阅读原文”；正文中的链接会变成纯文本，因为微信不打开外部链接。可以从“已发布到其他平台”框、由 Agent 或按计划发送；计划任务会选取最近 60 天内未发送过的精选文章，站点有中文时选中文版，并且只选有特色图片、可公开阅读的正文不少于 600 字的文章。"
 
@@ -7380,23 +7381,23 @@ msgstr "公众号视频 ID"
 msgid "WeChat's API takes videos of at most 10 MB and cannot place one in an article. Upload the post's video in the Official Accounts Platform, enter the ID it gets, wxv_ and digits, and save the post: each draft then shows WeChat's player where the video is."
 msgstr "微信接口只接受 10 MB 以内的视频，也无法把视频放进文章。请在公众号后台上传这篇文章的视频，把得到的 ID（wxv_ 加数字）填在这里并保存文章：之后每次生成草稿都会在视频位置放入公众号播放器。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2501
+#: admin/class-ai-chat-bedrock-admin.php:2509
 msgid "AWS"
 msgstr "AWS"
 
-#: admin/class-ai-chat-bedrock-admin.php:2523
+#: admin/class-ai-chat-bedrock-admin.php:2531
 msgid "Channels"
 msgstr "渠道"
 
-#: admin/class-ai-chat-bedrock-admin.php:2541
+#: admin/class-ai-chat-bedrock-admin.php:2549
 msgid "Safety and spend"
 msgstr "安全与费用"
 
-#: admin/class-ai-chat-bedrock-admin.php:2545
+#: admin/class-ai-chat-bedrock-admin.php:2553
 msgid "Integrations"
 msgstr "集成"
 
-#: admin/class-ai-chat-bedrock-admin.php:2581
+#: admin/class-ai-chat-bedrock-admin.php:2589
 msgid "Configured — enter a value to replace"
 msgstr "已配置 — 输入新值以替换"
 
@@ -7419,11 +7420,11 @@ msgstr "在这里再次发送会用当前版本替换草稿，包括你在微信
 msgid "▶ Watch this lesson's video on the site: tap \"Read more\" at the end."
 msgstr "▶ 本课视频请点击文末“阅读原文”，在网站观看。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1430
+#: admin/class-ai-chat-bedrock-admin.php:1438
 msgid "AppID, for safe mode and drafts"
 msgstr "AppID（安全模式和草稿都需要）"
 
-#: admin/class-ai-chat-bedrock-admin.php:1483
+#: admin/class-ai-chat-bedrock-admin.php:1491
 msgid "On each scheduled run, update drafts whose post changed since it was sent, unless they were edited, published or deleted in WeChat; with emails on, you are told of edited ones"
 msgstr "每次定时运行时，更新文章在发送后有改动的草稿；在微信中编辑、发表或删除过的草稿不会被改动；开启邮件通知时，会告诉你哪些被编辑过"
 
@@ -7443,7 +7444,7 @@ msgstr "一条明文消息被拒绝，因为小游戏设定为安全模式（已
 msgid "a plaintext message was refused, because an EncodingAESKey is set: choose safe mode in WeChat, or remove the key here"
 msgstr "一条明文消息被拒绝，因为已填写 EncodingAESKey：请在微信后台选择安全模式，或在这里删除该密钥"
 
-#: admin/class-ai-chat-bedrock-admin.php:1495
+#: admin/class-ai-chat-bedrock-admin.php:1503
 msgid "Run it now"
 msgstr "立即运行一次"
 
@@ -7461,7 +7462,7 @@ msgstr "已超时未运行：WordPress 的定时任务没有执行。请设置�
 msgid "You cannot run this."
 msgstr "你不能执行此操作。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1254
+#: admin/class-ai-chat-bedrock-admin.php:1262
 msgid "Maximum Bedrock requests per day for the whole site. Use 0 for no plugin-side limit. With a limit, each visitor may ask a tenth of it a day, and at least 20 questions, so one account cannot use up the day for everyone; administrators are not limited. Embeddings for search and indexing are not counted. This is not a billing guarantee; configure AWS Budgets as well."
 msgstr "整个站点每天最多发送的 Bedrock 请求数。填 0 表示插件不做限制。设置上限后，每位访客每天最多可用其中的十分之一（至少 20 个问题），这样单个账号无法替所有人用完当天的额度；管理员不受此限制。用于搜索和建立索引的嵌入请求不计入。这并不能保证费用上限，请同时配置 AWS Budgets。"
 
@@ -7469,20 +7470,20 @@ msgstr "整个站点每天最多发送的 Bedrock 请求数。填 0 表示插件
 msgid "You have asked as many questions as one visitor can today. Please come back tomorrow."
 msgstr "您今天的提问次数已达到单个访客的上限，请明天再来。"
 
-#: admin/class-ai-chat-bedrock-admin.php:141
+#: admin/class-ai-chat-bedrock-admin.php:148
 #: admin/partials/ai-chat-bedrock-admin-diagnostics.php:26
 msgid "Not in use"
 msgstr "未使用"
 
-#: admin/class-ai-chat-bedrock-admin.php:1404
+#: admin/class-ai-chat-bedrock-admin.php:1412
 msgid "Needs attention"
 msgstr "需要处理"
 
-#: admin/class-ai-chat-bedrock-admin.php:1414
+#: admin/class-ai-chat-bedrock-admin.php:1422
 msgid "Not connected yet"
 msgstr "尚未连接"
 
-#: admin/class-ai-chat-bedrock-admin.php:1446
+#: admin/class-ai-chat-bedrock-admin.php:1454
 msgid "The chat answers each text message from the site's pages, in plain text with its sources. WeChat waits about fifteen seconds in all; a longer answer is kept and the follower is told to send 1 to see it, so choose a fast model for WeChat if the chat's model takes longer. A new follower gets the welcome message and suggested questions. Every answer counts towards the daily request limit, and the conversation log records them when it is on."
 msgstr "对话会根据网站页面回答每条文字消息，以纯文本形式附上来源。微信总共等待约 15 秒；更久的回答会被保存，并提示粉丝发送 1 查看，因此如果对话使用的模型较慢，请为微信选择一个更快的模型。新粉丝会收到欢迎语和推荐问题。每个回答都计入每日请求上限，开启对话日志时也会记录。"
 
@@ -7493,11 +7494,11 @@ msgstr "对话会根据网站页面回答每条文字消息，以纯文本形式
 msgid "The last signed request from WeChat came %s ago."
 msgstr "微信上一次带有效签名的请求在 %s 前。"
 
-#: public/class-ai-chat-bedrock-public.php:118
+#: public/class-ai-chat-bedrock-public.php:140
 msgid "You said:"
 msgstr "你说："
 
-#: public/class-ai-chat-bedrock-public.php:119
+#: public/class-ai-chat-bedrock-public.php:141
 msgid "Assistant:"
 msgstr "助手："
 
@@ -7509,28 +7510,28 @@ msgstr "关闭对话"
 msgid "Support"
 msgstr "支持"
 
-#: admin/class-ai-chat-bedrock-admin.php:1092
+#: admin/class-ai-chat-bedrock-admin.php:1100
 msgid "Accent color"
 msgstr "强调色"
 
-#: admin/class-ai-chat-bedrock-admin.php:1964
+#: admin/class-ai-chat-bedrock-admin.php:1972
 msgid "The colour of the chat button, your own messages and Send, such as your theme's main colour. Leave it empty for the default blue. Text on it is white or black, whichever is easier to read."
 msgstr "用于对话按钮、访客自己的消息和“发送”按钮的颜色，例如主题的主色。留空则使用默认蓝色。按钮上的文字会自动选用白色或黑色中更易读的一种。"
 
-#: admin/class-ai-chat-bedrock-admin.php:1107
+#: admin/class-ai-chat-bedrock-admin.php:1115
 msgid "Answers to followers"
 msgstr "回复粉丝"
 
-#: admin/class-ai-chat-bedrock-admin.php:1108
+#: admin/class-ai-chat-bedrock-admin.php:1116
 msgid "Drafts"
 msgstr "草稿"
 
-#: admin/class-ai-chat-bedrock-admin.php:1111
+#: admin/class-ai-chat-bedrock-admin.php:1119
 msgid "Customer service"
 msgstr "客服消息"
 
 #. translators: %s: the site-wide value used when the field is empty.
-#: admin/class-ai-chat-bedrock-admin.php:1615
+#: admin/class-ai-chat-bedrock-admin.php:1623
 #, php-format
 msgid "Empty: %s, as for the site"
 msgstr "留空：%s，与全站相同"
@@ -7540,11 +7541,38 @@ msgid "Show the setup steps"
 msgstr "显示设置步骤"
 
 #. translators: %s: the main setting's value, used when the field is empty.
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:154
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:166
 #, php-format
 msgid "Empty: %s, as in the main settings"
 msgstr "留空：%s，与主设置相同"
 
-#: admin/partials/ai-chat-bedrock-admin-profiles.php:160
+#: admin/partials/ai-chat-bedrock-admin-profiles.php:172
 msgid "Leave a field empty to use the main setting."
 msgstr "留空则使用主设置。"
+
+#. translators: %s: the question of an answer-check case.
+#: admin/class-ai-chat-bedrock-admin.php:62
+#, php-format
+msgid "Remove the case: %s"
+msgstr "删除用例：%s"
+
+#: admin/class-ai-chat-bedrock-admin.php:64
+msgid "grounded: from the site"
+msgstr "grounded：依据网站内容"
+
+#: admin/class-ai-chat-bedrock-admin.php:65
+msgid "unsupported: nothing on it"
+msgstr "unsupported：网站没有相关内容"
+
+#: admin/class-ai-chat-bedrock-admin.php:66
+msgid "tool: calls a tool"
+msgstr "tool：调用工具"
+
+#: admin/class-ai-chat-bedrock-admin.php:152
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:52
+msgid "Add one below to let the chat call its tools, such as an Amazon Bedrock AgentCore Gateway."
+msgstr "在下方添加一个，让对话可以调用它的工具，例如 Amazon Bedrock AgentCore Gateway。"
+
+#: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:60
+msgid "Add an MCP server"
+msgstr "添加 MCP 服务器"

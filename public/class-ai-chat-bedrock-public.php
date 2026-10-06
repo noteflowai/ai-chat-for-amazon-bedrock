@@ -19,6 +19,13 @@ class AI_Chat_Bedrock_Public {
 	 *
 	 * @var bool[]
 	 */
+	/**
+	 * Whether this page holds a chat, once worked out.
+	 *
+	 * @var bool|null
+	 */
+	private $has_chat = null;
+
 	private static $rendered = array(
 		'any'    => false,
 		'usable' => false,
@@ -529,14 +536,43 @@ class AI_Chat_Bedrock_Public {
 	}
 
 	private function current_page_has_chat() {
+		if ( null !== $this->has_chat ) {
+			return $this->has_chat;
+		}
 		global $post;
-		if ( ! is_singular() || ! $post instanceof WP_Post ) {
-			return false;
+		$texts = array();
+		if ( is_singular() && $post instanceof WP_Post ) {
+			$texts[] = (string) $post->post_content;
+			// A synced pattern in the post is a reference, so has_block() does not see inside it.
+			if ( preg_match_all( '/<!-- wp:block \{[^}]*"ref":(\d+)/', (string) $post->post_content, $refs ) ) {
+				foreach ( array_slice( array_unique( array_map( 'absint', $refs[1] ) ), 0, 20 ) as $ref ) {
+					$pattern = get_post( $ref );
+					if ( $pattern instanceof WP_Post && 'wp_block' === $pattern->post_type ) {
+						$texts[] = (string) $pattern->post_content;
+					}
+				}
+			}
 		}
-		if ( has_shortcode( $post->post_content, 'ai_chat_bedrock' ) ) {
-			return true;
+		// A classic theme prints its sidebars after the head, so a chat in a widget would get its
+		// styles only in the footer and show unstyled first. Block themes render their templates
+		// before the head, so the chat's own enqueue is early enough there.
+		if ( ! ( function_exists( 'wp_is_block_theme' ) && wp_is_block_theme() ) ) {
+			foreach ( array( 'widget_block', 'widget_text', 'widget_custom_html' ) as $option ) {
+				foreach ( (array) get_option( $option, array() ) as $widget ) {
+					if ( is_array( $widget ) ) {
+						$texts[] = (string) ( isset( $widget['content'] ) ? $widget['content'] : ( isset( $widget['text'] ) ? $widget['text'] : '' ) );
+					}
+				}
+			}
 		}
-		return function_exists( 'has_block' ) && has_block( 'ai-chat-bedrock/chat', $post );
+		$this->has_chat = false;
+		foreach ( $texts as $text ) {
+			if ( false !== strpos( $text, '<!-- wp:ai-chat-bedrock/chat' ) || has_shortcode( $text, 'ai_chat_bedrock' ) ) {
+				$this->has_chat = true;
+				break;
+			}
+		}
+		return $this->has_chat;
 	}
 
 	private function sanitize_dimension( $value, $fallback ) {

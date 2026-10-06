@@ -35,7 +35,7 @@
         const $body = $('#ai-chat-bedrock-mcp-servers-table tbody').empty();
         const names = servers ? Object.keys(servers) : [];
         if (!names.length) {
-            $body.append($('<tr>', { 'class': 'no-items' }).append($('<td>', { colspan: 5, text: config.i18n.no_servers })));
+            $body.append($('<tr>', { 'class': 'no-items' }).append($('<td>', { colspan: 5, text: [config.i18n.no_servers, config.i18n.no_servers_hint].filter(Boolean).join(' ') })));
             return;
         }
         names.forEach(function (name) {

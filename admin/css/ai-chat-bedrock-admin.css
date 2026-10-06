@@ -372,6 +372,19 @@
     font-size: 13px;
 }
 
+/* Adding an MCP server, below the list. */
+.aicfab-add-server {
+    margin-top: 12px;
+}
+
+.aicfab-add-server > summary {
+    list-style: none;
+}
+
+.aicfab-add-server > summary::-webkit-details-marker {
+    display: none;
+}
+
 /* Setup steps, folded once all are done. */
 .aicfab-steps-done {
     margin: 4px 0 12px;

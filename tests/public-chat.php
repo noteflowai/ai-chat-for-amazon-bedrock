@@ -249,8 +249,13 @@ $GLOBALS['aicfab_post'] = null;
 function is_singular( $types = '' ) {
 	return null !== $GLOBALS['aicfab_post'];
 }
+$GLOBALS['aicfab_posts'] = array();
 function get_post( $post = null ) {
-	return $GLOBALS['aicfab_post'];
+	return is_int( $post ) && isset( $GLOBALS['aicfab_posts'][ $post ] ) ? $GLOBALS['aicfab_posts'][ $post ] : $GLOBALS['aicfab_post'];
+}
+$GLOBALS['aicfab_block_theme'] = false;
+function wp_is_block_theme() {
+	return $GLOBALS['aicfab_block_theme'];
 }
 function has_block( $block, $post = null ) {
 	return null !== $GLOBALS['aicfab_post'] && false !== strpos( (string) $GLOBALS['aicfab_post']->post_content, '<!-- wp:' . $block );
@@ -1015,6 +1020,52 @@ wp_enqueue_script( 'ai-chat-for-amazon-bedrock' );
 $aicfab_public->trim_scripts();
 check_pub( ! wp_script_is( 'ai-chat-for-amazon-bedrock' ) && ! wp_script_is( AI_Chat_Bedrock_Public::POPUP_HANDLE ), 'A page that rendered no chat after all loads neither.' );
 check_pub( isset( $GLOBALS['aicfab_localized']['ai_chat_bedrock_popup']['analytics'] ) && AI_Chat_Bedrock_Public::POPUP_HANDLE === $GLOBALS['aicfab_localized_on']['ai_chat_bedrock_popup'], 'The popup script is told whether analytics events are on.' );
+
+// --- Styles in the head wherever the chat is placed ---------------------------------------
+
+if ( ! class_exists( 'WP_Post' ) ) {
+	class WP_Post {
+		public $ID           = 0;
+		public $post_type    = 'post';
+		public $post_content = '';
+		public function __construct( $id, $content, $type = 'post' ) {
+			$this->ID           = $id;
+			$this->post_content = $content;
+			$this->post_type    = $type;
+		}
+	}
+}
+$aicfab_has_chat = function () {
+	$method = new ReflectionMethod( 'AI_Chat_Bedrock_Public', 'current_page_has_chat' );
+	if ( PHP_VERSION_ID < 80100 ) {
+		$method->setAccessible( true );
+	}
+	return $method->invoke( new AI_Chat_Bedrock_Public( 'ai-chat-for-amazon-bedrock', 'test' ) );
+};
+aicfab_reset_pub( array() );
+$GLOBALS['post']         = new WP_Post( 1, '<!-- wp:paragraph --><p>Hi</p><!-- /wp:paragraph -->' );
+$GLOBALS['aicfab_post']  = $GLOBALS['post'];
+$GLOBALS['aicfab_posts'] = array( 9 => new WP_Post( 9, '<!-- wp:ai-chat-bedrock/chat /-->', 'wp_block' ) );
+check_pub( ! $aicfab_has_chat(), 'A post without a chat does not load its styles.' );
+$GLOBALS['post']->post_content = '[ai_chat_bedrock]';
+check_pub( $aicfab_has_chat(), 'A chat in the post loads them in the head.' );
+$GLOBALS['post']->post_content = '<!-- wp:block {"ref":9} /-->';
+check_pub( $aicfab_has_chat(), 'So does a chat inside a synced pattern in the post.' );
+$GLOBALS['aicfab_posts'][9]->post_type = 'post';
+check_pub( ! $aicfab_has_chat(), 'A reference to something that is not a pattern is not followed.' );
+$GLOBALS['post']->post_content         = '';
+$GLOBALS['aicfab_opts']['widget_block'] = array( 2 => array( 'content' => '<!-- wp:ai-chat-bedrock/chat {"mode":"inline"} /-->' ), '_multiwidget' => 1 );
+check_pub( $aicfab_has_chat(), 'In a classic theme, a chat in a widget loads its styles in the head, not the footer.' );
+$GLOBALS['aicfab_block_theme'] = true;
+check_pub( ! $aicfab_has_chat(), 'A block theme renders its template before the head, so widgets are not scanned.' );
+$GLOBALS['aicfab_block_theme']          = false;
+$GLOBALS['aicfab_opts']['widget_block'] = array();
+$GLOBALS['aicfab_opts']['widget_text']  = array( 3 => array( 'text' => 'Ask us: [ai_chat_bedrock mode="popup"]' ) );
+check_pub( $aicfab_has_chat(), 'A shortcode in a text widget counts too.' );
+unset( $GLOBALS['post'] );
+$GLOBALS['aicfab_post']  = null;
+$GLOBALS['aicfab_posts'] = array();
+$GLOBALS['aicfab_opts']['widget_text'] = array();
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
