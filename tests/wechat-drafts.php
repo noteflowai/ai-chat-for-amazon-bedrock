@@ -166,14 +166,27 @@ function wp_safe_remote_post( $url, $args ) {
 		'media/uploadimg'       => '{"url":"http://mmbiz.qpic.cn/img/' . $n . '"}',
 		'material/add_material' => '{"media_id":"COVER_MEDIA_' . $n . '","url":"http://mmbiz.qpic.cn/c"}',
 		'draft/add'             => '{"media_id":"DRAFT_MEDIA_ID_' . $n . '"}',
+		'draft/update'          => '{"errcode":0,"errmsg":"ok"}',
 	);
 	return array( 'body' => $replies[ $path ] );
+}
+$GLOBALS['aicfab_remote'] = array();
+function wp_safe_remote_get( $url, $args ) {
+	$GLOBALS['aicfab_fetched'][] = $url;
+	return isset( $GLOBALS['aicfab_remote'][ $url ] ) ? array( 'body' => $GLOBALS['aicfab_remote'][ $url ], 'code' => 200 ) : array( 'body' => '', 'code' => 404 );
+}
+function wp_tempnam( $name ) {
+	return tempnam( sys_get_temp_dir(), $name );
+}
+function wp_delete_file( $path ) {
+	$GLOBALS['aicfab_deleted'][] = $path;
+	unlink( $path );
 }
 function wp_remote_retrieve_body( $response ) {
 	return $response['body'];
 }
 function wp_remote_retrieve_response_code( $response ) {
-	return 200;
+	return isset( $response['code'] ) ? $response['code'] : 200;
 }
 function wp_json_encode( $value, $flags = 0 ) {
 	return json_encode( $value, $flags );
@@ -346,7 +359,7 @@ function drafts_posts() {
 				'post_title'   => '具身智能入门：从感知到动作的完整路线图，以及为什么机器人需要世界模型来规划',
 				'post_excerpt' => str_repeat( '摘要', 80 ),
 				'thumbnail'    => 7,
-				'post_content' => '<p>See <a href="https://example.test/robots/">our robots</a>.</p><script>alert(1)</script><p class="x" style="color:red">Text</p><img class="wp-image-3" src="https://example.test/wp-content/uploads/2026/10/robot.jpg" alt="A robot"><img src="https://cdn.other.test/remote.jpg"><img src="https://example.test/wp-content/uploads/2026/10/huge.jpg" alt="Huge"><img src="https://example.test/wp-content/uploads/2026/10/anim.gif"><img src="https://example.test/wp-content/uploads/2026/10/../../../../etc/passwd"><p></p>',
+				'post_content' => '<p>' . str_repeat( '具身智能，', 140 ) . '</p><p>See <a href="https://example.test/robots/">our robots</a>.</p><script>alert(1)</script><p class="x" style="color:red">Text</p><img class="wp-image-3" src="https://example.test/wp-content/uploads/2026/10/robot.jpg" alt="A robot"><img src="https://cdn.other.test/remote.jpg"><img src="https://example.test/wp-content/uploads/2026/10/huge.jpg" alt="Huge"><img src="https://example.test/wp-content/uploads/2026/10/anim.gif"><img src="https://example.test/wp-content/uploads/2026/10/../../../../etc/passwd"><p></p>',
 			)
 		),
 		2 => new WP_Post(
@@ -412,9 +425,12 @@ $body = drafts_sent_body();
 check_drafts( is_array( $done ) && 'DRAFT_MEDIA_ID_' . count( $GLOBALS['aicfab_http'] ) === $done['media_id'] && array( 1, 2 ) === $done['posts'], 'Two posts become one draft.' );
 check_drafts( 'stable_token' === drafts_paths()[0] && 'draft/add' === end( $GLOBALS['aicfab_http'] )['path'] && false !== strpos( end( $GLOBALS['aicfab_http'] )['url'], 'access_token=AT' ), 'The draft is added with the account\'s access token.' );
 $first = $body['articles'][0];
-check_drafts( 32 === mb_strlen( $first['title'] ) && 120 === mb_strlen( $first['digest'] ) && 'https://example.test/?p=1' === $first['content_source_url'] && 'news' === $first['article_type'], 'Title and digest are cut to WeChat\'s limits, and Read more leads to the post.' );
+check_drafts( '具身智能入门：从感知到动作的完整路线图' === $first['title'] && 120 === mb_strlen( $first['digest'] ) && 'https://example.test/?p=1' === $first['content_source_url'] && 'news' === $first['article_type'], 'A long title ends at its last break and the digest is cut to WeChat\'s limits, and Read more leads to the post.' );
+check_drafts( '物理AI实验室 0.5：人形机器人热潮' === AI_Chat_Bedrock_WeChat_Drafts::title( '物理AI实验室 0.5：人形机器人热潮，把 Tesla 季度报告的一段话拆到演示、样机、量产与上岗' ) && 'Short title' === AI_Chat_Bedrock_WeChat_Drafts::title( 'Short title' ) && 32 === mb_strlen( AI_Chat_Bedrock_WeChat_Drafts::title( str_repeat( '字', 40 ) ) ), 'Titles: cut at a break, kept when short, and ended with … when there is no break.' );
+$lesson = new WP_Post( array( 'ID' => 30, 'post_title' => 'L', 'post_excerpt' => '' ) );
+check_drafts( '机器人认出了杯子，为什么伸手去拿，反而更难？这一集讲运动学。' === AI_Chat_Bedrock_WeChat_Drafts::digest( $lesson, '<h2>本节视频</h2><blockquote><p>▶ This lesson has a video, insert it here in the editor please, thank you very much.</p></blockquote><p>配音由 AI 合成。</p><p>机器人认出了杯子，为什么伸手去拿，反而更难？这一集讲运动学。' . str_repeat( '它管一件事：把手要去哪翻译成每个关节转多少', 5 ) . '</p>' ), 'The digest skips the video note and credit line, and ends at a sentence.' );
 check_drafts( 0 === strpos( $first['thumb_media_id'], 'COVER_MEDIA_' ) && 'Arms' === $body['articles'][1]['title'], 'The featured image is the cover; a post without one has its first image.' );
-check_drafts( false !== strpos( $first['content'], 'See our robots.' ) && false === strpos( $first['content'], '<a ' ) && false === strpos( $first['content'], 'alert' ) && false === strpos( $first['content'], 'style=' ), 'Links become text, and scripts and styles go.' );
+check_drafts( false !== strpos( $first['content'], 'See our robots.' ) && false === strpos( $first['content'], '<a ' ) && false === strpos( $first['content'], 'alert' ) && false === strpos( $first['content'], 'color:red' ) && false === strpos( $first['content'], 'class=' ), 'Links become text, and the post\'s scripts, styles and classes go.' );
 preg_match_all( '#<img src="([^"]+)"#', $first['content'], $images );
 check_drafts( 2 === count( $images[1] ) && 0 === strpos( $images[1][0], 'http://mmbiz.qpic.cn/img/' ), 'Uploaded images take WeChat\'s address; remote, GIF and outside-uploads images are left out.' );
 $uploads = array_values( array_filter( $GLOBALS['aicfab_http'], function ( $c ) { return 'media/uploadimg' === $c['path']; } ) );
@@ -425,8 +441,14 @@ check_drafts( 'wechat' === $record[0]['platform'] && 'planned' === $record[0]['s
 check_drafts( false !== strpos( AI_Chat_Bedrock_WeChat_Drafts::status_summary(), '2 articles are in the WeChat draft box' ), 'The settings screen says what was sent.' );
 
 $calls = count( $GLOBALS['aicfab_http'] );
-AI_Chat_Bedrock_WeChat_Drafts::create( array( 1 ), null, 'manual' );
-check_drafts( array( 'draft/add' ) === array_slice( drafts_paths(), $calls ), 'Sending again reuses the uploaded images, the cover and the token.' );
+$again = AI_Chat_Bedrock_WeChat_Drafts::create( array( 1 ), null, 'manual' );
+check_drafts( array( 'draft/update' ) === array_slice( drafts_paths(), $calls ) && true === $again['updated'] && $done['media_id'] === $again['media_id'], 'Sending a post again replaces its article in the draft it is in, reusing the images, the cover and the token.' );
+$update = json_decode( end( $GLOBALS['aicfab_http'] )['body'], true );
+check_drafts( $done['media_id'] === $update['media_id'] && 0 === $update['index'] && 'https://example.test/?p=1' === $update['articles']['content_source_url'], 'The update names the draft and the article\'s place in it.' );
+check_drafts( 1 === count( array_filter( AI_Chat_Bedrock_Distribution::entries( 1 ), function ( $e ) { return 'wechat' === $e['platform']; } ) ), 'And the record keeps one entry for it.' );
+$GLOBALS['aicfab_replies']['draft/update'] = array( '{"errcode":40007,"errmsg":"invalid media_id"}' );
+$anew = AI_Chat_Bedrock_WeChat_Drafts::create( array( 1 ), null, 'manual' );
+check_drafts( false === $anew['updated'] && $done['media_id'] !== $anew['media_id'] && 'draft/add' === end( $GLOBALS['aicfab_http'] )['path'], 'A draft already published or deleted is made anew.' );
 
 $skip = AI_Chat_Bedrock_WeChat_Drafts::create( array( 3, 4 ), null, 'manual' );
 check_drafts( is_wp_error( $skip ) && 'wx_nothing' === $skip->get_error_code() && array( 3 => 'no_cover', 4 => 'not_public' ) === $skip->get_error_data()['skipped'], 'A post without any image, or not public, is skipped with the reason.' );
@@ -434,7 +456,7 @@ check_drafts( is_wp_error( $skip ) && 'wx_nothing' === $skip->get_error_code() &
 $long                                  = new WP_Post( array( 'ID' => 5, 'post_title' => 'Long', 'thumbnail' => 7, 'post_content' => str_repeat( '<p>' . str_repeat( '字', 300 ) . '</p>', 80 ) ) );
 $GLOBALS['aicfab_posts'][5]            = $long;
 $article                               = AI_Chat_Bedrock_WeChat_Drafts::article( $long, $GLOBALS['aicfab_options'] );
-check_drafts( mb_strlen( $article['content'] ) <= AI_Chat_Bedrock_WeChat_Drafts::MAX_CONTENT && mb_strlen( $article['content'] ) > 18000 && false !== strpos( $article['content'], '字字</p><p>Tap' ), 'A long Chinese post is cut at a paragraph, counting characters, near WeChat\'s limit.' );
+check_drafts( mb_strlen( $article['content'] ) <= AI_Chat_Bedrock_WeChat_Drafts::MAX_CONTENT && mb_strlen( $article['content'] ) > 18000 && false !== strpos( $article['content'], '字字</p><p style="margin:0 0 16px;line-height:1.75;font-size:16px;color:#333;">Tap' ), 'A long Chinese post is cut at a paragraph, counting characters, near WeChat\'s limit.' );
 check_drafts( 0 === strpos( $article['digest'], '字字' ) && 120 === mb_strlen( $article['digest'] ), 'Without a written excerpt, the digest comes from what a guest reads.' );
 $list = AI_Chat_Bedrock_WeChat_Drafts::fit( '<ul><li>' . str_repeat( '项', 25000 ) . '</li></ul>', '<p>Read more</p>' );
 check_drafts( 0 === strpos( $list, '<p>项项' ) && false !== strpos( $list, '…</p><p>Read more</p>' ) && mb_strlen( $list ) <= AI_Chat_Bedrock_WeChat_Drafts::MAX_CONTENT, 'Content with no whole block that fits keeps its text instead of going empty.' );
@@ -451,6 +473,32 @@ drafts_settings( array( 'wechat_drafts_enabled' => false ) );
 check_drafts( ! AI_Chat_Bedrock_Distribution::box_needed(), 'With drafts and the record off, there is no box.' );
 drafts_settings();
 
+// --- WeChat's article format -------------------------------------------------------------------
+
+$clean = AI_Chat_Bedrock_WeChat_Drafts::clean_html( "<h1>Title</h1>\n<ul class=\"wp-block-list\">\n<li><strong>One.</strong> first</li>\n\n<li>  </li>\n\n<li>Two</li>\n</ul>\n\n<p> </p><p>Text<br><br><br>more</p>\n<figure class=\"wp-block-image\"><img src=\"x.jpg\" alt=\"\"><figcaption> Caption </figcaption></figure>\n<pre><code>a = 1\n  b = 2</code></pre>" );
+check_drafts( false === strpos( $clean, "\n<li" ) && false === strpos( $clean, '</li><li></li>' ) && false !== strpos( $clean, '<ul><li><strong>One.</strong> first</li><li>Two</li></ul>' ), 'No white space or empty items in lists, which WeChat shows as empty bullet points.' );
+check_drafts( false !== strpos( $clean, '<h2>Title</h2>' ) && false === strpos( $clean, '<p></p>' ) && false !== strpos( $clean, '<p>Text<br>more</p>' ), 'Headings start at h2, and empty paragraphs and repeated breaks go.' );
+check_drafts( false === strpos( $clean, 'figure' ) && false !== strpos( $clean, '<p class="aicfab-caption">Caption</p>' ) && false !== strpos( $clean, "<pre><code>a = 1\n  b = 2</code></pre>" ), 'Figures become their image and caption; code keeps its spacing.' );
+$styled = AI_Chat_Bedrock_WeChat_Drafts::style( $clean );
+check_drafts( false !== strpos( $styled, '<ul style="margin:0 0 16px;padding-left:24px;"><li style="' ) && false !== strpos( $styled, '<pre style="' ) && false !== strpos( $styled, '<code style="font-family:Menlo,Consolas,monospace;font-size:13px;background:none' ) && false !== strpos( $styled, '<p style="margin:-8px 0 16px' ), 'Every block is styled inline, as WeChat takes no style sheet.' );
+$folded = AI_Chat_Bedrock_WeChat_Drafts::clean_html( "<details><summary>文字稿</summary>\n<h2>文字稿</h2>\n<p>正文</p></details><details><summary>出处</summary><p>链接</p></details><div>loose text</div><p>After</p><svg><title>icon</title></svg>" );
+$gate = AI_Chat_Bedrock_WeChat_Drafts::clean_html( '<div><p>登录后继续阅读。</p><div>  <a class="fs_auth_btn fs_auth_google" href="https://example.test/wp-login.php?x=1"><svg></svg> 使用 Google </a>   <a href="https://example.test/wp-login.php">Log in</a><a class="wp-block-button__link" href="/x">Buy</a> <a href="https://example.test/page">a page</a></div></div>' );
+check_drafts( '<p>登录后继续阅读。</p><p>a page</p>' === $gate, 'Sign-in and other buttons go whole, an ordinary link keeps its text, and runs of spaces collapse.' );
+check_drafts( '<h2>文字稿</h2><p>正文</p><p><strong>出处</strong></p><p>链接</p><p>loose text</p><p>After</p>' === $folded, 'A folded section is shown open without repeating its heading, loose text becomes a paragraph, and icons go.' );
+$players = AI_Chat_Bedrock_WeChat_Drafts::without_players( '<figure class="wp-block-video"><video controls src="https://cdn.test/a.mp4" poster="https://cdn.test/poster.jpg"></video><figcaption>Lesson</figcaption></figure><p>After</p><figure class="wp-block-embed is-type-video"><div><iframe src="https://player.bilibili.com/x"></iframe></div></figure>' );
+check_drafts( 2 === substr_count( $players, 'This lesson has a video' ) && false !== strpos( $players, '<img src="https://cdn.test/poster.jpg"' ) && false === strpos( $players, '<video' ) && false === strpos( $players, '<iframe' ) && false !== strpos( $players, '<p>After</p>' ), 'A video or embedded player becomes its poster and a note to insert the video in WeChat.' );
+
+drafts_reset();
+$png                                               = base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' );
+$GLOBALS['aicfab_remote']['https://cdn.test/poster.png'] = $png;
+$GLOBALS['aicfab_remote']['https://cdn.test/fake.jpg']   = 'not an image at all';
+$GLOBALS['aicfab_posts'][6]                        = new WP_Post( array( 'ID' => 6, 'post_title' => 'Video lesson', 'thumbnail' => 7, 'post_content' => '<figure class="wp-block-video"><video src="https://cdn.test/a.mp4" poster="https://cdn.test/poster.png"></video></figure><p>Text</p><img src="https://cdn.test/fake.jpg"><img src="http://cdn.test/poster.png">' ) );
+$GLOBALS['aicfab_deleted']                         = array();
+$article                                           = AI_Chat_Bedrock_WeChat_Drafts::article( $GLOBALS['aicfab_posts'][6], $GLOBALS['aicfab_options'] );
+check_drafts( 1 === substr_count( $article['content'], '<img src="http://mmbiz.qpic.cn/img/' ) && false !== strpos( $article['content'], 'This lesson has a video' ), 'A poster on a CDN is fetched and uploaded to WeChat; a file that is not an image, and plain http, are not.' );
+check_drafts( 1 === count( $GLOBALS['aicfab_deleted'] ) && ! file_exists( $GLOBALS['aicfab_deleted'][0] ), 'The fetched file is deleted after the upload.' );
+drafts_reset();
+
 // --- When WeChat refuses --------------------------------------------------------------------
 
 drafts_reset();
@@ -466,7 +514,9 @@ drafts_reset();
 AI_Chat_Bedrock_Distribution::record( 2, array( 'platform' => 'wechat', 'item_id' => 'OLDDRAFT123', 'status' => 'public' ), 'wechat' );
 $GLOBALS['aicfab_posts'][5] = $long;
 $ids                        = AI_Chat_Bedrock_WeChat_Drafts::candidates();
-check_drafts( array( 5, 1 ) === $ids, 'Candidates are the newest public posts with an image, not sent before.' );
+check_drafts( array( 5, 1 ) === $ids, 'Candidates are the newest public posts with a cover and enough text, not sent before.' );
+$GLOBALS['aicfab_posts'][3]->post_content = '<p>' . str_repeat( '字', 900 ) . '</p>';
+check_drafts( 'no_cover' === AI_Chat_Bedrock_WeChat_Drafts::shortfall( $GLOBALS['aicfab_posts'][3] ) && 'too_short' === AI_Chat_Bedrock_WeChat_Drafts::shortfall( new WP_Post( array( 'ID' => 31, 'post_title' => 'Brief', 'thumbnail' => 7, 'post_content' => '<p>Two lines.</p>' ) ) ) && '' === AI_Chat_Bedrock_WeChat_Drafts::shortfall( $long ), 'The schedule leaves out posts without a cover or with little text.' );
 check_drafts( 4 === $GLOBALS['aicfab_queries'][0]['cat'] && isset( $GLOBALS['aicfab_queries'][0]['date_query'] ) && 'publish' === $GLOBALS['aicfab_queries'][0]['post_status'], 'Only the featured category, recent and published.' );
 
 AI_Chat_Bedrock_WeChat_Drafts::run();
