@@ -2193,8 +2193,9 @@ class AI_Chat_Bedrock_Admin {
 		if ( ! empty( $input['wxgame_clear'] ) ) {
 			delete_transient( AI_Chat_Bedrock_WeChat_Game::ACCESS_KEY );
 		}
-		// The Official Account and the mini game are separate accounts, and each keeps its own
-		// AppID, token and key, so a message signed for one is never taken by the other.
+		// The Official Account and the mini game are separate accounts with their own AppIDs. In
+		// safe mode each message carries its AppID, so they stay apart even when an owner gives both
+		// the same token and key, which is allowed but advised against.
 		$official_app = '' !== $output['wechat_app_id'] ? $output['wechat_app_id'] : ( isset( $current['wechat_app_id'] ) ? (string) $current['wechat_app_id'] : '' );
 		if ( '' !== $output['wxgame_app_id'] && $output['wxgame_app_id'] === $official_app ) {
 			$output['wxgame_app_id'] = '';
@@ -2207,8 +2208,7 @@ class AI_Chat_Bedrock_Admin {
 			$game     = '' !== $output[ $aicfab_key ] ? call_user_func( array( 'AI_Chat_Bedrock_WeChat', $aicfab_pair[1] ), AI_Chat_Bedrock_Security::decrypt_secret( $output[ $aicfab_key ] ) ) : '';
 			$official = isset( $output[ $aicfab_pair[0] ] ) && '' !== $output[ $aicfab_pair[0] ] ? call_user_func( array( 'AI_Chat_Bedrock_WeChat', $aicfab_pair[1] ), AI_Chat_Bedrock_Security::decrypt_secret( $output[ $aicfab_pair[0] ] ) ) : '';
 			if ( '' !== $game && $game === $official ) {
-				$output[ $aicfab_key ] = isset( $current[ $aicfab_key ] ) && $current[ $aicfab_key ] !== $output[ $aicfab_key ] ? $current[ $aicfab_key ] : '';
-				$this->notice( $aicfab_key, __( 'Use a different token and EncodingAESKey for the mini game than for the Official Account; the mini game\'s was not saved.', 'ai-chat-for-amazon-bedrock' ) );
+				$this->notice( $aicfab_key, __( 'The mini game uses the same token or EncodingAESKey as the Official Account. It was saved; choose safe mode in both, so each message is checked against its own AppID, and consider separate values.', 'ai-chat-for-amazon-bedrock' ) );
 			}
 		}
 

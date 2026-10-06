@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-06T00:17:20+00:00\n"
+"POT-Creation-Date: 2026-10-06T01:20:19+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -1825,12 +1825,12 @@ msgstr ""
 msgid "The mini game token must be 3 to 32 letters and digits; it was not saved."
 msgstr ""
 
-#: admin/class-ai-chat-bedrock-admin.php:2201
+#: admin/class-ai-chat-bedrock-admin.php:2202
 msgid "The mini game has its own AppID, not the Official Account's; it was not saved."
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:2211
-msgid "Use a different token and EncodingAESKey for the mini game than for the Official Account; the mini game's was not saved."
+msgid "The mini game uses the same token or EncodingAESKey as the Official Account. It was saved; choose safe mode in both, so each message is checked against its own AppID, and consider separate values."
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:2220
@@ -4606,55 +4606,55 @@ msgstr ""
 msgid "Published elsewhere"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:537
+#: includes/class-ai-chat-bedrock-distribution.php:549
 msgid "Not published on another platform yet. Agents record it here through the publishing abilities."
 msgstr ""
 
 #. translators: %s: the record that replaced this one, as platform:id.
-#: includes/class-ai-chat-bedrock-distribution.php:548
+#: includes/class-ai-chat-bedrock-distribution.php:562
 #, php-format
 msgid "Replaced by %s"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:570
+#: includes/class-ai-chat-bedrock-distribution.php:584
 msgid "planned"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:571
+#: includes/class-ai-chat-bedrock-distribution.php:585
 msgid "submitted"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:572
+#: includes/class-ai-chat-bedrock-distribution.php:586
 msgid "processing"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:573
+#: includes/class-ai-chat-bedrock-distribution.php:587
 msgid "public"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:574
+#: includes/class-ai-chat-bedrock-distribution.php:588
 msgid "unlisted"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:575
+#: includes/class-ai-chat-bedrock-distribution.php:589
 msgid "private"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:576
+#: includes/class-ai-chat-bedrock-distribution.php:590
 msgid "replaced"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:577
+#: includes/class-ai-chat-bedrock-distribution.php:591
 msgid "removed"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-distribution.php:578
+#: includes/class-ai-chat-bedrock-distribution.php:592
 #: public/class-ai-chat-bedrock-public.php:133
 msgid "failed"
 msgstr ""
 
 #. translators: %s: links to platforms, such as Bilibili and YouTube.
-#: includes/class-ai-chat-bedrock-distribution.php:611
+#: includes/class-ai-chat-bedrock-distribution.php:625
 #, php-format
 msgid "Also on %s"
 msgstr ""
@@ -6392,63 +6392,67 @@ msgid_plural "Last draft %1$s ago: %2$s articles are in the WeChat draft box."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:622
+#: includes/class-ai-chat-bedrock-wechat-game.php:629
 msgid "the address was called while the game was off, so nothing was taken"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:623
+#: includes/class-ai-chat-bedrock-wechat-game.php:630
 #: includes/class-ai-chat-bedrock-wechat.php:265
 msgid "a request came without a current timestamp, so it was refused"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:624
+#: includes/class-ai-chat-bedrock-wechat-game.php:631
 #: includes/class-ai-chat-bedrock-wechat.php:266
 msgid "the signature did not match the token, so the request was refused; enter the same token here as in WeChat"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:625
+#: includes/class-ai-chat-bedrock-wechat-game.php:632
+msgid "a plaintext message was refused, because the mini game shares the Official Account's token; choose safe mode for the mini game"
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-wechat-game.php:633
 #: includes/class-ai-chat-bedrock-wechat.php:267
 msgid "WeChat checked the address, and the signature matched"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:626
+#: includes/class-ai-chat-bedrock-wechat-game.php:634
 #: includes/class-ai-chat-bedrock-wechat.php:268
 msgid "a signed message arrived from WeChat"
 msgstr ""
 
 #. translators: 1: how long ago, such as 5 mins, 2: what happened.
-#: includes/class-ai-chat-bedrock-wechat-game.php:630
+#: includes/class-ai-chat-bedrock-wechat-game.php:638
 #: includes/class-ai-chat-bedrock-wechat.php:272
 #, php-format
 msgid "Last contact %1$s ago: %2$s."
 msgstr ""
 
 #. translators: 1: how long ago, 2: the server's IP address.
-#: includes/class-ai-chat-bedrock-wechat-game.php:638
+#: includes/class-ai-chat-bedrock-wechat-game.php:646
 #, php-format
 msgid "An answer could not be sent %1$s ago because WeChat does not accept this server's address. Add %2$s to the IP whitelist under Development Management > Development Settings in the mini game's console."
 msgstr ""
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-game.php:641
+#: includes/class-ai-chat-bedrock-wechat-game.php:649
 #, php-format
 msgid "An answer could not be sent %s ago: WeChat did not accept the AppID and AppSecret. Enter them again from the mini game's console."
 msgstr ""
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-game.php:644
+#: includes/class-ai-chat-bedrock-wechat-game.php:652
 #, php-format
 msgid "An answer could not be sent %s ago: WeChat allows answers only for 48 hours after a player writes, and a few at a time."
 msgstr ""
 
 #. translators: 1: how long ago, 2: error code.
-#: includes/class-ai-chat-bedrock-wechat-game.php:647
+#: includes/class-ai-chat-bedrock-wechat-game.php:655
 #, php-format
 msgid "An answer could not be sent %1$s ago (%2$s)."
 msgstr ""
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-game.php:651
+#: includes/class-ai-chat-bedrock-wechat-game.php:659
 #, php-format
 msgid "The last answer was sent %s ago."
 msgstr ""

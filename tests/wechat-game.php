@@ -362,6 +362,22 @@ sort( $parts, SORT_STRING );
 $refused = game_serve( new WP_REST_Request( 'POST', array( 'timestamp' => $timestamp, 'nonce' => 'nsafe2', 'encrypt_type' => 'aes', 'msg_signature' => sha1( implode( '', $parts ) ) ), '<xml><ToUserName>gh</ToUserName><Encrypt><![CDATA[' . $other . ']]></Encrypt></xml>' ) );
 check_game( 403 === $refused->get_status() && 1 === count( game_sent() ), 'A message for another AppID, such as the Official Account\'s, is refused.' );
 
+// --- Sharing the Official Account's token ---------------------------------------------------
+
+game_reset();
+game_settings( array( 'wechat_token' => AI_Chat_Bedrock_Security::encrypt_secret( AICFAB_TOKEN ) ) );
+$plain = game_signed( 'POST', game_json( array( 'MsgType' => 'text', 'Content' => 'pay', 'MsgId' => 9150 ) ) );
+check_game( 403 === $plain->get_status() && 'plaintext' === $GLOBALS['aicfab_store']['aicfab_wxgame_contact']['result'] && array() === $GLOBALS['aicfab_http'], 'With the Official Account\'s token, a plaintext message is refused, as it cannot show which account it is for.' );
+check_game( '7788' === game_signed( 'GET', '', array( 'echostr' => '7788' ) )->get_data(), 'WeChat can still check the address.' );
+$inner     = game_json( array( 'MsgType' => 'text', 'Content' => 'pay', 'MsgId' => 9151 ) );
+$encrypted = AI_Chat_Bedrock_WeChat::encrypt( $inner, AICFAB_AES_KEY, AICFAB_APP_ID );
+$timestamp = (string) time();
+$parts     = array( AICFAB_TOKEN, $timestamp, 'nshared', $encrypted );
+sort( $parts, SORT_STRING );
+$shared = game_serve( new WP_REST_Request( 'POST', array( 'timestamp' => $timestamp, 'nonce' => 'nshared', 'encrypt_type' => 'aes', 'msg_signature' => sha1( implode( '', $parts ) ) ), json_encode( array( 'ToUserName' => 'gh_game', 'Encrypt' => $encrypted ) ) ) );
+check_game( 'success' === $shared->get_data() && 1 === count( game_sent() ), 'A safe mode message for the game\'s AppID is taken.' );
+game_settings();
+
 // --- When an answer cannot be sent ----------------------------------------------------------
 
 game_reset();

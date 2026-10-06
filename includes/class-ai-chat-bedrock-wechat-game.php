@@ -222,7 +222,14 @@ class AI_Chat_Bedrock_WeChat_Game {
 			self::note_contact( 'stale' );
 			return $denied;
 		}
-		if ( 'POST' === $method && 'aes' === strtolower( (string) $request->get_param( 'encrypt_type' ) ) ) {
+		$safe = 'aes' === strtolower( (string) $request->get_param( 'encrypt_type' ) );
+		// With the Official Account's token, only an encrypted message, which names its AppID,
+		// shows which of the two it was meant for.
+		if ( 'POST' === $method && ! $safe && AI_Chat_Bedrock_WeChat::token( $options ) === $token ) {
+			self::note_contact( 'plaintext' );
+			return $denied;
+		}
+		if ( 'POST' === $method && $safe ) {
 			$body  = (string) $request->get_body();
 			$outer = strlen( $body ) <= self::MAX_BODY_BYTES ? self::parse( $body ) : null;
 			$valid = null !== $outer && ! empty( $outer['Encrypt'] ) && is_string( $outer['Encrypt'] ) && AI_Chat_Bedrock_WeChat::signature_matches( (string) $request->get_param( 'msg_signature' ), array( $token, $timestamp, $nonce, $outer['Encrypt'] ) );
@@ -622,6 +629,7 @@ class AI_Chat_Bedrock_WeChat_Game {
 				'off'       => __( 'the address was called while the game was off, so nothing was taken', 'ai-chat-for-amazon-bedrock' ),
 				'stale'     => __( 'a request came without a current timestamp, so it was refused', 'ai-chat-for-amazon-bedrock' ),
 				'signature' => __( 'the signature did not match the token, so the request was refused; enter the same token here as in WeChat', 'ai-chat-for-amazon-bedrock' ),
+				'plaintext' => __( 'a plaintext message was refused, because the mini game shares the Official Account\'s token; choose safe mode for the mini game', 'ai-chat-for-amazon-bedrock' ),
 				'checked'   => __( 'WeChat checked the address, and the signature matched', 'ai-chat-for-amazon-bedrock' ),
 				'message'   => __( 'a signed message arrived from WeChat', 'ai-chat-for-amazon-bedrock' ),
 			);

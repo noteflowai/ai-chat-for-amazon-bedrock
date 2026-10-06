@@ -4470,7 +4470,7 @@ msgstr "智能体步骤（%d）"
 msgid "succeeded"
 msgstr "成功"
 
-#: includes/class-ai-chat-bedrock-distribution.php:578
+#: includes/class-ai-chat-bedrock-distribution.php:592
 #: public/class-ai-chat-bedrock-public.php:133
 msgid "failed"
 msgstr "失败"
@@ -6567,50 +6567,50 @@ msgstr "按平台、状态、语言或文章筛选，列出各文章的发布记
 msgid "Published elsewhere"
 msgstr "已在其他平台发布"
 
-#: includes/class-ai-chat-bedrock-distribution.php:537
+#: includes/class-ai-chat-bedrock-distribution.php:549
 msgid "Not published on another platform yet. Agents record it here through the publishing abilities."
 msgstr "尚未在其他平台发布。智能体会通过发布能力在这里记录。"
 
 #. translators: %s: the record that replaced this one, as platform:id.
-#: includes/class-ai-chat-bedrock-distribution.php:548
+#: includes/class-ai-chat-bedrock-distribution.php:562
 #, php-format
 msgid "Replaced by %s"
 msgstr "已被 %s 替换"
 
-#: includes/class-ai-chat-bedrock-distribution.php:570
+#: includes/class-ai-chat-bedrock-distribution.php:584
 msgid "planned"
 msgstr "计划中"
 
-#: includes/class-ai-chat-bedrock-distribution.php:571
+#: includes/class-ai-chat-bedrock-distribution.php:585
 msgid "submitted"
 msgstr "已提交"
 
-#: includes/class-ai-chat-bedrock-distribution.php:572
+#: includes/class-ai-chat-bedrock-distribution.php:586
 msgid "processing"
 msgstr "处理中"
 
-#: includes/class-ai-chat-bedrock-distribution.php:573
+#: includes/class-ai-chat-bedrock-distribution.php:587
 msgid "public"
 msgstr "公开"
 
-#: includes/class-ai-chat-bedrock-distribution.php:574
+#: includes/class-ai-chat-bedrock-distribution.php:588
 msgid "unlisted"
 msgstr "不公开列出"
 
-#: includes/class-ai-chat-bedrock-distribution.php:575
+#: includes/class-ai-chat-bedrock-distribution.php:589
 msgid "private"
 msgstr "私享"
 
-#: includes/class-ai-chat-bedrock-distribution.php:576
+#: includes/class-ai-chat-bedrock-distribution.php:590
 msgid "replaced"
 msgstr "已替换"
 
-#: includes/class-ai-chat-bedrock-distribution.php:577
+#: includes/class-ai-chat-bedrock-distribution.php:591
 msgid "removed"
 msgstr "已删除"
 
 #. translators: %s: links to platforms, such as Bilibili and YouTube.
-#: includes/class-ai-chat-bedrock-distribution.php:611
+#: includes/class-ai-chat-bedrock-distribution.php:625
 #, php-format
 msgid "Also on %s"
 msgstr "也在 %s 上"
@@ -6838,28 +6838,28 @@ msgstr "微信还没有访问过这个地址。"
 msgid "the address was called while answering was off, so nothing was answered"
 msgstr "调用了该地址，但当时回复功能是关闭的，所以没有回复"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:623
+#: includes/class-ai-chat-bedrock-wechat-game.php:630
 #: includes/class-ai-chat-bedrock-wechat.php:265
 msgid "a request came without a current timestamp, so it was refused"
 msgstr "收到的请求没有有效的时间戳，已拒绝"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:624
+#: includes/class-ai-chat-bedrock-wechat-game.php:631
 #: includes/class-ai-chat-bedrock-wechat.php:266
 msgid "the signature did not match the token, so the request was refused; enter the same token here as in WeChat"
 msgstr "签名与令牌不匹配，请求已被拒绝；请在这里填写与微信后台相同的令牌"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:625
+#: includes/class-ai-chat-bedrock-wechat-game.php:633
 #: includes/class-ai-chat-bedrock-wechat.php:267
 msgid "WeChat checked the address, and the signature matched"
 msgstr "微信校验了该地址，签名一致"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:626
+#: includes/class-ai-chat-bedrock-wechat-game.php:634
 #: includes/class-ai-chat-bedrock-wechat.php:268
 msgid "a signed message arrived from WeChat"
 msgstr "收到了一条来自微信的已签名消息"
 
 #. translators: 1: how long ago, such as 5 mins, 2: what happened.
-#: includes/class-ai-chat-bedrock-wechat-game.php:630
+#: includes/class-ai-chat-bedrock-wechat-game.php:638
 #: includes/class-ai-chat-bedrock-wechat.php:272
 #, php-format
 msgid "Last contact %1$s ago: %2$s."
@@ -6944,36 +6944,36 @@ msgstr "小游戏令牌必须是 3 到 32 位字母和数字；未保存。"
 msgid "The AppSecret must be 32 letters and digits; it was not saved."
 msgstr "AppSecret 必须是 32 位字母和数字；未保存。"
 
-#: includes/class-ai-chat-bedrock-wechat-game.php:622
+#: includes/class-ai-chat-bedrock-wechat-game.php:629
 msgid "the address was called while the game was off, so nothing was taken"
 msgstr "小游戏关闭时访问了该地址，因此没有接收任何内容"
 
 #. translators: 1: how long ago, 2: the server's IP address.
-#: includes/class-ai-chat-bedrock-wechat-game.php:638
+#: includes/class-ai-chat-bedrock-wechat-game.php:646
 #, php-format
 msgid "An answer could not be sent %1$s ago because WeChat does not accept this server's address. Add %2$s to the IP whitelist under Development Management > Development Settings in the mini game's console."
 msgstr "%1$s前有一条回答未能发送，因为微信不接受本服务器的地址。请在小游戏后台“开发管理 > 开发设置”的 IP 白名单中加入 %2$s。"
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-game.php:641
+#: includes/class-ai-chat-bedrock-wechat-game.php:649
 #, php-format
 msgid "An answer could not be sent %s ago: WeChat did not accept the AppID and AppSecret. Enter them again from the mini game's console."
 msgstr "%s前有一条回答未能发送：微信不接受 AppID 和 AppSecret。请从小游戏后台重新填写。"
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-game.php:644
+#: includes/class-ai-chat-bedrock-wechat-game.php:652
 #, php-format
 msgid "An answer could not be sent %s ago: WeChat allows answers only for 48 hours after a player writes, and a few at a time."
 msgstr "%s前有一条回答未能发送：微信只允许在玩家发消息后 48 小时内回复，且条数有限。"
 
 #. translators: 1: how long ago, 2: error code.
-#: includes/class-ai-chat-bedrock-wechat-game.php:647
+#: includes/class-ai-chat-bedrock-wechat-game.php:655
 #, php-format
 msgid "An answer could not be sent %1$s ago (%2$s)."
 msgstr "%1$s前有一条回答未能发送（%2$s）。"
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-game.php:651
+#: includes/class-ai-chat-bedrock-wechat-game.php:659
 #, php-format
 msgid "The last answer was sent %s ago."
 msgstr "最近一条回答在 %s前发送。"
@@ -7246,10 +7246,14 @@ msgstr "精选文章："
 msgid "This account cannot send those posts."
 msgstr "该账号不能发送这些文章。"
 
-#: admin/class-ai-chat-bedrock-admin.php:2201
+#: admin/class-ai-chat-bedrock-admin.php:2202
 msgid "The mini game has its own AppID, not the Official Account's; it was not saved."
 msgstr "小游戏有自己的 AppID，不能用公众号的；未保存。"
 
 #: admin/class-ai-chat-bedrock-admin.php:2211
-msgid "Use a different token and EncodingAESKey for the mini game than for the Official Account; the mini game's was not saved."
-msgstr "小游戏的令牌和 EncodingAESKey 必须与公众号的不同；小游戏的设置未保存。"
+msgid "The mini game uses the same token or EncodingAESKey as the Official Account. It was saved; choose safe mode in both, so each message is checked against its own AppID, and consider separate values."
+msgstr "小游戏使用了与公众号相同的令牌或 EncodingAESKey。已保存；请在两边都选择安全模式，这样每条消息都会按各自的 AppID 校验，并建议改用不同的值。"
+
+#: includes/class-ai-chat-bedrock-wechat-game.php:632
+msgid "a plaintext message was refused, because the mini game shares the Official Account's token; choose safe mode for the mini game"
+msgstr "一条明文消息被拒绝，因为小游戏与公众号使用相同的令牌；请为小游戏选择安全模式"
