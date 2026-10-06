@@ -263,7 +263,7 @@ function wx_serve( $request ) {
 }
 function wx_post( $body, $params = array() ) {
 	$timestamp = isset( $params['timestamp'] ) ? $params['timestamp'] : (string) time();
-	$nonce     = 'n' . mt_rand( 1000, 9999 );
+	$nonce     = 'n' . uniqid( '', true );
 	$parts     = array( AICFAB_TOKEN, $timestamp, $nonce );
 	sort( $parts, SORT_STRING );
 	$params += array(
