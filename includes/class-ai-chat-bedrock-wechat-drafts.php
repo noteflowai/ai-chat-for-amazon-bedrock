@@ -597,11 +597,11 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	}
 
 	/**
-	 * Videos and embedded players as a note where they were.
+	 * Videos and embedded players as their poster and a line for readers where they were.
 	 *
-	 * WeChat shows no player from elsewhere, and its API takes videos of at most 10 MB and
-	 * cannot place one in an article, so a video is inserted in the Official Accounts Platform's
-	 * editor. The note marks the place, under the video's poster when it has one.
+	 * WeChat shows no player from elsewhere, and its API cannot place a video in an article,
+	 * so readers watch the video on the site, from Read more. A post with a WeChat video ID
+	 * gets WeChat's player instead.
 	 *
 	 * @param string $html Post HTML.
 	 * @return string
@@ -620,7 +620,8 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				/* translators: %s: the video's title in the material library. */
 				return $image . '<blockquote><p>' . esc_html( sprintf( __( '▶ This lesson\'s video is in the account\'s material library as "%s". Insert it here in the Official Accounts Platform\'s editor, or tap "Read more" to watch it on the site.', 'ai-chat-for-amazon-bedrock' ), $material ) ) . '</p></blockquote>';
 			}
-			return $image . '<blockquote><p>' . esc_html__( '▶ This lesson has a video. Insert it here in the Official Accounts Platform\'s editor (upload the MP4 to the material library first), or tap "Read more" to watch it on the site.', 'ai-chat-for-amazon-bedrock' ) . '</p></blockquote>';
+			// For readers: the video is watched on the site, from Read more.
+			return $image . '<blockquote><p>' . esc_html__( '▶ Watch this lesson\'s video on the site: tap "Read more" at the end.', 'ai-chat-for-amazon-bedrock' ) . '</p></blockquote>';
 		};
 		// A video block, with its caption, or a video on its own.
 		$html = preg_replace_callback(
