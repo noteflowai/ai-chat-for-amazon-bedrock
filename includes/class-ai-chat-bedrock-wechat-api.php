@@ -170,16 +170,18 @@ class AI_Chat_Bedrock_WeChat_API {
 	 * as long as it is accepted: WeChat's own repeats carry the same message and pass; a different
 	 * message under the same signature is refused.
 	 *
+	 * The pair of timestamp and nonce is what is kept, not the signature, as a safe mode address
+	 * carries two signatures and either could be presented.
+	 *
 	 * @param string $route     Route.
-	 * @param string $signature Signature or msg_signature.
 	 * @param string $timestamp Timestamp.
 	 * @param string $nonce     Nonce.
 	 * @param string $body      Body.
 	 * @param int    $ttl       Seconds the signature is accepted.
 	 * @return bool False for a different message under a signature already used.
 	 */
-	public static function fresh( $route, $signature, $timestamp, $nonce, $body, $ttl ) {
-		$key  = 'aicfab_wxn_' . md5( $route . '|' . $signature . '|' . $timestamp . '|' . $nonce );
+	public static function fresh( $route, $timestamp, $nonce, $body, $ttl ) {
+		$key  = 'aicfab_wxn_' . md5( $route . '|' . $timestamp . '|' . $nonce );
 		$hash = sha1( (string) $body );
 		$seen = get_transient( $key );
 		if ( false !== $seen ) {

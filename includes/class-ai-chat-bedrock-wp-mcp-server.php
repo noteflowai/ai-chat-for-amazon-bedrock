@@ -852,7 +852,9 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 	}
 
 	private function is_public_post( $post ) {
-		return $post instanceof WP_Post && 'publish' === $post->post_status && '' === $post->post_password;
+		// Also kept out: what the site keeps from AI answers, such as pages hidden from search.
+		return $post instanceof WP_Post && 'publish' === $post->post_status && '' === $post->post_password
+			&& ( ! class_exists( 'AI_Chat_Bedrock_Content' ) || AI_Chat_Bedrock_Content::is_answerable( $post ) );
 	}
 
 	private function site_info() {
@@ -872,12 +874,18 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 			'title'   => get_the_title( $post ),
 			'slug'    => $post->post_name,
 			'date'    => get_the_date( 'c', $post ),
-			'excerpt' => wp_strip_all_tags( get_the_excerpt( $post ) ),
+			// From what a signed-out visitor reads: the stored post can hold members-only sections.
+			'excerpt' => class_exists( 'AI_Chat_Bedrock_Distribution' ) ? AI_Chat_Bedrock_Distribution::public_excerpt( $post ) : wp_strip_all_tags( (string) $post->post_excerpt ),
 			'author'  => $author ? $author->display_name : '',
 			'url'     => get_permalink( $post ),
 		);
 		if ( $include_content ) {
-			$data['content'] = wp_strip_all_tags( strip_shortcodes( apply_filters( 'the_content', $post->post_content ) ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- applying a core filter, not declaring a hook.
+			$text  = class_exists( 'AI_Chat_Bedrock_Content' ) ? AI_Chat_Bedrock_Content::public_text( $post ) : '';
+			$title = class_exists( 'AI_Chat_Bedrock_Content' ) ? AI_Chat_Bedrock_Content::title( $post ) : '';
+			if ( '' !== $title && 0 === strpos( $text, $title ) ) {
+				$text = substr( $text, strlen( $title ) );
+			}
+			$data['content'] = trim( $text );
 		}
 		return $data;
 	}

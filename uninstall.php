@@ -52,8 +52,10 @@ function ai_chat_bedrock_uninstall_site() {
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( $ai_chat_bedrock_key_prefix ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 	}
 
-	// Locks of YouTube uploads, and anything WeChat left that has not expired yet.
-	foreach ( array( 'aicfab_youtube_lock_', '_transient_aicfab_wxg_', '_transient_timeout_aicfab_wxg_', '_transient_aicfab_youtube_', '_transient_timeout_aicfab_youtube_', '_transient_aicfab_wechat_draft_notice_', '_transient_timeout_aicfab_wechat_draft_notice_' ) as $ai_chat_bedrock_key_prefix ) {
+	// Locks of YouTube uploads, and every transient the plugin keeps under its aicfab_ prefix
+	// that has not expired yet: WeChat followers' recent exchanges, replay records, counters,
+	// notices and caches.
+	foreach ( array( 'aicfab_youtube_lock_', '_transient_aicfab_', '_transient_timeout_aicfab_' ) as $ai_chat_bedrock_key_prefix ) {
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( $ai_chat_bedrock_key_prefix ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 	}
 
