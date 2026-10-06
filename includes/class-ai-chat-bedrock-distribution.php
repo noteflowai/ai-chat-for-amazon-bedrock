@@ -519,10 +519,22 @@ class AI_Chat_Bedrock_Distribution {
 	 * @param string $post_type Post type.
 	 */
 	public function add_meta_box( $post_type ) {
-		if ( ! self::enabled() || ! post_type_supports( (string) $post_type, 'editor' ) ) {
+		if ( ! self::box_needed() || ! post_type_supports( (string) $post_type, 'editor' ) ) {
 			return;
 		}
 		add_meta_box( 'aicfab-distribution', __( 'Published elsewhere', 'ai-chat-for-amazon-bedrock' ), array( $this, 'render_meta_box' ), null, 'side', 'low' );
+	}
+
+	/**
+	 * Whether the editing screen needs the box: for the record, or for an action in it, such
+	 * as sending to the WeChat draft box or uploading to YouTube, which work with the record off.
+	 *
+	 * @return bool
+	 */
+	public static function box_needed() {
+		return self::enabled()
+			|| ( class_exists( 'AI_Chat_Bedrock_WeChat_Drafts' ) && AI_Chat_Bedrock_WeChat_Drafts::enabled() )
+			|| ( class_exists( 'AI_Chat_Bedrock_YouTube' ) && AI_Chat_Bedrock_YouTube::ready() );
 	}
 
 	/**
@@ -539,7 +551,9 @@ class AI_Chat_Bedrock_Distribution {
 			echo '<ul class="aicfab-distribution">';
 			foreach ( $entries as $entry ) {
 				$label = isset( $platforms[ $entry['platform'] ]['label'] ) ? $platforms[ $entry['platform'] ]['label'] : $entry['platform'];
-				echo '<li><a href="' . esc_url( $entry['url'] ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $label . ( '' !== $entry['language'] ? ' (' . $entry['language'] . ')' : '' ) ) . '</a> — ' . esc_html( self::status_label( $entry['status'] ) );
+				$name  = esc_html( $label . ( '' !== $entry['language'] ? ' (' . $entry['language'] . ')' : '' ) );
+				// A WeChat draft has no address until it is published.
+				echo '<li>' . ( '' !== $entry['url'] ? '<a href="' . esc_url( $entry['url'] ) . '" target="_blank" rel="noopener noreferrer">' . $name . '</a>' : $name ) . ' — ' . esc_html( self::status_label( $entry['status'] ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $name is escaped above.
 				if ( ! empty( $entry['account'] ) ) {
 					echo '<br><small>' . esc_html( $entry['account'] ) . '</small>';
 				}

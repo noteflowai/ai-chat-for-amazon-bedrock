@@ -246,6 +246,23 @@ function esc_attr( $text ) {
 function esc_html__( $text, $domain = null ) {
 	return $text;
 }
+function esc_html( $text ) {
+	return htmlspecialchars( (string) $text, ENT_QUOTES );
+}
+function do_action( $hook, ...$args ) {
+	if ( 'ai_chat_bedrock_distribution_box' === $hook ) {
+		AI_Chat_Bedrock_WeChat_Drafts::render_box_section( $args[0] );
+	}
+}
+function get_current_user_id() {
+	return 1;
+}
+function wp_nonce_url( $url, $action ) {
+	return $url . '&_wpnonce=nonce';
+}
+function admin_url( $path ) {
+	return 'https://example.test/wp-admin/' . $path;
+}
 function wp_parse_url( $url, $component = -1 ) {
 	return parse_url( $url, $component );
 }
@@ -412,6 +429,18 @@ $long                                  = new WP_Post( array( 'ID' => 5, 'post_ti
 $GLOBALS['aicfab_posts'][5]            = $long;
 $article                               = AI_Chat_Bedrock_WeChat_Drafts::article( $long, $GLOBALS['aicfab_options'] );
 check_drafts( strlen( $article['content'] ) <= AI_Chat_Bedrock_WeChat_Drafts::MAX_CONTENT && '</p>' === substr( $article['content'], -4 ) && false !== strpos( $article['content'], 'Read more' ), 'A long post is cut at a paragraph, under WeChat\'s limit.' );
+
+// --- The editor's box ---------------------------------------------------------------------
+
+check_drafts( ! AI_Chat_Bedrock_Distribution::enabled() && AI_Chat_Bedrock_Distribution::box_needed(), 'The editor shows the box for drafts even with the publishing record off.' );
+ob_start();
+( new AI_Chat_Bedrock_Distribution() )->render_meta_box( get_post( 1 ) );
+$box = ob_get_clean();
+check_drafts( false !== strpos( $box, 'WeChat Official Account (zh)</li>' ) || false !== strpos( $box, 'WeChat Official Account (zh) — planned' ), 'A draft is listed without a link, as it has no address yet.' );
+check_drafts( false === strpos( $box, 'href=""' ) && false !== strpos( $box, 'action=ai_chat_bedrock_wechat_draft&post=1&_wpnonce=' ) && false !== strpos( $box, 'Send to the WeChat draft box again' ), 'The box offers to send the post again, with a nonce.' );
+drafts_settings( array( 'wechat_drafts_enabled' => false ) );
+check_drafts( ! AI_Chat_Bedrock_Distribution::box_needed(), 'With drafts and the record off, there is no box.' );
+drafts_settings();
 
 // --- When WeChat refuses --------------------------------------------------------------------
 
