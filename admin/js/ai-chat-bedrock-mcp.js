@@ -10,15 +10,6 @@
         return $.ajax({ url: config.ajax_url, method: method || 'POST', dataType: 'json', data: data });
     }
 
-    function saveBoolean(name, value) {
-        return request({
-            action: 'ai_chat_bedrock_save_option',
-            nonce: config.nonce,
-            option_name: name,
-            option_value: value ? '1' : '0'
-        });
-    }
-
     // Every row has the same buttons, so each names its server for screen readers. The
     // visible part is a span of its own, so a busy label can replace it and leave the name.
     function rowButton(className, label, server) {
@@ -95,15 +86,9 @@
         });
     }
 
-    $('#ai_chat_bedrock_enable_mcp, #ai_chat_bedrock_mcp_public_access').on('change', function () {
-        const $checkbox = $(this);
-        const option = $checkbox.attr('id');
-        if ('ai_chat_bedrock_enable_mcp' === option) {
-            $('#ai-chat-bedrock-mcp-servers-section').toggleClass('hidden', !$checkbox.is(':checked'));
-        }
-        saveBoolean(option, $checkbox.is(':checked')).done(function (response) {
-            notice(response.success ? config.i18n.settings_saved : response.data.message, response.success ? 'success' : 'error');
-        }).fail(function () { notice(config.i18n.ajax_error, 'error'); });
+    // Saved with the form's button; the servers list shows as soon as tools are switched on.
+    $('#ai_chat_bedrock_enable_mcp').on('change', function () {
+        $('#ai-chat-bedrock-mcp-servers-section').toggleClass('hidden', !$(this).is(':checked'));
     });
 
     function authFields() {

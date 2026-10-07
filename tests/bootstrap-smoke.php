@@ -60,7 +60,8 @@ function expect_no_duplicate_handlers( $collection, $key ) {
 }
 expect_count( $GLOBALS['aicfab_actions'], 'wp_ajax_ai_chat_bedrock_message', 1 );
 expect_count( $GLOBALS['aicfab_actions'], 'wp_ajax_nopriv_ai_chat_bedrock_message', 1 );
-expect_count( $GLOBALS['aicfab_actions'], 'wp_ajax_ai_chat_bedrock_save_option', 1 );
+expect_count( $GLOBALS['aicfab_actions'], 'admin_post_ai_chat_bedrock_save_mcp_access', 1 );
+expect_count( $GLOBALS['aicfab_actions'], 'wp_ajax_ai_chat_bedrock_save_option', 0 );
 expect_count( $GLOBALS['aicfab_actions'], 'wp_ajax_ai_chat_bedrock_register_mcp_server', 1 );
 expect_count( $GLOBALS['aicfab_actions'], 'wp_ajax_ai_chat_bedrock_refresh_models', 1 );
 expect_count( $GLOBALS['aicfab_actions'], 'wp_ajax_ai_chat_bedrock_run_diagnostics', 1 );

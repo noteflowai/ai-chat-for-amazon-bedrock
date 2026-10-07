@@ -129,7 +129,6 @@ class AI_Chat_Bedrock_Admin {
 				'rest_nonce'   => wp_create_nonce( 'wp_rest' ),
 				'generate_url' => rest_url( AI_Chat_Bedrock_WP_MCP_Server::NAMESPACE_V1 . AI_Chat_Bedrock_Generator_Stream::REST_ROUTE ),
 				'i18n'         => array(
-					'settings_saved'        => __( 'Setting saved.', 'ai-chat-for-amazon-bedrock' ),
 					'generating'            => __( 'Writing the draft…', 'ai-chat-for-amazon-bedrock' ),
 					'indexing'              => __( 'Indexing…', 'ai-chat-for-amazon-bedrock' ),
 					'index_button'          => __( 'Index content now', 'ai-chat-for-amazon-bedrock' ),
@@ -2065,7 +2064,7 @@ class AI_Chat_Bedrock_Admin {
 	 */
 	public function removable_query_args( $args ) {
 		$args = is_array( $args ) ? $args : array();
-		return array_merge( $args, array( 'aicfab-alt', 'aicfab-alt-done', 'aicfab-alt-skipped', 'aicfab-alt-failed', 'aicfab-applied', 'aicfab-cleared', 'aicfab-generated', 'aicfab-image', 'aicfab-log', 'aicfab-message', 'aicfab-profile', 'aicfab-skipped', 'aicfab-transfer' ) );
+		return array_merge( $args, array( 'aicfab-alt', 'aicfab-alt-done', 'aicfab-alt-skipped', 'aicfab-alt-failed', 'aicfab-applied', 'aicfab-cleared', 'aicfab-generated', 'aicfab-image', 'aicfab-log', 'aicfab-mcp', 'aicfab-message', 'aicfab-profile', 'aicfab-skipped', 'aicfab-transfer' ) );
 	}
 
 	/**
