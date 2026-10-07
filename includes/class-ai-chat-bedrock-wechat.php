@@ -799,16 +799,9 @@ class AI_Chat_Bedrock_WeChat {
 	 * @return array|null Field names to text, or null for anything else.
 	 */
 	public static function parse( $xml ) {
-		$xml = trim( (string) $xml );
 		// No document types, so no entities, external or otherwise.
-		if ( '' === $xml || false !== stripos( $xml, '<!DOCTYPE' ) || false !== stripos( $xml, '<!ENTITY' ) || ! function_exists( 'simplexml_load_string' ) ) {
-			return null;
-		}
-		$previous = libxml_use_internal_errors( true );
-		$doc      = simplexml_load_string( $xml, 'SimpleXMLElement', LIBXML_NOCDATA | LIBXML_NONET );
-		libxml_clear_errors();
-		libxml_use_internal_errors( $previous );
-		if ( false === $doc || 'xml' !== $doc->getName() ) {
+		$doc = AI_Chat_Bedrock_WeChat_API::load_xml( $xml );
+		if ( null === $doc ) {
 			return null;
 		}
 		$fields = array();

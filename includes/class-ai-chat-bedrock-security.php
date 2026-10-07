@@ -165,10 +165,13 @@ class AI_Chat_Bedrock_Security {
 	 * @return int
 	 */
 	public static function daily_spent( $bucket ) {
+		$stored = max( 0, (int) get_transient( self::daily_key( $bucket ) ) );
+		// spend_daily() falls back to the transient when the cache cannot increment, so with a
+		// persistent cache both are read; reading the cache alone lost what the fallback counted.
 		if ( function_exists( 'wp_using_ext_object_cache' ) && wp_using_ext_object_cache() ) {
-			return max( 0, (int) wp_cache_get( self::daily_key( $bucket ), self::CACHE_GROUP ) );
+			return max( $stored, (int) wp_cache_get( self::daily_key( $bucket ), self::CACHE_GROUP ) );
 		}
-		return max( 0, (int) get_transient( self::daily_key( $bucket ) ) );
+		return $stored;
 	}
 
 	/**

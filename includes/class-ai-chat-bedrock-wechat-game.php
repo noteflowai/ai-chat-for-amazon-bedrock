@@ -707,14 +707,8 @@ class AI_Chat_Bedrock_WeChat_Game {
 			return is_array( $data ) ? $data : null;
 		}
 		// No document types, so no entities, external or otherwise.
-		if ( false !== stripos( $body, '<!DOCTYPE' ) || false !== stripos( $body, '<!ENTITY' ) || ! function_exists( 'simplexml_load_string' ) ) {
-			return null;
-		}
-		$previous = libxml_use_internal_errors( true );
-		$doc      = simplexml_load_string( $body, 'SimpleXMLElement', LIBXML_NOCDATA | LIBXML_NONET );
-		libxml_clear_errors();
-		libxml_use_internal_errors( $previous );
-		return false !== $doc && 'xml' === $doc->getName() ? self::xml_fields( $doc, 0 ) : null;
+		$doc = AI_Chat_Bedrock_WeChat_API::load_xml( $body );
+		return null !== $doc ? self::xml_fields( $doc, 0 ) : null;
 	}
 
 	private static function xml_fields( $node, $depth ) {

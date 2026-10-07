@@ -204,6 +204,11 @@ foreach ( array( 'includes/class-ai-chat-bedrock-wechat.php', 'includes/class-ai
 check( $aicfab_shared['includes/class-ai-chat-bedrock-wechat.php'] && $aicfab_shared['includes/class-ai-chat-bedrock-eval.php'], 'WeChat and evaluations are not held to one visitor\'s share' );
 check( ! $aicfab_shared['includes/class-ai-chat-bedrock-stream.php'] && ! $aicfab_shared['public/class-ai-chat-bedrock-public.php'], 'the visitor-facing chat never skips the per-visitor share' );
 
+// A draft's cover without a featured image comes from what a signed-out visitor sees, never from
+// a members-only block in the raw content.
+$aicfab_drafts_source = file_get_contents( dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat-drafts.php' );
+check( false !== strpos( $aicfab_drafts_source, "(string) AI_Chat_Bedrock_Content::render_as_guest( \$post ), \$found )" ) && false === strpos( $aicfab_drafts_source, "(string) \$post->post_content, \$found )" ), 'the WeChat cover falls back to a guest-visible image only' );
+
 $aicfab_uninstall = file_get_contents( __DIR__ . '/../uninstall.php' );
 check( count( $aicfab_meta_written ) >= 3, 'meta keys were found in the source, got ' . count( $aicfab_meta_written ) );
 

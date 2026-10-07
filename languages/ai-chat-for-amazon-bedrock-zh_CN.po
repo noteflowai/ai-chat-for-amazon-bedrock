@@ -1494,7 +1494,7 @@ msgstr "检查项"
 #: admin/partials/ai-chat-bedrock-admin-leads.php:125
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:51
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:317
-#: includes/class-ai-chat-bedrock-distribution.php:608
+#: includes/class-ai-chat-bedrock-distribution.php:615
 msgid "Status"
 msgstr "状态"
 
@@ -4450,7 +4450,7 @@ msgstr "智能体步骤（%d）"
 msgid "succeeded"
 msgstr "成功"
 
-#: includes/class-ai-chat-bedrock-distribution.php:708
+#: includes/class-ai-chat-bedrock-distribution.php:715
 #: public/class-ai-chat-bedrock-public.php:162
 msgid "failed"
 msgstr "失败"
@@ -6483,99 +6483,99 @@ msgid "Xiaohongshu"
 msgstr "小红书"
 
 #: includes/class-ai-chat-bedrock-distribution.php:125
-#: includes/class-ai-chat-bedrock-distribution.php:255
+#: includes/class-ai-chat-bedrock-distribution.php:262
 msgid "There is no such post."
 msgstr "没有这篇文章。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:179
+#: includes/class-ai-chat-bedrock-distribution.php:186
 msgid "The platform is not one the record knows."
 msgstr "记录中没有这个平台。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:185
+#: includes/class-ai-chat-bedrock-distribution.php:192
 msgid "The item ID does not look like one from that platform."
 msgstr "这个稿件 ID 看起来不是该平台的格式。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:191
-#: includes/class-ai-chat-bedrock-distribution.php:196
+#: includes/class-ai-chat-bedrock-distribution.php:198
+#: includes/class-ai-chat-bedrock-distribution.php:203
 msgid "The address is not on that platform, or not https."
 msgstr "这个地址不在该平台上，或者不是 https。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:203
+#: includes/class-ai-chat-bedrock-distribution.php:210
 msgid "The status is not one the record knows."
 msgstr "记录中没有这个状态。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:382
+#: includes/class-ai-chat-bedrock-distribution.php:389
 msgid "Get a post's publishing package"
 msgstr "获取文章的发布素材包"
 
-#: includes/class-ai-chat-bedrock-distribution.php:383
+#: includes/class-ai-chat-bedrock-distribution.php:390
 msgid "Return what is needed to publish a post on another platform: title, address, plain text, excerpt, tags, image, translations and where it is already published. Read only."
 msgstr "返回在其他平台发布文章所需的内容：标题、地址、纯文本、摘要、标签、图片、译文以及已发布的平台。只读。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:401
+#: includes/class-ai-chat-bedrock-distribution.php:408
 msgid "Record where a post was published"
 msgstr "记录文章在哪里发布"
 
-#: includes/class-ai-chat-bedrock-distribution.php:402
+#: includes/class-ai-chat-bedrock-distribution.php:409
 msgid "Record or update one item a post was published as on Bilibili, YouTube or Xiaohongshu: its ID, address, account, language and status. Naming the record it replaces marks that edition replaced. Changes only this record, never the post."
 msgstr "记录或更新文章在 B 站、YouTube 或小红书上的一条稿件：ID、地址、账号、语言和状态。指明它替换的记录，会把那个版本标记为已替换。只修改这条记录，不修改文章。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:422
+#: includes/class-ai-chat-bedrock-distribution.php:429
 msgid "List where posts are published"
 msgstr "列出文章的发布位置"
 
-#: includes/class-ai-chat-bedrock-distribution.php:423
+#: includes/class-ai-chat-bedrock-distribution.php:430
 msgid "List publishing records across posts, filtered by platform, status, language or post, such as editions still public after being replaced. Read only."
 msgstr "按平台、状态、语言或文章筛选，列出各文章的发布记录，例如被替换后仍然公开的版本。只读。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:553
+#: includes/class-ai-chat-bedrock-distribution.php:560
 msgid "Published elsewhere"
 msgstr "已在其他平台发布"
 
-#: includes/class-ai-chat-bedrock-distribution.php:583
+#: includes/class-ai-chat-bedrock-distribution.php:590
 msgid "Not published on another platform yet. Agents record it here through the publishing abilities."
 msgstr "尚未在其他平台发布。智能体会通过发布能力在这里记录。"
 
 #. translators: %s: the record that replaced this one, as platform:id.
-#: includes/class-ai-chat-bedrock-distribution.php:596
+#: includes/class-ai-chat-bedrock-distribution.php:603
 #, php-format
 msgid "Replaced by %s"
 msgstr "已被 %s 替换"
 
-#: includes/class-ai-chat-bedrock-distribution.php:700
+#: includes/class-ai-chat-bedrock-distribution.php:707
 msgid "planned"
 msgstr "计划中"
 
-#: includes/class-ai-chat-bedrock-distribution.php:701
+#: includes/class-ai-chat-bedrock-distribution.php:708
 msgid "submitted"
 msgstr "已提交"
 
-#: includes/class-ai-chat-bedrock-distribution.php:702
+#: includes/class-ai-chat-bedrock-distribution.php:709
 msgid "processing"
 msgstr "处理中"
 
-#: includes/class-ai-chat-bedrock-distribution.php:703
+#: includes/class-ai-chat-bedrock-distribution.php:710
 msgid "public"
 msgstr "公开"
 
-#: includes/class-ai-chat-bedrock-distribution.php:704
+#: includes/class-ai-chat-bedrock-distribution.php:711
 msgid "unlisted"
 msgstr "不公开列出"
 
-#: includes/class-ai-chat-bedrock-distribution.php:705
+#: includes/class-ai-chat-bedrock-distribution.php:712
 msgid "private"
 msgstr "私享"
 
-#: includes/class-ai-chat-bedrock-distribution.php:706
+#: includes/class-ai-chat-bedrock-distribution.php:713
 msgid "replaced"
 msgstr "已替换"
 
-#: includes/class-ai-chat-bedrock-distribution.php:707
+#: includes/class-ai-chat-bedrock-distribution.php:714
 msgid "removed"
 msgstr "已删除"
 
 #. translators: %s: links to platforms, such as Bilibili and YouTube.
-#: includes/class-ai-chat-bedrock-distribution.php:741
+#: includes/class-ai-chat-bedrock-distribution.php:748
 #, php-format
 msgid "Also on %s"
 msgstr "也在 %s 上"
@@ -7054,130 +7054,130 @@ msgstr "删除已保存的 AppSecret"
 msgid "Only drafts are made: WeChat lets only verified company accounts publish through its API. Check each draft and publish it in the Official Accounts Platform."
 msgstr "只会生成草稿：微信只允许已认证的企业账号通过接口发表。请检查每份草稿，并在公众平台中发表。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:339
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:343
 msgid "Drafts for the WeChat Official Account are off, or its AppID or AppSecret is missing."
 msgstr "微信公众号草稿功能未开启，或缺少 AppID 或 AppSecret。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:360
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:364
 msgid "No post could be made into an article."
 msgstr "没有文章能生成图文。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:410
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:414
 msgid "In the WeChat Official Account's draft box; publish it from the Official Accounts Platform."
 msgstr "已在微信公众号草稿箱中；请在公众平台中发表。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:562
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:566
 msgid "Tap \"Read more\" for the full article on the site."
 msgstr "点击“阅读原文”查看网站上的完整文章。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1037
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1042
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1634
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1043
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1048
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1640
 msgid "The post needs a featured image in JPEG or PNG for the cover."
 msgstr "文章需要一张 JPEG 或 PNG 格式的特色图片作为封面。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1049
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1055
 msgid "WeChat did not take the cover image."
 msgstr "微信没有接受封面图片。"
 
 #. translators: %d: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1221
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1227
 #, php-format
 msgid "%d article is ready in the WeChat draft box"
 msgid_plural "%d articles are ready in the WeChat draft box"
 msgstr[0] "微信草稿箱中已有 %d 篇文章待发表"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1222
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1228
 msgid "Check them and publish in the WeChat Official Accounts Platform: https://mp.weixin.qq.com/"
 msgstr "请检查后在微信公众平台中发表：https://mp.weixin.qq.com/"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1483
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1489
 msgid "You cannot send this post."
 msgstr "你不能发送这篇文章。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1486
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1492
 msgid "The post is in the WeChat draft box. Publish it from the Official Accounts Platform."
 msgstr "文章已在微信草稿箱中。请在公众平台中发表。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1506
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1512
 msgid "Published posts that anyone can read can be sent to the WeChat draft box."
 msgstr "所有人都能阅读的已发布文章才能发送到微信草稿箱。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1509
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1515
 msgid "Send to the WeChat draft box again"
 msgstr "再次发送到微信草稿箱"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1509
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1515
 msgid "Send to the WeChat draft box"
 msgstr "发送到微信草稿箱"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1529
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1535
 msgid "Send posts to the WeChat draft box"
 msgstr "把文章发送到微信草稿箱"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1530
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1536
 msgid "Make one draft in the WeChat Official Account from up to eight published posts, in order, and note it in their publishing records. Nothing is published: the owner publishes the draft in the Official Accounts Platform."
 msgstr "用最多八篇已发布文章按顺序在微信公众号中生成一份草稿，并记入它们的发布记录。不会发表任何内容：由所有者在公众平台中发表草稿。"
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1625
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1631
 #, php-format
 msgid "WeChat does not accept calls from %s. Add it to the IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform."
 msgstr "微信不接受来自 %s 的调用。请在微信开发者平台“基础信息 > 开发密钥”的 IP 白名单中加入它。"
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1625
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1631
 msgid "this server's address"
 msgstr "本服务器的地址"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1628
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1634
 msgid "The AppID or AppSecret is missing."
 msgstr "缺少 AppID 或 AppSecret。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1629
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1635
 msgid "WeChat did not accept the AppSecret. Reset it in the WeChat Developers Platform and enter the new one."
 msgstr "微信不接受该 AppSecret。请在微信开发者平台重置并填写新的 AppSecret。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1630
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1636
 msgid "WeChat did not accept the AppID."
 msgstr "微信不接受该 AppID。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1631
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1637
 msgid "The AppSecret is frozen in the WeChat Developers Platform."
 msgstr "该 AppSecret 已在微信开发者平台中冻结。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1632
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1638
 msgid "This account may not use that WeChat interface."
 msgstr "该账号无权使用这个微信接口。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1633
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1639
 msgid "The account reached WeChat's daily limit for this interface. Try again tomorrow."
 msgstr "该账号已达到这个接口的每日调用上限。请明天再试。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1635
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1641
 msgid "Only published posts that anyone can read are sent."
 msgstr "只发送所有人都能阅读的已发布文章。"
 
 #. translators: %s: error code.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1643
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1649
 #, php-format
 msgid "WeChat refused the draft (%s)."
 msgstr "微信拒绝了草稿（%s）。"
 
 #. translators: 1: how long ago, 2: what went wrong.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1660
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1666
 #, php-format
 msgid "Last draft %1$s ago failed: %2$s"
 msgstr "%1$s前的草稿失败：%2$s"
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1664
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1670
 #, php-format
 msgid "Last scheduled run %s ago: no new featured post to send."
 msgstr "%s前的定时任务：没有新的精选文章需要发送。"
 
 #. translators: 1: how long ago, 2: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1667
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1673
 #, php-format
 msgid "Last draft %1$s ago: %2$s article is in the WeChat draft box."
 msgid_plural "Last draft %1$s ago: %2$s articles are in the WeChat draft box."
@@ -7234,7 +7234,7 @@ msgstr "请先在“设置 > 渠道”中连接 YouTube 频道。"
 msgid "Overview"
 msgstr "概览"
 
-#: includes/class-ai-chat-bedrock-distribution.php:262
+#: includes/class-ai-chat-bedrock-distribution.php:269
 msgid "You cannot edit that translation."
 msgstr "你不能编辑该翻译。"
 
@@ -7259,19 +7259,19 @@ msgstr "用对话模型为文章撰写各平台文案"
 msgid "Off by default. Bilibili opens its publishing API only to registered companies and Xiaohongshu has none for creators, so there a person publishes. With this on, the Published elsewhere box writes the Bilibili, Xiaohongshu and YouTube title, text, tags and category from the text a signed-out visitor reads, within each platform's limits and in the post's language, with links to each creator page and the cover. After publishing, enter the address in the same box to record it. Each kit is one model request; agents can ask for one through an ability. The copy is an AI draft: check it, and declare AI assistance with the platform's label."
 msgstr "默认关闭。B 站只向已注册企业开放发布接口，小红书没有面向创作者的发布接口，所以这两个平台由人来发布。开启后，“已在其他平台发布”框会根据未登录访客可见的正文，按各平台的限制、用文章的语言，撰写 B 站、小红书和 YouTube 的标题、正文、标签和分区，并附上各平台创作页面和封面的链接。发布后，在同一框中填写地址即可记录。每个素材包调用一次模型；Agent 也可以通过能力（Ability）请求。文案是 AI 草稿：请核对，并用平台自带的标识声明使用了 AI 辅助。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:606
+#: includes/class-ai-chat-bedrock-distribution.php:613
 msgid "Record where it was published"
 msgstr "记录发布地址"
 
-#: includes/class-ai-chat-bedrock-distribution.php:607
+#: includes/class-ai-chat-bedrock-distribution.php:614
 msgid "Address on the platform"
 msgstr "平台上的地址"
 
-#: includes/class-ai-chat-bedrock-distribution.php:613
+#: includes/class-ai-chat-bedrock-distribution.php:620
 msgid "A Bilibili, YouTube, Xiaohongshu or WeChat article address. It is recorded when you save the post."
 msgstr "B 站、YouTube、小红书或微信公众号文章的地址。保存文章时记录。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:642
+#: includes/class-ai-chat-bedrock-distribution.php:649
 msgid "That address is not one the record knows: use a Bilibili, YouTube, Xiaohongshu or WeChat article address."
 msgstr "无法识别这个地址：请使用 B 站、YouTube、小红书或微信公众号文章的地址。"
 
@@ -7357,27 +7357,27 @@ msgstr "默认关闭。使用上方为微信公众号填写的 AppID，以及微
 msgid "An older draft of this post, deleted when it was sent again."
 msgstr "这篇文章较早的草稿，在再次发送时已删除。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1486
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1492
 msgid "The post's article in the WeChat draft box was replaced with the current version."
 msgstr "微信草稿箱中这篇文章已替换为当前版本。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1636
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1642
 msgid "The post has too little public text for an article."
 msgstr "这篇文章可公开阅读的正文太少，不足以成为一篇图文。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:563
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:567
 msgid "If the video does not show, tap \"Read more\" to watch it on the site."
 msgstr "如果视频没有显示，请点击“阅读原文”在网站观看。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:852
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:856
 msgid "(tap \"Read more\" at the end to open it)"
 msgstr "（点击文末“阅读原文”打开）"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1515
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1521
 msgid "WeChat video ID"
 msgstr "公众号视频 ID"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1516
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1522
 msgid "WeChat's API takes videos of at most 10 MB and cannot place one in an article. Upload the post's video in the Official Accounts Platform, enter the ID it gets, wxv_ and digits, and save the post: each draft then shows WeChat's player where the video is."
 msgstr "微信接口只接受 10 MB 以内的视频，也无法把视频放进文章。请在公众号后台上传这篇文章的视频，把得到的 ID（wxv_ 加数字）填在这里并保存文章：之后每次生成草稿都会在视频位置放入公众号播放器。"
 
@@ -7402,21 +7402,21 @@ msgid "Configured — enter a value to replace"
 msgstr "已配置 — 输入新值以替换"
 
 #. translators: %d: number of posts.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1332
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1338
 #, php-format
 msgid "%d post changed, and its WeChat draft holds your edits"
 msgid_plural "%d posts changed, and their WeChat drafts hold your edits"
 msgstr[0] "%d 篇文章有更新，但其微信草稿包含你的修改"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1333
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1339
 msgid "These drafts were edited in WeChat, so they were not replaced. Update them in the Official Accounts Platform, or send the post again from its edit screen to replace the draft, edits included."
 msgstr "这些草稿在微信中编辑过，因此没有被替换。请在公众平台中手动更新；或在文章编辑页再次发送，以当前版本替换草稿（你在微信中的修改会被覆盖）。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1512
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1518
 msgid "Sending it again replaces its draft with the current version, including any changes made to it in WeChat. The scheduled update leaves drafts edited in WeChat alone."
 msgstr "在这里再次发送会用当前版本替换草稿，包括你在微信中做的修改；定时更新不会覆盖在微信中编辑过的草稿。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:614
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:618
 msgid "▶ Watch this lesson's video on the site: tap \"Read more\" at the end."
 msgstr "▶ 本课视频请点击文末“阅读原文”，在网站观看。"
 
@@ -7428,11 +7428,11 @@ msgstr "AppID（安全模式和草稿都需要）"
 msgid "On each scheduled run, update drafts whose post changed since it was sent, unless they were edited, published or deleted in WeChat; with emails on, you are told of edited ones"
 msgstr "每次定时运行时，更新文章在发送后有改动的草稿；在微信中编辑、发表或删除过的草稿不会被改动；开启邮件通知时，会告诉你哪些被编辑过"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1283
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1289
 msgid "No longer in the WeChat draft box: published or deleted there. Send the post again to make a new draft."
 msgstr "已不在微信草稿箱中：已在微信中发表或删除。如需新草稿，请再次发送这篇文章。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1637
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1643
 msgid "No post could be made into an article: each must be published, readable by anyone, and have a featured image or an image in the text, in JPEG or PNG."
 msgstr "没有文章能生成图文：每篇都必须已发布、所有人可读，并且有 JPEG 或 PNG 格式的特色图片或正文图片。"
 
@@ -7449,16 +7449,16 @@ msgid "Run it now"
 msgstr "立即运行一次"
 
 #. translators: %s: date and time of the next run.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1420
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1426
 #, php-format
 msgid "Next scheduled run: %s."
 msgstr "下次定时运行：%s。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1424
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1430
 msgid "It is overdue: WordPress's scheduler is not running. Have a system cron job request wp-cron.php every few minutes."
 msgstr "已超时未运行：WordPress 的定时任务没有执行。请设置一个系统定时任务，每隔几分钟请求一次 wp-cron.php。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1435
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1441
 msgid "You cannot run this."
 msgstr "你不能执行此操作。"
 
@@ -7609,3 +7609,7 @@ msgstr "没有已安排的后台任务。"
 #: admin/trait-ai-chat-bedrock-admin-channels.php:182
 msgid "More about this"
 msgstr "更多说明"
+
+#: includes/class-ai-chat-bedrock-distribution.php:137
+msgid "WeChat drafts are recorded by the plugin when it sends them. Record a WeChat article once it is published."
+msgstr "微信草稿由插件在发送时自动记录。请在文章发表后再记录微信文章。"

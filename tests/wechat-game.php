@@ -452,6 +452,11 @@ $uninstall = file_get_contents( $root . '/uninstall.php' );
 check_game( false !== strpos( $uninstall, "'aicfab_wxgame_stats'" ) && false !== strpos( $uninstall, "'aicfab_wxgame_access'" ), 'Uninstalling removes the counts and the access token.' );
 check_game( false !== strpos( file_get_contents( $root . '/includes/class-ai-chat-bedrock-woocommerce.php' ), 'WeChat mini game' ), 'The suggested privacy policy describes the mini game.' );
 
+// A UTF-16 body hides <!DOCTYPE from a check for its bytes; it is refused before parsing.
+$aicfab_utf16 = "\xFF\xFE" . mb_convert_encoding( '<?xml version="1.0" encoding="UTF-16"?><!DOCTYPE xml [<!ENTITY a "aaaa">]><xml><Content>&a;</Content></xml>', 'UTF-16LE', 'UTF-8' );
+check_game( null === AI_Chat_Bedrock_WeChat_Game::parse( $aicfab_utf16 ), 'The mini game refuses a UTF-16 body.' );
+check_game( 'text' === AI_Chat_Bedrock_WeChat_Game::parse( '<xml><MsgType><![CDATA[text]]></MsgType></xml>' )['MsgType'], 'And still reads an ordinary XML message.' );
+
 if ( $failures ) {
 	echo "FAIL:\n - " . implode( "\n - ", $failures ) . "\n";
 	exit( 1 );
