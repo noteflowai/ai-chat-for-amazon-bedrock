@@ -1166,21 +1166,16 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			return;
 		}
 		// One run at a time: WP-Cron can start a second while the first is uploading, which
-		// would make a second draft of the same post. add_option() lets only one caller in.
-		if ( ! add_option( self::LOCK_OPTION, time() + self::LOCK_TTL, '', false ) ) {
-			if ( (int) get_option( self::LOCK_OPTION, 0 ) > time() ) {
-				return;
-			}
-			// A lock left by a run that died: taken over once it has expired.
-			delete_option( self::LOCK_OPTION );
-			if ( ! add_option( self::LOCK_OPTION, time() + self::LOCK_TTL, '', false ) ) {
-				return;
-			}
+		// would make a second draft of the same post. A lock left by a run that died is taken
+		// over once it has expired.
+		$lock = AI_Chat_Bedrock_Security::acquire_lock( self::LOCK_OPTION, self::LOCK_TTL );
+		if ( '' === $lock ) {
+			return;
 		}
 		try {
 			self::run_locked( $options );
 		} finally {
-			delete_option( self::LOCK_OPTION );
+			AI_Chat_Bedrock_Security::release_lock( self::LOCK_OPTION, $lock );
 		}
 	}
 

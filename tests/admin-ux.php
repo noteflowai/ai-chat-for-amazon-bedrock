@@ -164,14 +164,18 @@ check_ux( false !== strpos( $admin_js, "'class': 'aicfab-pill ' + statusTone(sta
 check_ux( false === strpos( $diagnostics, 'style=' ), 'the diagnostics view has no inline styles' );
 
 // MCP: the section links are navigation, not an ARIA tab widget they do not implement, and the
-// two settings that save on change say so and have a visible label next to them.
+// two access settings are a form saved with its button, as on every other settings screen.
 $mcp    = file_get_contents( dirname( __DIR__ ) . '/admin/partials/ai-chat-bedrock-admin-mcp-tab.php' );
 $mcp_js = file_get_contents( dirname( __DIR__ ) . '/admin/js/ai-chat-bedrock-mcp.js' );
 check_ux( false === strpos( $mcp, 'role="tablist"' ) && false !== strpos( $mcp, '<nav class="nav-tab-wrapper aicfab-mcp-nav" aria-label=' ), 'the MCP sections are a labelled nav' );
-foreach ( array( 'ai_chat_bedrock_enable_mcp', 'ai_chat_bedrock_mcp_public_access' ) as $id ) {
-	check_ux( 1 === preg_match( '/<label><input type="checkbox" id="' . $id . '" value="1" aria-describedby="aicfab-mcp-instant"/', $mcp ), "{$id} has an inline label and the saves-immediately note" );
+foreach ( array( 'ai_chat_bedrock_enable_mcp' => 'enable_mcp', 'ai_chat_bedrock_mcp_public_access' => 'mcp_public_access' ) as $id => $name ) {
+	check_ux( 1 === preg_match( '/<label><input type="checkbox" id="' . $id . '" name="' . $name . '" value="1"/', $mcp ), "{$id} has an inline label and is sent with the form" );
 }
-check_ux( false !== strpos( $mcp, 'id="aicfab-mcp-instant"' ), 'the saves-immediately note exists' );
+check_ux( false !== strpos( $mcp, "wp_nonce_field( 'ai_chat_bedrock_mcp_access' )" ) && false !== strpos( $mcp, 'value="ai_chat_bedrock_save_mcp_access"' ) && false !== strpos( $mcp, 'submit_button(' ), 'the access settings are a nonce-protected form with a Save button' );
+check_ux( false === strpos( $mcp_js, 'ai_chat_bedrock_save_option' ) && false === strpos( $mcp, 'aicfab-mcp-instant' ), 'nothing on the screen saves on change any more' );
+foreach ( array( 'saved', 'policy', 'oauth', 'revoked' ) as $aicfab_state ) {
+	check_ux( false !== strpos( $mcp, "'" . $aicfab_state . "'" ), "a save that returns with aicfab-mcp={$aicfab_state} is confirmed on screen" );
+}
 check_ux( false !== strpos( $mcp_js, "addEventListener( 'hashchange'" ) && false !== strpos( $mcp_js, 'history.replaceState' ), 'MCP sections follow and update the address' );
 
 // Content generator: one control per row, hints in descriptions rather than placeholders

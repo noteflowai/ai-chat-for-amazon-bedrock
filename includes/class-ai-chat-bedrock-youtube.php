@@ -488,23 +488,6 @@ class AI_Chat_Bedrock_YouTube {
 		return is_array( $job ) && isset( $job['state'] ) ? $job : null;
 	}
 
-	/**
-	 * Take a run's lock, which add_option() gives to one caller only. A lock left by a run that
-	 * died is taken over once it has expired.
-	 *
-	 * @param string $name Option name.
-	 * @return bool Whether this run holds it.
-	 */
-	private static function lock( $name ) {
-		if ( add_option( $name, time() + self::LOCK_TTL, '', false ) ) {
-			return true;
-		}
-		if ( (int) get_option( $name, 0 ) > time() ) {
-			return false;
-		}
-		update_option( $name, time() + self::LOCK_TTL, false );
-		return true;
-	}
 
 	/**
 	 * Upload what can be uploaded within one background run.
@@ -519,17 +502,21 @@ class AI_Chat_Bedrock_YouTube {
 		}
 		// One run at a time per post: cron can start a second while the first is still uploading.
 		$lock = 'aicfab_youtube_lock_' . $post_id;
-		if ( ! self::lock( $lock ) ) {
+		$held = AI_Chat_Bedrock_Security::acquire_lock( $lock, self::LOCK_TTL );
+		if ( '' === $held ) {
 			return;
 		}
-		// Should this run be cut short, by a time limit or a restart, the next one is already due.
-		wp_clear_scheduled_hook( self::CRON, array( $post_id ) );
-		wp_schedule_single_event( time() + self::LOCK_TTL + 60, self::CRON, array( $post_id ) );
+		try {
+			// Should this run be cut short, by a time limit or a restart, the next one is already due.
+			wp_clear_scheduled_hook( self::CRON, array( $post_id ) );
+			wp_schedule_single_event( time() + self::LOCK_TTL + 60, self::CRON, array( $post_id ) );
 
-		$job   = self::upload_step( $job, $post_id );
-		$state = $job['state'];
-		update_post_meta( $post_id, self::JOB_META, $job );
-		delete_option( $lock );
+			$job   = self::upload_step( $job, $post_id );
+			$state = $job['state'];
+			update_post_meta( $post_id, self::JOB_META, $job );
+		} finally {
+			AI_Chat_Bedrock_Security::release_lock( $lock, $held );
+		}
 
 		wp_clear_scheduled_hook( self::CRON, array( $post_id ) );
 		if ( 'uploading' === $state || 'queued' === $state ) {

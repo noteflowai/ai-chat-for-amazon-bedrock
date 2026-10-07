@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai, chatbot, ai-agent, mcp, connector
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.67.1
+Stable tag: 1.68.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -489,6 +489,12 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.68.0 =
+* MCP settings: switching MCP tools or public access on is saved with a Save button, as on every other screen, not the moment a box is ticked. Saving the tool policy, AI clients or revoking connections now confirms it and returns to that section.
+* Scheduled WeChat drafts and YouTube uploads take their one-at-a-time lock atomically, so two background runs started together can no longer both go ahead and make a duplicate draft or write one upload twice.
+* Saving an EncodingAESKey without the Official Account's AppID warns that safe mode cannot read messages without it.
+* The package's minified files are built only with the pinned esbuild version.
+
 = 1.67.1 =
 * Security: a chat answer containing NUL characters could put code-block text inside a link's address and run script in the visitor's browser. The text loses its NULs before rendering, and addresses with emphasis or code marks are no longer linked.
 * Security: only the plugin can record that a post sits in a WeChat Official Account draft, and only its own entries are followed, so someone who can edit a post cannot point draft updates or deletions at another draft.
@@ -504,6 +510,9 @@ what a good answer says.
 * Diagnostics and Site Health warn when the plugin's background tasks are overdue, as when WP-Cron stops running, and say how to fix it.
 
 == Upgrade Notice ==
+
+= 1.68.0 =
+MCP access is saved with a Save button, and every MCP save is confirmed.
 
 = 1.67.1 =
 Security fix for the chat's answer formatting and WeChat drafts. Update recommended.

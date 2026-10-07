@@ -17,7 +17,7 @@ class AI_Chat_Bedrock_MCP_Integration {
 	}
 
 	public function register_hooks( $loader ) {
-		$loader->add_action( 'wp_ajax_ai_chat_bedrock_save_option', $this, 'ajax_save_boolean_option' );
+		$loader->add_action( 'admin_post_ai_chat_bedrock_save_mcp_access', $this, 'handle_save_access' );
 		$loader->add_action( 'wp_ajax_ai_chat_bedrock_register_mcp_server', $this, 'ajax_register_mcp_server' );
 		$loader->add_action( 'wp_ajax_ai_chat_bedrock_unregister_mcp_server', $this, 'ajax_unregister_mcp_server' );
 		$loader->add_action( 'wp_ajax_ai_chat_bedrock_get_mcp_servers', $this, 'ajax_get_mcp_servers' );
@@ -29,17 +29,23 @@ class AI_Chat_Bedrock_MCP_Integration {
 		$loader->add_filter( 'ai_chat_bedrock_process_response', $this, 'process_mcp_tool_calls', 10, 2 );
 	}
 
-	public function ajax_save_boolean_option() {
-		$this->authorize_admin_request( 'ai_chat_bedrock_admin' );
-		$name    = isset( $_POST['option_name'] ) ? sanitize_key( wp_unslash( $_POST['option_name'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified in authorize_admin_request().
-		$allowed = array( 'ai_chat_bedrock_enable_mcp', 'ai_chat_bedrock_mcp_public_access' );
-		if ( ! in_array( $name, $allowed, true ) ) {
-			wp_send_json_error( array( 'message' => __( 'This setting cannot be changed here.', 'ai-chat-for-amazon-bedrock' ) ), 400 );
+	/**
+	 * Save whether the chat may call MCP tools and whether the site's MCP endpoint is public.
+	 *
+	 * A form with a Save button, as on every other settings screen. They used to save the moment
+	 * a box was ticked, which is no place to switch on public access by a slip of the mouse.
+	 */
+	public function handle_save_access() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Permission denied.', 'ai-chat-for-amazon-bedrock' ), '', array( 'response' => 403 ) );
 		}
-		$raw_value = isset( $_POST['option_value'] ) ? sanitize_text_field( wp_unslash( $_POST['option_value'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified in authorize_admin_request().
-		$value     = '' !== $raw_value && '0' !== $raw_value;
-		update_option( $name, $value, false );
-		wp_send_json_success( array( 'message' => __( 'Setting saved.', 'ai-chat-for-amazon-bedrock' ) ) );
+		check_admin_referer( 'ai_chat_bedrock_mcp_access' );
+
+		update_option( 'ai_chat_bedrock_enable_mcp', ! empty( $_POST['enable_mcp'] ), false ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by check_admin_referer().
+		update_option( 'ai_chat_bedrock_mcp_public_access', ! empty( $_POST['mcp_public_access'] ), false ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by check_admin_referer().
+
+		wp_safe_redirect( add_query_arg( 'aicfab-mcp', 'saved', admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-mcp' ) ) . '#aicfab-mcp-servers' );
+		exit;
 	}
 
 	public function ajax_register_mcp_server() {
@@ -331,7 +337,7 @@ class AI_Chat_Bedrock_MCP_Integration {
 
 		update_option( 'ai_chat_bedrock_mcp_log_enabled', ! empty( $_POST['mcp_log_enabled'] ), false ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified in authorize_admin_request().
 
-		wp_safe_redirect( add_query_arg( 'aicfab-policy', 'saved', admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-mcp' ) ) );
+		wp_safe_redirect( add_query_arg( 'aicfab-mcp', 'policy', admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-mcp' ) ) . '#aicfab-mcp-policy' );
 		exit;
 	}
 
@@ -345,7 +351,7 @@ class AI_Chat_Bedrock_MCP_Integration {
 		check_admin_referer( 'ai_chat_bedrock_oauth_settings' );
 
 		update_option( 'ai_chat_bedrock_oauth_enabled', ! empty( $_POST['oauth_enabled'] ), false ); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified in authorize_admin_request().
-		wp_safe_redirect( add_query_arg( 'aicfab-oauth', 'saved', admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-mcp' ) ) );
+		wp_safe_redirect( add_query_arg( 'aicfab-mcp', 'oauth', admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-mcp' ) ) . '#aicfab-mcp-clients' );
 		exit;
 	}
 
@@ -367,7 +373,7 @@ class AI_Chat_Bedrock_MCP_Integration {
 			}
 		}
 
-		wp_safe_redirect( add_query_arg( 'aicfab-oauth', 'revoked', admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-mcp' ) ) );
+		wp_safe_redirect( add_query_arg( 'aicfab-mcp', 'revoked', admin_url( 'admin.php?page=ai-chat-for-amazon-bedrock-mcp' ) ) . '#aicfab-mcp-clients' );
 		exit;
 	}
 
