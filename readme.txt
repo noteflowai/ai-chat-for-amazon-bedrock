@@ -472,7 +472,7 @@ what a good answer says.
 == Screenshots ==
 
 1. A grounded answer on the front end, citing the pages it used, with a timestamp, a copy action and a helpfulness control.
-2. Dashboard with today's usage, a seven-day trend, a per-model breakdown of requests and tokens, and the setup checklist.
+2. Dashboard with today's usage, a seven-day trend, a per-model breakdown of requests and tokens, and what is worth setting up next.
 3. Grounding settings: site content search, semantic search with an embedding model, batch indexing progress, knowledge base and controlled abilities.
 4. Diagnostics running a live Amazon Bedrock connectivity test, with round-trip time and tokens used.
 5. Answer checks: run a set of questions whose right answer you know, and read the result by category. Every check is a program; no model judges another model.
@@ -481,11 +481,11 @@ what a good answer says.
 8. Content generator streaming a draft as it is written, before the post is created.
 9. Conversations: the content gaps this site has, each with a shortcut to draft the missing page, above the log with its filters, CSV export and per-answer token counts.
 10. Chat settings with the system prompt, an optional Amazon Bedrock managed prompt, suggested questions and streaming.
-11. Per-role request limits, so editors and administrators can be given more requests per minute than anonymous visitors.
+11. Safety and spend: a daily request limit with each visitor's share, and per-role request limits, so editors and administrators can be given more requests per minute than anonymous visitors.
 12. The least-privilege IAM policy generated for this site's own configuration, ready to paste into AWS.
 13. Drafting a first set of pages from a description of the business. Every page is a draft, and nothing existing is touched.
 14. On a phone the chat opens full screen above the keyboard, from a small button in the corner, and renders lists and links in its answers.
-
+15. Settings > Channels, one page per account: a WeChat Official Account answered from the site's pages, with whether WeChat reaches it, and featured posts sent to its draft box.
 
 == Changelog ==
 
