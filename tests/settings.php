@@ -324,6 +324,9 @@ check_set( empty( $saved['wechat_enabled'] ) && '' === AI_Chat_Bedrock_WeChat::t
 $saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_enabled' => '1', 'wechat_token' => 'Tok3nForTests', 'wechat_aes_key' => 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG', 'wechat_app_id' => 'wx1234567890abcdef', 'wechat_hourly' => '30', 'wechat_model_id' => 'jp.anthropic.claude-haiku-4-5-20251001-v1:0' ) );
 check_set( true === $saved['wechat_enabled'] && 'Tok3nForTests' === AI_Chat_Bedrock_WeChat::token( $saved ) && 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG' === AI_Chat_Bedrock_WeChat::aes_key( $saved ) && 'wx1234567890abcdef' === $saved['wechat_app_id'] && 30 === $saved['wechat_hourly'] && 'jp.anthropic.claude-haiku-4-5-20251001-v1:0' === $saved['wechat_model_id'], 'The switch, token, key, AppID, model and limit are saved together.' );
 check_set( false === strpos( json_encode( $saved ), 'Tok3nForTests' ) && false === strpos( json_encode( $saved ), 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG' ), 'The token and key are stored encrypted.' );
+check_set( ! isset( $GLOBALS['aicfab_notices']['wechat_app_id'] ), 'A key saved with its AppID needs no warning.' );
+$saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_enabled' => '1', 'wechat_token' => '', 'wechat_aes_key' => '', 'wechat_app_id' => '' ) );
+check_set( isset( $GLOBALS['aicfab_notices']['wechat_app_id'] ), 'A key kept without an AppID is pointed out: safe mode cannot read a message without it.' );
 $saved = save_tab( $admin, array( 'wechat_enabled' ), array( 'wechat_enabled' => '1', 'wechat_token' => '', 'wechat_aes_key' => '', 'wechat_app_id' => 'wx1234567890abcdef' ) );
 check_set( 'Tok3nForTests' === AI_Chat_Bedrock_WeChat::token( $saved ) && '' !== AI_Chat_Bedrock_WeChat::aes_key( $saved ), 'Empty fields keep the saved token and key, which are never shown again.' );
 $saved = save_tab( $admin, array( 'chat_color_scheme' ), array( 'chat_color_scheme' => 'light' ) );

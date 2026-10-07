@@ -299,6 +299,12 @@ trait AI_Chat_Bedrock_Admin_Channels {
 			}
 		}
 
+		// Safe mode decrypts with the AppID and checks it, so a key without one cannot read a single
+		// message, and plaintext is only refused once both are there.
+		if ( ! empty( $output['wechat_enabled'] ) && '' !== $output['wechat_aes_key'] && '' === $output['wechat_app_id'] ) {
+			$this->notice( 'wechat_app_id', __( 'An EncodingAESKey is saved without the AppID, so safe mode cannot read messages and plaintext ones are not refused. Enter the Official Account\'s AppID.', 'ai-chat-for-amazon-bedrock' ) );
+		}
+
 		$output['wechat_menu'] = isset( $input['wechat_menu'] ) && is_string( $input['wechat_menu'] ) ? AI_Chat_Bedrock_Security::string_substr( sanitize_textarea_field( $input['wechat_menu'] ), 0, 1500 ) : '';
 
 		$output['wechat_drafts_enabled']  = ! empty( $input['wechat_drafts_enabled'] );

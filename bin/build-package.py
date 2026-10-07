@@ -34,6 +34,10 @@ TEXT_SUFFIXES = {'.php', '.js', '.css', '.txt', '.json', '.pot', '.po', '.md', '
 # Scripts and styles that get a minified copy in the package, beside the readable file the
 # plugin falls back to (see AI_Chat_Bedrock::minified_src()).
 MINIFY_DIRS = {'public/js', 'public/css', 'admin/js', 'admin/css'}
+# The esbuild the minified copies were checked with. Another version is not used unless
+# AICFAB_ESBUILD_ANY=1 says so: what goes into the package should not depend on whatever
+# happens to be in a cache on the machine that builds it.
+ESBUILD_VERSION = '0.28.2'
 
 
 def read_distignore():
@@ -97,13 +101,26 @@ def minified_name(rel):
     return rel.with_name(f'{rel.stem}.min{rel.suffix}')
 
 
+def esbuild_version(binary):
+    try:
+        return subprocess.run([binary, '--version'], capture_output=True, text=True, check=False, timeout=30).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return ''
+
+
 def esbuild_binary():
-    """esbuild from AICFAB_ESBUILD, the PATH, or npx's cache; None when there is none."""
+    """The pinned esbuild from AICFAB_ESBUILD, the PATH, or npx's cache; None when there is none."""
     candidates = [os.environ.get('AICFAB_ESBUILD', ''), shutil.which('esbuild') or '']
     candidates += sorted(glob.glob(os.path.expanduser('~/.npm/_npx/*/node_modules/esbuild/bin/esbuild')))
-    for candidate in candidates:
-        if candidate and os.access(candidate, os.X_OK):
+    found = [c for c in candidates if c and os.access(c, os.X_OK)]
+    for candidate in found:
+        if esbuild_version(candidate) == ESBUILD_VERSION:
             return candidate
+    if found and os.environ.get('AICFAB_ESBUILD_ANY') == '1':
+        print(f'warning: using esbuild {esbuild_version(found[0])}, not the pinned {ESBUILD_VERSION}')
+        return found[0]
+    if found:
+        print(f'warning: no esbuild {ESBUILD_VERSION} found (found {", ".join(sorted({esbuild_version(c) for c in found}))}); set AICFAB_ESBUILD to it, or AICFAB_ESBUILD_ANY=1')
     return None
 
 
@@ -115,7 +132,7 @@ def minify(paths):
     """
     binary = esbuild_binary()
     if not binary:
-        print('warning: esbuild not found (set AICFAB_ESBUILD); the package ships readable scripts and styles only')
+        print('warning: the package ships readable scripts and styles only')
         return {}
     node = shutil.which('node')
     copies = {}

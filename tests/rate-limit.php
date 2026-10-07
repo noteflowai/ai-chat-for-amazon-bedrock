@@ -182,6 +182,62 @@ $GLOBALS['aicfab_transients'] = array();
 $GLOBALS['aicfab_ext_cache'] = false;
 check_rl( 0 === AI_Chat_Bedrock_Security::daily_spent( 'chat' ) && AI_Chat_Bedrock_Security::check_rate_limit( 'chat', 2 ), 'Without the cache the transient counters are used, as before.' );
 
+// --- A lock only one request can hold ---------------------------------------------------
+
+// A stand-in for the options table that does what MySQL does: INSERT IGNORE inserts a name
+// only once, and UPDATE ... WHERE option_value = x changes a row only while it still holds x.
+class AICFAB_Lock_DB {
+	public $options = 'wp_options';
+	public $rows    = array();
+	public function prepare( $sql, ...$args ) {
+		return array( $sql, $args );
+	}
+	public function query( $prepared ) {
+		list( $sql, $args ) = $prepared;
+		if ( 0 === strpos( $sql, 'INSERT IGNORE' ) ) {
+			if ( isset( $this->rows[ $args[0] ] ) ) {
+				return 0;
+			}
+			$this->rows[ $args[0] ] = $args[1];
+			return 1;
+		}
+		if ( 0 === strpos( $sql, 'UPDATE' ) ) {
+			if ( isset( $this->rows[ $args[1] ] ) && $this->rows[ $args[1] ] === $args[2] ) {
+				$this->rows[ $args[1] ] = $args[0];
+				return 1;
+			}
+			return 0;
+		}
+		if ( 0 === strpos( $sql, 'DELETE' ) ) {
+			if ( isset( $this->rows[ $args[0] ] ) && $this->rows[ $args[0] ] === $args[1] ) {
+				unset( $this->rows[ $args[0] ] );
+				return 1;
+			}
+			return 0;
+		}
+		return false;
+	}
+	public function get_var( $prepared ) {
+		list( , $args ) = $prepared;
+		return isset( $this->rows[ $args[0] ] ) ? $this->rows[ $args[0] ] : null;
+	}
+}
+$GLOBALS['wpdb'] = new AICFAB_Lock_DB();
+$aicfab_first    = AI_Chat_Bedrock_Security::acquire_lock( 'aicfab_test_lock', 300 );
+$aicfab_second   = AI_Chat_Bedrock_Security::acquire_lock( 'aicfab_test_lock', 300 );
+check_rl( '' !== $aicfab_first && '' === $aicfab_second, 'A second request cannot take a lock that is held.' );
+AI_Chat_Bedrock_Security::release_lock( 'aicfab_test_lock', 'not-the-holder' );
+check_rl( isset( $GLOBALS['wpdb']->rows['aicfab_test_lock'] ), 'Only the holder releases its lock.' );
+AI_Chat_Bedrock_Security::release_lock( 'aicfab_test_lock', $aicfab_first );
+check_rl( ! isset( $GLOBALS['wpdb']->rows['aicfab_test_lock'] ) && '' !== AI_Chat_Bedrock_Security::acquire_lock( 'aicfab_test_lock', 300 ), 'Released, it can be taken again.' );
+$GLOBALS['wpdb']->rows['aicfab_dead_lock'] = ( time() - 5 ) . '|died';
+$aicfab_over  = AI_Chat_Bedrock_Security::acquire_lock( 'aicfab_dead_lock', 300 );
+$aicfab_racer = AI_Chat_Bedrock_Security::acquire_lock( 'aicfab_dead_lock', 300 );
+check_rl( '' !== $aicfab_over && '' === $aicfab_racer, 'A lock whose holder died is taken over once it has expired, by one request only.' );
+$GLOBALS['wpdb']->rows['aicfab_old_lock'] = (string) ( time() + 100 );
+check_rl( '' === AI_Chat_Bedrock_Security::acquire_lock( 'aicfab_old_lock', 300 ), 'A lock in the earlier format, a bare expiry time, is still respected.' );
+unset( $GLOBALS['wpdb'] );
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

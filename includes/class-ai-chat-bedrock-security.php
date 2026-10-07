@@ -220,6 +220,69 @@ class AI_Chat_Bedrock_Security {
 	}
 
 	/**
+	 * Take a lock that only one request at a time can hold, for background work.
+	 *
+	 * The add_option() function is not one: it reads, then writes, and two requests between both get
+	 * in. A row inserted with INSERT IGNORE is, as only one insert of a name can succeed. A lock
+	 * whose holder died is taken over once it expires, again by one request only, and the value
+	 * carries a token so that a run releases only its own lock.
+	 *
+	 * @param string $name Option name of the lock.
+	 * @param int    $ttl  Seconds until it expires.
+	 * @return string The holder's value, to release it with; empty when it is held.
+	 */
+	public static function acquire_lock( $name, $ttl ) {
+		global $wpdb;
+		$value = ( time() + max( 1, (int) $ttl ) ) . '|' . ( function_exists( 'wp_generate_password' ) ? wp_generate_password( 16, false, false ) : bin2hex( random_bytes( 8 ) ) );
+		if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'query' ) ) {
+			if ( add_option( $name, $value, '', false ) ) {
+				return $value;
+			}
+			if ( (int) get_option( $name, 0 ) > time() ) {
+				return '';
+			}
+			update_option( $name, $value, false );
+			return $value;
+		}
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery -- an atomic insert is the point; options are never cached for these.
+		$taken = $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", $name, $value ) );
+		if ( 1 !== (int) $taken ) {
+			$held = (string) $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $name ) );
+			// Held, or taken over just now by another request.
+			$taken = (int) $held > time() ? 0 : $wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s", $value, $name, $held ) );
+		}
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery
+		if ( function_exists( 'wp_cache_delete' ) ) {
+			wp_cache_delete( $name, 'options' );
+			wp_cache_delete( 'notoptions', 'options' );
+		}
+		return 1 === (int) $taken ? $value : '';
+	}
+
+	/**
+	 * Release a lock taken with acquire_lock(), if it is still this holder's.
+	 *
+	 * @param string $name  Option name of the lock.
+	 * @param string $value What acquire_lock() returned.
+	 */
+	public static function release_lock( $name, $value ) {
+		global $wpdb;
+		if ( '' === (string) $value ) {
+			return;
+		}
+		if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'query' ) ) {
+			if ( (string) get_option( $name, '' ) === (string) $value ) {
+				delete_option( $name );
+			}
+			return;
+		}
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", $name, $value ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		if ( function_exists( 'wp_cache_delete' ) ) {
+			wp_cache_delete( $name, 'options' );
+		}
+	}
+
+	/**
 	 * Validate an outbound MCP URL. HTTPS and WordPress safe-URL checks are mandatory.
 	 *
 	 * @param string $url URL to validate.
