@@ -129,6 +129,13 @@ class AI_Chat_Bedrock_Distribution {
 			return $entry;
 		}
 		$entry['source'] = in_array( $source, array( 'agent', 'youtube', 'wechat', 'manual' ), true ) ? $source : 'agent';
+		// A WeChat draft is updated and deleted in place by the plugin, by its media_id. Only the
+		// plugin may say a post sits in a draft; anyone who can edit the post could otherwise
+		// point those updates and deletions at another draft of the account. A published
+		// article can still be recorded by hand or by an agent.
+		if ( 'wechat' === $entry['platform'] && 'planned' === $entry['status'] && 'wechat' !== $entry['source'] ) {
+			return new WP_Error( 'aicfab_distribution_wechat_draft', __( 'WeChat drafts are recorded by the plugin when it sends them. Record a WeChat article once it is published.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 400 ) );
+		}
 
 		$entries = self::entries( $post->ID );
 		$now     = time();

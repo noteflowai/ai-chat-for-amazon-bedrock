@@ -65,6 +65,11 @@ check(-1 === md.renderMarkdown('[x](https://site.test/"onmouseover=alert(1))').i
 check('<p>2 * 3 * 4 = 24</p>' === md.renderMarkdown('2 * 3 * 4 = 24'), 'Arithmetic is not taken for emphasis.');
 check('<pre><code>- not a list</code></pre><p>after</p>' === md.renderMarkdown('```\n- not a list\n```\nafter'), 'Code keeps its text as written.');
 check('<p>退货政策：<strong>30 天</strong>内可退。</p>' === md.renderMarkdown('退货政策：**30 天**内可退。'), 'Chinese bold works without spaces around it.');
+// A NUL in the text named a code block's marker inside a link, and the code's quotes left the
+// attribute: href="https://example.com/<pre><code>" onmouseover="alert(1)" ...
+const smuggled = md.renderMarkdown('[docs](https://example.com/\u00000\u0000)\n```\n" onmouseover="alert(1)" x="\n```');
+check(-1 === smuggled.indexOf('href="https://example.com/<') && !/<a [^>]*href="[^"]*"[^>]*onmouseover/.test(smuggled.replace(/<pre>[\s\S]*?<\/pre>/g, '')), 'A NUL in the text cannot put a code block inside a link\'s address.');
+check(-1 === md.renderMarkdown('[x](https://site.test/a*b*c)').indexOf('<a') && -1 === md.renderMarkdown('[x](https://site.test/`x`)').indexOf('<a'), 'Emphasis or code marks in an address are not linked, so no markup lands in it.');
 
 // --- Streaming paints once a frame ---------------------------------------------------------
 

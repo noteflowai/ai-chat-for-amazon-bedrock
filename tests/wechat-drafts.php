@@ -781,6 +781,24 @@ array_map( 'unlink', glob( $aicfab_uploads . '/2026/10/*' ) );
 @rmdir( $aicfab_uploads . '/2026' );
 @rmdir( $aicfab_uploads );
 
+// --- A draft entry the plugin did not write is not followed ----------------------------
+
+// Recorded before only the plugin could record a WeChat draft: an update or a deletion must not
+// go to the media_id it names.
+$aicfab_saved_meta                                     = isset( $GLOBALS['aicfab_meta'][ 990 ] ) ? $GLOBALS['aicfab_meta'][ 990 ] : null;
+$GLOBALS['aicfab_meta'][ 990 ]['_aicfab_distribution'] = array(
+	array( 'key' => 'wechat:FORGEDmediaid123', 'platform' => 'wechat', 'item_id' => 'FORGEDmediaid123', 'status' => 'planned', 'version' => 'idx:2', 'source' => 'agent' ),
+);
+check_drafts( null === AI_Chat_Bedrock_WeChat_Drafts::draft_of( 990 ), 'A draft entry an agent wrote is not taken as the post\'s draft.' );
+$GLOBALS['aicfab_meta'][ 990 ]['_aicfab_distribution'][] = array( 'key' => 'wechat:REALmediaid12345', 'platform' => 'wechat', 'item_id' => 'REALmediaid12345', 'status' => 'planned', 'version' => 'idx:1', 'source' => 'wechat' );
+$aicfab_real = AI_Chat_Bedrock_WeChat_Drafts::draft_of( 990 );
+check_drafts( null !== $aicfab_real && 'REALmediaid12345' === $aicfab_real['media_id'] && 1 === $aicfab_real['index'], 'The plugin\'s own entry still is.' );
+if ( null === $aicfab_saved_meta ) {
+	unset( $GLOBALS['aicfab_meta'][ 990 ] );
+} else {
+	$GLOBALS['aicfab_meta'][ 990 ] = $aicfab_saved_meta;
+}
+
 if ( $failures ) {
 	echo "FAIL:\n - " . implode( "\n - ", $failures ) . "\n";
 	exit( 1 );

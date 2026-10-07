@@ -28,7 +28,10 @@
      */
     function renderMarkdown(escaped) {
         const blocks = [];
-        let text = String(escaped).replace(/```[^\n]*\n?([\s\S]*?)```/g, function (match, code) {
+        // Code blocks are set aside behind NUL markers. A NUL in the text itself could name one
+        // of them inside a link's address and put the code, quotes and all, into the attribute,
+        // so the text loses its NULs first and the markers can only be the ones made here.
+        let text = String(escaped).replace(/\u0000/g, '').replace(/```[^\n]*\n?([\s\S]*?)```/g, function (match, code) {
             blocks.push('<pre><code>' + code.replace(/\n$/, '') + '</code></pre>');
             return '\u0000' + (blocks.length - 1) + '\u0000';
         });
@@ -36,7 +39,7 @@
         function inline(line) {
             return line
                 .replace(/`([^`]+)`/g, '<code>$1</code>')
-                .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s<>"'()]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+                .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s<>"'()*`\u0000]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
                 .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
                 .replace(/(^|[^*\w])\*(?!\s)([^*\n]+?)\*(?!\w)/g, '$1<em>$2</em>');
         }

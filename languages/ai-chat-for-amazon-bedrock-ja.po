@@ -1490,7 +1490,7 @@ msgstr "チェック項目"
 #: admin/partials/ai-chat-bedrock-admin-leads.php:125
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:66
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:332
-#: includes/class-ai-chat-bedrock-distribution.php:608
+#: includes/class-ai-chat-bedrock-distribution.php:615
 msgid "Status"
 msgstr "ステータス"
 
@@ -4438,7 +4438,7 @@ msgstr "エージェントの手順（%d）"
 msgid "succeeded"
 msgstr "成功"
 
-#: includes/class-ai-chat-bedrock-distribution.php:708
+#: includes/class-ai-chat-bedrock-distribution.php:715
 #: public/class-ai-chat-bedrock-public.php:162
 msgid "failed"
 msgstr "失敗"
@@ -6459,99 +6459,99 @@ msgid "Xiaohongshu"
 msgstr "小紅書"
 
 #: includes/class-ai-chat-bedrock-distribution.php:125
-#: includes/class-ai-chat-bedrock-distribution.php:255
+#: includes/class-ai-chat-bedrock-distribution.php:262
 msgid "There is no such post."
 msgstr "その投稿はありません。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:179
+#: includes/class-ai-chat-bedrock-distribution.php:186
 msgid "The platform is not one the record knows."
 msgstr "記録が扱っていないプラットフォームです。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:185
+#: includes/class-ai-chat-bedrock-distribution.php:192
 msgid "The item ID does not look like one from that platform."
 msgstr "そのプラットフォームの ID の形式ではありません。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:191
-#: includes/class-ai-chat-bedrock-distribution.php:196
+#: includes/class-ai-chat-bedrock-distribution.php:198
+#: includes/class-ai-chat-bedrock-distribution.php:203
 msgid "The address is not on that platform, or not https."
 msgstr "そのプラットフォームのアドレスではないか、https ではありません。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:203
+#: includes/class-ai-chat-bedrock-distribution.php:210
 msgid "The status is not one the record knows."
 msgstr "記録が扱っていない状態です。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:382
+#: includes/class-ai-chat-bedrock-distribution.php:389
 msgid "Get a post's publishing package"
 msgstr "投稿の公開パッケージを取得"
 
-#: includes/class-ai-chat-bedrock-distribution.php:383
+#: includes/class-ai-chat-bedrock-distribution.php:390
 msgid "Return what is needed to publish a post on another platform: title, address, plain text, excerpt, tags, image, translations and where it is already published. Read only."
 msgstr "投稿を他のプラットフォームで公開するのに必要なもの（タイトル、アドレス、テキスト、抜粋、タグ、画像、翻訳、公開済みの場所）を返します。読み取り専用です。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:401
+#: includes/class-ai-chat-bedrock-distribution.php:408
 msgid "Record where a post was published"
 msgstr "投稿の公開先を記録"
 
-#: includes/class-ai-chat-bedrock-distribution.php:402
+#: includes/class-ai-chat-bedrock-distribution.php:409
 msgid "Record or update one item a post was published as on Bilibili, YouTube or Xiaohongshu: its ID, address, account, language and status. Naming the record it replaces marks that edition replaced. Changes only this record, never the post."
 msgstr "投稿を Bilibili、YouTube、小紅書で公開した 1 件（ID、アドレス、アカウント、言語、状態）を記録または更新します。置き換える記録を指定すると、その版は置き換え済みになります。変更するのはこの記録だけで、投稿は変更しません。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:422
+#: includes/class-ai-chat-bedrock-distribution.php:429
 msgid "List where posts are published"
 msgstr "投稿の公開先を一覧表示"
 
-#: includes/class-ai-chat-bedrock-distribution.php:423
+#: includes/class-ai-chat-bedrock-distribution.php:430
 msgid "List publishing records across posts, filtered by platform, status, language or post, such as editions still public after being replaced. Read only."
 msgstr "プラットフォーム、状態、言語、投稿で絞り込んで、投稿全体の公開記録を一覧表示します。置き換え後も公開されたままの版などです。読み取り専用です。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:553
+#: includes/class-ai-chat-bedrock-distribution.php:560
 msgid "Published elsewhere"
 msgstr "他で公開"
 
-#: includes/class-ai-chat-bedrock-distribution.php:583
+#: includes/class-ai-chat-bedrock-distribution.php:590
 msgid "Not published on another platform yet. Agents record it here through the publishing abilities."
 msgstr "まだ他のプラットフォームで公開されていません。エージェントが公開アビリティでここに記録します。"
 
 #. translators: %s: the record that replaced this one, as platform:id.
-#: includes/class-ai-chat-bedrock-distribution.php:596
+#: includes/class-ai-chat-bedrock-distribution.php:603
 #, php-format
 msgid "Replaced by %s"
 msgstr "%s に置き換え済み"
 
-#: includes/class-ai-chat-bedrock-distribution.php:700
+#: includes/class-ai-chat-bedrock-distribution.php:707
 msgid "planned"
 msgstr "予定"
 
-#: includes/class-ai-chat-bedrock-distribution.php:701
+#: includes/class-ai-chat-bedrock-distribution.php:708
 msgid "submitted"
 msgstr "提出済み"
 
-#: includes/class-ai-chat-bedrock-distribution.php:702
+#: includes/class-ai-chat-bedrock-distribution.php:709
 msgid "processing"
 msgstr "処理中"
 
-#: includes/class-ai-chat-bedrock-distribution.php:703
+#: includes/class-ai-chat-bedrock-distribution.php:710
 msgid "public"
 msgstr "公開"
 
-#: includes/class-ai-chat-bedrock-distribution.php:704
+#: includes/class-ai-chat-bedrock-distribution.php:711
 msgid "unlisted"
 msgstr "限定公開"
 
-#: includes/class-ai-chat-bedrock-distribution.php:705
+#: includes/class-ai-chat-bedrock-distribution.php:712
 msgid "private"
 msgstr "非公開"
 
-#: includes/class-ai-chat-bedrock-distribution.php:706
+#: includes/class-ai-chat-bedrock-distribution.php:713
 msgid "replaced"
 msgstr "置き換え済み"
 
-#: includes/class-ai-chat-bedrock-distribution.php:707
+#: includes/class-ai-chat-bedrock-distribution.php:714
 msgid "removed"
 msgstr "削除済み"
 
 #. translators: %s: links to platforms, such as Bilibili and YouTube.
-#: includes/class-ai-chat-bedrock-distribution.php:741
+#: includes/class-ai-chat-bedrock-distribution.php:748
 #, php-format
 msgid "Also on %s"
 msgstr "%s でも公開中"
@@ -6973,7 +6973,7 @@ msgid ""
 "Courses: https://example.com/courses/\n"
 "News: https://example.com/news/\n"
 "Send 精选 for the newest featured articles."
-msgstr ""
+msgstr "コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。"
 "コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\\nニュース：https://example.com/news/\\n「精选」と送ると最新のおすすめ記事が届きます。コース：https://example.com/courses/\n"
 "ニュース：https://example.com/news/\n"
 "「精选」と送ると最新のおすすめ記事が届きます。"
@@ -7030,130 +7030,130 @@ msgstr "保存した AppSecret を削除する"
 msgid "Only drafts are made: WeChat lets only verified company accounts publish through its API. Check each draft and publish it in the Official Accounts Platform."
 msgstr "作るのは下書きだけです。WeChat は API での公開を認証済みの企業アカウントにしか認めていません。下書きを確認して、公式アカウントプラットフォームで公開してください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:339
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:343
 msgid "Drafts for the WeChat Official Account are off, or its AppID or AppSecret is missing."
 msgstr "WeChat 公式アカウントの下書きがオフか、AppID または AppSecret がありません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:360
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:364
 msgid "No post could be made into an article."
 msgstr "記事にできる投稿がありませんでした。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:410
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:414
 msgid "In the WeChat Official Account's draft box; publish it from the Official Accounts Platform."
 msgstr "WeChat 公式アカウントの下書きボックスにあります。公式アカウントプラットフォームから公開してください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:562
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:566
 msgid "Tap \"Read more\" for the full article on the site."
 msgstr "サイトで全文を読むには「原文を読む」をタップしてください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1037
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1042
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1634
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1043
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1048
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1640
 msgid "The post needs a featured image in JPEG or PNG for the cover."
 msgstr "カバーには JPEG または PNG のアイキャッチ画像が必要です。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1049
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1055
 msgid "WeChat did not take the cover image."
 msgstr "WeChat がカバー画像を受け付けませんでした。"
 
 #. translators: %d: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1221
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1227
 #, php-format
 msgid "%d article is ready in the WeChat draft box"
 msgid_plural "%d articles are ready in the WeChat draft box"
 msgstr[0] "WeChat の下書きボックスに %d 件の記事があります"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1222
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1228
 msgid "Check them and publish in the WeChat Official Accounts Platform: https://mp.weixin.qq.com/"
 msgstr "確認して WeChat 公式アカウントプラットフォームで公開してください：https://mp.weixin.qq.com/"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1483
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1489
 msgid "You cannot send this post."
 msgstr "この投稿を送る権限がありません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1486
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1492
 msgid "The post is in the WeChat draft box. Publish it from the Official Accounts Platform."
 msgstr "投稿を WeChat の下書きボックスに入れました。公式アカウントプラットフォームから公開してください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1506
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1512
 msgid "Published posts that anyone can read can be sent to the WeChat draft box."
 msgstr "誰でも読める公開済みの投稿だけを WeChat の下書きボックスに送れます。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1509
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1515
 msgid "Send to the WeChat draft box again"
 msgstr "もう一度 WeChat の下書きボックスに送る"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1509
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1515
 msgid "Send to the WeChat draft box"
 msgstr "WeChat の下書きボックスに送る"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1529
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1535
 msgid "Send posts to the WeChat draft box"
 msgstr "投稿を WeChat の下書きボックスに送る"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1530
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1536
 msgid "Make one draft in the WeChat Official Account from up to eight published posts, in order, and note it in their publishing records. Nothing is published: the owner publishes the draft in the Official Accounts Platform."
 msgstr "公開済みの投稿最大 8 件から、順番どおりに WeChat 公式アカウントの下書きを 1 つ作り、各投稿の公開記録に残します。公開はしません。所有者が公式アカウントプラットフォームで公開します。"
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1625
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1631
 #, php-format
 msgid "WeChat does not accept calls from %s. Add it to the IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform."
 msgstr "WeChat は %s からの呼び出しを受け付けません。WeChat 開発者プラットフォームの「基本情報 > 開発者キー」で IP ホワイトリストに追加してください。"
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1625
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1631
 msgid "this server's address"
 msgstr "このサーバーのアドレス"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1628
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1634
 msgid "The AppID or AppSecret is missing."
 msgstr "AppID または AppSecret がありません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1629
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1635
 msgid "WeChat did not accept the AppSecret. Reset it in the WeChat Developers Platform and enter the new one."
 msgstr "WeChat が AppSecret を受け付けませんでした。WeChat 開発者プラットフォームでリセットし、新しいものを入力してください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1630
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1636
 msgid "WeChat did not accept the AppID."
 msgstr "WeChat が AppID を受け付けませんでした。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1631
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1637
 msgid "The AppSecret is frozen in the WeChat Developers Platform."
 msgstr "AppSecret が WeChat 開発者プラットフォームで凍結されています。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1632
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1638
 msgid "This account may not use that WeChat interface."
 msgstr "このアカウントはその WeChat インターフェースを使えません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1633
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1639
 msgid "The account reached WeChat's daily limit for this interface. Try again tomorrow."
 msgstr "このインターフェースの 1 日の上限に達しました。明日もう一度お試しください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1635
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1641
 msgid "Only published posts that anyone can read are sent."
 msgstr "誰でも読める公開済みの投稿だけを送ります。"
 
 #. translators: %s: error code.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1643
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1649
 #, php-format
 msgid "WeChat refused the draft (%s)."
 msgstr "WeChat が下書きを拒否しました（%s）。"
 
 #. translators: 1: how long ago, 2: what went wrong.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1660
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1666
 #, php-format
 msgid "Last draft %1$s ago failed: %2$s"
 msgstr "%1$s前の下書きは失敗しました：%2$s"
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1664
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1670
 #, php-format
 msgid "Last scheduled run %s ago: no new featured post to send."
 msgstr "%s前の定期実行：送る新しいおすすめ記事はありませんでした。"
 
 #. translators: 1: how long ago, 2: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1667
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1673
 #, php-format
 msgid "Last draft %1$s ago: %2$s article is in the WeChat draft box."
 msgid_plural "Last draft %1$s ago: %2$s articles are in the WeChat draft box."
@@ -7210,7 +7210,7 @@ msgstr "先に「設定 > チャネル」で YouTube チャンネルを接続し
 msgid "Overview"
 msgstr "概要"
 
-#: includes/class-ai-chat-bedrock-distribution.php:262
+#: includes/class-ai-chat-bedrock-distribution.php:269
 msgid "You cannot edit that translation."
 msgstr "その翻訳を編集する権限がありません。"
 
@@ -7235,19 +7235,19 @@ msgstr "チャットのモデルで投稿の各プラットフォーム向けの
 msgid "Off by default. Bilibili opens its publishing API only to registered companies and Xiaohongshu has none for creators, so there a person publishes. With this on, the Published elsewhere box writes the Bilibili, Xiaohongshu and YouTube title, text, tags and category from the text a signed-out visitor reads, within each platform's limits and in the post's language, with links to each creator page and the cover. After publishing, enter the address in the same box to record it. Each kit is one model request; agents can ask for one through an ability. The copy is an AI draft: check it, and declare AI assistance with the platform's label."
 msgstr "初期設定ではオフです。Bilibili は公開 API を登録企業にしか開放しておらず、小紅書にはクリエイター向けの公開 API がないため、そこでは人が公開します。オンにすると、「他の場所での公開」ボックスが、ログインしていない訪問者が読む本文から、各プラットフォームの制限内で投稿の言語により、Bilibili・小紅書・YouTube のタイトル、本文、タグ、カテゴリを書き、各クリエイターページとカバーへのリンクを添えます。公開後は同じボックスにアドレスを入力すると記録されます。キット 1 件につきモデルを 1 回使い、エージェントもアビリティから依頼できます。文面は AI の下書きです。確認し、プラットフォームの表示機能で AI の支援を申告してください。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:606
+#: includes/class-ai-chat-bedrock-distribution.php:613
 msgid "Record where it was published"
 msgstr "公開先を記録する"
 
-#: includes/class-ai-chat-bedrock-distribution.php:607
+#: includes/class-ai-chat-bedrock-distribution.php:614
 msgid "Address on the platform"
 msgstr "プラットフォーム上のアドレス"
 
-#: includes/class-ai-chat-bedrock-distribution.php:613
+#: includes/class-ai-chat-bedrock-distribution.php:620
 msgid "A Bilibili, YouTube, Xiaohongshu or WeChat article address. It is recorded when you save the post."
 msgstr "Bilibili、YouTube、小紅書、または WeChat 記事のアドレス。投稿を保存すると記録されます。"
 
-#: includes/class-ai-chat-bedrock-distribution.php:642
+#: includes/class-ai-chat-bedrock-distribution.php:649
 msgid "That address is not one the record knows: use a Bilibili, YouTube, Xiaohongshu or WeChat article address."
 msgstr "記録できないアドレスです。Bilibili、YouTube、小紅書、または WeChat 記事のアドレスを使ってください。"
 
@@ -7333,27 +7333,27 @@ msgstr "初期設定ではオフです。上で WeChat 公式アカウント用�
 msgid "An older draft of this post, deleted when it was sent again."
 msgstr "この投稿の古い下書き。もう一度送ったときに削除しました。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1486
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1492
 msgid "The post's article in the WeChat draft box was replaced with the current version."
 msgstr "WeChat の下書きボックスの記事を現在の版に置き換えました。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1636
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1642
 msgid "The post has too little public text for an article."
 msgstr "この投稿は公開本文が少なすぎて記事になりません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:563
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:567
 msgid "If the video does not show, tap \"Read more\" to watch it on the site."
 msgstr "動画が表示されない場合は「原文を読む」からサイトでご覧ください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:852
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:856
 msgid "(tap \"Read more\" at the end to open it)"
 msgstr "（末尾の「原文を読む」から開けます）"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1515
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1521
 msgid "WeChat video ID"
 msgstr "WeChat の動画 ID"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1516
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1522
 msgid "WeChat's API takes videos of at most 10 MB and cannot place one in an article. Upload the post's video in the Official Accounts Platform, enter the ID it gets, wxv_ and digits, and save the post: each draft then shows WeChat's player where the video is."
 msgstr "WeChat の API は 10 MB 以下の動画しか受け付けず、記事に動画を入れることもできません。公式アカウントプラットフォームで投稿の動画をアップロードし、付いた ID（wxv_ と数字）を入力して投稿を保存すると、下書きの動画の位置に WeChat のプレーヤーが入ります。"
 
@@ -7378,21 +7378,21 @@ msgid "Configured — enter a value to replace"
 msgstr "設定済み — 置き換えるには値を入力"
 
 #. translators: %d: number of posts.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1332
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1338
 #, php-format
 msgid "%d post changed, and its WeChat draft holds your edits"
 msgid_plural "%d posts changed, and their WeChat drafts hold your edits"
 msgstr[0] "%d 件の投稿が更新されましたが、WeChat の下書きにはあなたの編集があります"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1333
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1339
 msgid "These drafts were edited in WeChat, so they were not replaced. Update them in the Official Accounts Platform, or send the post again from its edit screen to replace the draft, edits included."
 msgstr "これらの下書きは WeChat で編集されているため、置き換えませんでした。公式アカウントプラットフォームで更新するか、投稿の編集画面からもう一度送って下書きを置き換えてください（WeChat での変更は失われます）。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1512
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1518
 msgid "Sending it again replaces its draft with the current version, including any changes made to it in WeChat. The scheduled update leaves drafts edited in WeChat alone."
 msgstr "ここからもう一度送ると、WeChat で加えた変更も含めて下書きが現在の版で置き換えられます。定期更新は WeChat で編集した下書きには手を付けません。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:614
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:618
 msgid "▶ Watch this lesson's video on the site: tap \"Read more\" at the end."
 msgstr "▶ このレッスンの動画は、末尾の「原文を読む」からサイトでご覧ください。"
 
@@ -7404,11 +7404,11 @@ msgstr "AppID（安全モードと下書きに必要）"
 msgid "On each scheduled run, update drafts whose post changed since it was sent, unless they were edited, published or deleted in WeChat; with emails on, you are told of edited ones"
 msgstr "定期実行のたびに、送った後に投稿が変わった下書きを更新する。WeChat で編集・公開・削除された下書きには手を付けず、メール通知がオンなら編集されたものを知らせる"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1283
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1289
 msgid "No longer in the WeChat draft box: published or deleted there. Send the post again to make a new draft."
 msgstr "WeChat の下書きボックスにはもうありません（公開または削除済み）。新しい下書きが必要なら、投稿をもう一度送ってください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1637
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1643
 msgid "No post could be made into an article: each must be published, readable by anyone, and have a featured image or an image in the text, in JPEG or PNG."
 msgstr "記事にできる投稿がありませんでした。それぞれ公開済みで誰でも読め、JPEG または PNG のアイキャッチ画像か本文の画像が必要です。"
 
@@ -7425,16 +7425,16 @@ msgid "Run it now"
 msgstr "今すぐ実行"
 
 #. translators: %s: date and time of the next run.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1420
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1426
 #, php-format
 msgid "Next scheduled run: %s."
 msgstr "次回の定期実行：%s。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1424
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1430
 msgid "It is overdue: WordPress's scheduler is not running. Have a system cron job request wp-cron.php every few minutes."
 msgstr "予定を過ぎています。WordPress のスケジューラーが動いていません。数分おきに wp-cron.php を呼ぶシステムの cron を設定してください。"
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1435
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1441
 msgid "You cannot run this."
 msgstr "これを実行する権限がありません。"
 
@@ -7636,3 +7636,7 @@ msgstr "訪問者はメールアドレスか電話番号を入力し、同意す
 #: admin/class-ai-chat-bedrock-admin.php:1441
 msgid "Disclose this in your privacy policy."
 msgstr "プライバシーポリシーに記載してください。"
+
+#: includes/class-ai-chat-bedrock-distribution.php:137
+msgid "WeChat drafts are recorded by the plugin when it sends them. Record a WeChat article once it is published."
+msgstr "WeChat の下書きは、プラグインが送信するときに自動で記録されます。WeChat の記事は公開後に記録してください。"

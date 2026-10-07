@@ -362,6 +362,14 @@ $player = AI_Chat_Bedrock_Bilibili::embed( $aicfab_matches, array(), 'https://ww
 check_dist( false !== strpos( $player, 'https://player.bilibili.com/player.html?bvid=BV1xx411c7mD&amp;page=2&amp;autoplay=0&amp;danmaku=0&amp;high_quality=1&amp;t=30' ), 'The player opens the part and time linked, paused and without danmaku: ' . $player );
 check_dist( false !== strpos( $player, 'sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"' ) && false !== strpos( $player, 'loading="lazy"' ) && false !== strpos( $player, 'title="Bilibili video BV1xx411c7mD"' ) && false !== strpos( $player, 'aspect-ratio:16/9' ), 'It is sandboxed, lazy, titled for screen readers and sized 16:9.' );
 
+// --- Only the plugin says a post sits in a WeChat draft --------------------------------
+
+$aicfab_draft = array( 'platform' => 'wechat', 'item_id' => 'Hb8Ss9pqQ1x2y3z4A5b6C7d8', 'status' => 'planned', 'version' => 'idx:0' );
+$aicfab_forged = AI_Chat_Bedrock_Distribution::record( 7, $aicfab_draft, 'agent' );
+check_dist( is_wp_error( $aicfab_forged ) && 'aicfab_distribution_wechat_draft' === $aicfab_forged->get_error_code(), 'An agent cannot record a WeChat draft, whose media_id later updates and deletes would follow.' );
+check_dist( is_wp_error( AI_Chat_Bedrock_Distribution::record( 7, $aicfab_draft, 'manual' ) ), 'Nor can it be entered by hand.' );
+check_dist( ! is_wp_error( AI_Chat_Bedrock_Distribution::record( 7, $aicfab_draft, 'wechat' ) ), 'The plugin records the drafts it sends.' );
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

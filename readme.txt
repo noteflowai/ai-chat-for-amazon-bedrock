@@ -492,6 +492,13 @@ what a good answer says.
 = 1.68.0 =
 * MCP settings: switching MCP tools or public access on is saved with a Save button, as on every other screen, not the moment a box is ticked. Saving the tool policy, AI clients or revoking connections now confirms it and returns to that section.
 
+= 1.67.1 =
+* Security: a chat answer containing NUL characters could put code-block text inside a link's address and run script in the visitor's browser. The text loses its NULs before rendering, and addresses with emphasis or code marks are no longer linked.
+* Security: only the plugin can record that a post sits in a WeChat Official Account draft, and only its own entries are followed, so someone who can edit a post cannot point draft updates or deletions at another draft.
+* WeChat bodies that are not UTF-8, or that declare another encoding or a document type, are refused before parsing, for the Official Account and the mini game.
+* A WeChat draft's cover, without a featured image, is the first image a signed-out visitor sees, never one from a members-only block.
+* With a persistent object cache, a visitor's daily share counts requests the cache could not, instead of losing them.
+
 = 1.67.0 =
 * Publishing kits, under Settings > Channels and off by default: from the text a signed-out visitor reads, the chat's model writes a post's Bilibili, Xiaohongshu and YouTube title, text, tags and category within each platform's limits, in the post's language, shown in the Published elsewhere box with links to each creator page and the cover. Bilibili opens its publishing API only to registered companies and Xiaohongshu has none for creators, so a person publishes there; no agent outside WordPress is needed. Agents can ask for a kit through an ability and the MCP server.
 * Record where a post was published by entering its Bilibili, YouTube, Xiaohongshu or WeChat article address in the same box; it is saved with the post.
@@ -503,6 +510,9 @@ what a good answer says.
 
 = 1.68.0 =
 MCP access is saved with a Save button, and every MCP save is confirmed.
+
+= 1.67.1 =
+Security fix for the chat's answer formatting and WeChat drafts. Update recommended.
 
 = 1.67.0 =
 Optional publishing kits and recording published addresses by hand; a full-screen chat on phones and an accent colour for the chat.

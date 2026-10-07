@@ -220,7 +220,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	public static function retire( $post_id, $current, $options ) {
 		$deleted = 0;
 		foreach ( AI_Chat_Bedrock_Distribution::entries( $post_id ) as $entry ) {
-			if ( ! isset( $entry['platform'], $entry['status'], $entry['item_id'] ) || 'wechat' !== $entry['platform'] || 'planned' !== $entry['status'] || $current === $entry['item_id'] ) {
+			if ( ! isset( $entry['platform'], $entry['status'], $entry['item_id'] ) || 'wechat' !== $entry['platform'] || 'planned' !== $entry['status'] || $current === $entry['item_id'] || ! isset( $entry['source'] ) || 'wechat' !== $entry['source'] ) {
 				continue;
 			}
 			if ( self::shared( $entry['item_id'], $post_id ) ) {
@@ -283,6 +283,10 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			if ( isset( $entry['platform'], $entry['status'], $entry['item_id'] ) && 'wechat' === $entry['platform'] ) {
 				if ( 'planned' !== $entry['status'] ) {
 					return null;
+				}
+				// Only a draft the plugin sent; any other "draft" entry is not trusted.
+				if ( ! isset( $entry['source'] ) || 'wechat' !== $entry['source'] ) {
+					continue;
 				}
 				return array(
 					'media_id'   => (string) $entry['item_id'],
@@ -1022,7 +1026,9 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		$id   = (int) get_post_thumbnail_id( $post );
 		$src  = $id ? (string) wp_get_attachment_url( $id ) : '';
 		$file = '' !== $src ? self::local_image( $src, self::COVER_BYTES ) : null;
-		if ( null === $file && preg_match( '#<img\b[^>]*\ssrc="([^"]+)"#i', (string) $post->post_content, $found ) ) {
+		// Without a featured image, the first image a signed-out visitor sees; the raw content could
+		// offer one from a members-only block as the account's public cover.
+		if ( null === $file && preg_match( '#<img\b[^>]*\ssrc="([^"]+)"#i', (string) AI_Chat_Bedrock_Content::render_as_guest( $post ), $found ) ) {
 			$src  = html_entity_decode( $found[1], ENT_QUOTES, 'UTF-8' );
 			$file = self::local_image( $src, self::COVER_BYTES );
 		}
