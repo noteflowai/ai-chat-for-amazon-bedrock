@@ -484,6 +484,7 @@ what a good answer says.
 11. Per-role request limits, so editors and administrators can be given more requests per minute than anonymous visitors.
 12. The least-privilege IAM policy generated for this site's own configuration, ready to paste into AWS.
 13. Drafting a first set of pages from a description of the business. Every page is a draft, and nothing existing is touched.
+14. On a phone the chat opens full screen above the keyboard, from a small button in the corner, and renders lists and links in its answers.
 
 
 == Changelog ==
