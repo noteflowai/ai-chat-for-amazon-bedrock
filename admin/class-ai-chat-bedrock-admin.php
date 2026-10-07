@@ -1391,7 +1391,8 @@ class AI_Chat_Bedrock_Admin {
 		echo '<label for="aicfab_field_speech_daily_chars">' . esc_html__( 'Characters read per day, across the site', 'ai-chat-for-amazon-bedrock' ) . '</label> <input type="number" id="aicfab_field_speech_daily_chars" class="regular-text" name="ai_chat_bedrock_settings[speech_daily_chars]" value="' . esc_attr( AI_Chat_Bedrock_Speech::daily_characters( $options ) ) . '" min="0" max="' . esc_attr( AI_Chat_Bedrock_Speech::MAX_DAILY_CHARACTERS ) . '" step="1000">';
 		echo '</div>';
 		echo '</fieldset>';
-		echo '<p class="description">' . esc_html__( 'Off by default. Amazon Polly reads the text aloud, in a voice for its language, and is billed per character; 0 removes the daily limit. Only answers this chat gave can be read, by the visitor they were given to. A post is read as a signed-out visitor sees it, so members-only content is never sent; its audio is saved in the uploads folder and made again when the post changes. The AWS identity needs polly:SynthesizeSpeech.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Off by default. Amazon Polly reads the text aloud, in a voice for its language, and is billed per character; 0 removes the daily limit.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<details class="aicfab-help"><summary>' . esc_html__( 'More about this', 'ai-chat-for-amazon-bedrock' ) . '</summary><p class="description">' . esc_html__( 'Only answers this chat gave can be read, by the visitor they were given to. A post is read as a signed-out visitor sees it, so members-only content is never sent; its audio is saved in the uploads folder and made again when the post changes. The AWS identity needs polly:SynthesizeSpeech.', 'ai-chat-for-amazon-bedrock' ) . '</p></details>';
 		$visitor = AI_Chat_Bedrock_Speech::visitor_characters( $options );
 		echo '<p class="description">' . esc_html(
 			$visitor > 0
@@ -1403,7 +1404,8 @@ class AI_Chat_Bedrock_Admin {
 
 	public function analytics_events_render() {
 		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[analytics_events]" value="1" ' . checked( AI_Chat_Bedrock_Analytics::enabled(), true, false ) . '> ' . esc_html__( 'Report chat activity to the analytics already on this site', 'ai-chat-for-amazon-bedrock' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Off by default. The chat tells the site\'s analytics tag when it is opened, a question is asked or answered, a source or product in an answer is followed, an answer is rated and a contact request is sent, with no message text or contact details. Google Analytics (through Site Kit, MonsterInsights or a gtag snippet), Google Tag Manager, Matomo and Plausible receive the events; mark ai_chat_contact as a key event to count contact requests as conversions. With a consent plugin that uses the WP Consent API, events wait until the visitor allows statistics.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Off by default. The chat tells the site\'s analytics tag when it is opened, a question is asked or answered, a source or product in an answer is followed, an answer is rated and a contact request is sent, with no message text or contact details.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<details class="aicfab-help"><summary>' . esc_html__( 'More about this', 'ai-chat-for-amazon-bedrock' ) . '</summary><p class="description">' . esc_html__( 'Google Analytics (through Site Kit, MonsterInsights or a gtag snippet), Google Tag Manager, Matomo and Plausible receive the events; mark ai_chat_contact as a key event to count contact requests as conversions. With a consent plugin that uses the WP Consent API, events wait until the visitor allows statistics.', 'ai-chat-for-amazon-bedrock' ) . '</p></details>';
 		$tools = AI_Chat_Bedrock_Analytics::tools();
 		if ( $tools ) {
 			/* translators: %s: comma separated names of analytics plugins. */
@@ -1434,7 +1436,9 @@ class AI_Chat_Bedrock_Admin {
 		if ( '' !== $joinchat ) {
 			$found[] = __( 'Joinchat is active: while the link is empty, its WhatsApp number is offered.', 'ai-chat-for-amazon-bedrock' );
 		}
-		echo '<p class="description">' . esc_html__( 'Off by default. A Contact a person button appears below the chat, and the assistant points to it when it cannot help. Visitors give an email address or phone number and must agree before anything is stored. Requests are kept on this site and listed under Contact requests, where they can be exported. The link can be a web, mailto: or tel: address. Disclose this in your privacy policy.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Off by default. A Contact a person button appears below the chat, and the assistant points to it when it cannot help.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<details class="aicfab-help"><summary>' . esc_html__( 'More about this', 'ai-chat-for-amazon-bedrock' ) . '</summary><p class="description">' . esc_html__( 'Visitors give an email address or phone number and must agree before anything is stored. Requests are kept on this site and listed under Contact requests, where they can be exported. The link can be a web, mailto: or tel: address.', 'ai-chat-for-amazon-bedrock' ) . '</p></details>';
+		echo '<p class="description">' . esc_html__( 'Disclose this in your privacy policy.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 		foreach ( $found as $line ) {
 			echo '<p class="description">' . esc_html( $line ) . '</p>';
 		}
