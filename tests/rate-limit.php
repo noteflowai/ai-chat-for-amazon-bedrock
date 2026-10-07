@@ -148,7 +148,7 @@ function wp_using_ext_object_cache() {
 	return ! empty( $GLOBALS['aicfab_ext_cache'] );
 }
 function wp_cache_add( $key, $value, $group = '', $ttl = 0 ) {
-	if ( isset( $GLOBALS['aicfab_cache'][ $group ][ $key ] ) ) {
+	if ( ! empty( $GLOBALS['aicfab_cache_fails'] ) || isset( $GLOBALS['aicfab_cache'][ $group ][ $key ] ) ) {
 		return false;
 	}
 	$GLOBALS['aicfab_cache'][ $group ][ $key ] = $value;
@@ -156,7 +156,7 @@ function wp_cache_add( $key, $value, $group = '', $ttl = 0 ) {
 	return true;
 }
 function wp_cache_incr( $key, $offset = 1, $group = '' ) {
-	if ( ! isset( $GLOBALS['aicfab_cache'][ $group ][ $key ] ) ) {
+	if ( ! empty( $GLOBALS['aicfab_cache_fails'] ) || ! isset( $GLOBALS['aicfab_cache'][ $group ][ $key ] ) ) {
 		return false;
 	}
 	$GLOBALS['aicfab_cache'][ $group ][ $key ] += $offset;
@@ -173,6 +173,12 @@ AI_Chat_Bedrock_Security::spend_daily( 'chat', 2 );
 check_rl( 3 === AI_Chat_Bedrock_Security::daily_spent( 'chat' ), 'A daily allowance adds up in the object cache.' );
 check_rl( array() === $GLOBALS['aicfab_transients'], 'With an object cache nothing is written as a transient.' );
 check_rl( in_array( DAY_IN_SECONDS, $GLOBALS['aicfab_cache_ttls'], true ) && in_array( 60, $GLOBALS['aicfab_cache_ttls'], true ), 'Cached counters expire with their window or their day.' );
+// When the cache cannot increment, what is spent goes to a transient, and is still counted.
+$GLOBALS['aicfab_cache_fails'] = true;
+AI_Chat_Bedrock_Security::spend_daily( 'speech', 7 );
+$GLOBALS['aicfab_cache_fails'] = false;
+check_rl( 7 === AI_Chat_Bedrock_Security::daily_spent( 'speech' ), 'A spend the cache could not count is read back from the fallback.' );
+$GLOBALS['aicfab_transients'] = array();
 $GLOBALS['aicfab_ext_cache'] = false;
 check_rl( 0 === AI_Chat_Bedrock_Security::daily_spent( 'chat' ) && AI_Chat_Bedrock_Security::check_rate_limit( 'chat', 2 ), 'Without the cache the transient counters are used, as before.' );
 

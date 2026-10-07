@@ -572,6 +572,17 @@ check_wx( false === AI_Chat_Bedrock_WeChat::serve( false, new WP_REST_Response( 
 $bootstrap = (string) file_get_contents( dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock.php' );
 check_wx( false !== strpos( $bootstrap, "add_filter( 'rest_pre_serve_request', 'AI_Chat_Bedrock_WeChat', 'serve', 10, 3 )" ) && false !== strpos( $bootstrap, "add_action( 'rest_api_init', \$wechat, 'register_routes' )" ), 'The route and the raw output are hooked.' );
 
+// --- Bodies that could carry a document type ------------------------------------------
+
+$aicfab_msg = '<xml><ToUserName><![CDATA[gh_1]]></ToUserName><MsgType><![CDATA[text]]></MsgType><Content><![CDATA[你好]]></Content></xml>';
+check_wx( '你好' === AI_Chat_Bedrock_WeChat::parse( $aicfab_msg )['Content'], 'A WeChat message parses.' );
+check_wx( 'text' === AI_Chat_Bedrock_WeChat::parse( '<?xml version="1.0" encoding="utf-8"?>' . $aicfab_msg )['MsgType'], 'So does one with a UTF-8 declaration.' );
+$aicfab_utf16 = "\xFF\xFE" . mb_convert_encoding( '<?xml version="1.0" encoding="UTF-16"?><!DOCTYPE xml [<!ENTITY a "aaaa">]><xml><Content>&a;</Content></xml>', 'UTF-16LE', 'UTF-8' );
+check_wx( null === AI_Chat_Bedrock_WeChat::parse( $aicfab_utf16 ), 'UTF-16, where <!DOCTYPE is not the bytes a check looks for, is refused.' );
+check_wx( null === AI_Chat_Bedrock_WeChat::parse( "<xml>\0<Content>x</Content></xml>" ), 'A NUL byte is refused.' );
+check_wx( null === AI_Chat_Bedrock_WeChat::parse( '<?xml version="1.0" encoding="ISO-8859-1"?><xml><Content>x</Content></xml>' ), 'Another declared encoding is refused.' );
+check_wx( null === AI_Chat_Bedrock_WeChat::parse( '<!doctype xml><xml><Content>x</Content></xml>' ), 'A document type in any case is refused.' );
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

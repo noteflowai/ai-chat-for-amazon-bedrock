@@ -162,6 +162,38 @@ class AI_Chat_Bedrock_WeChat_API {
 	}
 
 	/**
+	 * Parse a WeChat XML body, refusing anything that could carry a document type.
+	 *
+	 * Text that is not UTF-8 is refused before parsing: in UTF-16 a <!DOCTYPE is not the bytes
+	 * a check for it looks for, and safe mode parses the body before its signature can be
+	 * checked. A document that still has a type after parsing is refused as well.
+	 *
+	 * @param string $xml Request body.
+	 * @return SimpleXMLElement|null The root element, or null.
+	 */
+	public static function load_xml( $xml ) {
+		$xml = trim( (string) $xml );
+		if ( '' === $xml || ! function_exists( 'simplexml_load_string' ) || ! preg_match( '//u', $xml ) || false !== strpos( $xml, "\0" ) ) {
+			return null;
+		}
+		if ( false !== stripos( $xml, '<!DOCTYPE' ) || false !== stripos( $xml, '<!ENTITY' ) || preg_match( '/^<\?xml[^>]*encoding\s*=\s*["\'](?!utf-?8["\'])/i', $xml ) ) {
+			return null;
+		}
+		$previous = libxml_use_internal_errors( true );
+		$doc      = simplexml_load_string( $xml, 'SimpleXMLElement', LIBXML_NOCDATA | LIBXML_NONET );
+		libxml_clear_errors();
+		libxml_use_internal_errors( $previous );
+		if ( false === $doc || 'xml' !== $doc->getName() ) {
+			return null;
+		}
+		$node = function_exists( 'dom_import_simplexml' ) ? dom_import_simplexml( $doc ) : null;
+		if ( $node && $node->ownerDocument && null !== $node->ownerDocument->doctype ) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- DOM's own property.
+			return null;
+		}
+		return $doc;
+	}
+
+	/**
 	 * Whether a signed request is new, or WeChat sending the same request again.
 	 *
 	 * In plaintext mode the signature covers the token, timestamp and nonce but not the message,
