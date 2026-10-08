@@ -126,8 +126,8 @@ if ( ! function_exists( 'wp_get_abilities' ) ) {
 
 	/*
 	 * The behaviour each ability declares is what a client reads to decide whether calling it
-	 * unattended is safe, and WordPress enforces it at the transport layer. Exactly one ability
-	 * here writes, so exactly one should say so.
+	 * unattended is safe, and WordPress enforces it at the transport layer. With optional draft
+	 * sending disabled, only post draft creation and the curated review attestation write.
 	 */
 	$aicfab_writers = array();
 	$aicfab_silent  = array();
@@ -142,11 +142,29 @@ if ( ! function_exists( 'wp_get_abilities' ) ) {
 		}
 	}
 	aicfab_live( array() === $aicfab_silent, 'every ability declares its behaviour', implode( ', ', $aicfab_silent ) );
+	sort( $aicfab_writers );
 	aicfab_live(
-		array( 'ai-chat-bedrock/create-draft' ) === $aicfab_writers,
-		'the draft ability is the only one that declares it writes',
+		array( 'ai-chat-bedrock/create-draft', 'ai-chat-bedrock/review-wechat-post' ) === $aicfab_writers,
+		'only draft creation and curated review attestation declare writes',
 		$aicfab_writers ? implode( ', ', $aicfab_writers ) : 'none declared'
 	);
+	$aicfab_actor = get_current_user_id();
+	wp_set_current_user( 0 );
+	foreach ( array( 'get-wechat-review' => true, 'review-wechat-post' => false ) as $aicfab_review_name => $aicfab_readonly ) {
+		$aicfab_review = isset( $aicfab_ours[ 'ai-chat-bedrock/' . $aicfab_review_name ] ) ? $aicfab_ours[ 'ai-chat-bedrock/' . $aicfab_review_name ] : null;
+		$aicfab_meta   = $aicfab_review ? (array) $aicfab_review->get_meta() : array();
+		$aicfab_ann    = isset( $aicfab_meta['annotations'] ) ? (array) $aicfab_meta['annotations'] : array();
+		aicfab_live(
+			isset( $aicfab_ann['readonly'], $aicfab_ann['destructive'] ) && $aicfab_readonly === $aicfab_ann['readonly'] && false === $aicfab_ann['destructive'],
+			$aicfab_review_name . ' registers with its exact review behaviour'
+		);
+		$aicfab_permission = $aicfab_review ? $aicfab_review->check_permissions( array( 'post_id' => 1 ) ) : true;
+		aicfab_live(
+			is_wp_error( $aicfab_permission ) || false === $aicfab_permission,
+			$aicfab_review_name . ' rejects unauthenticated review access'
+		);
+	}
+	wp_set_current_user( $aicfab_actor );
 	aicfab_live( isset( $aicfab_ours['ai-chat-bedrock/describe-site'] ), 'the site description registers as an ability' );
 	aicfab_live( isset( $aicfab_ours['ai-chat-bedrock/query-metrics'] ), 'business insights register as an ability' );
 }
