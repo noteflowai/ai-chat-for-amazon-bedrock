@@ -1055,7 +1055,9 @@ check_drafts( ! is_wp_error( $read ) && 'review_missing' === $read['shortfall'] 
 $reflection = new ReflectionClass( 'AI_Chat_Bedrock_WP_MCP_Server' );
 $server = $reflection->newInstanceWithoutConstructor();
 $dispatch = $reflection->getMethod( 'execute_tool' );
-$dispatch->setAccessible( true );
+if ( PHP_VERSION_ID < 80100 ) {
+	$dispatch->setAccessible( true );
+}
 $review_input = drafts_review_input( 1 );
 $review_input['reviewer_user_id'] = 999;
 $GLOBALS['aicfab_user_id'] = 23;
