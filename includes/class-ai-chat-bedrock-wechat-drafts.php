@@ -38,8 +38,12 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 
 
 	// Where the video goes, until the article is styled.
-	const VIDEO_MARK = '[[aicfab-wechat-video]]';
-	const COVER_META = '_aicfab_wechat_cover';
+	const VIDEO_MARK     = '[[aicfab-wechat-video]]';
+	const COVER_META     = '_aicfab_wechat_cover';
+	const REVIEW_META    = '_aicfab_wechat_review';
+	const REVIEW_VERSION = 1;
+	const REVIEW_TTL     = 604800;
+	const REVIEW_CHECKS  = array( 'topic_fit', 'original_value', 'evidence', 'rights', 'mobile_readability', 'safety', 'public_only' );
 
 	// WeChat's answers for a draft it no longer has: an unknown media_id, or one already sent.
 	const DRAFT_GONE = array( 'wx_40007', 'wx_53403', 'wx_53404' );
@@ -199,7 +203,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				break;
 			}
 			// Only a post that makes a full article; see shortfall().
-			if ( ! self::sent( $post->ID ) && '' === self::shortfall( $post ) ) {
+			if ( ! self::sent( $post->ID ) && '' === self::shortfall( $post, $options ) ) {
 				$found[] = (int) $post->ID;
 			}
 		}
@@ -332,10 +336,12 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * @return array|WP_Error media_id, posts sent, and posts skipped with the reason.
 	 */
 	public static function create( $post_ids, $options = null, $source = 'manual' ) {
-		$options  = self::options( $options );
-		$articles = array();
-		$posts    = array();
-		$skipped  = array();
+		$options   = self::options( $options );
+		$articles  = array();
+		$posts     = array();
+		$skipped   = array();
+		$automatic = 'manual' !== $source;
+		$reviewed  = array();
 
 		self::$images_left  = self::DRAFT_IMAGES;
 		self::$images_until = microtime( true ) + self::IMAGE_SECONDS;
@@ -347,6 +353,32 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			if ( ! self::sendable( $post ) ) {
 				$skipped[ $post_id ] = 'not_public';
 				continue;
+			}
+			if ( $automatic ) {
+				$reason = self::shortfall( $post, $options );
+				if ( '' !== $reason ) {
+					$skipped[ $post_id ] = $reason;
+					continue;
+				}
+				// Existing effects are updated only on their own, after native reconciliation.
+				if ( self::sent( $post_id ) ) {
+					$draft = self::draft_of( $post_id );
+					if ( 1 !== count( $post_ids ) || null === $draft ) {
+						return self::note( new WP_Error( 'wx_reconcile', 'Existing WeChat record requires reconciliation.' ), $source );
+					}
+					self::$draft_times = null;
+					if ( 'current' !== self::draft_state( $draft, $options ) ) {
+						return self::note( new WP_Error( 'wx_reconcile', 'Native draft is missing, unknown or edited; reconcile before updating.' ), $source );
+					}
+				}
+				// Native readback may take time: validate again before the first upload.
+				$current  = get_post( $post_id );
+				$snapshot = self::review_snapshot( $current, $options );
+				if ( is_wp_error( $snapshot ) || '' !== self::review_shortfall( $current, $options ) ) {
+					return self::note( new WP_Error( 'wx_review', 'The curated review changed before conversion.' ), $source );
+				}
+				$post                 = $current;
+				$reviewed[ $post_id ] = $snapshot['digest'];
 			}
 			$article = self::article( $post, $options );
 			// WeChat refusing the account, as for an address not in the IP whitelist, stops here.
@@ -363,6 +395,16 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( ! $articles ) {
 			$error = new WP_Error( 'wx_nothing', __( 'No post could be made into an article.', 'ai-chat-for-amazon-bedrock' ), array( 'skipped' => $skipped ) );
 			return self::note( $error, $source, $skipped );
+		}
+		if ( $automatic ) {
+			$current_options = self::options( null );
+			foreach ( $posts as $post ) {
+				$current  = get_post( $post->ID );
+				$snapshot = self::review_snapshot( $current, $current_options );
+				if ( is_wp_error( $snapshot ) || '' !== self::review_shortfall( $current, $current_options ) || ! hash_equals( $reviewed[ $post->ID ], $snapshot['digest'] ) ) {
+					return self::note( new WP_Error( 'wx_review', 'The curated version changed during conversion; no draft was written.' ), $source );
+				}
+			}
 		}
 		// A post sent again replaces its article in the draft it is still in, rather than making
 		// a second draft; a draft already published or deleted is made anew.
@@ -384,7 +426,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			);
 			// Only a draft WeChat no longer has, published or deleted, is made anew; any other
 			// refusal is reported, so a post is never left in two drafts.
-			if ( is_wp_error( $updated ) && ! in_array( $updated->get_error_code(), self::DRAFT_GONE, true ) ) {
+			if ( is_wp_error( $updated ) && ( $automatic || ! in_array( $updated->get_error_code(), self::DRAFT_GONE, true ) ) ) {
 				return self::note( $updated, $source, $skipped );
 			}
 			$media_id = is_wp_error( $updated ) ? '' : $earlier['media_id'];
@@ -418,7 +460,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		}
 		// Older drafts of a post sent on its own are stale copies: they go, unless another post
 		// shares them.
-		if ( 1 === count( $posts ) ) {
+		if ( ! $automatic && 1 === count( $posts ) ) {
 			self::retire( $posts[0]->ID, $media_id, $options );
 		}
 		$done = array(
@@ -524,7 +566,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * @param WP_Post $post Post.
 	 * @return string The reason, or an empty string.
 	 */
-	public static function shortfall( $post ) {
+	public static function shortfall( $post, $options = null ) {
 		if ( ! self::sendable( $post ) ) {
 			return 'not_public';
 		}
@@ -535,6 +577,10 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( AI_Chat_Bedrock_Security::string_length( preg_replace( '/\s+/u', '', (string) $text ) ) < self::MIN_TEXT ) {
 			return 'too_short';
 		}
+		$review = self::review_shortfall( $post, self::options( $options ) );
+		if ( '' !== $review ) {
+			return $review;
+		}
 		/**
 		 * Why a post should not go to the WeChat draft box on the schedule.
 		 *
@@ -542,6 +588,151 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		 * @param WP_Post $post   Post.
 		 */
 		return (string) apply_filters( 'ai_chat_bedrock_wechat_drafts_shortfall', '', $post );
+	}
+
+	/**
+	 * Read-only version binding. No credentials, uploads or remote image requests.
+	 *
+	 * @param WP_Post $post Post.
+	 * @param array   $options Settings.
+	 * @return array|WP_Error Guest-visible input and its SHA-256.
+	 */
+	private static function review_snapshot( $post, $options ) {
+		if ( ! self::sendable( $post ) ) {
+			return new WP_Error( 'not_public', 'Only public posts can be reviewed.' );
+		}
+		$locales  = array(
+			'zh' => 'zh_CN',
+			'ja' => 'ja',
+			'en' => 'en_US',
+		);
+		$language = AI_Chat_Bedrock_Content::language( $post );
+		$switched = isset( $locales[ $language ] ) && function_exists( 'switch_to_locale' ) && switch_to_locale( $locales[ $language ] );
+		try {
+			$guest = AI_Chat_Bedrock_Content::render_as_guest( $post );
+			$html  = self::clean_html( self::without_players( $guest, self::video_id( $post->ID ) ) );
+		} finally {
+			if ( $switched ) {
+				restore_previous_locale();
+			}
+		}
+		if ( strlen( $guest ) > self::MAX_BYTES || strlen( $post->post_content ) > self::MAX_BYTES ) {
+			return new WP_Error( 'review_input_large', 'Review input exceeds the bounded article size.' );
+		}
+		$id    = (int) get_post_thumbnail_id( $post );
+		$cover = $id ? (string) wp_get_attachment_url( $id ) : '';
+		$file  = self::local_image( $cover, self::COVER_BYTES );
+		if ( null === $file ) {
+			return new WP_Error( 'review_assets', 'The featured cover must have locally readable JPEG/PNG bytes.' );
+		}
+		$assets = array(
+			array(
+				'src'    => $cover,
+				'sha256' => hash_file( 'sha256', $file['path'] ),
+				'mime'   => $file['mime'],
+			),
+		);
+		preg_match_all( '#<img\b[^>]*\ssrc="([^"]+)"#i', $html, $images );
+		if ( count( $images[1] ) > self::MAX_IMAGES ) {
+			return new WP_Error( 'review_assets', 'Too many images for a bounded curated article.' );
+		}
+		foreach ( $images[1] as $src ) {
+			$src   = html_entity_decode( $src, ENT_QUOTES, 'UTF-8' );
+			$image = self::local_image( $src, self::IMAGE_BYTES );
+			if ( null === $image ) {
+				return new WP_Error( 'review_assets', 'Every curated article image must have locally readable JPEG/PNG bytes.' );
+			}
+			$assets[] = array(
+				'src'    => $src,
+				'sha256' => hash_file( 'sha256', $image['path'] ),
+				'mime'   => $image['mime'],
+			);
+		}
+		foreach ( $assets as $asset ) {
+			if ( ! is_string( $asset['sha256'] ) || ! preg_match( '/^[a-f0-9]{64}$/D', $asset['sha256'] ) ) {
+				return new WP_Error( 'review_assets', 'An asset could not be hashed.' );
+			}
+		}
+		$input = array(
+			'version'            => self::REVIEW_VERSION,
+			'post_id'            => (int) $post->ID,
+			// Private source is hashed only, never returned to the reviewer.
+			'source_sha256'      => hash( 'sha256', (string) $post->post_content ),
+			'title'              => get_the_title( $post ),
+			'excerpt'            => (string) $post->post_excerpt,
+			'guest_html'         => $guest,
+			'conversion_html'    => $html,
+			'permalink'          => (string) get_permalink( $post ),
+			'language'           => AI_Chat_Bedrock_Content::language( $post ),
+			'selection_language' => self::language(),
+			'locale'             => function_exists( 'get_locale' ) ? get_locale() : '',
+			'author'             => self::author( $options ),
+			'account'            => AI_Chat_Bedrock_WeChat::app_id( $options ),
+			'video_id'           => self::video_id( $post->ID ),
+			'cover_id'           => $id,
+			'assets'             => $assets,
+			// Changes to conversion/projection code require a fresh editorial review.
+			'converter'          => hash_file( 'sha256', __FILE__ ),
+			'projection'         => hash_file( 'sha256', __DIR__ . '/class-ai-chat-bedrock-content.php' ),
+			'excerpt_projection' => hash_file( 'sha256', __DIR__ . '/class-ai-chat-bedrock-distribution.php' ),
+		);
+		foreach ( array( 'converter', 'projection', 'excerpt_projection' ) as $key ) {
+			if ( ! is_string( $input[ $key ] ) || ! preg_match( '/^[a-f0-9]{64}$/D', $input[ $key ] ) ) {
+				return new WP_Error( 'review_input', 'Conversion source could not be hashed.' );
+			}
+		}
+		$json = wp_json_encode( $input, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+		if ( ! is_string( $json ) ) {
+			return new WP_Error( 'review_input', 'Review input could not be encoded.' );
+		}
+		return array(
+			'digest' => hash( 'sha256', $json ),
+			'input'  => $input,
+		);
+	}
+
+	/** Validate attestations strictly, including values read back from post meta. */
+	private static function valid_attestation( $record ) {
+		if ( ! is_array( $record ) || ! isset( $record['version'], $record['post_id'], $record['digest'], $record['reviewed_at'], $record['expires_at'], $record['reviewer_user_id'], $record['review_identity'], $record['evidence'], $record['checks'], $record['reasons'] ) ) {
+			return false;
+		}
+		if ( self::REVIEW_VERSION !== $record['version'] || ! is_int( $record['post_id'] ) || $record['post_id'] < 1 || ! is_int( $record['reviewer_user_id'] ) || $record['reviewer_user_id'] < 1 || ! is_string( $record['digest'] ) || ! preg_match( '/^[a-f0-9]{64}$/D', $record['digest'] ) ) {
+			return false;
+		}
+		if ( ! is_int( $record['reviewed_at'] ) || ! is_int( $record['expires_at'] ) || $record['reviewed_at'] < 1 || $record['expires_at'] !== $record['reviewed_at'] + self::REVIEW_TTL ) {
+			return false;
+		}
+		if ( ! self::review_text( $record['review_identity'], 3, 160 ) || ! self::review_text( $record['evidence'], 20, 2000 ) || ! is_array( $record['checks'] ) || ! is_array( $record['reasons'] ) || count( $record['checks'] ) !== count( self::REVIEW_CHECKS ) || count( $record['reasons'] ) !== count( self::REVIEW_CHECKS ) ) {
+			return false;
+		}
+		foreach ( self::REVIEW_CHECKS as $check ) {
+			if ( ! isset( $record['checks'][ $check ], $record['reasons'][ $check ] ) || true !== $record['checks'][ $check ] || ! self::review_text( $record['reasons'][ $check ], 20, 2000 ) ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static function review_text( $value, $min, $max ) {
+		return is_string( $value ) && sanitize_textarea_field( $value ) === $value && strlen( trim( $value ) ) >= $min && strlen( $value ) <= $max;
+	}
+
+	private static function review_shortfall( $post, $options ) {
+		if ( ! self::sendable( $post ) ) {
+			return 'not_public';
+		}
+		$record = get_post_meta( $post->ID, self::REVIEW_META, true );
+		if ( '' === $record ) {
+			return 'review_missing';
+		}
+		if ( ! self::valid_attestation( $record ) || (int) $post->ID !== $record['post_id'] ) {
+			return 'review_invalid';
+		}
+		if ( $record['reviewed_at'] > time() || $record['expires_at'] <= time() ) {
+			return 'review_expired';
+		}
+		$snapshot = self::review_snapshot( $post, $options );
+		return is_wp_error( $snapshot ) ? $snapshot->get_error_code() : ( hash_equals( $record['digest'], $snapshot['digest'] ) ? '' : 'review_changed' );
 	}
 
 	/**
@@ -990,7 +1181,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		$seen = get_post_meta( $post_id, self::IMAGES_META, true );
 		$seen = is_array( $seen ) ? $seen : array();
 		$file = self::local_image( $src, self::IMAGE_BYTES );
-		$key  = md5( $account['app_id'] . '|' . ( null !== $file ? $file['path'] . '|' . filemtime( $file['path'] ) : 'url|' . $src ) );
+		$key  = md5( $account['app_id'] . '|' . ( null !== $file ? $file['path'] . '|' . hash_file( 'sha256', $file['path'] ) : 'url|' . $src ) );
 		if ( isset( $seen[ $key ] ) ) {
 			return (string) $seen[ $key ];
 		}
@@ -1032,7 +1223,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			$src  = html_entity_decode( $found[1], ENT_QUOTES, 'UTF-8' );
 			$file = self::local_image( $src, self::COVER_BYTES );
 		}
-		$key   = md5( $account['app_id'] . '|' . ( null !== $file ? $file['path'] . '|' . filemtime( $file['path'] ) : 'url|' . $src ) );
+		$key   = md5( $account['app_id'] . '|' . ( null !== $file ? $file['path'] . '|' . hash_file( 'sha256', $file['path'] ) : 'url|' . $src ) );
 		$saved = get_post_meta( $post->ID, self::COVER_META, true );
 		if ( '' !== $src && is_array( $saved ) && isset( $saved['key'], $saved['media_id'] ) && $key === $saved['key'] ) {
 			return (string) $saved['media_id'];
@@ -1263,7 +1454,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			if ( $done >= self::MAX_ARTICLES || null === $draft || ! $post instanceof WP_Post ) {
 				continue;
 			}
-			if ( strtotime( $post->post_modified_gmt . ' UTC' ) <= $draft['updated_at'] || '' !== self::shortfall( $post ) ) {
+			if ( strtotime( $post->post_modified_gmt . ' UTC' ) <= $draft['updated_at'] || '' !== self::shortfall( $post, $options ) ) {
 				continue;
 			}
 			$state = self::draft_state( $draft, $options );
@@ -1273,19 +1464,10 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				self::$held = array();
 				return -1;
 			}
-			// No longer a draft: published or deleted in WeChat, and not made again.
+			// Absence does not prove publication or deletion. Preserve the original effect.
 			if ( 'gone' === $state ) {
-				AI_Chat_Bedrock_Distribution::record(
-					$post->ID,
-					array(
-						'platform' => 'wechat',
-						'item_id'  => $draft['media_id'],
-						'status'   => 'submitted',
-						'note'     => __( 'No longer in the WeChat draft box: published or deleted there. Send the post again to make a new draft.', 'ai-chat-for-amazon-bedrock' ),
-					),
-					'wechat'
-				);
-				continue;
+				self::note( new WP_Error( 'wx_reconcile', 'Native draft is missing; preserve its record and reconcile.' ), 'schedule' );
+				return -1;
 			}
 			// A draft its owner edited in WeChat, as by inserting a video, is theirs now.
 			if ( 'edited' === $state ) {
@@ -1521,14 +1703,42 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * Register the ability agents use to send posts.
 	 */
 	public function register_abilities() {
-		if ( ! function_exists( 'wp_register_ability' ) || ! self::enabled() ) {
+		if ( ! function_exists( 'wp_register_ability' ) ) {
+			return;
+		}
+		foreach ( array(
+			'get-wechat-review'  => 'ability_get_review',
+			'review-wechat-post' => 'ability_review',
+		) as $name => $callback ) {
+			wp_register_ability(
+				'ai-chat-bedrock/' . $name,
+				array(
+					'label'               => 'get-wechat-review' === $name ? __( 'Read the current WeChat review input', 'ai-chat-for-amazon-bedrock' ) : __( 'Record a curated WeChat review', 'ai-chat-for-amazon-bedrock' ),
+					'description'         => __( 'Read the public version binding or record an editorial attestation for that exact digest. Requires permission to publish posts and edit the post. Does not contact WeChat.', 'ai-chat-for-amazon-bedrock' ),
+					'input_schema'        => self::review_schema( 'ability_review' === $callback ),
+					'output_schema'       => array( 'type' => 'object' ),
+					'execute_callback'    => array( $this, $callback ),
+					'permission_callback' => array( $this, 'can_review' ),
+					'category'            => AI_Chat_Bedrock_Abilities::CATEGORY,
+					'meta'                => array(
+						'annotations' => array(
+							'readonly'    => 'ability_get_review' === $callback,
+							'destructive' => false,
+							'idempotent'  => 'ability_get_review' === $callback,
+						),
+						'public'      => true,
+					),
+				)
+			);
+		}
+		if ( ! self::enabled() ) {
 			return;
 		}
 		wp_register_ability(
 			'ai-chat-bedrock/create-wechat-draft',
 			array(
 				'label'               => __( 'Send posts to the WeChat draft box', 'ai-chat-for-amazon-bedrock' ),
-				'description'         => __( 'Make one draft in the WeChat Official Account from up to eight published posts, in order, and note it in their publishing records. Nothing is published: the owner publishes the draft in the Official Accounts Platform.', 'ai-chat-for-amazon-bedrock' ),
+				'description'         => __( 'Make one draft in the WeChat Official Account from up to eight published posts with current curated reviews, in order, and note it in their publishing records. Nothing is published: the owner publishes the draft in the Official Accounts Platform.', 'ai-chat-for-amazon-bedrock' ),
 				'input_schema'        => self::schema(),
 				'output_schema'       => array( 'type' => 'object' ),
 				'execute_callback'    => array( $this, 'ability_create' ),
@@ -1573,7 +1783,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			return false;
 		}
 		foreach ( $ids as $id ) {
-			if ( ! current_user_can( 'edit_post', absint( $id ) ) ) {
+			if ( ! is_int( $id ) || $id < 1 || ! current_user_can( 'edit_post', $id ) ) {
 				return false;
 			}
 		}
@@ -1581,8 +1791,122 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	}
 
 	public function ability_create( $input ) {
+		if ( ! $this->can_send( $input ) ) {
+			return new WP_Error( 'forbidden', __( 'This account cannot send those posts.', 'ai-chat-for-amazon-bedrock' ) );
+		}
 		$done = self::create( isset( $input['post_ids'] ) ? (array) $input['post_ids'] : array(), null, 'agent' );
 		return is_wp_error( $done ) ? new WP_Error( $done->get_error_code(), self::describe( $done ) ) : $done;
+	}
+
+	public static function review_schema( $write = false ) {
+		$properties = array(
+			'post_id' => array(
+				'type'    => 'integer',
+				'minimum' => 1,
+			),
+		);
+		if ( $write ) {
+			$properties['digest']          = array(
+				'type'    => 'string',
+				'pattern' => '^[a-f0-9]{64}$',
+			);
+			$properties['review_identity'] = array(
+				'type'      => 'string',
+				'minLength' => 3,
+				'maxLength' => 160,
+			);
+			$properties['evidence']        = array(
+				'type'      => 'string',
+				'minLength' => 20,
+				'maxLength' => 2000,
+			);
+			$checks                        = array();
+			$reasons                       = array();
+			foreach ( self::REVIEW_CHECKS as $check ) {
+				$checks[ $check ]  = array(
+					'type' => 'boolean',
+					'enum' => array( true ),
+				);
+				$reasons[ $check ] = array(
+					'type'      => 'string',
+					'minLength' => 20,
+					'maxLength' => 2000,
+				);
+			}
+			$properties['checks']  = array(
+				'type'                 => 'object',
+				'properties'           => $checks,
+				'required'             => self::REVIEW_CHECKS,
+				'additionalProperties' => false,
+			);
+			$properties['reasons'] = array(
+				'type'                 => 'object',
+				'properties'           => $reasons,
+				'required'             => self::REVIEW_CHECKS,
+				'additionalProperties' => false,
+			);
+		}
+		return array(
+			'type'                 => 'object',
+			'properties'           => $properties,
+			'required'             => array_keys( $properties ),
+			'additionalProperties' => false,
+		);
+	}
+
+	public function can_review( $input = array() ) {
+		return is_array( $input ) && isset( $input['post_id'] ) && is_int( $input['post_id'] ) && $input['post_id'] > 0 && current_user_can( 'publish_posts' ) && current_user_can( 'edit_post', $input['post_id'] );
+	}
+
+	/** Permission checks are repeated here for direct callers as well as ability/MCP dispatch. */
+	public function ability_get_review( $input ) {
+		if ( ! $this->can_review( $input ) ) {
+			return new WP_Error( 'forbidden', 'Permission to publish and edit this post is required.' );
+		}
+		$post     = get_post( $input['post_id'] );
+		$options  = self::options( null );
+		$snapshot = self::review_snapshot( $post, $options );
+		if ( is_wp_error( $snapshot ) ) {
+			return $snapshot;
+		}
+		$record                = get_post_meta( $post->ID, self::REVIEW_META, true );
+		$snapshot['review']    = self::valid_attestation( $record ) ? $record : null;
+		$snapshot['shortfall'] = self::shortfall( $post, $options );
+		return $snapshot;
+	}
+
+	public function ability_review( $input ) {
+		if ( ! $this->can_review( $input ) ) {
+			return new WP_Error( 'forbidden', 'Permission to publish and edit this post is required.' );
+		}
+		$now    = time();
+		$record = array(
+			'version'          => self::REVIEW_VERSION,
+			'post_id'          => $input['post_id'],
+			'digest'           => isset( $input['digest'] ) ? $input['digest'] : null,
+			'reviewed_at'      => $now,
+			'expires_at'       => $now + self::REVIEW_TTL,
+			'reviewer_user_id' => get_current_user_id(),
+			'review_identity'  => isset( $input['review_identity'] ) ? $input['review_identity'] : null,
+			'evidence'         => isset( $input['evidence'] ) ? $input['evidence'] : null,
+			'checks'           => isset( $input['checks'] ) ? $input['checks'] : null,
+			'reasons'          => isset( $input['reasons'] ) ? $input['reasons'] : null,
+		);
+		if ( ! self::valid_attestation( $record ) ) {
+			return new WP_Error( 'review_invalid', 'Every required check needs a true attestation and a specific substantive reason, with review identity and external evidence.' );
+		}
+		$snapshot = self::review_snapshot( get_post( $input['post_id'] ), self::options( null ) );
+		if ( is_wp_error( $snapshot ) ) {
+			return $snapshot;
+		}
+		if ( ! hash_equals( $snapshot['digest'], $record['digest'] ) ) {
+			return new WP_Error( 'review_changed', 'Review the current version before recording its digest.' );
+		}
+		// WordPress unslashes meta values. Preserve the exact audit text across storage.
+		if ( false === update_post_meta( $input['post_id'], self::REVIEW_META, wp_slash( $record ) ) ) {
+			return new WP_Error( 'review_store', 'The review could not be stored.' );
+		}
+		return $this->ability_get_review( array( 'post_id' => $input['post_id'] ) );
 	}
 
 	/**
@@ -1626,16 +1950,18 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			return sprintf( __( 'WeChat does not accept calls from %s. Add it to the IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform.', 'ai-chat-for-amazon-bedrock' ), '' !== $ip ? $ip : __( 'this server\'s address', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		$known = array(
-			'wx_secret'  => __( 'The AppID or AppSecret is missing.', 'ai-chat-for-amazon-bedrock' ),
-			'wx_40125'   => __( 'WeChat did not accept the AppSecret. Reset it in the WeChat Developers Platform and enter the new one.', 'ai-chat-for-amazon-bedrock' ),
-			'wx_40013'   => __( 'WeChat did not accept the AppID.', 'ai-chat-for-amazon-bedrock' ),
-			'wx_40243'   => __( 'The AppSecret is frozen in the WeChat Developers Platform.', 'ai-chat-for-amazon-bedrock' ),
-			'wx_48001'   => __( 'This account may not use that WeChat interface.', 'ai-chat-for-amazon-bedrock' ),
-			'wx_45009'   => __( 'The account reached WeChat\'s daily limit for this interface. Try again tomorrow.', 'ai-chat-for-amazon-bedrock' ),
-			'no_cover'   => __( 'The post needs a featured image in JPEG or PNG for the cover.', 'ai-chat-for-amazon-bedrock' ),
-			'not_public' => __( 'Only published posts that anyone can read are sent.', 'ai-chat-for-amazon-bedrock' ),
-			'too_short'  => __( 'The post has too little public text for an article.', 'ai-chat-for-amazon-bedrock' ),
-			'wx_nothing' => __( 'No post could be made into an article: each must be published, readable by anyone, and have a featured image or an image in the text, in JPEG or PNG.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_secret'    => __( 'The AppID or AppSecret is missing.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_40125'     => __( 'WeChat did not accept the AppSecret. Reset it in the WeChat Developers Platform and enter the new one.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_40013'     => __( 'WeChat did not accept the AppID.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_40243'     => __( 'The AppSecret is frozen in the WeChat Developers Platform.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_48001'     => __( 'This account may not use that WeChat interface.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_45009'     => __( 'The account reached WeChat\'s daily limit for this interface. Try again tomorrow.', 'ai-chat-for-amazon-bedrock' ),
+			'no_cover'     => __( 'The post needs a featured image in JPEG or PNG for the cover.', 'ai-chat-for-amazon-bedrock' ),
+			'not_public'   => __( 'Only published posts that anyone can read are sent.', 'ai-chat-for-amazon-bedrock' ),
+			'too_short'    => __( 'The post has too little public text for an article.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_nothing'   => __( 'No post could be made into an article: each must be published, readable by anyone, and have a featured image or an image in the text, in JPEG or PNG.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_review'    => __( 'The current article needs a valid curated review before an automatic draft can be written.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_reconcile' => __( 'The existing WeChat draft needs reconciliation. Its record was preserved; no replacement draft was created.', 'ai-chat-for-amazon-bedrock' ),
 		);
 		if ( isset( $known[ $code ] ) ) {
 			return $known[ $code ];

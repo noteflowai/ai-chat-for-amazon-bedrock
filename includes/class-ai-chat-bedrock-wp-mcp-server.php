@@ -158,10 +158,19 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 	 */
 	private function distribution_tools() {
 		$tools = array();
+		if ( class_exists( 'AI_Chat_Bedrock_WeChat_Drafts' ) ) {
+			foreach ( array( 'get_wechat_review', 'review_wechat_post' ) as $name ) {
+				$tools[ $name ] = array(
+					'name'        => $name,
+					'description' => 'get_wechat_review' === $name ? 'Read current guest-visible WeChat input, SHA-256 version binding and curated review status. Requires publish_posts and edit_post. No WeChat API calls.' : 'Record an editorial review for the exact current WeChat digest, with external reviewer identity/evidence and all required checks and substantive reasons. Requires publish_posts and edit_post. Records an attestation, not proof of model independence; does not make or publish a draft.',
+					'parameters'  => AI_Chat_Bedrock_WeChat_Drafts::review_schema( 'review_wechat_post' === $name ),
+				);
+			}
+		}
 		if ( class_exists( 'AI_Chat_Bedrock_WeChat_Drafts' ) && AI_Chat_Bedrock_WeChat_Drafts::enabled() ) {
 			$tools['create_wechat_draft'] = array(
 				'name'        => 'create_wechat_draft',
-				'description' => 'Make one draft in the site\'s WeChat Official Account from up to eight published posts, in order: title, excerpt, cover from the featured image, the text and images a signed-out visitor sees, and the post as Read more. Nothing is published; the owner publishes the draft in the Official Accounts Platform. Notes the draft in each post\'s publishing record. Requires permission to publish posts and to edit each one.',
+				'description' => 'Make one draft in the site\'s WeChat Official Account from up to eight published posts with current curated reviews, in order: title, excerpt, cover from the featured image, the text and images a signed-out visitor sees, and the post as Read more. Nothing is published; the owner publishes the draft in the Official Accounts Platform. Notes the draft in each post\'s publishing record. Requires permission to publish posts and to edit each one.',
 				'parameters'  => AI_Chat_Bedrock_WeChat_Drafts::schema(),
 			);
 		}
@@ -563,6 +572,8 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 			case 'record_publication':
 			case 'list_publications':
 			case 'create_wechat_draft':
+			case 'get_wechat_review':
+			case 'review_wechat_post':
 			case 'prepare_publish_kit':
 				return $this->distribution_call( $name, $arguments );
 		}
@@ -607,6 +618,10 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 			return new WP_Error( 'tool_unavailable', __( 'This tool is not enabled on this site.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		$arguments = is_array( $arguments ) ? $arguments : array();
+		if ( in_array( $name, array( 'get_wechat_review', 'review_wechat_post' ), true ) ) {
+			$drafts = new AI_Chat_Bedrock_WeChat_Drafts();
+			return 'get_wechat_review' === $name ? $drafts->ability_get_review( $arguments ) : $drafts->ability_review( $arguments );
+		}
 		if ( 'prepare_publish_kit' === $name ) {
 			$kit = new AI_Chat_Bedrock_Publish_Kit();
 			return $kit->can_generate( $arguments ) ? $kit->ability_generate( $arguments ) : new WP_Error( 'forbidden', __( 'This account cannot edit that post.', 'ai-chat-for-amazon-bedrock' ) );
