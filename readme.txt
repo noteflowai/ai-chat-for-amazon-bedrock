@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai, chatbot, ai-agent, mcp, connector
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.68.0
+Stable tag: 1.69.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -489,6 +489,12 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.69.0 =
+* Automatic WeChat drafts require a current editorial review of the exact public article, locally bound image files and conversion source. Reviews cover reader fit, original value, evidence, rights, mobile readability, safety and public-only content; changed or expired inputs require another review.
+* Authorized editors and agents can read the review input and record its attestation through protected WordPress abilities and MCP tools. The publishing pipeline remains responsible for independent review and the final native draft preview.
+* Automatic updates hold missing, unknown or externally changed WeChat drafts for reconciliation instead of recreating them. Final publication and follower sending remain with the Official Account owner.
+* Updated Chinese and Japanese translations and release checks for the review workflow.
+
 = 1.68.0 =
 * MCP settings: switching MCP tools or public access on is saved with a Save button, as on every other screen, not the moment a box is ticked. Saving the tool policy, AI clients or revoking connections now confirms it and returns to that section.
 * Scheduled WeChat drafts and YouTube uploads take their one-at-a-time lock atomically, so two background runs started together can no longer both go ahead and make a duplicate draft or write one upload twice.
@@ -510,6 +516,9 @@ what a good answer says.
 * Diagnostics and Site Health warn when the plugin's background tasks are overdue, as when WP-Cron stops running, and say how to fix it.
 
 == Upgrade Notice ==
+
+= 1.69.0 =
+Automatic WeChat drafting now requires a current curated review. Review existing candidates before the next scheduled draft; missing or changed native drafts require reconciliation.
 
 = 1.68.0 =
 MCP access is saved with a Save button, and every MCP save is confirmed.
