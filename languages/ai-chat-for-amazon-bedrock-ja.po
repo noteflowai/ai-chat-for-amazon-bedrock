@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Chatbot & Agents for Amazon Bedrock 1.69.0\n"
+"Project-Id-Version: AI Chatbot & Agents for Amazon Bedrock 1.70.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "POT-Creation-Date: 2026-10-08T14:03:11+00:00\n"
 "PO-Revision-Date: 2026-10-08T14:03:21+00:00\n"

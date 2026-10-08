@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai, chatbot, ai-agent, mcp, connector
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.69.0
+Stable tag: 1.70.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -489,6 +489,11 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.70.0 =
+* Authorized editors and agents can prepare a separate static WeChat edition with its own title, excerpt and local cover. The published WordPress article stays unchanged.
+* Automatic draft selection requires an explicit public edition and a current independent review bound to its exact source and image bytes. Missing, changed or unknown drafts remain held for reconciliation.
+* The real WordPress abilities and MCP integration is covered by release checks. Final draft preview, publication and follower sending remain with the Official Account owner.
+
 = 1.69.0 =
 * Automatic WeChat drafts require a current editorial review of the exact public article, locally bound image files and conversion source. Reviews cover reader fit, original value, evidence, rights, mobile readability, safety and public-only content; changed or expired inputs require another review.
 * Authorized editors and agents can read the review input and record its attestation through protected WordPress abilities and MCP tools. The publishing pipeline remains responsible for independent review and the final native draft preview.
@@ -516,6 +521,9 @@ what a good answer says.
 * Diagnostics and Site Health warn when the plugin's background tasks are overdue, as when WP-Cron stops running, and say how to fix it.
 
 == Upgrade Notice ==
+
+= 1.70.0 =
+Prepare and independently review a public WeChat edition before automatic drafting. Keep one draft writer and schedule owner; this release does not enable drafting or publish articles.
 
 = 1.69.0 =
 Automatic WeChat drafting now requires a current curated review. Review existing candidates before the next scheduled draft; missing or changed native drafts require reconciliation.

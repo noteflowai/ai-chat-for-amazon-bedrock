@@ -39,7 +39,9 @@ attestations and the sole writer's source/native drift, reconciliation and final
 remain required. Source acceptance includes setter authorization, malformed input,
 local byte drift, privacy and the real MCP-to-writer path. Independent source/security
 review and original-owner adoption/native-copy review remain separate gates; no version
-bump or deployment is part of this maintenance work.
+bump or deployment was part of the source-only maintenance acceptance. Release 1.70.0
+packages this reviewed change; WordPress.org distribution, site installation, settings
+and native draft acceptance are separate checks owned by the original release operator.
 
 | ID | Outcome | Acceptance evidence |
 | --- | --- | --- |
