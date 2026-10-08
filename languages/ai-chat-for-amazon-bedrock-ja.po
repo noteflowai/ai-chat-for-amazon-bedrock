@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Chatbot & Agents for Amazon Bedrock 1.69.0\n"
+"Project-Id-Version: AI Chatbot & Agents for Amazon Bedrock 1.70.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "POT-Creation-Date: 2026-10-08T14:03:11+00:00\n"
 "PO-Revision-Date: 2026-10-08T14:03:21+00:00\n"
@@ -7657,3 +7657,15 @@ msgstr "自動で下書きを作成するには、現在の記事に対する有
 #: includes/class-ai-chat-bedrock-wechat-drafts.php:1964
 msgid "The existing WeChat draft needs reconciliation. Its record was preserved; no replacement draft was created."
 msgstr "既存のWeChat下書きの状態を照合する必要があります。元の記録は保持されており、代わりの下書きは作成されていません。"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1850
+msgid "Read the public WeChat edition"
+msgstr "WeChat の公開版を読む"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1850
+msgid "Prepare a public WeChat edition"
+msgstr "WeChat の公開版を準備する"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1851
+msgid "Read or prepare a protected static public edition for an existing post. Requires permission to publish posts and edit the post. Does not contact WeChat or change the canonical post."
+msgstr "既存の記事の保護された静的な公開版を読んだり準備したりします。記事の公開権限と対象記事の編集権限が必要です。WeChat への通信や元の記事の変更は行いません。"

@@ -2,10 +2,10 @@
 /**
  * Featured posts as drafts in the WeChat Official Account.
  *
- * A post goes to the account's draft box as an article: its title, author, excerpt, a cover
- * from the featured image, the text and images a signed-out visitor sees, and the post's
- * address as "Read more". Images are uploaded to WeChat, which shows no others, and links in
- * the text become plain text, since WeChat does not open them; "Read more" leads to the post.
+ * A post's protected public edition supplies its independent title, excerpt, local cover
+ * and static HTML. The explicit human editor path may use a signed-out projection only
+ * when no edition exists. Images are uploaded to WeChat and links become plain text;
+ * "Read more" leads to the canonical post, whose body is never changed here.
  *
  * Only a draft is made. Since July 2025 WeChat lets only verified company accounts publish or
  * send to all followers through its API, so publishing stays a tap in the Official Accounts
@@ -38,12 +38,14 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 
 
 	// Where the video goes, until the article is styled.
-	const VIDEO_MARK     = '[[aicfab-wechat-video]]';
-	const COVER_META     = '_aicfab_wechat_cover';
-	const REVIEW_META    = '_aicfab_wechat_review';
-	const REVIEW_VERSION = 1;
-	const REVIEW_TTL     = 604800;
-	const REVIEW_CHECKS  = array( 'topic_fit', 'original_value', 'evidence', 'rights', 'mobile_readability', 'safety', 'public_only' );
+	const VIDEO_MARK      = '[[aicfab-wechat-video]]';
+	const COVER_META      = '_aicfab_wechat_cover';
+	const REVIEW_META     = '_aicfab_wechat_review';
+	const REVIEW_VERSION  = 1;
+	const REVIEW_TTL      = 604800;
+	const REVIEW_CHECKS   = array( 'topic_fit', 'original_value', 'evidence', 'rights', 'mobile_readability', 'safety', 'public_only' );
+	const EDITION_META    = '_aicfab_wechat_edition';
+	const EDITION_VERSION = 1;
 
 	// WeChat's answers for a draft it no longer has: an unknown media_id, or one already sent.
 	const DRAFT_GONE = array( 'wx_40007', 'wx_53403', 'wx_53404' );
@@ -481,17 +483,24 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * @return array|WP_Error
 	 */
 	public static function article( $post, $options ) {
+		$edition = metadata_exists( 'post', $post->ID, self::EDITION_META ) ? self::edition_for_post( $post ) : null;
+		if ( is_wp_error( $edition ) ) {
+			return $edition;
+		}
 		$account = self::account( $options );
-		$cover   = self::cover( $post, $account );
+		$cover   = self::cover( $post, $account, $edition );
 		if ( is_wp_error( $cover ) ) {
 			return $cover;
 		}
-		$content = self::content( $post, $account );
+		$content = self::content( $post, $account, $edition );
+		if ( is_wp_error( $content ) ) {
+			return $content;
+		}
 		return array(
 			'article_type'          => 'news',
-			'title'                 => self::title( html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ) ),
+			'title'                 => null !== $edition ? $edition['record']['title'] : self::title( html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ) ),
 			'author'                => self::author( $options ),
-			'digest'                => self::digest( $post, $content ),
+			'digest'                => null !== $edition ? $edition['record']['excerpt'] : self::digest( $post, $content ),
 			'content'               => $content,
 			'content_source_url'    => (string) get_permalink( $post ),
 			'thumb_media_id'        => $cover,
@@ -561,7 +570,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 *
 	 * A person checks every draft before it is published, and a post sent by hand is the
 	 * sender's choice; the schedule, which nobody watches, sends only posts that make a full
-	 * article: published and public, with a cover image, and enough text a guest can read.
+	 * article: published and public, with a local curated edition, cover and current review.
 	 *
 	 * @param WP_Post $post Post.
 	 * @return string The reason, or an empty string.
@@ -570,10 +579,11 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( ! self::sendable( $post ) ) {
 			return 'not_public';
 		}
-		if ( ! get_post_thumbnail_id( $post ) ) {
-			return 'no_cover';
+		$edition = self::edition_for_post( $post );
+		if ( is_wp_error( $edition ) ) {
+			return $edition->get_error_code();
 		}
-		$text = AI_Chat_Bedrock_Content::public_text( $post );
+		$text = html_entity_decode( wp_strip_all_tags( $edition['html'] ), ENT_QUOTES, 'UTF-8' );
 		if ( AI_Chat_Bedrock_Security::string_length( preg_replace( '/\s+/u', '', (string) $text ) ) < self::MIN_TEXT ) {
 			return 'too_short';
 		}
@@ -595,11 +605,15 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 *
 	 * @param WP_Post $post Post.
 	 * @param array   $options Settings.
-	 * @return array|WP_Error Guest-visible input and its SHA-256.
+	 * @return array|WP_Error Explicit public edition input and its SHA-256.
 	 */
 	private static function review_snapshot( $post, $options ) {
 		if ( ! self::sendable( $post ) ) {
-			return new WP_Error( 'not_public', 'Only public posts can be reviewed.' );
+			return self::preparation_error( 'not_public', 'Only public posts can be reviewed.', 422 );
+		}
+		$edition = self::edition_for_post( $post );
+		if ( is_wp_error( $edition ) ) {
+			return $edition;
 		}
 		$locales  = array(
 			'zh' => 'zh_CN',
@@ -609,48 +623,10 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		$language = AI_Chat_Bedrock_Content::language( $post );
 		$switched = isset( $locales[ $language ] ) && function_exists( 'switch_to_locale' ) && switch_to_locale( $locales[ $language ] );
 		try {
-			$guest = AI_Chat_Bedrock_Content::render_as_guest( $post );
-			$html  = self::clean_html( self::without_players( $guest, self::video_id( $post->ID ) ) );
+			$html = self::clean_html( $edition['html'] );
 		} finally {
 			if ( $switched ) {
 				restore_previous_locale();
-			}
-		}
-		if ( strlen( $guest ) > self::MAX_BYTES || strlen( $post->post_content ) > self::MAX_BYTES ) {
-			return new WP_Error( 'review_input_large', 'Review input exceeds the bounded article size.' );
-		}
-		$id    = (int) get_post_thumbnail_id( $post );
-		$cover = $id ? (string) wp_get_attachment_url( $id ) : '';
-		$file  = self::local_image( $cover, self::COVER_BYTES );
-		if ( null === $file ) {
-			return new WP_Error( 'review_assets', 'The featured cover must have locally readable JPEG/PNG bytes.' );
-		}
-		$assets = array(
-			array(
-				'src'    => $cover,
-				'sha256' => hash_file( 'sha256', $file['path'] ),
-				'mime'   => $file['mime'],
-			),
-		);
-		preg_match_all( '#<img\b[^>]*\ssrc="([^"]+)"#i', $html, $images );
-		if ( count( $images[1] ) > self::MAX_IMAGES ) {
-			return new WP_Error( 'review_assets', 'Too many images for a bounded curated article.' );
-		}
-		foreach ( $images[1] as $src ) {
-			$src   = html_entity_decode( $src, ENT_QUOTES, 'UTF-8' );
-			$image = self::local_image( $src, self::IMAGE_BYTES );
-			if ( null === $image ) {
-				return new WP_Error( 'review_assets', 'Every curated article image must have locally readable JPEG/PNG bytes.' );
-			}
-			$assets[] = array(
-				'src'    => $src,
-				'sha256' => hash_file( 'sha256', $image['path'] ),
-				'mime'   => $image['mime'],
-			);
-		}
-		foreach ( $assets as $asset ) {
-			if ( ! is_string( $asset['sha256'] ) || ! preg_match( '/^[a-f0-9]{64}$/D', $asset['sha256'] ) ) {
-				return new WP_Error( 'review_assets', 'An asset could not be hashed.' );
 			}
 		}
 		$input = array(
@@ -658,9 +634,11 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			'post_id'            => (int) $post->ID,
 			// Private source is hashed only, never returned to the reviewer.
 			'source_sha256'      => hash( 'sha256', (string) $post->post_content ),
-			'title'              => get_the_title( $post ),
-			'excerpt'            => (string) $post->post_excerpt,
-			'guest_html'         => $guest,
+			'source_digest'      => $edition['record']['source_digest'],
+			'edition'            => $edition['record'],
+			'title'              => $edition['record']['title'],
+			'excerpt'            => $edition['record']['excerpt'],
+			'guest_html'         => $edition['html'],
 			'conversion_html'    => $html,
 			'permalink'          => (string) get_permalink( $post ),
 			'language'           => AI_Chat_Bedrock_Content::language( $post ),
@@ -669,8 +647,8 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			'author'             => self::author( $options ),
 			'account'            => AI_Chat_Bedrock_WeChat::app_id( $options ),
 			'video_id'           => self::video_id( $post->ID ),
-			'cover_id'           => $id,
-			'assets'             => $assets,
+			'cover_id'           => $edition['record']['cover_id'],
+			'assets'             => $edition['assets'],
 			// Changes to conversion/projection code require a fresh editorial review.
 			'converter'          => hash_file( 'sha256', __FILE__ ),
 			'projection'         => hash_file( 'sha256', __DIR__ . '/class-ai-chat-bedrock-content.php' ),
@@ -688,6 +666,156 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		return array(
 			'digest' => hash( 'sha256', $json ),
 			'input'  => $input,
+		);
+	}
+
+	/** Preparation failures are actionable input errors, including on read-only abilities. */
+	private static function preparation_error( $code, $message, $status = 422 ) {
+		return new WP_Error(
+			$code,
+			$message,
+			array(
+				'status'    => $status,
+				'shortfall' => array(
+					'code'    => $code,
+					'message' => $message,
+				),
+			)
+		);
+	}
+
+	/** Hash canonical source without running blocks, filters or private shortcodes. */
+	private static function edition_source_digest( $post ) {
+		return hash(
+			'sha256',
+			wp_json_encode(
+				array(
+					(int) $post->ID,
+					(string) $post->post_content,
+					(string) $post->post_title,
+					(string) $post->post_excerpt,
+					AI_Chat_Bedrock_Content::language( $post ),
+					(string) get_permalink( $post ),
+				),
+				JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+			)
+		);
+	}
+
+	/** Static authoring subset; attachment:ID is resolved only from local uploads. */
+	private static function edition_html( $html ) {
+		if ( ! is_string( $html ) || '' === trim( $html ) || ! preg_match( '//u', $html ) ) {
+			return self::preparation_error( 'edition_invalid', 'Edition HTML must be nonempty UTF-8 text.' );
+		}
+		if ( strlen( $html ) > self::MAX_BYTES ) {
+			return self::preparation_error( 'review_input_large', 'Edition HTML exceeds 1 MB.', 413 );
+		}
+		$decoded = html_entity_decode( $html, ENT_QUOTES, 'UTF-8' );
+		if ( preg_match( '#<\s*/?\s*(script|style|iframe|form|video|audio|svg|object|embed|noscript)\b|\[/?[a-z_][^\]]*\]|<!--\s*/?wp:#i', $decoded ) ) {
+			return self::preparation_error( 'edition_invalid', 'Use static public HTML without active elements, blocks or shortcodes.' );
+		}
+		$allowed = array(
+			'img' => array(
+				'src' => true,
+				'alt' => true,
+			),
+			'a'   => array( 'href' => true ),
+			'th'  => array( 'colspan' => true ),
+			'td'  => array( 'colspan' => true ),
+		);
+		foreach ( array( 'p', 'br', 'h1', 'h2', 'h3', 'h4', 'strong', 'b', 'em', 'i', 'u', 'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'hr', 'figure', 'figcaption', 'table', 'thead', 'tbody', 'tr' ) as $tag ) {
+			$allowed[ $tag ] = array();
+		}
+		$html = trim( wp_kses( $html, $allowed, array( 'http', 'https', 'attachment' ) ) );
+		return '' === trim( wp_strip_all_tags( $html ) ) ? self::preparation_error( 'edition_invalid', 'Edition needs public editorial text.' ) : $html;
+	}
+
+	/** Resolve an attachment even when its public URL is offloaded to a CDN. */
+	private static function edition_image( $id, $bytes ) {
+		$uploads = wp_get_upload_dir();
+		$root    = realpath( $uploads['basedir'] );
+		$path    = get_attached_file( $id );
+		$path    = is_string( $path ) ? realpath( $path ) : false;
+		if ( false === $root || false === $path || 0 !== strpos( $path, $root . DIRECTORY_SEPARATOR ) || ! is_readable( $path ) || ! in_array( get_post_mime_type( $id ), array( 'image/jpeg', 'image/png' ), true ) ) {
+			return self::preparation_error( 'review_assets', 'Edition attachments need locally readable JPEG/PNG files in uploads.' );
+		}
+		$src  = rtrim( $uploads['baseurl'], '/' ) . '/' . implode( '/', array_map( 'rawurlencode', explode( DIRECTORY_SEPARATOR, substr( $path, strlen( $root ) + 1 ) ) ) );
+		$file = self::local_image( $src, $bytes );
+		$info = null !== $file ? wp_getimagesize( $file['path'] ) : false;
+		$hash = null !== $file ? hash_file( 'sha256', $file['path'] ) : false;
+		if ( ! is_array( $info ) || $info['mime'] !== $file['mime'] || ! is_string( $hash ) || ! preg_match( '/^[a-f0-9]{64}$/D', $hash ) ) {
+			return self::preparation_error( 'review_assets', 'Selected attachment bytes must be a JPEG/PNG within the image size limit.' );
+		}
+		return array(
+			'attachment_id' => $id,
+			'src'           => $src,
+			'selected_file' => substr( $file['path'], strlen( $root ) + 1 ),
+			'mime'          => $file['mime'],
+			'sha256'        => $hash,
+		);
+	}
+
+	/** Validate the stored edition on every read and writer call, including direct meta drift. */
+	private static function edition_for_post( $post ) {
+		$record = get_post_meta( $post->ID, self::EDITION_META, true );
+		if ( ! metadata_exists( 'post', $post->ID, self::EDITION_META ) ) {
+			return self::preparation_error( 'edition_missing', 'Prepare an explicit public WeChat edition before automatic selection or creation.', 409 );
+		}
+		if ( ! is_array( $record ) || count( $record ) !== 9 || ! isset( $record['version'], $record['post_id'], $record['source_digest'], $record['author_user_id'], $record['stored_at'] ) || self::EDITION_VERSION !== $record['version'] || (int) $post->ID !== $record['post_id'] || ! is_int( $record['author_user_id'] ) || $record['author_user_id'] < 1 || ! is_int( $record['stored_at'] ) || $record['stored_at'] < 1 || $record['stored_at'] > time() || ! is_string( $record['source_digest'] ) || ! preg_match( '/^[a-f0-9]{64}$/D', $record['source_digest'] ) ) {
+			return self::preparation_error( 'edition_invalid', 'Stored edition metadata is malformed.' );
+		}
+		$prepared = self::prepare_edition( $record );
+		if ( is_wp_error( $prepared ) ) {
+			return $prepared;
+		}
+		if ( $prepared['record']['html'] !== $record['html'] ) {
+			return self::preparation_error( 'edition_invalid', 'Stored edition HTML is not sanitized.' );
+		}
+		if ( ! hash_equals( self::edition_source_digest( $post ), $record['source_digest'] ) ) {
+			return self::preparation_error( 'edition_stale', 'Canonical source changed; prepare and review the edition again.', 409 );
+		}
+		$prepared['record'] = $record;
+		return $prepared;
+	}
+
+	private static function prepare_edition( $fields ) {
+		if ( ! isset( $fields['title'], $fields['excerpt'], $fields['html'], $fields['cover_id'] ) || ! self::review_text( $fields['title'], 1, 512 ) || ! self::review_text( $fields['excerpt'], 1, 2000 ) || AI_Chat_Bedrock_Security::string_length( $fields['title'] ) > self::TITLE_CHARS || AI_Chat_Bedrock_Security::string_length( $fields['excerpt'] ) > self::DIGEST_CHARS || ! is_int( $fields['cover_id'] ) || $fields['cover_id'] < 1 ) {
+			return self::preparation_error( 'edition_invalid', 'Edition needs a plain title (1–32 characters), excerpt (1–120 characters), HTML and local cover attachment ID.' );
+		}
+		$html = self::edition_html( $fields['html'] );
+		if ( is_wp_error( $html ) ) {
+			return $html;
+		}
+		$cover = self::edition_image( $fields['cover_id'], self::COVER_BYTES );
+		if ( is_wp_error( $cover ) ) {
+			return $cover;
+		}
+		$fields['html'] = $html;
+		$assets         = array( $cover );
+		$error          = null;
+		$count          = 0;
+		$html           = preg_replace_callback(
+			'#<img\b[^>]*>#i',
+			function ( $tag ) use ( &$assets, &$error, &$count ) {
+				++$count;
+				if ( $count > self::MAX_IMAGES || 1 !== preg_match_all( '#\ssrc\s*=#i', $tag[0] ) || ! preg_match( '#\ssrc="attachment:([1-9][0-9]*)"#', $tag[0], $match ) || (string) (int) $match[1] !== $match[1] ) {
+					$error = self::preparation_error( 'review_assets', 'Use at most 20 body images with src="attachment:ID"; remote images are not reviewable.' );
+					return '';
+				}
+				$image = self::edition_image( (int) $match[1], self::IMAGE_BYTES );
+				if ( is_wp_error( $image ) ) {
+					$error = $image;
+					return '';
+				}
+				$assets[] = $image;
+				return str_replace( 'src="attachment:' . $match[1] . '"', 'src="' . esc_url( $image['src'] ) . '"', $tag[0] );
+			},
+			$html
+		);
+		return null !== $error ? $error : array(
+			'record' => $fields,
+			'html'   => $html,
+			'assets' => $assets,
 		);
 	}
 
@@ -743,7 +871,13 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * @param array   $account Account.
 	 * @return string
 	 */
-	public static function content( $post, $account ) {
+	public static function content( $post, $account, $edition = null ) {
+		if ( null === $edition && metadata_exists( 'post', $post->ID, self::EDITION_META ) ) {
+			$edition = self::edition_for_post( $post );
+		}
+		if ( is_wp_error( $edition ) ) {
+			return $edition;
+		}
 		// The plugin's own lines are in the post's language, which may not be the site's.
 		$locales  = array(
 			'zh' => 'zh_CN',
@@ -753,23 +887,27 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		$language = AI_Chat_Bedrock_Content::language( $post );
 		$switched = isset( $locales[ $language ] ) && function_exists( 'switch_to_locale' ) && switch_to_locale( $locales[ $language ] );
 		$video    = self::video_id( $post->ID );
-		$html     = self::clean_html( self::without_players( AI_Chat_Bedrock_Content::render_as_guest( $post ), $video ) );
+		$html     = null !== $edition ? self::clean_html( $edition['html'] ) : self::clean_html( self::without_players( AI_Chat_Bedrock_Content::render_as_guest( $post ), $video ) );
 		$more     = self::style( '<p>' . esc_html__( 'Tap "Read more" for the full article on the site.', 'ai-chat-for-amazon-bedrock' ) . '</p>' );
 		$fallback = esc_html__( 'If the video does not show, tap "Read more" to watch it on the site.', 'ai-chat-for-amazon-bedrock' );
 		if ( $switched ) {
 			restore_previous_locale();
 		}
 
-		$left = self::MAX_IMAGES;
-		$html = preg_replace_callback(
+		$left  = self::MAX_IMAGES;
+		$error = null;
+		$html  = preg_replace_callback(
 			'#<img\b[^>]*>#i',
-			function ( $tag ) use ( $post, $account, &$left ) {
+			function ( $tag ) use ( $post, $account, $edition, &$left, &$error ) {
 				$src = preg_match( '#\ssrc="([^"]+)"#i', $tag[0], $found ) ? html_entity_decode( $found[1], ENT_QUOTES, 'UTF-8' ) : '';
 				if ( $left < 1 || '' === $src ) {
 					return '';
 				}
-				$url = self::upload_image( $src, $account, $post->ID );
+				$url = self::upload_image( $src, $account, $post->ID, null !== $edition );
 				if ( '' === $url ) {
+					if ( null !== $edition ) {
+						$error = new WP_Error( 'review_assets', 'A reviewed edition image could not be uploaded; no draft was written.' );
+					}
 					return '';
 				}
 				--$left;
@@ -778,6 +916,9 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			},
 			$html
 		);
+		if ( null !== $error ) {
+			return $error;
+		}
 		// An image that could not be used leaves nothing behind.
 		$html = self::style( self::without_empty( $html ) );
 		if ( '' !== $video ) {
@@ -1177,11 +1318,14 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * @param int    $post_id Post, whose uploads are remembered.
 	 * @return string Address, or an empty string when the image cannot be used.
 	 */
-	private static function upload_image( $src, $account, $post_id ) {
+	private static function upload_image( $src, $account, $post_id, $local_only = false ) {
 		$seen = get_post_meta( $post_id, self::IMAGES_META, true );
 		$seen = is_array( $seen ) ? $seen : array();
 		$file = self::local_image( $src, self::IMAGE_BYTES );
-		$key  = md5( $account['app_id'] . '|' . ( null !== $file ? $file['path'] . '|' . hash_file( 'sha256', $file['path'] ) : 'url|' . $src ) );
+		if ( $local_only && null === $file ) {
+			return '';
+		}
+		$key = md5( $account['app_id'] . '|' . ( null !== $file ? $file['path'] . '|' . hash_file( 'sha256', $file['path'] ) : 'url|' . $src ) );
 		if ( isset( $seen[ $key ] ) ) {
 			return (string) $seen[ $key ];
 		}
@@ -1189,7 +1333,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( self::$images_left < 1 || ( self::$images_until && microtime( true ) > self::$images_until ) ) {
 			return '';
 		}
-		$file = null !== $file ? $file : self::remote_image( $src, self::IMAGE_BYTES );
+		$file = null !== $file || $local_only ? $file : self::remote_image( $src, self::IMAGE_BYTES );
 		if ( null === $file ) {
 			return '';
 		}
@@ -1213,13 +1357,13 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * @param array   $account Account.
 	 * @return string|WP_Error The media_id.
 	 */
-	private static function cover( $post, $account ) {
-		$id   = (int) get_post_thumbnail_id( $post );
-		$src  = $id ? (string) wp_get_attachment_url( $id ) : '';
+	private static function cover( $post, $account, $edition = null ) {
+		$id   = null !== $edition ? $edition['record']['cover_id'] : (int) get_post_thumbnail_id( $post );
+		$src  = null !== $edition ? $edition['assets'][0]['src'] : ( $id ? (string) wp_get_attachment_url( $id ) : '' );
 		$file = '' !== $src ? self::local_image( $src, self::COVER_BYTES ) : null;
 		// Without a featured image, the first image a signed-out visitor sees; the raw content could
 		// offer one from a members-only block as the account's public cover.
-		if ( null === $file && preg_match( '#<img\b[^>]*\ssrc="([^"]+)"#i', (string) AI_Chat_Bedrock_Content::render_as_guest( $post ), $found ) ) {
+		if ( null === $edition && null === $file && preg_match( '#<img\b[^>]*\ssrc="([^"]+)"#i', (string) AI_Chat_Bedrock_Content::render_as_guest( $post ), $found ) ) {
 			$src  = html_entity_decode( $found[1], ENT_QUOTES, 'UTF-8' );
 			$file = self::local_image( $src, self::COVER_BYTES );
 		}
@@ -1229,7 +1373,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			return (string) $saved['media_id'];
 		}
 		// An image offloaded to a CDN is fetched from there.
-		$file = null === $file && '' !== $src ? self::remote_image( $src, self::COVER_BYTES ) : $file;
+		$file = null === $edition && null === $file && '' !== $src ? self::remote_image( $src, self::COVER_BYTES ) : $file;
 		if ( null === $file ) {
 			return new WP_Error( 'no_cover', __( 'The post needs a featured image in JPEG or PNG for the cover.', 'ai-chat-for-amazon-bedrock' ) );
 		}
@@ -1709,22 +1853,26 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		foreach ( array(
 			'get-wechat-review'  => 'ability_get_review',
 			'review-wechat-post' => 'ability_review',
+			'get-wechat-edition' => 'ability_get_edition',
+			'set-wechat-edition' => 'ability_set_edition',
 		) as $name => $callback ) {
+			$readonly = in_array( $callback, array( 'ability_get_review', 'ability_get_edition' ), true );
+			$edition  = in_array( $callback, array( 'ability_get_edition', 'ability_set_edition' ), true );
 			wp_register_ability(
 				'ai-chat-bedrock/' . $name,
 				array(
-					'label'               => 'get-wechat-review' === $name ? __( 'Read the current WeChat review input', 'ai-chat-for-amazon-bedrock' ) : __( 'Record a curated WeChat review', 'ai-chat-for-amazon-bedrock' ),
-					'description'         => __( 'Read the public version binding or record an editorial attestation for that exact digest. Requires permission to publish posts and edit the post. Does not contact WeChat.', 'ai-chat-for-amazon-bedrock' ),
-					'input_schema'        => self::review_schema( 'ability_review' === $callback ),
+					'label'               => $edition ? ( $readonly ? __( 'Read the public WeChat edition', 'ai-chat-for-amazon-bedrock' ) : __( 'Prepare a public WeChat edition', 'ai-chat-for-amazon-bedrock' ) ) : ( $readonly ? __( 'Read the current WeChat review input', 'ai-chat-for-amazon-bedrock' ) : __( 'Record a curated WeChat review', 'ai-chat-for-amazon-bedrock' ) ),
+					'description'         => $edition ? __( 'Read or prepare a protected static public edition for an existing post. Requires permission to publish posts and edit the post. Does not contact WeChat or change the canonical post.', 'ai-chat-for-amazon-bedrock' ) : __( 'Read the public version binding or record an editorial attestation for that exact digest. Requires permission to publish posts and edit the post. Does not contact WeChat.', 'ai-chat-for-amazon-bedrock' ),
+					'input_schema'        => $edition ? self::edition_schema( ! $readonly ) : self::review_schema( ! $readonly ),
 					'output_schema'       => array( 'type' => 'object' ),
 					'execute_callback'    => array( $this, $callback ),
 					'permission_callback' => array( $this, 'can_review' ),
 					'category'            => AI_Chat_Bedrock_Abilities::CATEGORY,
 					'meta'                => array(
 						'annotations' => array(
-							'readonly'    => 'ability_get_review' === $callback,
+							'readonly'    => $readonly,
 							'destructive' => false,
-							'idempotent'  => 'ability_get_review' === $callback,
+							'idempotent'  => $readonly,
 						),
 						'public'      => true,
 					),
@@ -1855,13 +2003,79 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	}
 
 	public function can_review( $input = array() ) {
-		return is_array( $input ) && isset( $input['post_id'] ) && is_int( $input['post_id'] ) && $input['post_id'] > 0 && current_user_can( 'publish_posts' ) && current_user_can( 'edit_post', $input['post_id'] );
+		return get_current_user_id() > 0 && is_array( $input ) && isset( $input['post_id'] ) && is_int( $input['post_id'] ) && $input['post_id'] > 0 && current_user_can( 'publish_posts' ) && current_user_can( 'edit_post', $input['post_id'] );
+	}
+
+	public static function edition_schema( $write = false ) {
+		$schema = self::review_schema();
+		if ( $write ) {
+			$schema['properties'] += array(
+				'title'    => array(
+					'type'      => 'string',
+					'minLength' => 1,
+					'maxLength' => self::TITLE_CHARS,
+				),
+				'excerpt'  => array(
+					'type'      => 'string',
+					'minLength' => 1,
+					'maxLength' => self::DIGEST_CHARS,
+				),
+				'html'     => array(
+					'type'        => 'string',
+					'minLength'   => 1,
+					'maxLength'   => self::MAX_BYTES,
+					'description' => 'Static public editorial HTML; use src="attachment:ID" for local body images. No shortcodes or dynamic blocks.',
+				),
+				'cover_id' => array(
+					'type'    => 'integer',
+					'minimum' => 1,
+				),
+			);
+			$schema['required']    = array_keys( $schema['properties'] );
+		}
+		return $schema;
+	}
+
+	public function ability_get_edition( $input ) {
+		$result = $this->ability_get_review( $input );
+		if ( ! is_wp_error( $result ) ) {
+			$result['edition'] = $result['input']['edition'];
+		}
+		return $result;
+	}
+
+	/** Protected metadata only; this never updates canonical post fields or creates a post. */
+	public function ability_set_edition( $input ) {
+		if ( ! $this->can_review( $input ) ) {
+			return self::preparation_error( 'forbidden', 'Permission to publish and edit this post is required.', 403 );
+		}
+		$post = get_post( $input['post_id'] );
+		if ( ! self::sendable( $post ) ) {
+			return self::preparation_error( 'not_public', 'Only public posts can have a public WeChat edition.' );
+		}
+		if ( array_diff( array_keys( $input ), array( 'post_id', 'title', 'excerpt', 'html', 'cover_id' ) ) ) {
+			return self::preparation_error( 'edition_invalid', 'Unexpected edition fields.' );
+		}
+		$prepared = self::prepare_edition( $input );
+		if ( is_wp_error( $prepared ) ) {
+			return $prepared;
+		}
+		$record                   = $prepared['record'];
+		$record['version']        = self::EDITION_VERSION;
+		$record['source_digest']  = self::edition_source_digest( $post );
+		$record['author_user_id'] = get_current_user_id();
+		$record['stored_at']      = time();
+		// WordPress unslashes meta. Preserve the exact sanitized public edition bytes.
+		if ( false === update_post_meta( $post->ID, self::EDITION_META, wp_slash( $record ) ) && get_post_meta( $post->ID, self::EDITION_META, true ) !== $record ) {
+			return new WP_Error( 'edition_store', 'The edition could not be stored.' );
+		}
+		return $this->ability_get_edition( array( 'post_id' => $post->ID ) );
 	}
 
 	/** Permission checks are repeated here for direct callers as well as ability/MCP dispatch. */
 	public function ability_get_review( $input ) {
 		if ( ! $this->can_review( $input ) ) {
-			return new WP_Error( 'forbidden', 'Permission to publish and edit this post is required.' );
+			return self::preparation_error( 'forbidden', 'Permission to publish and edit this post is required.', 403 );
 		}
 		$post     = get_post( $input['post_id'] );
 		$options  = self::options( null );
@@ -1877,7 +2091,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 
 	public function ability_review( $input ) {
 		if ( ! $this->can_review( $input ) ) {
-			return new WP_Error( 'forbidden', 'Permission to publish and edit this post is required.' );
+			return self::preparation_error( 'forbidden', 'Permission to publish and edit this post is required.', 403 );
 		}
 		$now    = time();
 		$record = array(
@@ -1893,14 +2107,14 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			'reasons'          => isset( $input['reasons'] ) ? $input['reasons'] : null,
 		);
 		if ( ! self::valid_attestation( $record ) ) {
-			return new WP_Error( 'review_invalid', 'Every required check needs a true attestation and a specific substantive reason, with review identity and external evidence.' );
+			return self::preparation_error( 'review_invalid', 'Every required check needs a true attestation and a specific substantive reason, with review identity and external evidence.' );
 		}
 		$snapshot = self::review_snapshot( get_post( $input['post_id'] ), self::options( null ) );
 		if ( is_wp_error( $snapshot ) ) {
 			return $snapshot;
 		}
 		if ( ! hash_equals( $snapshot['digest'], $record['digest'] ) ) {
-			return new WP_Error( 'review_changed', 'Review the current version before recording its digest.' );
+			return self::preparation_error( 'review_changed', 'Review the current version before recording its digest.', 409 );
 		}
 		// WordPress unslashes meta values. Preserve the exact audit text across storage.
 		if ( false === update_post_meta( $input['post_id'], self::REVIEW_META, wp_slash( $record ) ) ) {

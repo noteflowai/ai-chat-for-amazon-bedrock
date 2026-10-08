@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Chatbot & Agents for Amazon Bedrock 1.69.0\n"
+"Project-Id-Version: AI Chatbot & Agents for Amazon Bedrock 1.70.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "POT-Creation-Date: 2026-10-08T14:03:11+00:00\n"
 "PO-Revision-Date: 2026-10-08T14:03:21+00:00\n"
@@ -7657,3 +7657,15 @@ msgstr "当前文章须先取得有效的精选审核，才能自动生成草稿
 #: includes/class-ai-chat-bedrock-wechat-drafts.php:1964
 msgid "The existing WeChat draft needs reconciliation. Its record was preserved; no replacement draft was created."
 msgstr "需要核对确认现有微信草稿的状态。其原始记录已保留，未创建替代草稿。"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1850
+msgid "Read the public WeChat edition"
+msgstr "读取微信公开版本"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1850
+msgid "Prepare a public WeChat edition"
+msgstr "准备微信公开版本"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1851
+msgid "Read or prepare a protected static public edition for an existing post. Requires permission to publish posts and edit the post. Does not contact WeChat or change the canonical post."
+msgstr "读取或准备现有文章的受保护静态公开版本。需要发布文章及编辑该文章的权限。不会联系微信或修改原文章。"
