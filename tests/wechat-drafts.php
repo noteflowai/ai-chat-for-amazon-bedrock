@@ -31,12 +31,14 @@ $GLOBALS['aicfab_caps']       = array( 'publish_posts' => true, 'edit_post' => t
 // An uploads folder with real images.
 $aicfab_uploads = sys_get_temp_dir() . '/aicfab-drafts-' . getmypid();
 @mkdir( $aicfab_uploads . '/2026/10', 0777, true );
-file_put_contents( $aicfab_uploads . '/2026/10/robot.jpg', "\xFF\xD8\xFF" . str_repeat( 'a', 2000 ) );
-file_put_contents( $aicfab_uploads . '/2026/10/arm.png', "\x89PNG" . str_repeat( 'b', 3000 ) );
-file_put_contents( $aicfab_uploads . '/2026/10/huge.jpg', "\xFF\xD8\xFF" . str_repeat( 'c', 1100000 ) );
-file_put_contents( $aicfab_uploads . '/2026/10/huge-1024x768.jpg', "\xFF\xD8\xFF" . str_repeat( 'd', 5000 ) );
+$aicfab_jpeg = base64_decode( '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDiKKKK9g8s/9k=' );
+$aicfab_png = base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' );
+file_put_contents( $aicfab_uploads . '/2026/10/robot.jpg', $aicfab_jpeg . str_repeat( 'a', 2000 ) );
+file_put_contents( $aicfab_uploads . '/2026/10/arm.png', $aicfab_png . str_repeat( 'b', 3000 ) );
+file_put_contents( $aicfab_uploads . '/2026/10/huge.jpg', $aicfab_jpeg . str_repeat( 'c', 1100000 ) );
+file_put_contents( $aicfab_uploads . '/2026/10/huge-1024x768.jpg', $aicfab_jpeg . str_repeat( 'd', 5000 ) );
 file_put_contents( $aicfab_uploads . '/2026/10/anim.gif', 'GIF89a' );
-file_put_contents( $aicfab_uploads . '/2026/10/cover.jpg', "\xFF\xD8\xFF" . str_repeat( 'e', 4000 ) );
+file_put_contents( $aicfab_uploads . '/2026/10/cover.jpg', $aicfab_jpeg . str_repeat( 'e', 4000 ) );
 
 class WP_Error {
 	private $code;
@@ -124,6 +126,9 @@ function delete_transient( $key ) {
 function get_post_meta( $id, $key, $single = false ) {
 	return isset( $GLOBALS['aicfab_meta'][ $id ][ $key ] ) ? $GLOBALS['aicfab_meta'][ $id ][ $key ] : '';
 }
+function metadata_exists( $type, $id, $key ) {
+	return isset( $GLOBALS['aicfab_meta'][ $id ] ) && array_key_exists( $key, $GLOBALS['aicfab_meta'][ $id ] );
+}
 function update_post_meta( $id, $key, $value ) {
 	$GLOBALS['aicfab_meta'][ $id ][ $key ] = $value;
 	return true;
@@ -175,6 +180,9 @@ function get_post_thumbnail_id( $post ) {
 	return $post->thumbnail;
 }
 function wp_get_attachment_url( $id ) {
+	if ( ! empty( $GLOBALS['aicfab_cdn_attachments'] ) ) {
+		return 'https://cdn.example.test/offloaded-' . $id . '.jpg';
+	}
 	return 'https://example.test/wp-content/uploads/2026/10/' . ( 7 === $id ? 'cover.jpg' : 'anim.gif' );
 }
 function wp_get_upload_dir() {
@@ -370,7 +378,15 @@ function delete_post_meta( $id, $key ) {
 function wp_nonce_field( $action, $name ) {
 	echo '<input type="hidden" name="' . $name . '" value="nonce-' . $action . '">';
 }
-$GLOBALS['aicfab_attachments'] = array();
+$GLOBALS['aicfab_attachments'] = array(
+	7 => array( $aicfab_uploads . '/2026/10/cover.jpg', 'image/jpeg' ),
+	8 => array( $aicfab_uploads . '/2026/10/robot.jpg', 'image/jpeg' ),
+	9 => array( $aicfab_uploads . '/2026/10/huge.jpg', 'image/jpeg' ),
+	10 => array( $aicfab_uploads . '/2026/10/arm.png', 'image/png' ),
+);
+function wp_getimagesize( $path ) {
+	return @getimagesize( $path );
+}
 function get_attached_file( $id ) {
 	return isset( $GLOBALS['aicfab_attachments'][ $id ] ) ? $GLOBALS['aicfab_attachments'][ $id ][0] : false;
 }
@@ -404,6 +420,7 @@ class AI_Chat_Bedrock_Content {
 		return 'members' !== $post->post_title;
 	}
 	public static function render_as_guest( $post ) {
+		$GLOBALS['aicfab_guest_renders'] = isset( $GLOBALS['aicfab_guest_renders'] ) ? $GLOBALS['aicfab_guest_renders'] + 1 : 1;
 		return preg_replace( '#\[member-answer\].*?\[/member-answer\]#s', '', $post->post_content );
 	}
 	public static function language( $post ) {
@@ -535,9 +552,21 @@ function drafts_review( $id ) {
 	check_drafts( ! is_wp_error( $result ), 'Automatic fixture ' . $id . ' has an explicit current-version review.' );
 	return $result;
 }
-function drafts_local_article( $id = 1 ) {
-	// Keep the manual remote/unsupported-image fixture unchanged; curate a local article for cron.
-	$GLOBALS['aicfab_posts'][ $id ]->post_content = '<p>' . str_repeat( '具身机器人实验。', 140 ) . '</p><img src="https://example.test/wp-content/uploads/2026/10/robot.jpg" alt="Robot">';
+function drafts_edition_input( $id = 1, $extra = array() ) {
+	return array_merge( array(
+		'post_id' => $id,
+		'title' => AI_Chat_Bedrock_WeChat_Drafts::title( get_the_title( $id ) ),
+		'excerpt' => 'A public robot experiment prepared for mobile readers.',
+		'html' => '<p>' . str_repeat( '具身机器人实验。', 140 ) . '</p><img src="attachment:8" alt="Robot">',
+		'cover_id' => 7,
+	), $extra );
+}
+function drafts_local_article( $id = 1, $extra = array() ) {
+	// Explicit editorial input, independent of the canonical/manual guest fixture.
+	$drafts = new AI_Chat_Bedrock_WeChat_Drafts();
+	$result = $drafts->ability_set_edition( drafts_edition_input( $id, $extra ) );
+	check_drafts( ! is_wp_error( $result ), 'Automatic fixture ' . $id . ' explicitly prepares a protected local edition.' );
+	return $result;
 }
 
 // --- Settings -------------------------------------------------------------------------------
@@ -683,6 +712,7 @@ foreach ( array( 2, 4 ) as $aicfab_id ) {
 	$GLOBALS['aicfab_meta'][ $aicfab_id ][ AI_Chat_Bedrock_Distribution::META ][0]['updated_at'] = time() - 3600;
 }
 $GLOBALS['aicfab_posts'][2]->thumbnail         = 7;
+drafts_local_article( 2, array( 'html' => '<p>' . str_repeat( '新增小测。', 200 ) . '</p><img src="attachment:10" alt="">' ) );
 drafts_review( 2 );
 AI_Chat_Bedrock_WeChat_Drafts::run();
 $updates = array_values( array_filter( $GLOBALS['aicfab_http'], function ( $c ) { return 'draft/update' === $c['path']; } ) );
@@ -749,12 +779,19 @@ drafts_reset();
 AI_Chat_Bedrock_Distribution::record( 2, array( 'platform' => 'wechat', 'item_id' => 'OLDDRAFT123', 'status' => 'public' ), 'wechat' );
 $GLOBALS['aicfab_posts'][5] = $long;
 drafts_local_article();
+drafts_local_article( 5 );
 drafts_review( 1 );
 drafts_review( 5 );
 $ids                        = AI_Chat_Bedrock_WeChat_Drafts::candidates();
 check_drafts( array( 5, 1 ) === $ids, 'Candidates are the newest public posts with a cover and enough text, not sent before.' );
 $GLOBALS['aicfab_posts'][3]->post_content = '<p>' . str_repeat( '字', 900 ) . '</p>';
-check_drafts( 'no_cover' === AI_Chat_Bedrock_WeChat_Drafts::shortfall( $GLOBALS['aicfab_posts'][3] ) && 'too_short' === AI_Chat_Bedrock_WeChat_Drafts::shortfall( new WP_Post( array( 'ID' => 31, 'post_title' => 'Brief', 'thumbnail' => 7, 'post_content' => '<p>Two lines.</p>' ) ) ) && '' === AI_Chat_Bedrock_WeChat_Drafts::shortfall( $long ), 'The schedule leaves out posts without a cover or with little text.' );
+$GLOBALS['aicfab_posts'][31] = new WP_Post( array( 'ID' => 31, 'post_title' => 'Brief', 'thumbnail' => 7, 'post_content' => '<p>Two lines.</p>' ) );
+drafts_local_article( 31, array( 'html' => '<p>Two lines.</p>' ) );
+check_drafts( 'edition_missing' === AI_Chat_Bedrock_WeChat_Drafts::shortfall( $GLOBALS['aicfab_posts'][3] ) && 'too_short' === AI_Chat_Bedrock_WeChat_Drafts::shortfall( $GLOBALS['aicfab_posts'][31] ) && '' === AI_Chat_Bedrock_WeChat_Drafts::shortfall( $long ), 'The schedule holds missing editions and short editorial text.' );
+foreach ( array( 599 => 'too_short', 600 => 'review_missing' ) as $length => $reason ) {
+	drafts_local_article( 31, array( 'html' => '<p>' . str_repeat( '&#97;', $length ) . str_repeat( '&nbsp;', 100 ) . '</p>' ) );
+	check_drafts( $reason === AI_Chat_Bedrock_WeChat_Drafts::shortfall( $GLOBALS['aicfab_posts'][31] ), 'Editorial text threshold counts decoded readable characters, excluding entity whitespace: ' . $length );
+}
 check_drafts( 4 === $GLOBALS['aicfab_queries'][0]['cat'] && isset( $GLOBALS['aicfab_queries'][0]['date_query'] ) && 'publish' === $GLOBALS['aicfab_queries'][0]['post_status'], 'Only the featured category, recent and published.' );
 
 AI_Chat_Bedrock_WeChat_Drafts::run();
@@ -788,6 +825,7 @@ drafts_reset();
 drafts_settings( array( 'wechat_drafts_schedule' => 'daily', 'wechat_drafts_count' => 2 ) );
 $GLOBALS['aicfab_posts'][5] = $long;
 drafts_local_article();
+drafts_local_article( 5 );
 drafts_review( 1 );
 drafts_review( 5 );
 $GLOBALS['aicfab_store'][ AI_Chat_Bedrock_WeChat_Drafts::LOCK_OPTION ] = time() + 600;
@@ -831,6 +869,132 @@ $uninstall = (string) file_get_contents( $root . '/uninstall.php' );
 check_drafts( false !== strpos( $uninstall, "'ai_chat_bedrock_wechat_drafts'," ) && false !== strpos( $uninstall, "'_aicfab_wechat_images', '_aicfab_wechat_cover'" ) && false !== strpos( $uninstall, "'aicfab_wechat_access'" ) && false !== strpos( (string) file_get_contents( $root . '/includes/class-ai-chat-bedrock-deactivator.php' ), "'ai_chat_bedrock_wechat_drafts'" ), 'Deactivating and uninstalling remove the schedule and the token.' );
 
 // --- Curated current-version gate: automatic paths never substitute a quality score ----------
+
+// The setter is a local protected editorial preparation step, never a post writer.
+drafts_reset();
+drafts_settings();
+$drafts = new AI_Chat_Bedrock_WeChat_Drafts();
+$canonical = serialize( $GLOBALS['aicfab_posts'] );
+$GLOBALS['aicfab_fetched'] = array();
+$missing = $drafts->ability_get_edition( array( 'post_id' => 1 ) );
+check_drafts( 'edition_missing' === $missing->get_error_code() && 409 === $missing->get_error_data()['status'] && 'edition_missing' === $missing->get_error_data()['shortfall']['code'] && array() === AI_Chat_Bedrock_WeChat_Drafts::candidates() && is_wp_error( $drafts->ability_create( array( 'post_ids' => array( 1 ) ) ) ) && array() === $GLOBALS['aicfab_http'], 'Missing edition is a structured 409 and blocks automatic selection/create before any API.' );
+$r = drafts_local_article( 1, array( 'title' => 'Independent editorial title', 'excerpt' => 'Independent mobile excerpt.', 'html' => '<p onclick="bad()" class="private-gate" style="display:none">' . str_repeat( 'Public robotics experiment. ', 40 ) . '</p><img src="attachment:8" alt="attachment:8" onerror="bad()">' ) );
+check_drafts( $canonical === serialize( $GLOBALS['aicfab_posts'] ) && 4 === count( $GLOBALS['aicfab_posts'] ) && false === strpos( $r['edition']['html'], 'onclick' ) && false === strpos( $r['edition']['html'], 'private-gate' ) && false === strpos( $r['edition']['html'], 'onerror' ) && false !== strpos( $r['input']['guest_html'], 'alt="attachment:8"' ) && array() === $GLOBALS['aicfab_http'] && array() === $GLOBALS['aicfab_fetched'], 'Setter sanitizes static attributes, resolves local markers precisely and never changes or duplicates canonical posts or fetches remotely.' );
+$saved = get_post_meta( 1, AI_Chat_Bedrock_WeChat_Drafts::EDITION_META, true );
+foreach ( array( 'publish_posts', 'edit_post', 'anonymous', 'other_post' ) as $case ) {
+	$input = drafts_edition_input();
+	if ( 'anonymous' === $case ) {
+		$GLOBALS['aicfab_user_id'] = 0; // Even a misleading capabilities stub cannot authorize nobody.
+	} elseif ( 'other_post' === $case ) {
+		$input['post_id'] = 99;
+	} else {
+		$GLOBALS['aicfab_caps'][ $case ] = false;
+	}
+	$denied = $drafts->ability_set_edition( $input );
+	check_drafts( is_wp_error( $denied ) && 'forbidden' === $denied->get_error_code() && 403 === $denied->get_error_data()['status'] && $saved === get_post_meta( 1, AI_Chat_Bedrock_WeChat_Drafts::EDITION_META, true ), 'Direct setter repeats authenticated publish/edit permissions: ' . $case );
+	$GLOBALS['aicfab_caps'] = array( 'publish_posts' => true, 'edit_post' => true );
+	unset( $GLOBALS['aicfab_user_id'] );
+}
+foreach ( array(
+	'title' => array( 'title' => str_repeat( '字', 33 ) ),
+	'excerpt' => array( 'excerpt' => str_repeat( 'x', 121 ) ),
+	'empty' => array( 'html' => '' ),
+	'array' => array( 'html' => array( 'text' ) ),
+	'utf8' => array( 'html' => "\xFF" ),
+	'large' => array( 'html' => str_repeat( 'x', 1000001 ) ),
+	'shortcode' => array( 'html' => '<p>[member-answer]synthetic placeholder[/member-answer]</p>' ),
+	'encoded_shortcode' => array( 'html' => '<p>&#91;member-answer&#93;</p>' ),
+	'block' => array( 'html' => '<!-- wp:dynamic/private --><p>Public test.</p>' ),
+	'script' => array( 'html' => '<p>Public.</p><script>bad()</script>' ),
+	'iframe' => array( 'html' => '<p>Public.</p><iframe src="https://example.test/"></iframe>' ),
+	'remote' => array( 'html' => '<p>Public.</p><img src="https://cdn.example.test/x.jpg">' ),
+	'file_url' => array( 'html' => '<p>Public.</p><img src="file:///etc/passwd">' ),
+	'local_url' => array( 'html' => '<p>Public.</p><img src="https://example.test/wp-content/uploads/2026/10/robot.jpg">' ),
+	'duplicate_src' => array( 'html' => '<p>Public.</p><img src="https://cdn.example.test/x.jpg" src="attachment:8">' ),
+	'too_many_images' => array( 'html' => '<p>Public.</p>' . str_repeat( '<img src="attachment:8">', 21 ) ),
+	'cover_string' => array( 'cover_id' => '7' ),
+	'cover_missing' => array( 'cover_id' => 7000 ),
+	'forged_source' => array( 'source_digest' => str_repeat( 'a', 64 ) ),
+	'forged_actor' => array( 'author_user_id' => 500 ),
+) as $case => $extra ) {
+	$result = $drafts->ability_set_edition( drafts_edition_input( 1, $extra ) );
+	check_drafts( is_wp_error( $result ) && ( 'large' === $case ? 413 : 422 ) === $result->get_error_data()['status'] && $saved === get_post_meta( 1, AI_Chat_Bedrock_WeChat_Drafts::EDITION_META, true ) && array() === $GLOBALS['aicfab_http'] && array() === $GLOBALS['aicfab_fetched'], 'Malformed preparation is a structured input error, never stored or remotely fetched: ' . $case );
+}
+foreach ( array( 'private', 'password', 'members' ) as $case ) {
+	$post = clone $GLOBALS['aicfab_posts'][1];
+	if ( 'private' === $case ) {
+		$GLOBALS['aicfab_posts'][1]->post_status = 'private';
+	} elseif ( 'password' === $case ) {
+		$GLOBALS['aicfab_posts'][1]->post_password = 'synthetic-password';
+	} else {
+		$GLOBALS['aicfab_posts'][1]->post_title = 'members';
+	}
+	$result = $drafts->ability_set_edition( drafts_edition_input() );
+	check_drafts( 'not_public' === $result->get_error_code() && 422 === $result->get_error_data()['status'] && $saved === get_post_meta( 1, AI_Chat_Bedrock_WeChat_Drafts::EDITION_META, true ), 'Setter rejects nonpublic targets: ' . $case );
+	$GLOBALS['aicfab_posts'][1] = $post;
+}
+foreach ( array( 'array', 'empty', 'false', 'null', 'version', 'extra', 'timestamp', 'html', 'remote', 'cover' ) as $case ) {
+	$bad = $saved;
+	if ( 'array' === $case ) {
+		$bad = 'malformed';
+	} elseif ( 'empty' === $case ) {
+		$bad = '';
+	} elseif ( 'false' === $case ) {
+		$bad = false;
+	} elseif ( 'null' === $case ) {
+		$bad = null;
+	} elseif ( 'version' === $case ) {
+		$bad['version'] = 99;
+	} elseif ( 'extra' === $case ) {
+		$bad['unexpected'] = 'synthetic';
+	} elseif ( 'timestamp' === $case ) {
+		$bad['stored_at'] = time() + 600;
+	} elseif ( 'html' === $case ) {
+		$bad['html'] .= '<p onclick="bad()">Untrusted attributes.</p>';
+	} elseif ( 'remote' === $case ) {
+		$bad['html'] .= '<img src="https://cdn.example.test/x.jpg">';
+	} else {
+		$bad['cover_id'] = 7000;
+	}
+	update_post_meta( 1, AI_Chat_Bedrock_WeChat_Drafts::EDITION_META, $bad );
+	$read = $drafts->ability_get_review( array( 'post_id' => 1 ) );
+	$manual = AI_Chat_Bedrock_WeChat_Drafts::create( array( 1 ), null, 'manual' );
+	$auto = $drafts->ability_create( array( 'post_ids' => array( 1 ) ) );
+	check_drafts( is_wp_error( $read ) && 422 === $read->get_error_data()['status'] && is_wp_error( $manual ) && is_wp_error( $auto ) && array() === $GLOBALS['aicfab_http'] && array() === $GLOBALS['aicfab_fetched'], 'Invalid stored edition holds manual and automatic paths without guest fallback: ' . $case );
+}
+update_post_meta( 1, AI_Chat_Bedrock_WeChat_Drafts::EDITION_META, $saved );
+
+// Hash the actual selected derivative, not a CDN URL or the original oversized file.
+$selected = drafts_local_article( 1, array( 'html' => '<p>' . str_repeat( 'Public experiment. ', 60 ) . '</p><img src="attachment:9">' ) );
+$asset = $selected['input']['assets'][1];
+check_drafts( '2026/10/huge-1024x768.jpg' === $asset['selected_file'] && hash_file( 'sha256', $aicfab_uploads . '/' . $asset['selected_file'] ) === $asset['sha256'], 'Review binds the smaller local image bytes the existing converter will actually upload.' );
+drafts_review( 1 );
+$path = $aicfab_uploads . '/2026/10/huge-1024x768.jpg';
+$bytes = file_get_contents( $path );
+file_put_contents( $path, $bytes . 'derivative drift' );
+check_drafts( 'review_changed' === AI_Chat_Bedrock_WeChat_Drafts::shortfall( get_post( 1 ) ) && is_wp_error( $drafts->ability_create( array( 'post_ids' => array( 1 ) ) ) ) && array() === $GLOBALS['aicfab_http'], 'Selected derivative byte drift holds automatic creation before any API.' );
+file_put_contents( $path, $bytes );
+foreach ( array( 'outside', 'symlink', 'mime', 'corrupt', 'oversize', 'missing' ) as $case ) {
+	$outside = sys_get_temp_dir() . '/aicfab-outside-' . getmypid() . '.jpg';
+	file_put_contents( $outside, $aicfab_jpeg );
+	$path = $aicfab_uploads . '/2026/10/negative.jpg';
+	if ( 'symlink' === $case ) {
+		symlink( $outside, $path );
+	} elseif ( 'missing' !== $case ) {
+		file_put_contents( $path, 'corrupt' === $case ? 'invalid JPEG' : $aicfab_jpeg . ( 'oversize' === $case ? str_repeat( 'x', AI_Chat_Bedrock_WeChat_Drafts::COVER_BYTES + 1 ) : '' ) );
+	}
+	$GLOBALS['aicfab_attachments'][70] = array( 'outside' === $case ? $outside : $path, 'mime' === $case ? 'image/gif' : 'image/jpeg' );
+	$result = $drafts->ability_set_edition( drafts_edition_input( 1, array( 'cover_id' => 70 ) ) );
+	check_drafts( is_wp_error( $result ) && 'review_assets' === $result->get_error_code() && 422 === $result->get_error_data()['status'] && array() === $GLOBALS['aicfab_fetched'], 'Local attachment validation refuses ' . $case );
+	if ( file_exists( $path ) || is_link( $path ) ) {
+		unlink( $path );
+	}
+	unlink( $outside );
+}
+drafts_local_article( 1, array( 'title' => 'Independent editorial title', 'excerpt' => 'Independent mobile excerpt.' ) );
+drafts_review( 1 );
+$done = $drafts->ability_create( array( 'post_ids' => array( 1 ) ) );
+check_drafts( ! is_wp_error( $done ) && 'Independent editorial title' === drafts_sent_body()['articles'][0]['title'] && 'Independent mobile excerpt.' === drafts_sent_body()['articles'][0]['digest'] && $canonical === serialize( $GLOBALS['aicfab_posts'] ) && array() === $GLOBALS['aicfab_fetched'], 'Reviewed independent edition reaches the sole native writer without modifying the canonical post or fetching remote course posters.' );
 
 drafts_reset();
 drafts_settings();
@@ -917,7 +1081,9 @@ foreach ( array( 'post_content', 'post_title', 'post_excerpt', 'language' ) as $
 	$previous = $GLOBALS['aicfab_posts'][1]->$field;
 	$GLOBALS['aicfab_posts'][1]->$field .= ' edited';
 	$result = $drafts->ability_create( array( 'post_ids' => array( 1 ) ) );
-	check_drafts( is_wp_error( $result ) && 'review_changed' === AI_Chat_Bedrock_WeChat_Drafts::shortfall( $GLOBALS['aicfab_posts'][1] ) && array() === $GLOBALS['aicfab_http'], 'Version drift prevents all API: ' . $field );
+	check_drafts( is_wp_error( $result ) && 'edition_stale' === AI_Chat_Bedrock_WeChat_Drafts::shortfall( $GLOBALS['aicfab_posts'][1] ) && array() === $GLOBALS['aicfab_http'], 'Version drift prevents all API: ' . $field );
+	$manual = AI_Chat_Bedrock_WeChat_Drafts::create( array( 1 ), null, 'manual' );
+	check_drafts( is_wp_error( $manual ) && 'edition_stale' === $manual->get_error_data()['skipped'][1] && array() === $GLOBALS['aicfab_http'], 'Explicit human creation also holds stale stored editions instead of falling back: ' . $field );
 	$GLOBALS['aicfab_posts'][1]->$field = $previous;
 }
 $old_author = $GLOBALS['aicfab_options']['wechat_drafts_author'];
@@ -939,7 +1105,7 @@ foreach ( array( 'cover.jpg', 'robot.jpg' ) as $asset ) {
 	touch( $path, $mtime );
 }
 $GLOBALS['aicfab_posts'][1]->post_content .= '<img src="https://cdn.example.test/mutable-cover.jpg">';
-check_drafts( 'review_assets' === $drafts->ability_get_review( array( 'post_id' => 1 ) )->get_error_code() && array() === $GLOBALS['aicfab_http'], 'Read-only binding refuses mutable remote asset bytes instead of fetching them.' );
+check_drafts( 'edition_stale' === $drafts->ability_get_review( array( 'post_id' => 1 ) )->get_error_code() && array() === $GLOBALS['aicfab_http'], 'Canonical remote asset changes stale the edition without fetching them.' );
 drafts_local_article();
 $before = get_post_meta( 1, AI_Chat_Bedrock_WeChat_Drafts::REVIEW_META, true );
 foreach ( array( 'publish_posts', 'edit_post' ) as $cap ) {
@@ -963,8 +1129,10 @@ foreach ( array( 'private', 'password', 'members' ) as $case ) {
 	$GLOBALS['aicfab_posts'][1] = $post;
 }
 $GLOBALS['aicfab_posts'][1]->post_content .= '[member-answer]MEMBER_SOLUTION_NOT_FOR_WECHAT[/member-answer]';
+drafts_local_article();
+$renders = $GLOBALS['aicfab_guest_renders'];
 $guest_review = drafts_review( 1 );
-check_drafts( false === strpos( $guest_review['input']['guest_html'], 'MEMBER_SOLUTION_NOT_FOR_WECHAT' ) && false === strpos( $guest_review['input']['conversion_html'], 'MEMBER_SOLUTION_NOT_FOR_WECHAT' ), 'The review input uses the guest projection and never returns gated source text.' );
+check_drafts( false === strpos( $guest_review['input']['guest_html'], 'MEMBER_SOLUTION_NOT_FOR_WECHAT' ) && false === strpos( $guest_review['input']['conversion_html'], 'MEMBER_SOLUTION_NOT_FOR_WECHAT' ) && $renders === $GLOBALS['aicfab_guest_renders'], 'Explicit editorial input never renders or returns gated canonical source text.' );
 $done = $drafts->ability_create( array( 'post_ids' => array( 1 ) ) );
 check_drafts( ! is_wp_error( $done ) && array( 1 ) === $done['posts'] && false === strpos( wp_json_encode( drafts_sent_body() ), 'MEMBER_SOLUTION_NOT_FOR_WECHAT' ), 'A current reviewed version uses the sole existing draft writer with no member answers.' );
 
@@ -993,6 +1161,7 @@ $GLOBALS['aicfab_posts'][1]->post_content .= '<p>A new experiment not yet review
 $GLOBALS['aicfab_posts'][1]->post_modified_gmt = gmdate( 'Y-m-d H:i:s', time() + 300 );
 AI_Chat_Bedrock_WeChat_Drafts::run();
 check_drafts( array() === $GLOBALS['aicfab_http'] && $original === AI_Chat_Bedrock_Distribution::entries( 1 ), 'Refresh with a changed unreviewed version leaves native draft and original effects untouched.' );
+drafts_local_article();
 drafts_review( 1 );
 foreach ( array( 'unknown', 'gone', 'update_40007', 'update_53403' ) as $case ) {
 	$GLOBALS['aicfab_http'] = array();
@@ -1014,15 +1183,18 @@ drafts_settings();
 drafts_local_article();
 $GLOBALS['aicfab_posts'][5] = clone $GLOBALS['aicfab_posts'][1];
 $GLOBALS['aicfab_posts'][5]->ID = 5;
+drafts_local_article( 5 );
 drafts_review( 1 );
 $done = $drafts->ability_create( array( 'post_ids' => array( 1, 5 ) ) );
 check_drafts( ! is_wp_error( $done ) && array( 1 ) === $done['posts'] && 'review_missing' === $done['skipped'][5] && 1 === count( drafts_sent_body()['articles'] ) && ! AI_Chat_Bedrock_WeChat_Drafts::sent( 5 ), 'A batch writes only the individually current reviewed post; no unreviewed article is mixed in.' );
-foreach ( array( 'content', 'option', 'review' ) as $case ) {
+foreach ( array( 'content', 'option', 'review', 'edition', 'body_asset', 'cover_asset', 'code' ) as $case ) {
 	drafts_reset();
 	drafts_settings();
 	drafts_local_article();
 	drafts_review( 1 );
-	$GLOBALS['aicfab_on_http'] = function ( $path ) use ( $case ) {
+	$drift_path = 'code' === $case ? $root . '/includes/class-ai-chat-bedrock-content.php' : $aicfab_uploads . '/2026/10/' . ( 'cover_asset' === $case ? 'cover.jpg' : 'robot.jpg' );
+	$drift_bytes = file_get_contents( $drift_path );
+	$GLOBALS['aicfab_on_http'] = function ( $path ) use ( $case, $drift_path, $drift_bytes ) {
 		if ( 'media/uploadimg' !== $path ) {
 			return;
 		}
@@ -1030,14 +1202,30 @@ foreach ( array( 'content', 'option', 'review' ) as $case ) {
 			$GLOBALS['aicfab_posts'][1]->post_content .= '<p>Changed during upload.</p>';
 		} elseif ( 'option' === $case ) {
 			$GLOBALS['aicfab_options']['wechat_drafts_author'] = '转换时修改的署名';
-		} else {
+		} elseif ( 'review' === $case ) {
 			delete_post_meta( 1, AI_Chat_Bedrock_WeChat_Drafts::REVIEW_META );
+		} elseif ( 'edition' === $case ) {
+			$GLOBALS['aicfab_meta'][1][ AI_Chat_Bedrock_WeChat_Drafts::EDITION_META ]['html'] .= '<p>Edited static edition.</p>';
+		} else {
+			file_put_contents( $drift_path, $drift_bytes . ( 'code' === $case ? "\n// Offline converter drift fixture.\n" : 'asset changed during conversion' ) );
 		}
 	};
-	$result = $drafts->ability_create( array( 'post_ids' => array( 1 ) ) );
+	try {
+		$result = $drafts->ability_create( array( 'post_ids' => array( 1 ) ) );
+	} finally {
+		file_put_contents( $drift_path, $drift_bytes );
+	}
 	check_drafts( is_wp_error( $result ) && 'wx_review' === $result->get_error_code() && ! in_array( 'draft/add', drafts_paths(), true ) && ! in_array( 'draft/update', drafts_paths(), true ) && ! AI_Chat_Bedrock_WeChat_Drafts::sent( 1 ), 'Final revalidation refuses native draft write after mid-conversion drift: ' . $case );
 }
 unset( $GLOBALS['aicfab_on_http'] );
+
+drafts_reset();
+drafts_settings();
+drafts_local_article();
+drafts_review( 1 );
+$GLOBALS['aicfab_replies']['media/uploadimg'] = array( '{"errcode":-1,"errmsg":"offline rejected image"}' );
+$result = $drafts->ability_create( array( 'post_ids' => array( 1 ) ) );
+check_drafts( is_wp_error( $result ) && ! in_array( 'draft/add', drafts_paths(), true ) && ! in_array( 'draft/update', drafts_paths(), true ) && ! AI_Chat_Bedrock_WeChat_Drafts::sent( 1 ), 'Edition image upload failure holds the writer instead of silently omitting a reviewed image.' );
 
 // Real ability registration and MCP dispatch protect both review entrypoints even when
 // draft sending is disabled; caller-provided reviewer identity never sets the WP actor.
@@ -1058,6 +1246,23 @@ $dispatch = $reflection->getMethod( 'execute_tool' );
 if ( PHP_VERSION_ID < 80100 ) {
 	$dispatch->setAccessible( true );
 }
+$set_ability = $registered['ai-chat-bedrock/set-wechat-edition'];
+$get_ability = $registered['ai-chat-bedrock/get-wechat-edition'];
+check_drafts( false === $set_ability['meta']['annotations']['readonly'] && true === $get_ability['meta']['annotations']['readonly'] && false === $set_ability['meta']['annotations']['destructive'] && false === $set_ability['input_schema']['additionalProperties'], 'Native edition abilities declare their metadata-only write and protected read accurately.' );
+$GLOBALS['aicfab_cdn_attachments'] = true;
+$GLOBALS['aicfab_user_id'] = 23;
+$canonical = serialize( $GLOBALS['aicfab_posts'] );
+$edition_input = drafts_edition_input( 1, array( 'title' => 'MCP curated edition', 'excerpt' => 'MCP public summary.' ) );
+$result = $dispatch->invoke( $server, 'set_wechat_edition', $edition_input );
+check_drafts( ! is_wp_error( $result ) && 23 === $result['edition']['author_user_id'] && $canonical === serialize( $GLOBALS['aicfab_posts'] ) && array() === $GLOBALS['aicfab_http'], 'Actual MCP setter stores the authenticated actor and independent edition against local attachments even when public attachment URLs are CDN URLs.' );
+$result = $dispatch->invoke( $server, 'get_wechat_edition', array( 'post_id' => 1 ) );
+check_drafts( ! is_wp_error( $result ) && 'MCP curated edition' === $result['edition']['title'] && 'review_missing' === $result['shortfall'], 'Actual MCP read returns the sanitized edition, exact digest and required independent-review shortfall.' );
+$call_tool = $reflection->getMethod( 'call_tool' );
+if ( PHP_VERSION_ID < 80100 ) {
+	$call_tool->setAccessible( true );
+}
+$rpc = $call_tool->invoke( $server, 1, array( 'name' => 'get_wechat_edition', 'arguments' => array( 'post_id' => 2 ) ) );
+check_drafts( true === $rpc['result']['isError'] && 'edition_missing' === $rpc['result']['structuredContent']['error']['code'] && 409 === $rpc['result']['structuredContent']['error']['data']['status'], 'MCP tool results preserve actionable structured preparation errors.' );
 $review_input = drafts_review_input( 1 );
 $review_input['reviewer_user_id'] = 999;
 $GLOBALS['aicfab_user_id'] = 23;
@@ -1069,16 +1274,22 @@ foreach ( array( 'publish_posts', 'edit_post' ) as $cap ) {
 	$GLOBALS['aicfab_caps'][ $cap ] = false;
 	$read = $dispatch->invoke( $server, 'get_wechat_review', array( 'post_id' => 1 ) );
 	$write = $dispatch->invoke( $server, 'review_wechat_post', $review_input );
-	check_drafts( false === call_user_func( $read_ability['permission_callback'], array( 'post_id' => 1 ) ) && false === call_user_func( $write_ability['permission_callback'], array( 'post_id' => 1 ) ) && 'forbidden' === $read->get_error_code() && 'forbidden' === $write->get_error_code() && array() === $GLOBALS['aicfab_http'], 'Ability permissions and real MCP dispatch enforce capability ' . $cap );
+	$set = $dispatch->invoke( $server, 'set_wechat_edition', $edition_input );
+	check_drafts( false === call_user_func( $set_ability['permission_callback'], array( 'post_id' => 1 ) ) && false === call_user_func( $read_ability['permission_callback'], array( 'post_id' => 1 ) ) && false === call_user_func( $write_ability['permission_callback'], array( 'post_id' => 1 ) ) && 'forbidden' === $set->get_error_code() && 'forbidden' === $read->get_error_code() && 'forbidden' === $write->get_error_code() && array() === $GLOBALS['aicfab_http'], 'Ability permissions and real MCP dispatch enforce capability ' . $cap );
 	$GLOBALS['aicfab_caps'][ $cap ] = true;
 }
 $GLOBALS['aicfab_caps'] = array();
 $GLOBALS['aicfab_user_id'] = 0;
 $denied = $server->check_permission( null );
 $result = $dispatch->invoke( $server, 'review_wechat_post', $review_input );
-check_drafts( is_wp_error( $denied ) && 'rest_forbidden' === $denied->get_error_code() && 'forbidden' === $result->get_error_code() && 23 === get_post_meta( 1, AI_Chat_Bedrock_WeChat_Drafts::REVIEW_META, true )['reviewer_user_id'], 'Unauthenticated REST/MCP access cannot read or replace the review actor or attestation.' );
+$set = $dispatch->invoke( $server, 'set_wechat_edition', $edition_input );
+check_drafts( is_wp_error( $denied ) && 'rest_forbidden' === $denied->get_error_code() && 'forbidden' === $set->get_error_code() && 'forbidden' === $result->get_error_code() && 23 === get_post_meta( 1, AI_Chat_Bedrock_WeChat_Drafts::REVIEW_META, true )['reviewer_user_id'], 'Unauthenticated REST/MCP access cannot read or replace the edition, review actor or attestation.' );
 $GLOBALS['aicfab_caps'] = array( 'publish_posts' => true, 'edit_post' => true );
 unset( $GLOBALS['aicfab_user_id'] );
+drafts_settings();
+$result = $dispatch->invoke( $server, 'create_wechat_draft', array( 'post_ids' => array( 1 ) ) );
+check_drafts( ! is_wp_error( $result ) && 'MCP curated edition' === drafts_sent_body()['articles'][0]['title'] && 'MCP public summary.' === drafts_sent_body()['articles'][0]['digest'], 'Actual MCP edition → independent review → sole writer flow reaches the native draft API with the independent title and excerpt.' );
+unset( $GLOBALS['aicfab_cdn_attachments'] );
 
 array_map( 'unlink', glob( $aicfab_uploads . '/2026/10/*' ) );
 @rmdir( $aicfab_uploads . '/2026/10' );

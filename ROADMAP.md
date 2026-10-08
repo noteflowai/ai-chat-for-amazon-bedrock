@@ -28,6 +28,19 @@ Extend WP-01/WP-03 with a 30-day operator comparison: the same site questions an
 
 ## Now
 
+### WP-02 maintenance: explicit WeChat edition input (2026-10-08)
+
+The release-owner's course-page reproduction identified an input gap: converting the
+whole canonical guest page selected remote posters and could not accept the separately
+curated public editorial source. Protected per-post edition abilities/MCP now prepare
+static HTML, an independent title/excerpt and local cover without changing the canonical
+post. Missing editions hold automatic selection; independent public-only/rights/mobile
+attestations and the sole writer's source/native drift, reconciliation and final checks
+remain required. Source acceptance includes setter authorization, malformed input,
+local byte drift, privacy and the real MCP-to-writer path. Independent source/security
+review and original-owner adoption/native-copy review remain separate gates; no version
+bump or deployment is part of this maintenance work.
+
 | ID | Outcome | Acceptance evidence |
 | --- | --- | --- |
 | WP-01 | A site owner reaches the first grounded answer | Observe three setup attempts on supported WordPress/PHP environments. Exercise role credentials, region/model access and empty-content cases. Target a cited first answer within 30 minutes with actionable diagnostic steps. |

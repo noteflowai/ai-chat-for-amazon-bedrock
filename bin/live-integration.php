@@ -127,7 +127,7 @@ if ( ! function_exists( 'wp_get_abilities' ) ) {
 	/*
 	 * The behaviour each ability declares is what a client reads to decide whether calling it
 	 * unattended is safe, and WordPress enforces it at the transport layer. With optional draft
-	 * sending disabled, only post draft creation and the curated review attestation write.
+	 * sending disabled, post draft creation, protected edition preparation and review write.
 	 */
 	$aicfab_writers = array();
 	$aicfab_silent  = array();
@@ -144,13 +144,13 @@ if ( ! function_exists( 'wp_get_abilities' ) ) {
 	aicfab_live( array() === $aicfab_silent, 'every ability declares its behaviour', implode( ', ', $aicfab_silent ) );
 	sort( $aicfab_writers );
 	aicfab_live(
-		array( 'ai-chat-bedrock/create-draft', 'ai-chat-bedrock/review-wechat-post' ) === $aicfab_writers,
-		'only draft creation and curated review attestation declare writes',
+		array( 'ai-chat-bedrock/create-draft', 'ai-chat-bedrock/review-wechat-post', 'ai-chat-bedrock/set-wechat-edition' ) === $aicfab_writers,
+		'only draft creation, protected edition preparation and review declare writes',
 		$aicfab_writers ? implode( ', ', $aicfab_writers ) : 'none declared'
 	);
 	$aicfab_actor = get_current_user_id();
 	wp_set_current_user( 0 );
-	foreach ( array( 'get-wechat-review' => true, 'review-wechat-post' => false ) as $aicfab_review_name => $aicfab_readonly ) {
+	foreach ( array( 'get-wechat-review' => true, 'review-wechat-post' => false, 'get-wechat-edition' => true, 'set-wechat-edition' => false ) as $aicfab_review_name => $aicfab_readonly ) {
 		$aicfab_review = isset( $aicfab_ours[ 'ai-chat-bedrock/' . $aicfab_review_name ] ) ? $aicfab_ours[ 'ai-chat-bedrock/' . $aicfab_review_name ] : null;
 		$aicfab_meta   = $aicfab_review ? (array) $aicfab_review->get_meta() : array();
 		$aicfab_ann    = isset( $aicfab_meta['annotations'] ) ? (array) $aicfab_meta['annotations'] : array();

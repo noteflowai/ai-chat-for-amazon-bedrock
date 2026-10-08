@@ -159,6 +159,13 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 	private function distribution_tools() {
 		$tools = array();
 		if ( class_exists( 'AI_Chat_Bedrock_WeChat_Drafts' ) ) {
+			foreach ( array( 'get_wechat_edition', 'set_wechat_edition' ) as $name ) {
+				$tools[ $name ] = array(
+					'name'        => $name,
+					'description' => 'get_wechat_edition' === $name ? 'Read the protected public WeChat edition, exact digest and review shortfall. Requires publish_posts and edit_post. No remote fetch or WeChat call.' : 'Store a bounded static public WeChat edition on the existing post: independent title, excerpt, HTML and local cover attachment. Use src="attachment:ID" for body images. Requires publish_posts and edit_post. Does not alter the canonical post or contact WeChat. Independent public-only, rights and mobile review remains required.',
+					'parameters'  => AI_Chat_Bedrock_WeChat_Drafts::edition_schema( 'set_wechat_edition' === $name ),
+				);
+			}
 			foreach ( array( 'get_wechat_review', 'review_wechat_post' ) as $name ) {
 				$tools[ $name ] = array(
 					'name'        => $name,
@@ -170,7 +177,7 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 		if ( class_exists( 'AI_Chat_Bedrock_WeChat_Drafts' ) && AI_Chat_Bedrock_WeChat_Drafts::enabled() ) {
 			$tools['create_wechat_draft'] = array(
 				'name'        => 'create_wechat_draft',
-				'description' => 'Make one draft in the site\'s WeChat Official Account from up to eight published posts with current curated reviews, in order: title, excerpt, cover from the featured image, the text and images a signed-out visitor sees, and the post as Read more. Nothing is published; the owner publishes the draft in the Official Accounts Platform. Notes the draft in each post\'s publishing record. Requires permission to publish posts and to edit each one.',
+				'description' => 'Make one draft in the site\'s WeChat Official Account from up to eight published posts with explicit public editions and current curated reviews, in order: edition title, excerpt, local cover and body images, and the canonical post as Read more. Nothing is published; the owner publishes the draft in the Official Accounts Platform. Notes the draft in each post\'s publishing record. Requires permission to publish posts and to edit each one.',
 				'parameters'  => AI_Chat_Bedrock_WeChat_Drafts::schema(),
 			);
 		}
@@ -510,8 +517,15 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 			return $this->rpc_result(
 				$id,
 				array(
-					'isError' => true,
-					'content' => array(
+					'isError'           => true,
+					'structuredContent' => array(
+						'error' => array(
+							'code'    => $result->get_error_code(),
+							'message' => $result->get_error_message(),
+							'data'    => $result->get_error_data(),
+						),
+					),
+					'content'           => array(
 						array(
 							'type' => 'text',
 							'text' => $result->get_error_message(),
@@ -574,6 +588,8 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 			case 'create_wechat_draft':
 			case 'get_wechat_review':
 			case 'review_wechat_post':
+			case 'get_wechat_edition':
+			case 'set_wechat_edition':
 			case 'prepare_publish_kit':
 				return $this->distribution_call( $name, $arguments );
 		}
@@ -618,6 +634,10 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 			return new WP_Error( 'tool_unavailable', __( 'This tool is not enabled on this site.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		$arguments = is_array( $arguments ) ? $arguments : array();
+		if ( in_array( $name, array( 'get_wechat_edition', 'set_wechat_edition' ), true ) ) {
+			$drafts = new AI_Chat_Bedrock_WeChat_Drafts();
+			return 'get_wechat_edition' === $name ? $drafts->ability_get_edition( $arguments ) : $drafts->ability_set_edition( $arguments );
+		}
 		if ( in_array( $name, array( 'get_wechat_review', 'review_wechat_post' ), true ) ) {
 			$drafts = new AI_Chat_Bedrock_WeChat_Drafts();
 			return 'get_wechat_review' === $name ? $drafts->ability_get_review( $arguments ) : $drafts->ability_review( $arguments );

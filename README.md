@@ -20,8 +20,11 @@ resolved so the answer is not a guess.
 Some deliberate limits, which the test suites assert rather than merely document:
 
 - Guest chat is off by default, and an unknown profile key falls back without unlocking it.
-- The only write operation reachable by a tool is creating a draft. Nothing publishes,
-  nothing updates an existing post, no order or customer data is exposed.
+- Content tools create drafts and write protected editorial editions/attestations on
+  existing posts. They never change a published post's canonical body or publish/send.
+  No order or customer data is exposed.
+- Automatic WeChat selection requires an explicit public edition and independent
+  digest-bound review. See [the edition contract](docs/wechat-curation.md).
 - Retrieval indexes published, non-password-protected content only.
 - Tool output is wrapped as untrusted data before it reaches the model.
 - Tokens are stored as SHA-256 only, compared with `hash_equals`.
