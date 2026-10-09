@@ -1,6 +1,6 @@
 === AI Chatbot & Agents for Amazon Bedrock ===
 Contributors: glay, glayguo
-Tags: ai, chatbot, ai-agent, mcp, connector
+Tags: ai chatbot, chatbot, ai, woocommerce, mcp
 Requires at least: 6.4
 Tested up to: 7.1
 Stable tag: 1.70.0
@@ -8,160 +8,103 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI chatbot with cited answers from your site and WooCommerce store, AI agents, an MCP server and the WordPress AI provider for Amazon Bedrock.
+AI chatbot that answers from your site and WooCommerce store with citations, on Claude and other Amazon Bedrock models. AI agents and MCP built in.
 
 == Description ==
 
-Connect WordPress directly to **Amazon Bedrock** using your own AWS account. Add a chat powered by
-Claude, Amazon Nova, Meta Llama, Mistral, DeepSeek, OpenAI gpt-oss, Qwen or Kimi, let authenticated conversations use
-governed tools through the Model Context Protocol, and check that the answers are still right after
-you change something.
+Add an **AI chatbot that answers from your own pages and WooCommerce store, and cites them**. It runs on Claude, Amazon Nova, Meta Llama, Mistral, DeepSeek, OpenAI gpt-oss, Qwen or Kimi through **Amazon Bedrock in your own AWS account**. Requests go from your server straight to the Bedrock endpoint you configure. There is no relay service and no third party in between.
 
-Model requests go from your WordPress server to the Amazon Bedrock endpoint you configure. The
-plugin author does not operate an AI relay service, and no request passes through anyone else. It is
-built for site owners, developers and teams already on AWS who want predictable requests and
-security-focused defaults.
+Built for site owners, developers and teams who want predictable requests, safe defaults for public chat, and a way to check that answers are still right after a change.
 
-= The Amazon Bedrock provider for WordPress AI =
+= Why site owners choose it =
 
-On WordPress 7.0 and later, every plugin that calls the WordPress AI Client, including the
-official AI plugin, can use Amazon Bedrock without knowing anything about AWS. The plugin offers
-core what Bedrock can actually do, model by model:
+* **Answers from your content, with sources.** The chat searches your published pages, in the visitor's language first, and cites what it used. Questions your site does not cover are listed as content gaps, with a shortcut to draft the missing page.
+* **Ready for WooCommerce.** Live product answers with prices, stock and Add to cart. Signed-in customers can ask where their order is. Product descriptions can be drafted from real attributes.
+* **Safe for public traffic by default.** Guest access is off until you turn it on. Requests are rate limited and tools run on the server. The chat stays hidden until it can actually answer.
+* **No AWS keys to store.** An instance role, a task role or environment variables are enough. Off AWS, one Bedrock API key is enough. Diagnostics generates the least-privilege IAM policy your configuration needs.
+* **Know what it costs.** A dashboard of requests and tokens by the model that answered, the input tokens Claude read from Bedrock's cache, and failed requests by cause.
+* **Know whether answers are still right.** Run questions whose right answer you know and read the result by category. Every check is a program, so no model grades another, and the command-line run can gate a deployment.
 
-* **Text** from Claude, Nova and the other chat models, with system instructions, several
-  candidates, top P and stop sequences where the model accepts them
-* **Images in the prompt** for the models that read them, such as Claude, Nova Lite and Pro,
-  Llama 4 and Qwen3 VL, so alt text and image descriptions work
-* **JSON answers**, checked before they are returned and constrained by the schema on the models
-  that take one
-* **Image generation** with Stability AI Stable Image Core, Stable Diffusion 3.5 Large and Stable
-  Image Ultra, including editing an image with Stable Diffusion 3.5
-* **Embeddings** with Amazon Titan and Cohere on WordPress 7.2, where core adds them
+= Features =
 
-Each request takes the same path as the chat, so the guardrail, daily limit, token ceiling and
-usage dashboard apply to all of them. A capability a model lacks is not offered, so core picks a
-model that has it rather than one that fails.
+**Chat on any page**
 
-= Images in the Media Library =
+* `[ai_chat_bedrock]` shortcode, a chat block, or a floating launcher on every page; full screen above the keyboard on phones
+* Streaming answers that a visitor can stop, which also stops the Bedrock request
+* Answers and posts read aloud with Amazon Polly
+* Several chats with their own profiles, a fallback model, and managed prompts from Bedrock Prompt Management
+* Optional conversation memory, kept in the visitor's browser tab only, or also saved in a signed-in visitor's user data for the days you set
 
-Choose an image model and turn on the media helpers, and every JPEG, PNG or WebP image gets
-**Remove background** and, up to about one megapixel, **Upscale 4×**. The result is saved as a new
-image next to the original, which is never changed.
+**Grounded in your content**
 
-= What you can build =
+* Matching by shared words; choose an embedding model to match by meaning instead, so "when will my parcel arrive" finds a page titled "Getting parcels to you"
+* Amazon S3 Vectors searches every passage of every page; a reranking model keeps the passages that best answer the question, from your pages and a knowledge base alike
+* Only what a signed-out visitor can read is ever indexed or quoted, so members-only sections stay out of answers, and pages your SEO plugin keeps out of search engines stay out too
 
-* An internal assistant, or a public chatbot with explicit guest access
-* An agent that answers from your own content and from approved MCP tools
-* A WordPress MCP endpoint that clients such as Claude Code, Cursor or VS Code can read
-* Answers for a WeChat Official Account, from the same pages, and mini game customer service
-* A record of where each post is published on Bilibili, YouTube or Xiaohongshu that your agents
-  keep, Bilibili embeds, and uploads to YouTube
+**For WooCommerce stores** (each feature is off until you turn it on)
 
-Add the chat with the `[ai_chat_bedrock]` shortcode or the chat block, or let it float on every page.
+* **Product answers** from the live catalog, with the price, sale price, stock and options the shop shows right now, as cards with View product and, where nothing has to be chosen, Add to cart. Drafts, private and hidden products are never described.
+* **Order questions** for signed-in customers about their own recent orders only. Only the order number, dates, status, items, total, shipping method and tracking number are sent to the model; addresses, email, phone and payment details never are, and naming another customer's order number reveals nothing.
+* **Product assistant** that drafts the short and full description from the product's name, attributes and categories, or summarizes approved reviews without reviewer names. Nothing is saved until you update the product.
+* Compatible with High-Performance Order Storage and the Cart and Checkout blocks.
 
-= Three things this does differently =
+**The Amazon Bedrock provider for WordPress AI**
 
-**It runs without storing AWS keys.** An instance role, a task role or environment variables are
-enough. Off AWS, one Bedrock API key is enough. Where keys are stored, they are encrypted, and Diagnostics generates the least-privilege
-IAM policy this site actually needs rather than asking you to attach a broad managed policy.
+On WordPress 7.0 and later, every plugin that calls the WordPress AI Client, including the official AI plugin, can use Amazon Bedrock. The plugin offers core what each model can actually do:
 
-**It assumes a public chat will be abused.** Every default below is the safe one, and each is a
-setting you can change rather than a promise you have to trust:
+* Text, with system instructions, several candidates, top P and stop sequences where the model accepts them
+* Images in the prompt for models that read them, such as Claude, Nova Lite and Pro, Llama 4 and Qwen3 VL, so alt text and image descriptions work
+* JSON answers, checked before they are returned and constrained by the schema on models that take one
+* Image generation with Stability AI Stable Image Core, Stable Diffusion 3.5 Large and Stable Image Ultra, including image editing with Stable Diffusion 3.5
+* Embeddings with Amazon Titan and Cohere on WordPress 7.2, where core adds them
 
-* Guest access is off until you enable it, and the chat is hidden from visitors until it can
-  actually answer, so a half-finished setup is never public
-* Requests are rate limited per visitor and per profile, with optional per-role limits and an
-  optional daily site cap
-* Tools run on the server, so a browser cannot forge a tool result, and a tool that changes data
-  needs an explicit capability
-* External MCP tools are off for visitors, and the built-in MCP routes require authentication unless
-  you deliberately open read-only access
+A capability a model lacks is not offered, so core picks a model that has it. Every request takes the chat's path, so the guardrail, daily limit, token ceiling and usage dashboard apply to all of them.
+
+**Images in the Media Library**
+
+Choose an image model and turn on the media helpers, and every JPEG, PNG or WebP image gets **Remove background** and, up to about one megapixel, **Upscale 4×**. The result is saved as a new image; the original is never changed.
+
+**AI agents and MCP**
+
+* A WordPress MCP endpoint, on protocol revision 2026-07-28, that clients such as Claude Code, Cursor or VS Code can read. Anonymous access and OAuth are both off by default.
+* Calls to external MCP servers and an Amazon Bedrock AgentCore Gateway, with no authentication, an encrypted bearer token, or SigV4, over public HTTPS only
+* An agent that answers from your own content and from approved tools; a tool that changes data needs an explicit capability
+* The WordPress abilities integration, WP-CLI, and moving a configuration between sites
+
+**Channels**
+
+* Answers for a WeChat Official Account from the same pages, and customer service for a mini game
+* A record your agents keep of where each post is published on Bilibili, YouTube or Xiaohongshu, Bilibili embeds, and uploads to YouTube
+
+= Security by default =
+
+Every default below is the safe one, and each is a setting you can change rather than a promise you have to trust:
+
+* Guest access is off until you enable it, and the chat is hidden from visitors until it can actually answer, so a half-finished setup is never public
+* Requests are rate limited per visitor and per profile, with optional per-role limits and an optional daily site cap
+* Tools run on the server, so a browser cannot forge a tool result
+* External MCP tools are off for visitors, and the built-in MCP routes require authentication unless you deliberately open read-only access
 * Input, history, token and tool-call limits are enforced on the server
-* A visitor can stop a long answer, and the server stops the Bedrock request with it rather than
-  paying for text nobody will read
-
-**It can tell you whether an answer was good.** Write questions whose right answer you already know
-and run them: each goes through the pipeline the chat uses, and the result is reported by category,
-so you can see which part of an answer changed after a prompt edit or a model swap. Every check is a
-program, so nothing scores style or tone and no model is asked to judge another model. It runs from
-the command line too and exits nonzero, which is what lets it gate a deployment.
-
-= Grounded in your own content =
-
-Point the chat at your published pages and it answers from them, citing what it used. Choose an
-embedding model and it matches by meaning rather than by shared words, so "when will my parcel
-arrive" can find a page titled "Getting parcels to you". Keep the vectors in Amazon S3 Vectors and
-every passage of every page is searched, in the visitor's language first. Only what a signed-out
-visitor can read is ever indexed or quoted, so members-only sections stay out of answers, and pages
-your SEO plugin keeps out of search engines stay out too. Add a
-reranking model and the passages that best answer the question are kept, from your pages and a
-knowledge base alike. Questions
-the site does not cover return no context, and the Conversations screen lists them as content gaps
-with a shortcut to draft the page that is missing.
-
-= For WooCommerce stores =
-
-With WooCommerce active, a WooCommerce tab adds three features, each off until you turn it on:
-
-* **Product answers.** A question about products is answered from the live catalog, with the
-  price, sale price, stock and options the shop shows right now, and the products appear as cards
-  under the answer with View product and, where nothing has to be chosen, Add to cart. On a
-  product page, "is this in stock?" is about that product. Drafts, private and password-protected
-  products, products hidden from the catalog, and out-of-stock products on a store that hides them
-  are never described.
-* **Order questions.** A signed-in customer can ask where their order is. Only their own recent
-  orders are read, and only the order number, dates, status, items, total, shipping method and
-  tracking number are sent to the model; addresses, email, phone and payment details never are.
-  Naming another customer's order number reveals nothing.
-* **Product assistant.** On the product edit screen, draft the short and the full description from
-  the product's real name, attributes and categories, or summarize its approved reviews without
-  reviewer names. The draft is shown for review, and nothing is saved until you update the product.
-
-The plugin declares compatibility with High-Performance Order Storage and the Cart and Checkout
-blocks, and adds suggested text for the site's privacy policy under Settings > Privacy.
-
-= An MCP server, and an MCP client =
-
-The site can expose its own read-only tools to AI clients over JSON-RPC on protocol revision
-2026-07-28, with anonymous access and OAuth both off by default. It can also call external MCP
-servers and an Amazon Bedrock AgentCore Gateway, with no authentication, a bearer token stored
-encrypted, or SigV4. Endpoints must be public HTTPS URLs.
+* Credentials saved through the settings screen are encrypted with authenticated encryption derived from the site's WordPress authentication salts, and are never rendered back into the form
 
 = Stored data and privacy =
 
-No custom table is created. The conversation log is optional and off by default; when enabled it
-holds the 200 most recent exchanges in a WordPress option, with a retention window you set, and it
-supports the WordPress personal-data export and erase tools. Conversation memory is off by default
-too: it can keep a conversation in the visitor's browser tab only, or also save a signed-in visitor's
-recent conversation in their user data for the days you set. Debug mode records redacted metadata,
-not prompts, responses or credentials. AWS states that model providers have no access to Bedrock
-prompts and completions, and that they are not used to train the base models. The Privacy Policy section
-sets out what is sent, to whom, and what is kept.
+No custom table is created. The conversation log is optional and off by default; when enabled it holds the 200 most recent exchanges in a WordPress option, with a retention window you set, and supports the WordPress personal-data export and erase tools. Conversation memory is off by default too: it can keep a conversation in the visitor's browser tab only, or also save a signed-in visitor's recent conversation in their user data for the days you set. Debug mode records redacted metadata, not prompts, responses or credentials. AWS states that model providers have no access to Bedrock prompts and completions, and that they are not used to train the base models. The Privacy Policy section sets out what is sent, to whom, and what is kept.
 
-= What it costs, and how to watch it =
+= What it costs =
 
-The dashboard shows requests and tokens for the last seven days, broken down by the model that
-actually answered, so a fallback or a profile on a different model is visible. Those counters are
-kept for 30 days and contain no prompts, responses or identities. On Claude, the system prompt and
-tool definitions every visitor shares are cached by Bedrock, and the dashboard shows how many input
-tokens were read from that cache instead of being billed at the full price.
+Amazon Bedrock bills your AWS account for what the models use. The dashboard shows requests and tokens for the last seven days by the model that actually answered, kept for 30 days without prompts, responses or identities. It also counts chat requests that still failed after any fallback model, grouped as throttled, access denied, rejected, unavailable, network or other, and shows how long streamed answers take to start.
 
-Token counts are what Bedrock reported and are not a price estimate. Rate limiting reduces
-accidental usage but guarantees nothing about your bill, so review Amazon Bedrock pricing and set
-AWS Budgets before opening a chat to public traffic.
+Token counts are what Bedrock reported and are not a price estimate. Rate limiting reduces accidental usage but guarantees nothing about your bill, so review Amazon Bedrock pricing and set AWS Budgets before opening a chat to public traffic.
 
-The dashboard also counts chat requests that reached Amazon Bedrock and still failed after any
-fallback model, today and for the last seven days, grouped as throttled, access denied, rejected,
-unavailable, network or other. These are counters only: no message, error text or identity is kept.
+= Get started =
 
-The usage panel also shows how long streamed answers take to start.
+1. Install and activate the plugin.
+2. Paste an Amazon Bedrock API key, or use the server's IAM role, and pick a model.
+3. Run **Diagnostics**: it sends one short question to the model and reports the answer.
+4. Add the chat block or `[ai_chat_bedrock]` to a page.
 
-= The rest =
-
-Streaming, reading answers and posts aloud with Amazon Polly, managed prompts from Bedrock Prompt Management, a fallback model, multiple chats with
-profiles, a floating launcher, the content tools, the WordPress abilities integration, WP-CLI, moving
-a configuration between sites and the full MCP setup are covered in the FAQ tab, with their limits
-stated.
+The Installation tab has the details, and the FAQ covers every feature with its limits stated.
 
 == Installation ==
 
