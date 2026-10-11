@@ -1,9 +1,9 @@
-=== AI Chatbot & Agents for Amazon Bedrock ===
+=== AI Chatbot, Agents & MCP for Amazon Bedrock ===
 Contributors: glay, glayguo
 Tags: ai chatbot, ai, connector, woocommerce, mcp
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.72.1
+Stable tag: 1.72.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -94,7 +94,7 @@ No custom table is created. The conversation log is optional and off by default;
 
 = What it costs =
 
-Amazon Bedrock bills your AWS account for what the models use. The dashboard shows requests and tokens for the last seven days by the model that actually answered, kept for 30 days without prompts, responses or identities. It also counts chat requests that still failed after any fallback model, grouped as throttled, access denied, rejected, unavailable, network or other, and shows how long streamed answers take to start.
+Amazon Bedrock bills your AWS account for what the models use. It is part of AWS paid plans, not the AWS Free plan; new AWS accounts get $100 in Free Tier credits and can earn up to $100 more, up to $200 over six months, and remaining credits apply to AWS bills after upgrading to the Paid plan. The dashboard shows requests and tokens for the last seven days by the model that actually answered, kept for 30 days without prompts, responses or identities. It also counts chat requests that still failed after any fallback model, grouped as throttled, access denied, rejected, unavailable, network or other, and shows how long streamed answers take to start.
 
 Token counts are what Bedrock reported and are not a price estimate. Rate limiting reduces accidental usage but guarantees nothing about your bill, so review Amazon Bedrock pricing and set AWS Budgets before opening a chat to public traffic.
 
@@ -105,7 +105,7 @@ Token counts are what Bedrock reported and are not a price estimate. Rate limiti
 3. Run **Diagnostics**: it sends one short question to the model and reports the answer.
 4. Add the chat block or `[ai_chat_bedrock]` to a page.
 
-The Installation tab has the details, and the FAQ covers every feature with its limits stated.
+The Installation tab has the details, and the FAQ covers every feature with its limits stated. A step-by-step guide for sites on AWS is [in English](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/getting-started-on-aws.md) and [in Japanese](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/ja/getting-started-on-aws.md).
 
 == Installation ==
 
@@ -437,6 +437,10 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.72.2 =
+* Renamed AI Chatbot, Agents & MCP for Amazon Bedrock, naming the built-in WordPress MCP server.
+* A step-by-step guide for WordPress sites on AWS, in English and Japanese, and the readme says Bedrock needs an AWS paid plan and how new-account credits apply.
+
 = 1.72.1 =
 * The official WordPress AI plugin now sees Amazon Bedrock as connected on sites that sign with an IAM role, access keys or a key in this plugin's settings. It looked only for a key stored on Settings > Connectors, so on those sites every AI plugin feature asked to connect a provider. Its image generation is offered once an image model is chosen, the choice that agrees to send prompts to the Stability models.
 
@@ -466,6 +470,9 @@ what a good answer says.
 * Updated Chinese and Japanese translations and release checks for the review workflow.
 
 == Upgrade Notice ==
+
+= 1.72.2 =
+New name and a getting-started guide for sites on AWS; no change to how the plugin works.
 
 = 1.72.1 =
 The WordPress AI plugin now works with Bedrock on sites that sign with an IAM role or keys in this plugin's settings.

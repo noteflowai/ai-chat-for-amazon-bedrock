@@ -177,7 +177,7 @@ class AI_Chat_Bedrock_Admin {
 	}
 
 	public function add_plugin_admin_menu() {
-		add_menu_page( __( 'AI Chatbot & Agents for Amazon Bedrock', 'ai-chat-for-amazon-bedrock' ), __( 'AI Chat Bedrock', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name, array( $this, 'display_plugin_admin_page' ), 'dashicons-format-chat', 100 );
+		add_menu_page( __( 'AI Chatbot, Agents & MCP for Amazon Bedrock', 'ai-chat-for-amazon-bedrock' ), __( 'AI Chat Bedrock', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name, array( $this, 'display_plugin_admin_page' ), 'dashicons-format-chat', 100 );
 		// The first item opens the menu's own page; named for what it is, not the plugin again.
 		add_submenu_page( $this->plugin_name, __( 'Overview', 'ai-chat-for-amazon-bedrock' ), __( 'Overview', 'ai-chat-for-amazon-bedrock' ), 'manage_options', $this->plugin_name, array( $this, 'display_plugin_admin_page' ) );
 		// Daily work first: trying the chat, reading what visitors asked and what they need.
@@ -801,7 +801,7 @@ class AI_Chat_Bedrock_Admin {
 
 		printf(
 			'<div class="notice notice-warning is-dismissible aicfab-setup-notice"><p><strong>%1$s</strong> %2$s <a href="%3$s">%4$s</a></p></div>',
-			esc_html__( 'AI Chatbot & Agents for Amazon Bedrock:', 'ai-chat-for-amazon-bedrock' ),
+			esc_html__( 'AI Chatbot, Agents & MCP for Amazon Bedrock:', 'ai-chat-for-amazon-bedrock' ),
 			esc_html__( 'no usable AWS credentials were found, so the chat cannot answer yet. An Amazon Bedrock API key is the quickest way to connect.', 'ai-chat-for-amazon-bedrock' ),
 			esc_url( admin_url( 'admin.php?page=' . $this->plugin_name . '-settings' ) ),
 			esc_html__( 'Finish setup', 'ai-chat-for-amazon-bedrock' )
