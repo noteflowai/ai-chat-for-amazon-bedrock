@@ -438,7 +438,7 @@ what a good answer says.
 == Changelog ==
 
 = 1.71.1 =
-* A WeChat editorial review now binds what readers get (the converted article, title, excerpt, cover and image bytes) and no longer the plugin's code files. An update that changes nothing a reader sees keeps the review; one that changes the output still asks for a fresh review. Reviews recorded before this version need one fresh review.
+* A WeChat editorial review now binds what readers get, the exact article the writer would send with its title, excerpt, cover and image bytes, and no longer the plugin's code files. An update that changes nothing a reader sees keeps the review; one that changes the output still asks for a fresh review. Reviews recorded before this version need one fresh review.
 
 = 1.71.0 =
 * llms.txt, under Settings > Agents and tools and off by default: a Markdown file at /llms.txt that tells AI tools what the site holds, listing its public posts, pages and products by type and, on a multilingual site, language. It never names a draft, members-only content, a hidden product or a page kept out of search engines, and is served only where nothing else answers the address: a real llms.txt file, a page there or a plugin answering before the page template loads goes first.

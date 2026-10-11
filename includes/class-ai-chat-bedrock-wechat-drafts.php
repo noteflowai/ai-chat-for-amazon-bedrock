@@ -496,6 +496,21 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( is_wp_error( $content ) ) {
 			return $content;
 		}
+		return self::article_fields( $post, $options, $edition, $content, $cover );
+	}
+
+	/**
+	 * The article the writer sends, from its content and cover. The review binds the same
+	 * fields, so what it covers is what WeChat receives.
+	 *
+	 * @param WP_Post    $post    Post.
+	 * @param array      $options Settings.
+	 * @param array|null $edition Edition.
+	 * @param string     $content Article HTML.
+	 * @param string     $cover   Cover media ID.
+	 * @return array
+	 */
+	private static function article_fields( $post, $options, $edition, $content, $cover ) {
 		return array(
 			'article_type'          => 'news',
 			'title'                 => null !== $edition ? $edition['record']['title'] : self::title( html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ) ),
@@ -648,11 +663,26 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			'account'            => AI_Chat_Bedrock_WeChat::app_id( $options ),
 			'video_id'           => self::video_id( $post->ID ),
 			'cover_id'           => $edition['record']['cover_id'],
-			// The review binds what readers get, not the code that made it: a code change that
-			// alters the converted HTML, an excerpt or an image changes those bytes and needs a
-			// fresh review, and one that changes nothing a reader sees keeps the review.
 			'assets'             => $edition['assets'],
 		);
+
+		// The review binds what readers get, not the code that made it: the article the writer
+		// would send, rendered by the writer's own code with each image standing in as its
+		// bytes' hash, since WeChat's address is only known after upload. A code change that
+		// alters the article needs a fresh review; one that changes nothing a reader sees keeps it.
+		$article = self::content(
+			$post,
+			array(),
+			$edition,
+			static function ( $src ) {
+				$file = self::local_image( $src, self::IMAGE_BYTES );
+				return null === $file ? '' : 'https://image.invalid/' . hash_file( 'sha256', $file['path'] );
+			}
+		);
+		if ( is_wp_error( $article ) ) {
+			return $article;
+		}
+		$input['article'] = self::article_fields( $post, $options, $edition, $article, 'cover:' . $edition['record']['cover_id'] );
 
 		$json = wp_json_encode( $input, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
 		if ( ! is_string( $json ) ) {
@@ -862,11 +892,14 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * The article's HTML: what a signed-out visitor sees, with the tags WeChat shows, links as
 	 * plain text, and images uploaded to WeChat.
 	 *
-	 * @param WP_Post $post    Post.
-	 * @param array   $account Account.
-	 * @return string
+	 * @param WP_Post       $post    Post.
+	 * @param array         $account Account.
+	 * @param array|null    $edition Edition.
+	 * @param callable|null $resolve Image address for a source, instead of uploading it; the
+	 *                               review renders the article with one, so it binds the result.
+	 * @return string|WP_Error
 	 */
-	public static function content( $post, $account, $edition = null ) {
+	public static function content( $post, $account, $edition = null, $resolve = null ) {
 		if ( null === $edition && metadata_exists( 'post', $post->ID, self::EDITION_META ) ) {
 			$edition = self::edition_for_post( $post );
 		}
@@ -893,12 +926,12 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		$error = null;
 		$html  = preg_replace_callback(
 			'#<img\b[^>]*>#i',
-			function ( $tag ) use ( $post, $account, $edition, &$left, &$error ) {
+			function ( $tag ) use ( $post, $account, $edition, $resolve, &$left, &$error ) {
 				$src = preg_match( '#\ssrc="([^"]+)"#i', $tag[0], $found ) ? html_entity_decode( $found[1], ENT_QUOTES, 'UTF-8' ) : '';
 				if ( $left < 1 || '' === $src ) {
 					return '';
 				}
-				$url = self::upload_image( $src, $account, $post->ID, null !== $edition );
+				$url = null !== $resolve ? (string) call_user_func( $resolve, $src ) : self::upload_image( $src, $account, $post->ID, null !== $edition );
 				if ( '' === $url ) {
 					if ( null !== $edition ) {
 						$error = new WP_Error( 'review_assets', 'A reviewed edition image could not be uploaded; no draft was written.' );

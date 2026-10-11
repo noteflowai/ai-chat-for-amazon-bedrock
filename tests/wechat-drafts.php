@@ -331,7 +331,7 @@ function esc_attr( $text ) {
 	return htmlspecialchars( (string) $text, ENT_QUOTES );
 }
 function esc_html__( $text, $domain = null ) {
-	return $text;
+	return isset( $GLOBALS['aicfab_translations'][ $text ] ) ? $GLOBALS['aicfab_translations'][ $text ] : $text;
 }
 function esc_html( $text ) {
 	return htmlspecialchars( (string) $text, ENT_QUOTES );
@@ -1237,6 +1237,16 @@ try {
 }
 check_drafts( ! is_wp_error( $aicfab_after ) && $aicfab_before['digest'] === $aicfab_after['digest'] && '' === $aicfab_after['shortfall'], 'A code change that alters nothing readers get keeps the current review.' );
 check_drafts( ! array_intersect( array( 'converter', 'projection', 'excerpt_projection' ), array_keys( $aicfab_after['input'] ) ) && 2 === $aicfab_after['input']['version'], 'The review input names its version and holds no code-file hashes.' );
+
+// What the writer adds after converting, such as the Read more line, is part of what the review
+// binds: changing it changes the article readers get, with the converted HTML and images as they were.
+$GLOBALS['aicfab_translations']['Tap "Read more" for the full article on the site.'] = 'A changed closing line.';
+$aicfab_changed = $drafts->ability_get_review( array( 'post_id' => 1 ) );
+unset( $GLOBALS['aicfab_translations'] );
+check_drafts( $aicfab_before['input']['conversion_html'] === $aicfab_changed['input']['conversion_html'] && $aicfab_before['input']['assets'] === $aicfab_changed['input']['assets'] && $aicfab_before['digest'] !== $aicfab_changed['digest'] && '' !== $aicfab_changed['shortfall'], 'A change to what the writer adds after conversion needs a fresh review.' );
+check_drafts( false !== strpos( $aicfab_before['input']['article']['content'], 'https://image.invalid/' ) && false === strpos( $aicfab_before['input']['article']['content'], 'mmbiz' ) && 'news' === $aicfab_before['input']['article']['article_type'], 'The bound article is the writer\'s own, with images standing in as their bytes\' hashes and nothing uploaded.' );
+$aicfab_final = $drafts->ability_get_review( array( 'post_id' => 1 ) );
+check_drafts( $aicfab_before['digest'] === $aicfab_final['digest'] && '' === $aicfab_final['shortfall'], 'Restoring the line restores the reviewed article.' );
 
 drafts_reset();
 drafts_settings();
