@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai chatbot, ai, connector, woocommerce, mcp
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.71.1
+Stable tag: 1.72.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -388,7 +388,7 @@ With site abilities on (off by default), agents can search and read published po
 
 = What does the site description tell an agent? =
 
-Turn on Site description and agents get a describe-site ability listing what the site holds as schema.org types, with counts per language, how the types relate and a sensitivity class for each property. IDs match the ones Yoast SEO and WooCommerce print in the page. The same rules decide what the index, the chat, agents and channels may use, whether or not the description is turned on. [Sensitivity rules and single-item descriptions](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#what-does-the-site-description-tell-an-agent).
+Turn on Site description and agents get a describe-site ability listing what the site holds as schema.org types, with counts per language, how the types relate and a sensitivity class for each property. IDs match the ones Yoast SEO and WooCommerce print in the page. The same rules decide what the index, the chat, agents and channels may use, whether or not the description is turned on, and Diagnostics lists what agents can reach. [Sensitivity rules and single-item descriptions](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#what-does-the-site-description-tell-an-agent).
 
 = Does the plugin publish an llms.txt file? =
 
@@ -437,6 +437,11 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.72.0 =
+* Diagnostics and Site Health have an AI agents line: what is turned on for agents and tools (the site description, llms.txt with its address, the site content abilities, and the WordPress MCP server with how it is reached), which of them follow the public-content rule, and where to turn the rest on. A real llms.txt file at the site root, which AI tools get instead, is named as such.
+* Developers: AI_Chat_Bedrock_Ontology::agent_surface() returns these settings in one place, and Diagnostics reads them from it.
+* The Live Preview on WordPress.org shows llms.txt and the site description, and leaves out WordPress's sample post and page.
+
 = 1.71.1 =
 * A WeChat editorial review now binds what readers get, the exact article the writer would send with its title, excerpt, cover and image bytes, and no longer the plugin's code files. An update that changes nothing a reader sees keeps the review; one that changes the output still asks for a fresh review. Reviews recorded before this version need one fresh review.
 
@@ -464,6 +469,9 @@ what a good answer says.
 * The package's minified files are built only with the pinned esbuild version.
 
 == Upgrade Notice ==
+
+= 1.72.0 =
+Diagnostics shows what AI agents and tools can reach on your site, and where to turn the rest on.
 
 = 1.71.1 =
 Plugin updates no longer invalidate WeChat editorial reviews unless the article readers get changes. Reviews recorded before 1.71.1 need one fresh review.

@@ -366,6 +366,54 @@ foreach ( array( 'wechat-drafts' => 'CRON', 'embeddings' => 'CRON_HOOK', 'leads'
 	check_diag( isset( $aicfab_hook[1] ) && false !== strpos( $aicfab_diag_source, "'" . $aicfab_hook[1] . "'" ), 'The background task check knows the hook of ' . $aicfab_file . '.' );
 }
 
+// --- What AI agents can reach, read from the site description --------------------
+
+function aicfab_agents_check( $diag ) {
+	foreach ( $diag->run( false ) as $check ) {
+		if ( 'agents' === $check['id'] ) {
+			return $check;
+		}
+	}
+	return null;
+}
+check_diag( null === aicfab_agents_check( $aicfab_diag ), 'Without the site description class there is no agents row to report.' );
+if ( ! function_exists( 'home_url' ) ) {
+	function home_url( $path = '' ) {
+		return 'https://example.test' . $path;
+	}
+}
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-ontology.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-llms-txt.php';
+$GLOBALS['aicfab_opts']['ai_chat_bedrock_enable_mcp'] = false;
+$GLOBALS['aicfab_opts']['ai_chat_bedrock_settings']   = array();
+$aicfab_agents = aicfab_agents_check( $aicfab_diag );
+check_diag( null !== $aicfab_agents && 'off' === $aicfab_agents['status'] && false !== strpos( $aicfab_agents['message'], 'Settings > Agents and tools' ), 'With nothing on, agents get nothing, and the row says where to turn it on.' );
+$GLOBALS['aicfab_opts']['ai_chat_bedrock_settings'] = array( 'llms_txt' => true, 'site_ontology' => true );
+$GLOBALS['aicfab_opts']['ai_chat_bedrock_enable_mcp'] = true;
+$aicfab_agents = aicfab_agents_check( $aicfab_diag );
+check_diag( 'pass' === $aicfab_agents['status'] && 0 === strpos( $aicfab_agents['message'], 'Turned on for AI agents and tools: ' ) && false !== strpos( $aicfab_agents['message'], 'llms.txt at https://example.test/llms.txt' ) && false !== strpos( $aicfab_agents['message'], 'the WordPress MCP server, for signed-in accounts' ) && false !== strpos( $aicfab_agents['message'], "the plugin's llms.txt show only published, public content" ), 'What is turned on is listed: llms.txt with its address, the MCP server with how it is reached, and the public-content rule only for what follows it.' );
+$aicfab_row_source = (string) file_get_contents( dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-diagnostics.php' ) . (string) file_get_contents( dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-ontology.php' );
+check_diag( false === strpos( $aicfab_row_source, 'ai_chat_bedrock_llms_txt_serve' ) && false === strpos( $aicfab_row_source, 'Llms_Txt::response(' ) && false === strpos( $aicfab_agents['message'], 'can use' ), 'The row reports the settings, not whether each address answers: it never consults the serving path, and says nothing is usable.' );
+$GLOBALS['aicfab_opts']['ai_chat_bedrock_settings']           = array();
+$GLOBALS['aicfab_opts']['ai_chat_bedrock_mcp_public_access'] = true;
+$aicfab_agents = aicfab_agents_check( $aicfab_diag );
+check_diag( 'pass' === $aicfab_agents['status'] && false !== strpos( $aicfab_agents['message'], 'readable without signing in' ) && false === strpos( $aicfab_agents['message'], 'public content' ), 'With only the MCP server on, no public-content rule is claimed for it, and public access is named.' );
+$GLOBALS['aicfab_opts']['ai_chat_bedrock_mcp_public_access'] = false;
+$GLOBALS['aicfab_opts']['ai_chat_bedrock_enable_mcp']        = false;
+file_put_contents( ABSPATH . 'llms.txt', "# Hand written\n" );
+$aicfab_agents = aicfab_agents_check( $aicfab_diag );
+unlink( ABSPATH . 'llms.txt' );
+check_diag( 'off' === $aicfab_agents['status'] && false !== strpos( $aicfab_agents['message'], 'not written by this plugin' ), 'With the setting off, a real llms.txt file is still named as what AI tools get.' );
+$GLOBALS['aicfab_opts']['ai_chat_bedrock_settings']   = array( 'llms_txt' => true, 'site_ontology' => true );
+$GLOBALS['aicfab_opts']['ai_chat_bedrock_enable_mcp'] = true;
+check_diag( false === strpos( $aicfab_agents['message'], 'the site description' ), 'The site description is not listed where the Abilities API that offers it is missing.' );
+file_put_contents( ABSPATH . 'llms.txt', "# Hand written\n" );
+$aicfab_agents = aicfab_agents_check( $aicfab_diag );
+unlink( ABSPATH . 'llms.txt' );
+check_diag( false === strpos( $aicfab_agents['message'], 'llms.txt at ' ) && false !== strpos( $aicfab_agents['message'], 'not written by this plugin' ), 'A real llms.txt file at the site root is reported as what AI tools get, not the plugin\'s.' );
+$aicfab_surface = AI_Chat_Bedrock_Ontology::agent_surface();
+check_diag( true === $aicfab_surface['mcp']['on'] && false === $aicfab_surface['site_abilities']['on'] && true === $aicfab_surface['llms_txt']['on'], 'The site description reports each agent surface from the settings.' );
+
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
 	exit( 1 );

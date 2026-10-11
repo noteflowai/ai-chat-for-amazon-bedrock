@@ -100,6 +100,9 @@ class AI_Chat_Bedrock_Diagnostics {
 		$checks[] = $this->check_encryption();
 		$checks[] = $this->check_public_access( $options );
 		$checks[] = $this->check_mcp();
+		if ( class_exists( 'AI_Chat_Bedrock_Ontology' ) ) {
+			$checks[] = $this->check_agents();
+		}
 		$checks[] = $this->check_schedules();
 		$checks[] = $this->check_guardrail( $options );
 		$checks[] = $this->check_knowledge_base( $options );
@@ -453,6 +456,53 @@ class AI_Chat_Bedrock_Diagnostics {
 			return $this->result( 'mcp', __( 'MCP tools', 'ai-chat-for-amazon-bedrock' ), 'warn', __( 'The built-in WordPress MCP endpoint is publicly readable. Disable public access unless it is required.', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		return $this->result( 'mcp', __( 'MCP tools', 'ai-chat-for-amazon-bedrock' ), 'pass', __( 'MCP tools are enabled and require authentication.', 'ai-chat-for-amazon-bedrock' ) );
+	}
+
+	/**
+	 * What is turned on for AI agents and tools, in one line, with where to turn the rest on.
+	 * It reports the settings, not whether each address answers right now. The MCP check above
+	 * already warns about public access, so this one only reports.
+	 */
+	private function check_agents() {
+		$surface = AI_Chat_Bedrock_Ontology::agent_surface();
+		$label   = __( 'AI agents', 'ai-chat-for-amazon-bedrock' );
+		$on      = array();
+		$public  = false;
+		if ( $surface['site_description']['on'] ) {
+			$on[]   = __( 'the site description', 'ai-chat-for-amazon-bedrock' );
+			$public = true;
+		}
+		if ( $surface['site_abilities']['on'] ) {
+			$on[]   = __( 'the site content abilities', 'ai-chat-for-amazon-bedrock' );
+			$public = true;
+		}
+		$file = '';
+		if ( $surface['llms_txt']['on'] && ! $surface['llms_txt']['file'] ) {
+			/* translators: %s: the llms.txt address. */
+			$on[]   = sprintf( __( 'llms.txt at %s', 'ai-chat-for-amazon-bedrock' ), $surface['llms_txt']['url'] );
+			$public = true;
+		} elseif ( $surface['llms_txt']['file'] ) {
+			$file = __( 'An llms.txt file at the site root, not written by this plugin, is served to AI tools.', 'ai-chat-for-amazon-bedrock' );
+		}
+		// The MCP server answers with its own sign-in and tool permissions, so it is listed with
+		// how it is reached, and the public-content rule is not claimed for it.
+		if ( $surface['mcp']['on'] ) {
+			$on[] = $surface['mcp']['public'] ? __( 'the WordPress MCP server, readable without signing in', 'ai-chat-for-amazon-bedrock' ) : __( 'the WordPress MCP server, for signed-in accounts', 'ai-chat-for-amazon-bedrock' );
+		}
+		if ( empty( $on ) ) {
+			return $this->result( 'agents', $label, 'off', AI_Chat_Bedrock_Translation::sentences( __( 'AI agents and tools get nothing from the plugin. The site description, llms.txt, site content abilities and the MCP server are under Settings > Agents and tools.', 'ai-chat-for-amazon-bedrock' ), $file ) );
+		}
+		return $this->result(
+			'agents',
+			$label,
+			'pass',
+			AI_Chat_Bedrock_Translation::sentences(
+				/* translators: %s: what is turned on, such as "the site description, llms.txt at https://example.com/llms.txt". */
+				sprintf( __( 'Turned on for AI agents and tools: %s.', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_Translation::items( $on ) ),
+				$public ? __( 'The site description, the site content abilities and the plugin\'s llms.txt show only published, public content, never drafts or members-only text.', 'ai-chat-for-amazon-bedrock' ) : '',
+				$file
+			)
+		);
 	}
 
 	private function check_live_invocation( $options ) {

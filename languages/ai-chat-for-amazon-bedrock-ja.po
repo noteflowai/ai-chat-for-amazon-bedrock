@@ -7694,3 +7694,44 @@ msgstr "サイトのルートに llms.txt ファイルがすでにあるため�
 #, php-format
 msgid "Content is published in: %s."
 msgstr "公開している言語：%s。"
+
+msgid "AI agents"
+msgstr "AI エージェント"
+
+msgid "the site description"
+msgstr "サイトの説明"
+
+msgid "the site content abilities"
+msgstr "サイトのコンテンツ機能"
+
+msgid "the WordPress MCP server, for signed-in accounts"
+msgstr "WordPress MCP サーバー（ログインしたアカウント向け）"
+
+#. translators: %s: the llms.txt address.
+#, php-format
+msgid "llms.txt at %s"
+msgstr "%s の llms.txt"
+
+msgid ""
+"An llms.txt file at the site root, not written by this plugin, is served to "
+"AI tools."
+msgstr "このプラグインが書いたものではない llms.txt ファイルがサイトのルートにあり、AI ツールにはそれが返されます。"
+
+msgid ""
+"AI agents and tools get nothing from the plugin. The site description, llms."
+"txt, site content abilities and the MCP server are under Settings > Agents "
+"and tools."
+msgstr "AI エージェントやツールがこのプラグインから得られるものはまだありません。サイトの説明、llms.txt、サイトのコンテンツ機能、MCP サーバーは「設定 > エージェントとツール」で有効にできます。"
+
+#. translators: %s: what agents can reach, such as "the site description, llms.txt at https://example.com/llms.txt".
+#, php-format
+msgid "Turned on for AI agents and tools: %s."
+msgstr "AI エージェントやツール向けに有効なもの：%s。"
+
+msgid ""
+"The site description, the site content abilities and the plugin's llms.txt "
+"show only published, public content, never drafts or members-only text."
+msgstr "サイトの説明、サイトのコンテンツ機能、このプラグインの llms.txt は公開済みの公開コンテンツのみを示し、下書きや会員限定のテキストは含みません。"
+
+msgid "the WordPress MCP server, readable without signing in"
+msgstr "WordPress MCP サーバー（ログインなしで読み取り可能）"
