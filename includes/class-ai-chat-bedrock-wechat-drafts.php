@@ -41,7 +41,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	const VIDEO_MARK      = '[[aicfab-wechat-video]]';
 	const COVER_META      = '_aicfab_wechat_cover';
 	const REVIEW_META     = '_aicfab_wechat_review';
-	const REVIEW_VERSION  = 1;
+	const REVIEW_VERSION  = 2;
 	const REVIEW_TTL      = 604800;
 	const REVIEW_CHECKS   = array( 'topic_fit', 'original_value', 'evidence', 'rights', 'mobile_readability', 'safety', 'public_only' );
 	const EDITION_META    = '_aicfab_wechat_edition';
@@ -648,17 +648,12 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			'account'            => AI_Chat_Bedrock_WeChat::app_id( $options ),
 			'video_id'           => self::video_id( $post->ID ),
 			'cover_id'           => $edition['record']['cover_id'],
+			// The review binds what readers get, not the code that made it: a code change that
+			// alters the converted HTML, an excerpt or an image changes those bytes and needs a
+			// fresh review, and one that changes nothing a reader sees keeps the review.
 			'assets'             => $edition['assets'],
-			// Changes to conversion/projection code require a fresh editorial review.
-			'converter'          => hash_file( 'sha256', __FILE__ ),
-			'projection'         => hash_file( 'sha256', __DIR__ . '/class-ai-chat-bedrock-content.php' ),
-			'excerpt_projection' => hash_file( 'sha256', __DIR__ . '/class-ai-chat-bedrock-distribution.php' ),
 		);
-		foreach ( array( 'converter', 'projection', 'excerpt_projection' ) as $key ) {
-			if ( ! is_string( $input[ $key ] ) || ! preg_match( '/^[a-f0-9]{64}$/D', $input[ $key ] ) ) {
-				return new WP_Error( 'review_input', 'Conversion source could not be hashed.' );
-			}
-		}
+
 		$json = wp_json_encode( $input, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
 		if ( ! is_string( $json ) ) {
 			return new WP_Error( 'review_input', 'Review input could not be encoded.' );

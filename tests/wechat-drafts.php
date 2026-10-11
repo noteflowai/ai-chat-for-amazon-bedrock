@@ -1188,12 +1188,12 @@ drafts_local_article( 5 );
 drafts_review( 1 );
 $done = $drafts->ability_create( array( 'post_ids' => array( 1, 5 ) ) );
 check_drafts( ! is_wp_error( $done ) && array( 1 ) === $done['posts'] && 'review_missing' === $done['skipped'][5] && 1 === count( drafts_sent_body()['articles'] ) && ! AI_Chat_Bedrock_WeChat_Drafts::sent( 5 ), 'A batch writes only the individually current reviewed post; no unreviewed article is mixed in.' );
-foreach ( array( 'content', 'option', 'review', 'edition', 'body_asset', 'cover_asset', 'code' ) as $case ) {
+foreach ( array( 'content', 'option', 'review', 'edition', 'body_asset', 'cover_asset' ) as $case ) {
 	drafts_reset();
 	drafts_settings();
 	drafts_local_article();
 	drafts_review( 1 );
-	$drift_path = 'code' === $case ? $root . '/includes/class-ai-chat-bedrock-content.php' : $aicfab_uploads . '/2026/10/' . ( 'cover_asset' === $case ? 'cover.jpg' : 'robot.jpg' );
+	$drift_path = $aicfab_uploads . '/2026/10/' . ( 'cover_asset' === $case ? 'cover.jpg' : 'robot.jpg' );
 	$drift_bytes = file_get_contents( $drift_path );
 	$GLOBALS['aicfab_on_http'] = function ( $path ) use ( $case, $drift_path, $drift_bytes ) {
 		if ( 'media/uploadimg' !== $path ) {
@@ -1208,7 +1208,7 @@ foreach ( array( 'content', 'option', 'review', 'edition', 'body_asset', 'cover_
 		} elseif ( 'edition' === $case ) {
 			$GLOBALS['aicfab_meta'][1][ AI_Chat_Bedrock_WeChat_Drafts::EDITION_META ]['html'] .= '<p>Edited static edition.</p>';
 		} else {
-			file_put_contents( $drift_path, $drift_bytes . ( 'code' === $case ? "\n// Offline converter drift fixture.\n" : 'asset changed during conversion' ) );
+			file_put_contents( $drift_path, $drift_bytes . 'asset changed during conversion' );
 		}
 	};
 	try {
@@ -1219,6 +1219,24 @@ foreach ( array( 'content', 'option', 'review', 'edition', 'body_asset', 'cover_
 	check_drafts( is_wp_error( $result ) && 'wx_review' === $result->get_error_code() && ! in_array( 'draft/add', drafts_paths(), true ) && ! in_array( 'draft/update', drafts_paths(), true ) && ! AI_Chat_Bedrock_WeChat_Drafts::sent( 1 ), 'Final revalidation refuses native draft write after mid-conversion drift: ' . $case );
 }
 unset( $GLOBALS['aicfab_on_http'] );
+
+// A plugin update that changes no byte a reader gets keeps the review: the digest binds the
+// converted output, not the code files that produced it.
+drafts_reset();
+drafts_settings();
+drafts_local_article();
+drafts_review( 1 );
+$aicfab_before = $drafts->ability_get_review( array( 'post_id' => 1 ) );
+$aicfab_code   = $root . '/includes/class-ai-chat-bedrock-content.php';
+$aicfab_bytes  = file_get_contents( $aicfab_code );
+file_put_contents( $aicfab_code, $aicfab_bytes . "\n// Unrelated code change fixture.\n" );
+try {
+	$aicfab_after = $drafts->ability_get_review( array( 'post_id' => 1 ) );
+} finally {
+	file_put_contents( $aicfab_code, $aicfab_bytes );
+}
+check_drafts( ! is_wp_error( $aicfab_after ) && $aicfab_before['digest'] === $aicfab_after['digest'] && '' === $aicfab_after['shortfall'], 'A code change that alters nothing readers get keeps the current review.' );
+check_drafts( ! array_intersect( array( 'converter', 'projection', 'excerpt_projection' ), array_keys( $aicfab_after['input'] ) ) && 2 === $aicfab_after['input']['version'], 'The review input names its version and holds no code-file hashes.' );
 
 drafts_reset();
 drafts_settings();
