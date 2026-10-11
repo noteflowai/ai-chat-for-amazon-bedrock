@@ -522,7 +522,7 @@ class AI_Chat_Bedrock_WeChat {
 		}
 		$lines = array();
 		foreach ( get_posts( $args ) as $post ) {
-			if ( count( $lines ) < 5 && ( ! class_exists( 'AI_Chat_Bedrock_Content' ) || AI_Chat_Bedrock_Content::is_public( $post ) ) ) {
+			if ( count( $lines ) < 5 && class_exists( 'AI_Chat_Bedrock_Ontology' ) && AI_Chat_Bedrock_Ontology::allows( $post, 'distribution' ) ) {
 				$lines[] = html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ) . "\n" . get_permalink( $post );
 			}
 		}

@@ -227,6 +227,52 @@ check_onto( 'no' === AI_Chat_Bedrock_Ontology::rule( 'secret', 'analytics' ) && 
 check_onto( AI_Chat_Bedrock_Ontology::may_show_count( 0 ) && AI_Chat_Bedrock_Ontology::may_show_count( 5 ) && AI_Chat_Bedrock_Ontology::may_show_count( 120 ), 'Zero and groups of five or more may be shown.' );
 check_onto( ! AI_Chat_Bedrock_Ontology::may_show_count( 1 ) && ! AI_Chat_Bedrock_Ontology::may_show_count( 4 ), 'Groups of one to four people are withheld.' );
 
+// --- The policy applied to posts --------------------------------------------------
+
+$aicfab_public = get_post( 10 );
+$aicfab_locked = get_post( 13 );
+$aicfab_draft  = get_post( 12 );
+check_onto( 'public' === AI_Chat_Bedrock_Ontology::post_class( $aicfab_public ) && 'member' === AI_Chat_Bedrock_Ontology::post_class( $aicfab_locked ) && '' === AI_Chat_Bedrock_Ontology::post_class( $aicfab_draft ) && '' === AI_Chat_Bedrock_Ontology::post_class( null ), 'A public post is public, a password-protected one is member content, and a draft is not site data.' );
+foreach ( array( 'index', 'visitor_chat', 'agent', 'distribution' ) as $aicfab_use ) {
+	check_onto( AI_Chat_Bedrock_Ontology::allows( $aicfab_public, $aicfab_use ), 'A public post may be used for ' . $aicfab_use . '.' );
+	check_onto( ! AI_Chat_Bedrock_Ontology::allows( $aicfab_locked, $aicfab_use ) && ! AI_Chat_Bedrock_Ontology::allows( $aicfab_draft, $aicfab_use ), 'Member content and drafts are refused for ' . $aicfab_use . '.' );
+}
+check_onto( ! AI_Chat_Bedrock_Ontology::allows( $aicfab_public, 'email' ), 'An unknown use is refused for a post too.' );
+check_onto( 'no' === AI_Chat_Bedrock_Ontology::rule( 'member', 'distribution' ) && 'no' === AI_Chat_Bedrock_Ontology::rule( 'personal', 'distribution' ) && 'no' === AI_Chat_Bedrock_Ontology::rule( 'financial', 'distribution' ), 'Only public content is sent to a channel.' );
+$aicfab_published = array();
+foreach ( AI_Chat_Bedrock_Ontology::sensitivity_classes() as $aicfab_rules ) {
+	$aicfab_published[ $aicfab_rules['class'] ] = $aicfab_rules['distribution'];
+}
+check_onto( array( 'public' => 'yes', 'member' => 'no', 'personal' => 'no', 'financial' => 'no' ) === $aicfab_published, 'The rules published to agents include sending to a channel.' );
+$GLOBALS['aicfab_options']['ai_chat_bedrock_settings']['site_ontology'] = false;
+check_onto( ! AI_Chat_Bedrock_Ontology::allows( $aicfab_locked, 'visitor_chat' ) && AI_Chat_Bedrock_Ontology::allows( $aicfab_public, 'visitor_chat' ), 'The policy applies with the site description turned off: the setting only decides what agents are told.' );
+$GLOBALS['aicfab_options']['ai_chat_bedrock_settings']['site_ontology'] = true;
+$GLOBALS['aicfab_filters']['ai_chat_bedrock_ontology_allows'] = function ( $allowed, $post, $usage ) {
+	return 'agent' === $usage ? false : true;
+};
+check_onto( ! AI_Chat_Bedrock_Ontology::allows( $aicfab_public, 'agent' ) && AI_Chat_Bedrock_Ontology::allows( $aicfab_public, 'index' ), 'A site can withhold a public post from one use.' );
+check_onto( ! AI_Chat_Bedrock_Ontology::allows( $aicfab_locked, 'index' ) && ! AI_Chat_Bedrock_Ontology::allows( $aicfab_draft, 'distribution' ), 'But returning true never grants what the policy refuses.' );
+unset( $GLOBALS['aicfab_filters']['ai_chat_bedrock_ontology_allows'] );
+
+// Every part that sends a post's text somewhere asks the policy, and none keeps its own copy
+// of the visibility rules, which is how they drift apart.
+$aicfab_root = dirname( __DIR__ );
+foreach ( array(
+	'embeddings'     => 'index',
+	's3-vectors'     => 'index',
+	'retrieval'      => 'visitor_chat',
+	'site-abilities' => 'agent',
+	'wp-mcp-server'  => 'agent',
+	'wechat-drafts'  => 'distribution',
+	'publish-kit'    => 'distribution',
+	'wechat'         => 'distribution',
+) as $aicfab_file => $aicfab_use ) {
+	$aicfab_source = (string) file_get_contents( $aicfab_root . '/includes/class-ai-chat-bedrock-' . $aicfab_file . '.php' );
+	check_onto( false !== strpos( $aicfab_source, "AI_Chat_Bedrock_Ontology::allows( \$post, '{$aicfab_use}'" ), $aicfab_file . ' asks the site policy for ' . $aicfab_use . '.' );
+	check_onto( false === strpos( $aicfab_source, 'post_password' ) && false === strpos( $aicfab_source, 'AI_Chat_Bedrock_Content::is_answerable(' ), $aicfab_file . ' keeps no copy of the visibility rules.' );
+	check_onto( ! preg_match( "/! class_exists\( 'AI_Chat_Bedrock_(Content|Ontology)' \) \|\| AI_Chat_Bedrock_\\1::(is_|allows)/", $aicfab_source ), $aicfab_file . ' refuses, rather than allows, when the policy is not loaded.' );
+}
+
 // --- One language, no shop -------------------------------------------------------
 
 $aicfab_site = AI_Chat_Bedrock_Ontology::describe();

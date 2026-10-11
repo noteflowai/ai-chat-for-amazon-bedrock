@@ -197,6 +197,7 @@ class AI_Chat_Bedrock_AWS {
 
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-content.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-ontology.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-s3-vectors.php';
 
 $failures = array();

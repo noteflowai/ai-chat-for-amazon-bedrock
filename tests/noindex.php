@@ -149,14 +149,21 @@ check_noindex( ! AI_Chat_Bedrock_Content::is_answerable( $private ), 'But never 
 
 $root = dirname( __DIR__ );
 foreach ( array(
-	'includes/class-ai-chat-bedrock-retrieval.php'     => 'keyword search',
-	'includes/class-ai-chat-bedrock-embeddings.php'    => 'semantic search',
-	'includes/class-ai-chat-bedrock-s3-vectors.php'    => 'S3 Vectors search',
-	'includes/class-ai-chat-bedrock-site-abilities.php' => 'the site content abilities',
-) as $file => $what ) {
+	'includes/class-ai-chat-bedrock-retrieval.php'      => array( 'keyword search', 'visitor_chat' ),
+	'includes/class-ai-chat-bedrock-embeddings.php'     => array( 'semantic search', 'index' ),
+	'includes/class-ai-chat-bedrock-s3-vectors.php'     => array( 'S3 Vectors search', 'index' ),
+	'includes/class-ai-chat-bedrock-site-abilities.php' => array( 'the site content abilities', 'agent' ),
+	'includes/class-ai-chat-bedrock-wp-mcp-server.php'  => array( 'the built-in MCP server', 'agent' ),
+) as $file => $use ) {
 	$source = (string) file_get_contents( $root . '/' . $file );
-	check_noindex( false !== strpos( $source, 'AI_Chat_Bedrock_Content::is_answerable(' ) && false === strpos( $source, 'AI_Chat_Bedrock_Content::is_public(' ), ucfirst( $what ) . ' leaves out pages hidden from search engines.' );
+	check_noindex( false !== strpos( $source, "AI_Chat_Bedrock_Ontology::allows( \$post, '{$use[1]}'" ) && false === strpos( $source, 'AI_Chat_Bedrock_Content::is_public(' ) && false === strpos( $source, 'AI_Chat_Bedrock_Content::is_answerable(' ), ucfirst( $use[0] ) . ' asks the site policy for a search use, which leaves out pages hidden from search engines.' );
 }
+
+// The policy itself, with a page hidden from search engines.
+require $root . '/includes/class-ai-chat-bedrock-ontology.php';
+check_noindex( ! AI_Chat_Bedrock_Ontology::allows( $post, 'index' ) && ! AI_Chat_Bedrock_Ontology::allows( $post, 'visitor_chat' ) && ! AI_Chat_Bedrock_Ontology::allows( $post, 'agent' ), 'A hidden page is left out of every search use.' );
+check_noindex( AI_Chat_Bedrock_Ontology::allows( $post, 'distribution' ), 'Sending a public post to a channel is not a search, so a hidden page may still be sent.' );
+check_noindex( AI_Chat_Bedrock_Ontology::allows( $post, 'index', array( 'include_noindex' => true ) ), 'A site that includes hidden pages has them indexed.' );
 $speech = (string) file_get_contents( $root . '/includes/class-ai-chat-bedrock-speech.php' );
 check_noindex( false === strpos( $speech, 'is_answerable' ), 'Reading a post aloud is not affected, since the visitor is already on it.' );
 $embeddings = (string) file_get_contents( $root . '/includes/class-ai-chat-bedrock-embeddings.php' );

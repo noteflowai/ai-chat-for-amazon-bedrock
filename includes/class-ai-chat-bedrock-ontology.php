@@ -40,6 +40,8 @@ class AI_Chat_Bedrock_Ontology {
 	 *   visitor_chat  Sent to the model while answering a visitor.
 	 *   agent         Returned to an agent through an ability or the MCP server.
 	 *   analytics     Shown in reports.
+	 *   distribution  Sent, as written, to a channel the site publishes on, such as a WeChat
+	 *                 Official Account draft or a social post kit.
 	 *
 	 * "own" means only to the signed-in person the data is about, "aggregate" only as totals,
 	 * and for people only when at least MIN_GROUP of them are counted together.
@@ -50,24 +52,28 @@ class AI_Chat_Bedrock_Ontology {
 			'visitor_chat' => 'yes',
 			'agent'        => 'yes',
 			'analytics'    => 'yes',
+			'distribution' => 'yes',
 		),
 		'member'    => array(
 			'index'        => 'no',
 			'visitor_chat' => 'no',
 			'agent'        => 'no',
 			'analytics'    => 'aggregate',
+			'distribution' => 'no',
 		),
 		'personal'  => array(
 			'index'        => 'no',
 			'visitor_chat' => 'own',
 			'agent'        => 'no',
 			'analytics'    => 'aggregate',
+			'distribution' => 'no',
 		),
 		'financial' => array(
 			'index'        => 'no',
 			'visitor_chat' => 'no',
 			'agent'        => 'aggregate',
 			'analytics'    => 'aggregate',
+			'distribution' => 'no',
 		),
 	);
 
@@ -122,6 +128,63 @@ class AI_Chat_Bedrock_Ontology {
 	 */
 	public static function may( $sensitivity, $usage ) {
 		return 'yes' === self::rule( $sensitivity, $usage );
+	}
+
+	/**
+	 * Uses that search the site for an answer. A page the site keeps out of search engines
+	 * is left out of these unless the site includes such pages; see
+	 * AI_Chat_Bedrock_Content::is_answerable().
+	 */
+	const SEARCH_USES = array( 'index', 'visitor_chat', 'agent' );
+
+	/**
+	 * The sensitivity class of a post's text.
+	 *
+	 * A published post anyone can read is public. A published post with a password, or one the
+	 * site marks as meant for a restricted audience through the ai_chat_bedrock_is_public_post
+	 * filter, is member content. Anything else, such as a draft, is not site data at all.
+	 *
+	 * @param WP_Post|null $post Post.
+	 * @return string public, member, or an empty string.
+	 */
+	public static function post_class( $post ) {
+		if ( ! $post instanceof WP_Post || 'publish' !== $post->post_status ) {
+			return '';
+		}
+		return AI_Chat_Bedrock_Content::is_public( $post ) ? self::PUBLIC_DATA : self::MEMBER;
+	}
+
+	/**
+	 * Whether a post's text may be used in one way. Every part of the plugin that sends a
+	 * post's text somewhere asks this, so the policy above is the rule that is applied, not
+	 * a description of rules kept elsewhere. It does not depend on the site description
+	 * setting: that only decides whether the description is offered to agents.
+	 *
+	 * @param WP_Post|null $post    Post.
+	 * @param string       $usage   index, visitor_chat, agent, analytics or distribution.
+	 * @param array|null   $options Settings; the saved ones when omitted.
+	 * @return bool
+	 */
+	public static function allows( $post, $usage, $options = null ) {
+		$class = self::post_class( $post );
+		if ( '' === $class || ! self::may( $class, $usage ) ) {
+			return false;
+		}
+		if ( in_array( $usage, self::SEARCH_USES, true ) && ! AI_Chat_Bedrock_Content::is_answerable( $post, $options ) ) {
+			return false;
+		}
+
+		/**
+		 * Whether a post the policy allows may be used in this way. The filter can only
+		 * withhold a post: returning true for a post the policy refuses has no effect.
+		 *
+		 * @since 1.71.0
+		 *
+		 * @param bool    $allowed Whether the post may be used. Always true when called.
+		 * @param WP_Post $post    Post.
+		 * @param string  $usage   index, visitor_chat, agent, analytics or distribution.
+		 */
+		return (bool) apply_filters( 'ai_chat_bedrock_ontology_allows', true, $post, $usage );
 	}
 
 	/**
@@ -434,13 +497,14 @@ class AI_Chat_Bedrock_Ontology {
 	 * One published post as a node, or null for a post that is not public.
 	 *
 	 * Only what a signed-out visitor can see is described: no members-only text, no author
-	 * account, and no draft or private translation.
+	 * account, and no draft or private translation. A page the site keeps out of search
+	 * engines is left out too, the same as from the read tools agents use.
 	 *
 	 * @param WP_Post $post Post.
 	 * @return array|null
 	 */
 	public static function entity( $post ) {
-		if ( ! AI_Chat_Bedrock_Content::is_public( $post ) ) {
+		if ( ! self::allows( $post, 'agent' ) ) {
 			return null;
 		}
 		$type = self::type_of( $post );
@@ -824,7 +888,7 @@ class AI_Chat_Bedrock_Ontology {
 				continue;
 			}
 			$translation = get_post( (int) $id );
-			if ( ! AI_Chat_Bedrock_Content::is_public( $translation ) ) {
+			if ( ! self::allows( $translation, 'agent' ) ) {
 				continue;
 			}
 			$out[] = array(

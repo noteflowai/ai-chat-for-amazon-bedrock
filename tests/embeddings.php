@@ -182,6 +182,7 @@ class AI_Chat_Bedrock_AWS {
 }
 
 require_once __DIR__ . '/../includes/class-ai-chat-bedrock-content.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-ontology.php';
 require_once __DIR__ . '/../includes/class-ai-chat-bedrock-embeddings.php';
 require_once __DIR__ . '/../includes/class-ai-chat-bedrock-s3-vectors.php';
 

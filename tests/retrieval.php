@@ -175,6 +175,7 @@ function _x( $text, $context, $domain = null ) {
 
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-content.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-ontology.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-retrieval.php';
 
 $aicfab_options = array( 'enable_site_context' => true, 'context_results' => 3 );

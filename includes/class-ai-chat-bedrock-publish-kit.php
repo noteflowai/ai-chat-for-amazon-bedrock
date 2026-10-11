@@ -133,7 +133,7 @@ class AI_Chat_Bedrock_Publish_Kit {
 	 */
 	public static function generate( $post_id, $platforms = array() ) {
 		$post = get_post( absint( $post_id ) );
-		if ( ! $post instanceof WP_Post || 'publish' !== $post->post_status || ! AI_Chat_Bedrock_Content::is_public( $post ) ) {
+		if ( ! AI_Chat_Bedrock_Ontology::allows( $post, 'distribution' ) ) {
 			return new WP_Error( 'aicfab_kit_post', __( 'Kits are written for published posts that anyone can read.', 'ai-chat-for-amazon-bedrock' ), array( 'status' => 400 ) );
 		}
 		$known     = array_keys( self::platforms() );

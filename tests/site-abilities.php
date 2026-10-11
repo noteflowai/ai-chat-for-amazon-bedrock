@@ -75,6 +75,7 @@ function wp_salt() { return 'site-abilities-salt'; }
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-content.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-tool-policy.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-ontology.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-site-abilities.php';
 
 $failures = array();

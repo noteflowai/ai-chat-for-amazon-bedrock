@@ -463,11 +463,11 @@ class AI_Chat_Bedrock_Site_Abilities {
 	}
 
 	private function is_public_post( $post ) {
-		if ( ! $post instanceof WP_Post || 'publish' !== $post->post_status || '' !== $post->post_password ) {
+		if ( ! AI_Chat_Bedrock_Ontology::allows( $post, 'agent' ) ) {
 			return false;
 		}
 		$type = get_post_type_object( $post->post_type );
-		return $type && ! empty( $type->public ) && AI_Chat_Bedrock_Content::is_answerable( $post );
+		return $type && ! empty( $type->public );
 	}
 
 	/**
