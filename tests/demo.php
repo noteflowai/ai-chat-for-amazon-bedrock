@@ -252,6 +252,8 @@ check_demo( '/ask-us/' === $profile['landingPage'] && '/%postname%/' === $steps[
 check_demo( ! empty( $profile['login'] ), 'The preview is signed in, since the chat is not open to guests by default.' );
 check_demo( false !== strpos( $steps['runPHP']['code'], "'enable_site_context' => true" ), 'The blueprint lets the chat use the site\'s pages.' );
 check_demo( false !== strpos( $steps['runPHP']['code'], "'aws_use_role_credentials' => false" ), 'The blueprint skips the role credential lookup, which Playground cannot answer.' );
+check_demo( false !== strpos( $steps['runPHP']['code'], "'site_ontology'       => true" ) && false !== strpos( $steps['runPHP']['code'], "'llms_txt'            => true" ) && false !== strpos( $steps['runPHP']['code'], 'href=\\"/llms.txt\\"' ), 'The preview shows what AI tools get: the site description and its llms.txt, linked from the page it lands on.' );
+check_demo( false !== strpos( $steps['runPHP']['code'], 'wp_delete_post( 1, true );' ) && false !== strpos( $steps['runPHP']['code'], 'wp_delete_post( 2, true );' ), 'The sample post and page are removed, so answers and llms.txt are only the bakery\'s.' );
 
 if ( $failures ) {
 	fwrite( STDERR, "FAILED\n- " . implode( "\n- ", $failures ) . "\n" );
