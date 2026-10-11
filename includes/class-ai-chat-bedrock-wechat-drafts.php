@@ -70,6 +70,12 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	const MAX_CONTENT = 19000;
 	const MAX_BYTES   = 1000000;
 
+	// Room each image address takes while the article is fitted to those limits. The article
+	// is cut before the addresses are known, so the review and the writer cut it in the same
+	// place; a WeChat address longer than this holds the draft rather than cut it elsewhere.
+	const IMAGE_URL_ROOM = 200;
+	const IMAGE_SLOT     = 'https://image.invalid/slot/';
+
 	// Images uploaded for one draft, and the seconds spent on them; the rest are left out, so
 	// one request from the editor or an agent ends well within PHP's and the browser's limits.
 	const DRAFT_IMAGES  = 40;
@@ -924,9 +930,10 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 
 		$left  = self::MAX_IMAGES;
 		$error = null;
+		$urls  = array();
 		$html  = preg_replace_callback(
 			'#<img\b[^>]*>#i',
-			function ( $tag ) use ( $post, $account, $edition, $resolve, &$left, &$error ) {
+			function ( $tag ) use ( $post, $account, $edition, $resolve, &$left, &$error, &$urls ) {
 				$src = preg_match( '#\ssrc="([^"]+)"#i', $tag[0], $found ) ? html_entity_decode( $found[1], ENT_QUOTES, 'UTF-8' ) : '';
 				if ( $left < 1 || '' === $src ) {
 					return '';
@@ -939,8 +946,16 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 					return '';
 				}
 				--$left;
-				$alt = preg_match( '#\salt="([^"]*)"#i', $tag[0], $found ) ? $found[1] : '';
-				return '<img src="' . esc_url( $url ) . '" alt="' . esc_attr( html_entity_decode( $alt, ENT_QUOTES, 'UTF-8' ) ) . '" style="' . self::STYLES['img'] . '">';
+				$url = esc_url( $url );
+				if ( strlen( $url ) > self::IMAGE_URL_ROOM ) {
+					$error = new WP_Error( 'image_url_room', 'An image address is longer than the room the article keeps for it; no draft was written.' );
+					return '';
+				}
+				// A slot of the room's length until the article is fitted, then the address.
+				$slot          = self::IMAGE_SLOT . str_pad( (string) count( $urls ), self::IMAGE_URL_ROOM - strlen( self::IMAGE_SLOT ), '0', STR_PAD_LEFT );
+				$urls[ $slot ] = $url;
+				$alt           = preg_match( '#\salt="([^"]*)"#i', $tag[0], $found ) ? $found[1] : '';
+				return '<img src="' . $slot . '" alt="' . esc_attr( html_entity_decode( $alt, ENT_QUOTES, 'UTF-8' ) ) . '" style="' . self::STYLES['img'] . '">';
 			},
 			$html
 		);
@@ -952,7 +967,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( '' !== $video ) {
 			$html = preg_replace( '#<p\b[^>]*>' . preg_quote( self::VIDEO_MARK, '#' ) . '</p>#', self::player( $video ) . '<p style="' . self::STYLES['caption'] . '">' . $fallback . '</p>', $html, 1 );
 		}
-		return self::fit( $html, $more );
+		return strtr( self::fit( $html, $more ), $urls );
 	}
 
 	/**

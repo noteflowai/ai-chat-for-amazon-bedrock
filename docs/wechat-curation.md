@@ -148,7 +148,10 @@ MIME types and SHA-256 bytes of the selected cover and all body images. It also
 binds the article the writer would send: the writer's own rendering, with image
 styles, the WeChat video player, the Read more line, the length fit and the
 payload settings, in which each image stands in as its bytes' hash because the
-WeChat address is known only after upload. So it binds what readers get, not the
+WeChat address is known only after upload. The article is fitted to WeChat's
+length limits with every image address counted at a fixed 200 characters, before
+the addresses are filled in, so the review and the writer cut a long article in
+the same place; a WeChat address longer than that holds the draft. So it binds what readers get, not the
 code that produced it: a plugin update that changes the article requires a fresh
 review, and one that changes nothing a reader sees keeps the review. Review input
 version 2 (1.71.1) replaced the earlier code-file hashes with this binding, so
