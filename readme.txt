@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai chatbot, chatbot, ai, woocommerce, mcp
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.70.0
+Stable tag: 1.71.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -70,6 +70,7 @@ Choose an image model and turn on the media helpers, and every JPEG, PNG or WebP
 * Calls to external MCP servers and an Amazon Bedrock AgentCore Gateway, with no authentication, an encrypted bearer token, or SigV4, over public HTTPS only
 * An agent that answers from your own content and from approved tools; a tool that changes data needs an explicit capability
 * The WordPress abilities integration, WP-CLI, and moving a configuration between sites
+* An **llms.txt** file at your site root, written from the site description: your public posts, pages and products by type and language, for AI tools to read. Off until enabled; a real llms.txt file or another plugin's is never replaced.
 
 **Channels**
 
@@ -387,7 +388,11 @@ With site abilities on (off by default), agents can search and read published po
 
 = What does the site description tell an agent? =
 
-Turn on Site description and agents get a describe-site ability listing what the site holds as schema.org types, with counts per language, how the types relate and a sensitivity class for each property. IDs match the ones Yoast SEO and WooCommerce print in the page. [Sensitivity rules and single-item descriptions](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#what-does-the-site-description-tell-an-agent).
+Turn on Site description and agents get a describe-site ability listing what the site holds as schema.org types, with counts per language, how the types relate and a sensitivity class for each property. IDs match the ones Yoast SEO and WooCommerce print in the page. The same rules decide what the index, the chat, agents and channels may use, whether or not the description is turned on. [Sensitivity rules and single-item descriptions](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#what-does-the-site-description-tell-an-agent).
+
+= Does the plugin publish an llms.txt file? =
+
+Only if you turn on llms.txt under Settings > Agents and tools. It lists what agents may see, grouped by schema.org type, with each item's language on a multilingual site: no drafts, members-only content, hidden products or pages kept out of search engines. A real llms.txt file at the site root is served by your web server instead, and a plugin that answers the address itself goes first.
 
 = What do business insights show, and to whom? =
 
@@ -432,6 +437,12 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.71.0 =
+* llms.txt, under Settings > Agents and tools and off by default: a Markdown file at /llms.txt that tells AI tools what the site holds, listing its public posts, pages and products by type and, on a multilingual site, language. It never names a draft, members-only content, a hidden product or a page kept out of search engines, and never replaces a real llms.txt file or one another plugin serves.
+* The site description's sensitivity policy is now the rule every part of the plugin applies to a post. Indexing, the chat, site abilities, the MCP server, WeChat drafts and replies and publishing kits ask one policy, which refuses when it cannot be checked. A site can withhold a post from one use with the ai_chat_bedrock_ontology_allows filter.
+* A product the shop does not list, such as one hidden from the catalog, is left out of the index, the chat, agents and channels, not only the site description. describe_site no longer describes pages hidden from search engines, as the MCP read tools already did.
+* WooCommerce's cart, checkout and account pages count as hidden from search engines, as WooCommerce tells search engines, so they stay out of answers, agents and llms.txt.
+
 = 1.70.0 =
 * Authorized editors and agents can prepare a separate static WeChat edition with its own title, excerpt and local cover. The published WordPress article stays unchanged.
 * Automatic draft selection requires an explicit public edition and a current independent review bound to its exact source and image bytes. Missing, changed or unknown drafts remain held for reconciliation.
@@ -449,21 +460,10 @@ what a good answer says.
 * Saving an EncodingAESKey without the Official Account's AppID warns that safe mode cannot read messages without it.
 * The package's minified files are built only with the pinned esbuild version.
 
-= 1.67.1 =
-* Security: a chat answer containing NUL characters could put code-block text inside a link's address and run script in the visitor's browser. The text loses its NULs before rendering, and addresses with emphasis or code marks are no longer linked.
-* Security: only the plugin can record that a post sits in a WeChat Official Account draft, and only its own entries are followed, so someone who can edit a post cannot point draft updates or deletions at another draft.
-* WeChat bodies that are not UTF-8, or that declare another encoding or a document type, are refused before parsing, for the Official Account and the mini game.
-* A WeChat draft's cover, without a featured image, is the first image a signed-out visitor sees, never one from a members-only block.
-* With a persistent object cache, a visitor's daily share counts requests the cache could not, instead of losing them.
-
-= 1.67.0 =
-* Publishing kits, under Settings > Channels and off by default: from the text a signed-out visitor reads, the chat's model writes a post's Bilibili, Xiaohongshu and YouTube title, text, tags and category within each platform's limits, in the post's language, shown in the Published elsewhere box with links to each creator page and the cover. Bilibili opens its publishing API only to registered companies and Xiaohongshu has none for creators, so a person publishes there; no agent outside WordPress is needed. Agents can ask for a kit through an ability and the MCP server.
-* Record where a post was published by entering its Bilibili, YouTube, Xiaohongshu or WeChat article address in the same box; it is saved with the post.
-* On a phone the chat is a corner button and opens full screen; an accent colour under Settings > Chat; smoother streaming; a page where a visitor may only sign in loads a 9 KB script instead of the whole chat.
-* Settings > Channels has a page each for the WeChat Official Account, the mini game and the video platforms. A feature's fields appear once it is turned on; empty limits say what they fall back to; once setup is complete, Overview folds its steps away. Profiles and MCP servers list first, with adding a step away. A chat in a synced pattern or a classic widget is styled from the start. Scripts and styles ship minified, readable with SCRIPT_DEBUG.
-* Diagnostics and Site Health warn when the plugin's background tasks are overdue, as when WP-Cron stops running, and say how to fix it.
-
 == Upgrade Notice ==
+
+= 1.71.0 =
+Optional llms.txt written from the site description. Every use of a post now follows the description's sensitivity policy; products hidden from the catalog stay out of answers and agents.
 
 = 1.70.0 =
 Prepare and independently review a public WeChat edition before automatic drafting. Keep one draft writer and schedule owner; this release does not enable drafting or publish articles.

@@ -173,6 +173,11 @@ class AI_Chat_Bedrock_Ontology {
 		if ( in_array( $usage, self::SEARCH_USES, true ) && ! AI_Chat_Bedrock_Content::is_answerable( $post, $options ) ) {
 			return false;
 		}
+		// A product the shop does not list, such as one hidden from the catalog, is left out
+		// of every use, the same as from the shop's own search.
+		if ( 'product' === $post->post_type && function_exists( 'wc_get_product' ) && ( ! class_exists( 'AI_Chat_Bedrock_WooCommerce' ) || ! AI_Chat_Bedrock_WooCommerce::is_listable( wc_get_product( $post->ID ) ) ) ) {
+			return false;
+		}
 
 		/**
 		 * Whether a post the policy allows may be used in this way. The filter can only

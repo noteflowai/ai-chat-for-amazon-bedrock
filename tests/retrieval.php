@@ -33,6 +33,7 @@ class WP_Post {
 	public $post_modified_gmt = '';
 	public $post_title    = '';
 	public $post_content  = '';
+	public $post_type     = 'post';
 	public $post_status   = 'publish';
 	public $post_password = '';
 

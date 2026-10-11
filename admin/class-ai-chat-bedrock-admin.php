@@ -1107,6 +1107,7 @@ class AI_Chat_Bedrock_Admin {
 		$this->field( 'abilities_tools', __( 'WordPress abilities as tools', 'ai-chat-for-amazon-bedrock' ), 'abilities_tools_render', 'aicfab_agents' );
 		$this->field( 'site_abilities', __( 'Site content abilities', 'ai-chat-for-amazon-bedrock' ), 'site_abilities_render', 'aicfab_agents' );
 		$this->field( 'site_ontology', __( 'Site description', 'ai-chat-for-amazon-bedrock' ), 'site_ontology_render', 'aicfab_agents' );
+		$this->field( 'llms_txt', __( 'llms.txt', 'ai-chat-for-amazon-bedrock' ), 'llms_txt_render', 'aicfab_agents' );
 		$this->field( 'business_metrics', __( 'Business insights', 'ai-chat-for-amazon-bedrock' ), 'business_metrics_render', 'aicfab_agents' );
 		$this->field( 'editor_assistant', __( 'Editor assistant', 'ai-chat-for-amazon-bedrock' ), 'editor_assistant_render', 'aicfab_agents' );
 		$this->field( 'media_assistant', __( 'Media helpers', 'ai-chat-for-amazon-bedrock' ), 'media_assistant_render', 'aicfab_agents' );
@@ -1333,6 +1334,18 @@ class AI_Chat_Bedrock_Admin {
 		$checked = ! empty( $this->option( 'site_ontology', false ) );
 		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[site_ontology]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Describe the site to agents and label passages with their type and language', 'ai-chat-for-amazon-bedrock' ) . '</label>';
 		echo '<p class="description">' . esc_html__( 'Adds a read-only describe-site ability and MCP tool. It lists what the site holds as schema.org types, with counts per language, how they relate and which data an AI may see, using the same IDs as Yoast SEO and WooCommerce. Passages given to the model also say whether they come from a post, page or product, and in which language. Only published, public content is described.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+	}
+	public function llms_txt_render() {
+		$checked = ! empty( $this->option( 'llms_txt', false ) );
+		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[llms_txt]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Publish an llms.txt file that tells AI tools what the site holds', 'ai-chat-for-amazon-bedrock' ) . '</label>';
+		echo '<p class="description">' . esc_html__( 'Lists the site\'s public posts, pages and products by type, in every language, at the address below. It follows the same rules as the site description: no members-only content, drafts or pages hidden from search engines. A real llms.txt file, or one from another plugin, is never replaced.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		if ( class_exists( 'AI_Chat_Bedrock_Llms_Txt' ) ) {
+			if ( AI_Chat_Bedrock_Llms_Txt::file_exists() ) {
+				echo '<p class="description">' . esc_html__( 'An llms.txt file is already at the site root, so the web server serves that file instead.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+			} elseif ( $checked ) {
+				echo '<p class="description"><a href="' . esc_url( AI_Chat_Bedrock_Llms_Txt::url() ) . '" target="_blank" rel="noopener">' . esc_html( AI_Chat_Bedrock_Llms_Txt::url() ) . '</a></p>';
+			}
+		}
 	}
 	public function business_metrics_render() {
 		$checked = ! empty( $this->option( 'business_metrics', false ) );
@@ -1906,6 +1919,7 @@ class AI_Chat_Bedrock_Admin {
 		$output['abilities_tools']     = ! empty( $input['abilities_tools'] );
 		$output['site_abilities']      = ! empty( $input['site_abilities'] );
 		$output['site_ontology']       = ! empty( $input['site_ontology'] );
+		$output['llms_txt']            = ! empty( $input['llms_txt'] );
 		$output['business_metrics']    = ! empty( $input['business_metrics'] );
 		$output['editor_assistant']    = ! empty( $input['editor_assistant'] );
 		$output['log_conversations']   = ! empty( $input['log_conversations'] );
@@ -2116,6 +2130,7 @@ class AI_Chat_Bedrock_Admin {
 		'popup_site_wide',
 		'site_abilities',
 		'site_ontology',
+		'llms_txt',
 		'business_metrics',
 		'show_sources',
 		'include_noindex',

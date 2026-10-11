@@ -528,6 +528,7 @@ check_onto(
 );
 check_onto( 'https://example.test/term/widgets/' === $aicfab_product['category'][0]['@id'] && ! isset( $aicfab_product['about'] ), 'Product categories fill category, not about.' );
 check_onto( is_wp_error( AI_Chat_Bedrock_Ontology::describe( array( 'id' => 21 ) ) ), 'A product the shop hides is not described.' );
+check_onto( ! AI_Chat_Bedrock_Ontology::allows( get_post( 21 ), 'index' ) && ! AI_Chat_Bedrock_Ontology::allows( get_post( 21 ), 'distribution' ) && AI_Chat_Bedrock_Ontology::allows( get_post( 20 ), 'index' ), 'A product the shop hides is left out of every use, not only the description.' );
 
 // --- Extending -------------------------------------------------------------------------
 

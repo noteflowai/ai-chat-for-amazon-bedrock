@@ -145,6 +145,19 @@ add_filter( 'ai_chat_bedrock_is_answerable_post', function ( $answerable, $item 
 check_noindex( AI_Chat_Bedrock_Content::is_answerable( $thanks ), 'A site can decide for a post itself.' );
 check_noindex( ! AI_Chat_Bedrock_Content::is_answerable( $private ), 'But never for a post that is not public.' );
 
+// --- WooCommerce's own pages -------------------------------------------------------------
+
+// Declared here, the way a site adds WooCommerce: a conditional declaration is not hoisted.
+if ( ! function_exists( 'wc_get_page_id' ) ) {
+	function wc_get_page_id( $page ) {
+		return array( 'cart' => 30, 'checkout' => 31, 'myaccount' => 32, 'shop' => 33 )[ $page ] ?? -1;
+	}
+}
+foreach ( array( 30 => 'cart', 31 => 'checkout', 32 => 'account' ) as $aicfab_id => $aicfab_what ) {
+	check_noindex( AI_Chat_Bedrock_Content::is_noindex( new WP_Post( $aicfab_id, 'page' ) ), 'WooCommerce\'s ' . $aicfab_what . ' page is noindex, as WooCommerce tells search engines.' );
+}
+check_noindex( ! AI_Chat_Bedrock_Content::is_noindex( new WP_Post( 33, 'page' ) ) && ! AI_Chat_Bedrock_Content::is_noindex( new WP_Post( 30 ) ), 'The shop page, and a post that shares a page ID, are not.' );
+
 // --- Where it applies ---------------------------------------------------------------------
 
 $root = dirname( __DIR__ );

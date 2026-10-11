@@ -7669,3 +7669,26 @@ msgstr "WeChat の公開版を準備する"
 #: includes/class-ai-chat-bedrock-wechat-drafts.php:1851
 msgid "Read or prepare a protected static public edition for an existing post. Requires permission to publish posts and edit the post. Does not contact WeChat or change the canonical post."
 msgstr "既存の記事の保護された静的な公開版を読んだり準備したりします。記事の公開権限と対象記事の編集権限が必要です。WeChat への通信や元の記事の変更は行いません。"
+
+msgid "llms.txt"
+msgstr "llms.txt ファイル"
+
+msgid "Publish an llms.txt file that tells AI tools what the site holds"
+msgstr "サイトの内容を AI ツールに伝える llms.txt ファイルを公開する"
+
+msgid ""
+"Lists the site's public posts, pages and products by type, in every "
+"language, at the address below. It follows the same rules as the site "
+"description: no members-only content, drafts or pages hidden from search "
+"engines. A real llms.txt file, or one from another plugin, is never replaced."
+msgstr "サイトの公開されている投稿、固定ページ、商品を、すべての言語について種類別に下のアドレスで一覧にします。サイトの説明と同じルールに従い、会員限定のコンテンツ、下書き、検索エンジンから除外したページは含みません。実在する llms.txt ファイルや、ほかのプラグインの llms.txt を置き換えることはありません。"
+
+msgid ""
+"An llms.txt file is already at the site root, so the web server serves that "
+"file instead."
+msgstr "サイトのルートに llms.txt ファイルがすでにあるため、Web サーバーがそのファイルを返します。"
+
+#. translators: %s: language names, separated by commas.
+#, php-format
+msgid "Content is published in: %s."
+msgstr "公開している言語：%s。"
