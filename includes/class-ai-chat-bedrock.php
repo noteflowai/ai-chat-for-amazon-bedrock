@@ -311,7 +311,7 @@ class AI_Chat_Bedrock {
 		// llms.txt, written from the description, only where nothing else answers the address,
 		// and written again after a change.
 		$llms_txt = new AI_Chat_Bedrock_Llms_Txt();
-		$this->loader->add_action( 'template_redirect', $llms_txt, 'serve', PHP_INT_MAX );
+		$this->loader->add_filter( 'template_include', $llms_txt, 'serve', PHP_INT_MAX );
 		$this->loader->add_action( 'save_post', 'AI_Chat_Bedrock_Llms_Txt', 'flush' );
 		$this->loader->add_action( 'deleted_post', 'AI_Chat_Bedrock_Llms_Txt', 'flush' );
 		$this->loader->add_action( 'update_option_ai_chat_bedrock_settings', 'AI_Chat_Bedrock_Llms_Txt', 'flush' );

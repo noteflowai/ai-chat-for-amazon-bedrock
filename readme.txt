@@ -70,7 +70,7 @@ Choose an image model and turn on the media helpers, and every JPEG, PNG or WebP
 * Calls to external MCP servers and an Amazon Bedrock AgentCore Gateway, with no authentication, an encrypted bearer token, or SigV4, over public HTTPS only
 * An agent that answers from your own content and from approved tools; a tool that changes data needs an explicit capability
 * The WordPress abilities integration, WP-CLI, and moving a configuration between sites
-* An **llms.txt** file at your site root, written from the site description: your public posts, pages and products by type and language, for AI tools to read. Off until enabled, and served only where nothing else answers the address, so a real llms.txt file or another plugin's goes first.
+* An **llms.txt** file at your site root, written from the site description: your public posts, pages and products by type and language, for AI tools to read. Off until enabled, and served only where nothing else answers the address.
 
 **Channels**
 
@@ -392,7 +392,7 @@ Turn on Site description and agents get a describe-site ability listing what the
 
 = Does the plugin publish an llms.txt file? =
 
-Only if you turn on llms.txt under Settings > Agents and tools. It lists what agents may see, grouped by schema.org type, with each item's language on a multilingual site: no drafts, members-only content, hidden products or pages kept out of search engines. It is served only where nothing else answers: a real llms.txt file at the site root, a page at that address or another plugin's llms.txt goes first, and a plugin can claim the address with the ai_chat_bedrock_llms_txt_serve filter.
+Only if you turn on llms.txt under Settings > Agents and tools. It lists what agents may see, grouped by schema.org type, with each item's language on a multilingual site: no drafts, members-only content, hidden products or pages kept out of search engines. It is served only where nothing else answers: a real llms.txt file at the site root, a page at that address and any plugin answering before the page template loads go first, and any other plugin can claim the address with the ai_chat_bedrock_llms_txt_serve filter.
 
 = What do business insights show, and to whom? =
 
@@ -438,7 +438,7 @@ what a good answer says.
 == Changelog ==
 
 = 1.71.0 =
-* llms.txt, under Settings > Agents and tools and off by default: a Markdown file at /llms.txt that tells AI tools what the site holds, listing its public posts, pages and products by type and, on a multilingual site, language. It never names a draft, members-only content, a hidden product or a page kept out of search engines, and is served only where nothing else answers the address, so a real llms.txt file or another plugin's goes first.
+* llms.txt, under Settings > Agents and tools and off by default: a Markdown file at /llms.txt that tells AI tools what the site holds, listing its public posts, pages and products by type and, on a multilingual site, language. It never names a draft, members-only content, a hidden product or a page kept out of search engines, and is served only where nothing else answers the address: a real llms.txt file, a page there or a plugin answering before the page template loads goes first.
 * The site description's sensitivity policy is now the rule every part of the plugin applies to a post. Indexing, the chat, site abilities, the MCP server, WeChat drafts and replies and publishing kits ask one policy, which refuses when it cannot be checked. A site can withhold a post from one use with the ai_chat_bedrock_ontology_allows filter.
 * A product the shop does not list, such as one hidden from the catalog, is left out of the index, the chat, agents and channels, not only the site description. describe_site no longer describes pages hidden from search engines, as the MCP read tools already did.
 * WooCommerce's cart, checkout and account pages count as hidden from search engines, as WooCommerce tells search engines, so they stay out of answers, agents and llms.txt.

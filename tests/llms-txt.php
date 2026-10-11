@@ -234,36 +234,36 @@ check_llms( ! AI_Chat_Bedrock_Llms_Txt::file_exists(), 'Without a real file at t
 file_put_contents( ABSPATH . 'llms.txt', "# Hand written\n" );
 $_SERVER['REQUEST_URI'] = '/llms.txt';
 ob_start();
-( new AI_Chat_Bedrock_Llms_Txt() )->serve();
+$aicfab_template = ( new AI_Chat_Bedrock_Llms_Txt() )->serve( 'index.php' );
 $served = ob_get_clean();
-check_llms( AI_Chat_Bedrock_Llms_Txt::file_exists() && '' === $served, 'A real llms.txt file is never replaced.' );
+check_llms( AI_Chat_Bedrock_Llms_Txt::file_exists() && '' === $served && 'index.php' === $aicfab_template, 'A real llms.txt file is never replaced, and the template is returned unchanged.' );
 unlink( ABSPATH . 'llms.txt' );
 rmdir( ABSPATH );
 
 $GLOBALS['aicfab_is_404'] = false;
 ob_start();
-( new AI_Chat_Bedrock_Llms_Txt() )->serve();
-check_llms( '' === ob_get_clean(), 'When a page, post or rewrite rule answers the address, it is left to answer.' );
+$aicfab_template = ( new AI_Chat_Bedrock_Llms_Txt() )->serve( 'index.php' );
+check_llms( '' === ob_get_clean() && 'index.php' === $aicfab_template, 'When a page, post or rewrite rule answers the address, it is left to answer.' );
 $GLOBALS['aicfab_is_404']                                = true;
 $GLOBALS['aicfab_filters']['ai_chat_bedrock_llms_txt_serve'] = '__return_false';
 function __return_false() {
 	return false;
 }
 ob_start();
-( new AI_Chat_Bedrock_Llms_Txt() )->serve();
-check_llms( '' === ob_get_clean(), 'A plugin that serves its own llms.txt later can claim the address.' );
+$aicfab_template = ( new AI_Chat_Bedrock_Llms_Txt() )->serve( 'index.php' );
+check_llms( '' === ob_get_clean() && 'index.php' === $aicfab_template, 'A plugin that serves its own llms.txt later can claim the address.' );
 unset( $GLOBALS['aicfab_filters']['ai_chat_bedrock_llms_txt_serve'] );
 
 $GLOBALS['aicfab_options']['ai_chat_bedrock_settings']['llms_txt'] = false;
 ob_start();
-( new AI_Chat_Bedrock_Llms_Txt() )->serve();
-check_llms( '' === ob_get_clean() && ! AI_Chat_Bedrock_Llms_Txt::enabled(), 'Nothing is served while the setting is off.' );
+$aicfab_template = ( new AI_Chat_Bedrock_Llms_Txt() )->serve( 'index.php' );
+check_llms( '' === ob_get_clean() && 'index.php' === $aicfab_template && ! AI_Chat_Bedrock_Llms_Txt::enabled(), 'Nothing is served while the setting is off.' );
 
 // --- Wiring ---------------------------------------------------------------------------
 
 $root      = dirname( __DIR__ );
 $bootstrap = (string) file_get_contents( $root . '/includes/class-ai-chat-bedrock.php' );
-check_llms( false !== strpos( $bootstrap, "add_action( 'template_redirect', \$llms_txt, 'serve', PHP_INT_MAX )" ), 'It answers last on template_redirect, after any other handler there.' );
+check_llms( false !== strpos( $bootstrap, "add_filter( 'template_include', \$llms_txt, 'serve', PHP_INT_MAX )" ) && false === strpos( $bootstrap, "'template_redirect', \$llms_txt" ), 'It answers from template_include, so every template_redirect handler goes first.' );
 foreach ( array( 'save_post', 'deleted_post', 'update_option_ai_chat_bedrock_settings' ) as $hook ) {
 	check_llms( false !== strpos( $bootstrap, "add_action( '{$hook}', 'AI_Chat_Bedrock_Llms_Txt', 'flush' )" ), 'The cache is forgotten on ' . $hook . '.' );
 }

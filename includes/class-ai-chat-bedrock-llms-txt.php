@@ -10,9 +10,9 @@
  *
  * It is served only when nothing else answers the address. A real llms.txt file at the site
  * root is served by the web server before WordPress runs. A page, post or rewrite rule at the
- * address resolves the request, so WordPress does not report it as not found. A plugin that
- * answers on template_redirect runs first, since this one runs last there, and a plugin that
- * answers later can claim the address through the ai_chat_bedrock_llms_txt_serve filter.
+ * address resolves the request, so WordPress does not report it as not found. Every
+ * template_redirect handler runs before this one, which answers from the template_include
+ * filter, and any other handler can claim the address through ai_chat_bedrock_llms_txt_serve.
  *
  * @package AI_Chat_Bedrock
  */
@@ -68,23 +68,27 @@ class AI_Chat_Bedrock_Llms_Txt {
 	}
 
 	/**
-	 * Answer a request for the file. Runs last on template_redirect.
+	 * Answer a request for the file, from the template_include filter, so that every
+	 * template_redirect handler has had its turn.
+	 *
+	 * @param string $template Template WordPress would load.
+	 * @return string The template, unchanged, when the file is not served.
 	 */
-	public function serve() {
+	public function serve( $template = '' ) {
 		if ( ! self::enabled() || ! self::is_request() || self::file_exists() || ! is_404() ) {
-			return;
+			return $template;
 		}
 
 		/**
 		 * Whether the plugin answers the llms.txt address. Return false from a plugin that
-		 * serves its own llms.txt after template_redirect.
+		 * serves its own llms.txt from template_include or later.
 		 *
 		 * @since 1.71.0
 		 *
 		 * @param bool $serve Whether to serve the file. True when nothing else answered.
 		 */
 		if ( ! apply_filters( 'ai_chat_bedrock_llms_txt_serve', true ) ) {
-			return;
+			return $template;
 		}
 		status_header( 200 );
 		header( 'Content-Type: text/plain; charset=utf-8' );
