@@ -967,7 +967,15 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( '' !== $video ) {
 			$html = preg_replace( '#<p\b[^>]*>' . preg_quote( self::VIDEO_MARK, '#' ) . '</p>#', self::player( $video ) . '<p style="' . self::STYLES['caption'] . '">' . $fallback . '</p>', $html, 1 );
 		}
-		return strtr( self::fit( $html, $more ), $urls );
+		// Only the image tags made above get their address: the same text written in the
+		// article stays as written.
+		return preg_replace_callback(
+			'#<img src="(' . preg_quote( self::IMAGE_SLOT, '#' ) . '[0-9]+)"#',
+			function ( $found ) use ( $urls ) {
+				return isset( $urls[ $found[1] ] ) ? '<img src="' . $urls[ $found[1] ] . '"' : $found[0];
+			},
+			self::fit( $html, $more )
+		);
 	}
 
 	/**

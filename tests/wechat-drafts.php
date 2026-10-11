@@ -1274,6 +1274,20 @@ $aicfab_long = AI_Chat_Bedrock_WeChat_Drafts::content(
 	}
 );
 check_drafts( is_wp_error( $aicfab_long ) && 'image_url_room' === $aicfab_long->get_error_code(), 'An image address longer than its room holds the draft instead of cutting the article elsewhere.' );
+$aicfab_slot   = AI_Chat_Bedrock_WeChat_Drafts::IMAGE_SLOT . str_repeat( '0', AI_Chat_Bedrock_WeChat_Drafts::IMAGE_URL_ROOM - strlen( AI_Chat_Bedrock_WeChat_Drafts::IMAGE_SLOT ) );
+$aicfab_quoted = '<p><img src="a.jpg" alt=""></p><p>' . $aicfab_slot . '</p><p><code>&lt;img src="' . $aicfab_slot . '"&gt;</code></p>';
+$aicfab_out    = array();
+foreach ( array( 'https://image.invalid/' . str_repeat( 'a', 64 ), 'http://mmbiz.qpic.cn/mmbiz_jpg/xyz/0' ) as $aicfab_address ) {
+	$aicfab_out[] = AI_Chat_Bedrock_WeChat_Drafts::content(
+		$aicfab_post,
+		array(),
+		array( 'html' => $aicfab_quoted, 'record' => array(), 'assets' => array() ),
+		function () use ( $aicfab_address ) {
+			return $aicfab_address;
+		}
+	);
+}
+check_drafts( 2 === substr_count( $aicfab_out[0], $aicfab_slot ) && 2 === substr_count( $aicfab_out[1], $aicfab_slot ) && preg_replace( '#<img src="[^"]*"#', '', $aicfab_out[0] ) === preg_replace( '#<img src="[^"]*"#', '', $aicfab_out[1] ) && false !== strpos( $aicfab_out[1], '<img src="http://mmbiz.qpic.cn/mmbiz_jpg/xyz/0"' ), 'Text that matches an image slot stays as written; only the generated image addresses differ.' );
 
 drafts_reset();
 drafts_settings();
