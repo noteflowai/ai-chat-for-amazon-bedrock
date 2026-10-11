@@ -6,7 +6,7 @@ To see it first without an AWS account, open the **Live Preview** on the plugin'
 
 ## Before you start
 
-- An AWS account on a paid plan. Amazon Bedrock is not part of the AWS Free plan. New AWS accounts get up to $200 in Free Tier credits, which apply to AWS bills after upgrading to the Paid plan ([AWS Free Tier](https://aws.amazon.com/free/)).
+- An AWS account on a paid plan. Amazon Bedrock is not part of the AWS Free plan. New AWS accounts get $100 in Free Tier credits and can earn up to $100 more, up to $200 over six months; remaining credits apply to AWS bills after upgrading to the Paid plan ([AWS Free Tier](https://aws.amazon.com/free/)).
 - WordPress 6.4 or later and PHP 7.4 or later.
 - Bedrock bills per use. Review [Amazon Bedrock pricing](https://aws.amazon.com/bedrock/pricing/) and set an [AWS Budget](https://aws.amazon.com/aws-cost-management/aws-budgets/) before opening the chat to the public.
 
@@ -16,7 +16,7 @@ In WordPress, open **Plugins > Add New**, search for **Amazon Bedrock**, then in
 
 ## 2. Choose a Region and a model
 
-Open **AI Chat Bedrock > Settings**, choose the AWS Region, and pick a model. Enable access to that model in the same Region in the Amazon Bedrock console if your account requires it.
+Open **AI Chat Bedrock > Settings**, choose the AWS Region, such as Asia Pacific (Tokyo), and pick a model. Enable access to that model in the same Region in the Amazon Bedrock console if your account requires it.
 
 ## 3. Connect to Bedrock
 

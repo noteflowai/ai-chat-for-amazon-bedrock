@@ -94,7 +94,7 @@ No custom table is created. The conversation log is optional and off by default;
 
 = What it costs =
 
-Amazon Bedrock bills your AWS account for what the models use. It is part of AWS paid plans, not the AWS Free plan; new AWS accounts get up to $200 in Free Tier credits, which apply to AWS bills after upgrading to the Paid plan. The dashboard shows requests and tokens for the last seven days by the model that actually answered, kept for 30 days without prompts, responses or identities. It also counts chat requests that still failed after any fallback model, grouped as throttled, access denied, rejected, unavailable, network or other, and shows how long streamed answers take to start.
+Amazon Bedrock bills your AWS account for what the models use. It is part of AWS paid plans, not the AWS Free plan; new AWS accounts get $100 in Free Tier credits and can earn up to $100 more, up to $200 over six months, and remaining credits apply to AWS bills after upgrading to the Paid plan. The dashboard shows requests and tokens for the last seven days by the model that actually answered, kept for 30 days without prompts, responses or identities. It also counts chat requests that still failed after any fallback model, grouped as throttled, access denied, rejected, unavailable, network or other, and shows how long streamed answers take to start.
 
 Token counts are what Bedrock reported and are not a price estimate. Rate limiting reduces accidental usage but guarantees nothing about your bill, so review Amazon Bedrock pricing and set AWS Budgets before opening a chat to public traffic.
 
