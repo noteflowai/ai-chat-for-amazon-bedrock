@@ -438,7 +438,7 @@ what a good answer says.
 == Changelog ==
 
 = 1.72.0 =
-* Diagnostics and Site Health have an AI agents line: what agents and tools can reach on the site (the site description, llms.txt with its address, the site content abilities and the WordPress MCP server), that each shows only public content, and where to turn the rest on. A real llms.txt file at the site root, which AI tools get instead, is named as such.
+* Diagnostics and Site Health have an AI agents line: what agents and tools can reach on the site (the site description, llms.txt where nothing else answers its address, the site content abilities, and the WordPress MCP server with how it is reached), which of them follow the public-content rule, and where to turn the rest on. A real llms.txt file at the site root, which AI tools get instead, is named as such.
 * The site description reports these surfaces itself, so Diagnostics reads one source rather than each setting.
 * The Live Preview on WordPress.org shows llms.txt and the site description, and leaves out WordPress's sample post and page.
 

@@ -466,21 +466,27 @@ class AI_Chat_Bedrock_Diagnostics {
 		$surface = AI_Chat_Bedrock_Ontology::agent_surface();
 		$label   = __( 'AI agents', 'ai-chat-for-amazon-bedrock' );
 		$on      = array();
+		$public  = false;
 		if ( $surface['site_description']['on'] ) {
-			$on[] = __( 'the site description', 'ai-chat-for-amazon-bedrock' );
+			$on[]   = __( 'the site description', 'ai-chat-for-amazon-bedrock' );
+			$public = true;
 		}
 		if ( $surface['site_abilities']['on'] ) {
-			$on[] = __( 'the site content abilities', 'ai-chat-for-amazon-bedrock' );
-		}
-		if ( $surface['mcp']['on'] ) {
-			$on[] = __( 'the WordPress MCP server', 'ai-chat-for-amazon-bedrock' );
+			$on[]   = __( 'the site content abilities', 'ai-chat-for-amazon-bedrock' );
+			$public = true;
 		}
 		$file = '';
 		if ( $surface['llms_txt']['on'] && ! $surface['llms_txt']['file'] ) {
 			/* translators: %s: the llms.txt address. */
-			$on[] = sprintf( __( 'llms.txt at %s', 'ai-chat-for-amazon-bedrock' ), $surface['llms_txt']['url'] );
+			$on[]   = sprintf( __( 'llms.txt at %s, where nothing else answers that address', 'ai-chat-for-amazon-bedrock' ), $surface['llms_txt']['url'] );
+			$public = true;
 		} elseif ( $surface['llms_txt']['file'] ) {
 			$file = __( 'An llms.txt file at the site root, not written by this plugin, is served to AI tools.', 'ai-chat-for-amazon-bedrock' );
+		}
+		// The MCP server answers with its own sign-in and tool permissions, so it is listed with
+		// how it is reached, and the public-content rule is not claimed for it.
+		if ( $surface['mcp']['on'] ) {
+			$on[] = $surface['mcp']['public'] ? __( 'the WordPress MCP server, readable without signing in', 'ai-chat-for-amazon-bedrock' ) : __( 'the WordPress MCP server, for signed-in accounts', 'ai-chat-for-amazon-bedrock' );
 		}
 		if ( empty( $on ) ) {
 			return $this->result( 'agents', $label, 'off', AI_Chat_Bedrock_Translation::sentences( __( 'AI agents and tools get nothing from the plugin. The site description, llms.txt, site content abilities and the MCP server are under Settings > Agents and tools.', 'ai-chat-for-amazon-bedrock' ), $file ) );
@@ -492,7 +498,7 @@ class AI_Chat_Bedrock_Diagnostics {
 			AI_Chat_Bedrock_Translation::sentences(
 				/* translators: %s: what agents can reach, such as "the site description, llms.txt at https://example.com/llms.txt". */
 				sprintf( __( 'AI agents and tools can use: %s.', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_Translation::items( $on ) ),
-				__( 'Each shows only what the site policy lets agents see: published, public content, never drafts or members-only text.', 'ai-chat-for-amazon-bedrock' ),
+				$public ? __( 'The site description, the site content abilities and the plugin\'s llms.txt show only published, public content, never drafts or members-only text.', 'ai-chat-for-amazon-bedrock' ) : '',
 				$file
 			)
 		);
