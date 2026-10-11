@@ -94,7 +94,7 @@ No custom table is created. The conversation log is optional and off by default;
 
 = What it costs =
 
-Amazon Bedrock bills your AWS account for what the models use. It is part of AWS paid plans, not the AWS Free plan; new AWS accounts get $100 in Free Tier credits and can earn up to $100 more, up to $200 over six months, and remaining credits apply to AWS bills after upgrading to the Paid plan. The dashboard shows requests and tokens for the last seven days by the model that actually answered, kept for 30 days without prompts, responses or identities. It also counts chat requests that still failed after any fallback model, grouped as throttled, access denied, rejected, unavailable, network or other, and shows how long streamed answers take to start.
+Amazon Bedrock bills your AWS account for what the models use. Whether your AWS plan includes Bedrock depends on the account: AWS's Free Tier page lists it for the Paid plan, while AWS's newer sign-up experience, which AWS is releasing to a limited number of customers, includes it in the Free Tier without multi-Region or cross-Region features. A new AWS Free Tier account gets $100 in credits when it is created and can earn up to $100 more, up to $200 over six months; remaining credits apply to AWS bills after upgrading to the Paid plan. The dashboard shows requests and tokens for the last seven days by the model that actually answered, kept for 30 days without prompts, responses or identities. It also counts chat requests that still failed after any fallback model, grouped as throttled, access denied, rejected, unavailable, network or other, and shows how long streamed answers take to start.
 
 Token counts are what Bedrock reported and are not a price estimate. Rate limiting reduces accidental usage but guarantees nothing about your bill, so review Amazon Bedrock pricing and set AWS Budgets before opening a chat to public traffic.
 
@@ -439,7 +439,7 @@ what a good answer says.
 
 = 1.72.2 =
 * Renamed AI Chatbot, Agents & MCP for Amazon Bedrock, naming the built-in WordPress MCP server.
-* A step-by-step guide for WordPress sites on AWS, in English and Japanese, and the readme says Bedrock needs an AWS paid plan and how new-account credits apply.
+* A step-by-step guide for WordPress sites on AWS, in English and Japanese, and the readme says which AWS plans include Bedrock and how new-account credits apply.
 
 = 1.72.1 =
 * The official WordPress AI plugin now sees Amazon Bedrock as connected on sites that sign with an IAM role, access keys or a key in this plugin's settings. It looked only for a key stored on Settings > Connectors, so on those sites every AI plugin feature asked to connect a provider. Its image generation is offered once an image model is chosen, the choice that agrees to send prompts to the Stability models.

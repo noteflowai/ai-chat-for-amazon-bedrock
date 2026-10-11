@@ -6,7 +6,7 @@ To see it first without an AWS account, open the **Live Preview** on the plugin'
 
 ## Before you start
 
-- An AWS account on a paid plan. Amazon Bedrock is not part of the AWS Free plan. New AWS accounts get $100 in Free Tier credits and can earn up to $100 more, up to $200 over six months; remaining credits apply to AWS bills after upgrading to the Paid plan ([AWS Free Tier](https://aws.amazon.com/free/)).
+- An AWS account that can use Amazon Bedrock. Check your account's plan: the [AWS Free Tier page](https://aws.amazon.com/free/) lists Bedrock for the Paid plan, while AWS's [newer sign-up experience](https://docs.aws.amazon.com/accounts/latest/reference/supported-services-sign-up-new.html), which AWS is releasing to a limited number of customers, includes it in the Free Tier without multi-Region or cross-Region features. A new AWS Free Tier account gets $100 in credits when it is created and can earn up to $100 more, up to $200 over six months; remaining credits apply to AWS bills after upgrading to the Paid plan.
 - WordPress 6.4 or later and PHP 7.4 or later.
 - Bedrock bills per use. Review [Amazon Bedrock pricing](https://aws.amazon.com/bedrock/pricing/) and set an [AWS Budget](https://aws.amazon.com/aws-cost-management/aws-budgets/) before opening the chat to the public.
 

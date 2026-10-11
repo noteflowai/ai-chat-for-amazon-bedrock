@@ -6,7 +6,7 @@ AWS アカウントがなくても、まずプラグインの WordPress.org ペ�
 
 ## 始める前に
 
-- 有料プランの AWS アカウント。Amazon Bedrock は AWS の無料プランには含まれません。新しい AWS アカウントには無料利用枠クレジットが 100 ドル付与され、さらに最大 100 ドルを獲得できます（6 か月で最大 200 ドル）。有料プランにアップグレードすると、残りのクレジットは AWS の請求に充当されます（[AWS 無料利用枠](https://aws.amazon.com/jp/free/)）。
+- Amazon Bedrock を使える AWS アカウント。アカウントのプランを確認してください。[AWS 無料利用枠のページ](https://aws.amazon.com/jp/free/)では Bedrock は有料プラン向けとされていますが、AWS が一部のお客様に順次提供している[新しいサインアップ方式](https://docs.aws.amazon.com/accounts/latest/reference/supported-services-sign-up-new.html)では無料利用枠に含まれます（マルチリージョン・クロスリージョンの機能は使えません）。新しく AWS 無料利用枠アカウントを作成すると、すぐに 100 ドルのクレジットが付与され、さらに最大 100 ドルを獲得できます（6 か月で最大 200 ドル）。有料プランにアップグレードすると、残りのクレジットは AWS の請求に充当されます。
 - WordPress 6.4 以降、PHP 7.4 以降。
 - Bedrock は使った分だけ課金されます。チャットを一般公開する前に [Amazon Bedrock の料金](https://aws.amazon.com/jp/bedrock/pricing/) を確認し、[AWS Budgets](https://aws.amazon.com/jp/aws-cost-management/aws-budgets/) を設定してください。
 
