@@ -7709,8 +7709,8 @@ msgstr "WordPress MCP サーバー（ログインしたアカウント向け）"
 
 #. translators: %s: the llms.txt address.
 #, php-format
-msgid "llms.txt at %s, where nothing else answers that address"
-msgstr "%s の llms.txt（ほかに応答するものがない場合）"
+msgid "llms.txt at %s"
+msgstr "%s の llms.txt"
 
 msgid ""
 "An llms.txt file at the site root, not written by this plugin, is served to "
@@ -7725,8 +7725,8 @@ msgstr "AI エージェントやツールがこのプラグインから得られ
 
 #. translators: %s: what agents can reach, such as "the site description, llms.txt at https://example.com/llms.txt".
 #, php-format
-msgid "AI agents and tools can use: %s."
-msgstr "AI エージェントやツールが使えるもの：%s。"
+msgid "Turned on for AI agents and tools: %s."
+msgstr "AI エージェントやツール向けに有効なもの：%s。"
 
 msgid ""
 "The site description, the site content abilities and the plugin's llms.txt "

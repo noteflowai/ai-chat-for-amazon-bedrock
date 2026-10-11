@@ -459,8 +459,9 @@ class AI_Chat_Bedrock_Diagnostics {
 	}
 
 	/**
-	 * What AI agents and tools can reach, in one line, with where to turn the rest on. The
-	 * MCP check above already warns about public access, so this one only reports.
+	 * What is turned on for AI agents and tools, in one line, with where to turn the rest on.
+	 * It reports the settings, not whether each address answers right now. The MCP check above
+	 * already warns about public access, so this one only reports.
 	 */
 	private function check_agents() {
 		$surface = AI_Chat_Bedrock_Ontology::agent_surface();
@@ -478,7 +479,7 @@ class AI_Chat_Bedrock_Diagnostics {
 		$file = '';
 		if ( $surface['llms_txt']['on'] && ! $surface['llms_txt']['file'] ) {
 			/* translators: %s: the llms.txt address. */
-			$on[]   = sprintf( __( 'llms.txt at %s, where nothing else answers that address', 'ai-chat-for-amazon-bedrock' ), $surface['llms_txt']['url'] );
+			$on[]   = sprintf( __( 'llms.txt at %s', 'ai-chat-for-amazon-bedrock' ), $surface['llms_txt']['url'] );
 			$public = true;
 		} elseif ( $surface['llms_txt']['file'] ) {
 			$file = __( 'An llms.txt file at the site root, not written by this plugin, is served to AI tools.', 'ai-chat-for-amazon-bedrock' );
@@ -496,8 +497,8 @@ class AI_Chat_Bedrock_Diagnostics {
 			$label,
 			'pass',
 			AI_Chat_Bedrock_Translation::sentences(
-				/* translators: %s: what agents can reach, such as "the site description, llms.txt at https://example.com/llms.txt". */
-				sprintf( __( 'AI agents and tools can use: %s.', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_Translation::items( $on ) ),
+				/* translators: %s: what is turned on, such as "the site description, llms.txt at https://example.com/llms.txt". */
+				sprintf( __( 'Turned on for AI agents and tools: %s.', 'ai-chat-for-amazon-bedrock' ), AI_Chat_Bedrock_Translation::items( $on ) ),
 				$public ? __( 'The site description, the site content abilities and the plugin\'s llms.txt show only published, public content, never drafts or members-only text.', 'ai-chat-for-amazon-bedrock' ) : '',
 				$file
 			)

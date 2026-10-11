@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-11T11:42:06+00:00\n"
+"POT-Creation-Date: 2026-10-11T11:47:03+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -4733,63 +4733,63 @@ msgstr ""
 msgid "MCP tools are enabled and require authentication."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:467
+#: includes/class-ai-chat-bedrock-diagnostics.php:468
 msgid "AI agents"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:471
+#: includes/class-ai-chat-bedrock-diagnostics.php:472
 msgid "the site description"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:475
+#: includes/class-ai-chat-bedrock-diagnostics.php:476
 msgid "the site content abilities"
 msgstr ""
 
 #. translators: %s: the llms.txt address.
-#: includes/class-ai-chat-bedrock-diagnostics.php:481
+#: includes/class-ai-chat-bedrock-diagnostics.php:482
 #, php-format
-msgid "llms.txt at %s, where nothing else answers that address"
+msgid "llms.txt at %s"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:484
+#: includes/class-ai-chat-bedrock-diagnostics.php:485
 msgid "An llms.txt file at the site root, not written by this plugin, is served to AI tools."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:489
+#: includes/class-ai-chat-bedrock-diagnostics.php:490
 msgid "the WordPress MCP server, readable without signing in"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:489
+#: includes/class-ai-chat-bedrock-diagnostics.php:490
 msgid "the WordPress MCP server, for signed-in accounts"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:492
+#: includes/class-ai-chat-bedrock-diagnostics.php:493
 msgid "AI agents and tools get nothing from the plugin. The site description, llms.txt, site content abilities and the MCP server are under Settings > Agents and tools."
 msgstr ""
 
-#. translators: %s: what agents can reach, such as "the site description, llms.txt at https://example.com/llms.txt".
-#: includes/class-ai-chat-bedrock-diagnostics.php:500
+#. translators: %s: what is turned on, such as "the site description, llms.txt at https://example.com/llms.txt".
+#: includes/class-ai-chat-bedrock-diagnostics.php:501
 #, php-format
-msgid "AI agents and tools can use: %s."
+msgid "Turned on for AI agents and tools: %s."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:501
+#: includes/class-ai-chat-bedrock-diagnostics.php:502
 msgid "The site description, the site content abilities and the plugin's llms.txt show only published, public content, never drafts or members-only text."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:512
-#: includes/class-ai-chat-bedrock-diagnostics.php:531
+#: includes/class-ai-chat-bedrock-diagnostics.php:513
+#: includes/class-ai-chat-bedrock-diagnostics.php:532
 msgid "Model invocation"
 msgstr ""
 
 #. translators: %d: round trip duration in milliseconds.
-#: includes/class-ai-chat-bedrock-diagnostics.php:518
+#: includes/class-ai-chat-bedrock-diagnostics.php:519
 #, php-format
 msgid "Round trip took %d ms."
 msgstr ""
 
 #. translators: 1: input token count, 2: output token count.
-#: includes/class-ai-chat-bedrock-diagnostics.php:525
+#: includes/class-ai-chat-bedrock-diagnostics.php:526
 #, php-format
 msgid "Tokens used: %1$d input, %2$d output."
 msgstr ""
