@@ -5699,8 +5699,8 @@ msgid "AI Chatbot & Agents for Amazon Bedrock"
 msgstr "AI Chatbot & Agents for Amazon Bedrock"
 
 #: admin/class-ai-chat-bedrock-admin.php:804
-msgid "AI Chatbot & Agents for Amazon Bedrock:"
-msgstr "AI Chatbot & Agents for Amazon Bedrock："
+msgid "AI Chatbot, Agents & MCP for Amazon Bedrock:"
+msgstr "AI Chatbot, Agents & MCP for Amazon Bedrock："
 
 #. translators: %s: link to the Settings > Connectors screen.
 #: admin/class-ai-chat-bedrock-admin.php:1194
@@ -5735,8 +5735,8 @@ msgid "Claude, Nova, Llama and other models on AWS. On AWS an IAM role is used a
 msgstr "AWS 上の Claude、Nova、Llama などのモデル。AWS 上では IAM ロールが使われ、キーは不要です。それ以外の環境では Amazon Bedrock API キーを入力してください。モデル、リージョン、ガードレールはプラグインの設定で選びます。"
 
 #: includes/class-ai-chat-bedrock-diagnostics.php:22
-msgid "AI Chatbot & Agents for Amazon Bedrock configuration"
-msgstr "AI Chatbot & Agents for Amazon Bedrock の設定"
+msgid "AI Chatbot, Agents & MCP for Amazon Bedrock configuration"
+msgstr "AI Chatbot, Agents & MCP for Amazon Bedrock の設定"
 
 #: includes/class-ai-chat-bedrock-review-prompt.php:98
 msgid "Your chat has been answering visitors for over a week. If it has helped, a review on WordPress.org helps other site owners find it. If something is not right, the support forum is the place to say so."
@@ -7735,3 +7735,6 @@ msgstr "サイトの説明、サイトのコンテンツ機能、このプラグ
 
 msgid "the WordPress MCP server, readable without signing in"
 msgstr "WordPress MCP サーバー（ログインなしで読み取り可能）"
+
+msgid "AI Chatbot, Agents & MCP for Amazon Bedrock"
+msgstr "AI Chatbot, Agents & MCP for Amazon Bedrock"

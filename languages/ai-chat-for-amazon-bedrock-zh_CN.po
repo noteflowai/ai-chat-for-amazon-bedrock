@@ -5699,8 +5699,8 @@ msgid "AI Chatbot & Agents for Amazon Bedrock"
 msgstr "AI Chatbot & Agents for Amazon Bedrock"
 
 #: admin/class-ai-chat-bedrock-admin.php:804
-msgid "AI Chatbot & Agents for Amazon Bedrock:"
-msgstr "AI Chatbot & Agents for Amazon Bedrock："
+msgid "AI Chatbot, Agents & MCP for Amazon Bedrock:"
+msgstr "AI Chatbot, Agents & MCP for Amazon Bedrock："
 
 #. translators: %s: link to the Settings > Connectors screen.
 #: admin/class-ai-chat-bedrock-admin.php:1194
@@ -5735,8 +5735,8 @@ msgid "Claude, Nova, Llama and other models on AWS. On AWS an IAM role is used a
 msgstr "AWS 上的 Claude、Nova、Llama 等模型。在 AWS 上使用 IAM 角色，无需密钥；在其他环境中，请输入 Amazon Bedrock API 密钥。模型、区域和护栏在插件设置中选择。"
 
 #: includes/class-ai-chat-bedrock-diagnostics.php:22
-msgid "AI Chatbot & Agents for Amazon Bedrock configuration"
-msgstr "AI Chatbot & Agents for Amazon Bedrock 配置"
+msgid "AI Chatbot, Agents & MCP for Amazon Bedrock configuration"
+msgstr "AI Chatbot, Agents & MCP for Amazon Bedrock 配置"
 
 #: includes/class-ai-chat-bedrock-review-prompt.php:98
 msgid "Your chat has been answering visitors for over a week. If it has helped, a review on WordPress.org helps other site owners find it. If something is not right, the support forum is the place to say so."
@@ -7735,3 +7735,6 @@ msgstr "站点描述、站点内容能力和本插件生成的 llms.txt 只提�
 
 msgid "the WordPress MCP server, readable without signing in"
 msgstr "WordPress MCP 服务器（无需登录即可读取）"
+
+msgid "AI Chatbot, Agents & MCP for Amazon Bedrock"
+msgstr "AI Chatbot, Agents & MCP for Amazon Bedrock"
