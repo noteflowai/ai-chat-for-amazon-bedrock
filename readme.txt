@@ -439,7 +439,7 @@ what a good answer says.
 
 = 1.72.0 =
 * Diagnostics and Site Health have an AI agents line: what is turned on for agents and tools (the site description, llms.txt with its address, the site content abilities, and the WordPress MCP server with how it is reached), which of them follow the public-content rule, and where to turn the rest on. A real llms.txt file at the site root, which AI tools get instead, is named as such.
-* The site description reports these surfaces itself, so Diagnostics reads one source rather than each setting.
+* Developers: AI_Chat_Bedrock_Ontology::agent_surface() returns these settings in one place, and Diagnostics reads them from it.
 * The Live Preview on WordPress.org shows llms.txt and the site description, and leaves out WordPress's sample post and page.
 
 = 1.71.1 =
