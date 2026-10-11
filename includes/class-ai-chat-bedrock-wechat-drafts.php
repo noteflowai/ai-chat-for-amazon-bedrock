@@ -326,7 +326,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * @return bool
 	 */
 	public static function sendable( $post ) {
-		return $post instanceof WP_Post && 'publish' === $post->post_status && '' === (string) $post->post_password && AI_Chat_Bedrock_Content::is_public( $post );
+		return AI_Chat_Bedrock_Ontology::allows( $post, 'distribution' );
 	}
 
 	/**

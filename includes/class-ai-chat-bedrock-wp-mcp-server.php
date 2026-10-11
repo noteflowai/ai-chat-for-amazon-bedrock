@@ -900,8 +900,7 @@ class AI_Chat_Bedrock_WP_MCP_Server {
 
 	private function is_public_post( $post ) {
 		// Also kept out: what the site keeps from AI answers, such as pages hidden from search.
-		return $post instanceof WP_Post && 'publish' === $post->post_status && '' === $post->post_password
-			&& ( ! class_exists( 'AI_Chat_Bedrock_Content' ) || AI_Chat_Bedrock_Content::is_answerable( $post ) );
+		return class_exists( 'AI_Chat_Bedrock_Ontology' ) && AI_Chat_Bedrock_Ontology::allows( $post, 'agent' );
 	}
 
 	private function site_info() {

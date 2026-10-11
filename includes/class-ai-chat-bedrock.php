@@ -56,6 +56,7 @@ class AI_Chat_Bedrock {
 		require_once $base . 'includes/class-ai-chat-bedrock-abilities.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-site-abilities.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-ontology.php';
+		require_once $base . 'includes/class-ai-chat-bedrock-llms-txt.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-metrics.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-tool-policy.php';
 		require_once $base . 'includes/class-ai-chat-bedrock-tool-log.php';
@@ -306,6 +307,14 @@ class AI_Chat_Bedrock {
 		$ontology = new AI_Chat_Bedrock_Ontology();
 		$this->loader->add_action( 'wp_abilities_api_init', $ontology, 'register' );
 		$this->loader->add_filter( 'ai_chat_bedrock_retrieved_passages', 'AI_Chat_Bedrock_Ontology', 'annotate_passages', 5 );
+
+		// llms.txt, written from the description, only where nothing else answers the address,
+		// and written again after a change.
+		$llms_txt = new AI_Chat_Bedrock_Llms_Txt();
+		$this->loader->add_filter( 'template_include', $llms_txt, 'serve', PHP_INT_MAX );
+		$this->loader->add_action( 'save_post', 'AI_Chat_Bedrock_Llms_Txt', 'flush' );
+		$this->loader->add_action( 'deleted_post', 'AI_Chat_Bedrock_Llms_Txt', 'flush' );
+		$this->loader->add_action( 'update_option_ai_chat_bedrock_settings', 'AI_Chat_Bedrock_Llms_Txt', 'flush' );
 
 		$metrics = new AI_Chat_Bedrock_Metrics();
 		$this->loader->add_action( 'wp_abilities_api_init', $metrics, 'register' );

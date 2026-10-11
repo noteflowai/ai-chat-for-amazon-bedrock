@@ -178,9 +178,20 @@ class AI_Chat_Bedrock_Chat_Request {
 		return isset( $options['suggested_questions'] ) ? $options['suggested_questions'] : array();
 	}
 }
+class WP_Post {
+	public $ID;
+	public $post_title;
+	public $post_type = 'post';
+	public $post_status = 'publish';
+	public $post_password = '';
+	public function __construct( $id, $title ) {
+		$this->ID         = $id;
+		$this->post_title = $title;
+	}
+}
 class AI_Chat_Bedrock_Content {
 	public static function is_public( $post ) {
-		return 'members only' !== $post->post_title;
+		return 'publish' === $post->post_status && '' === $post->post_password && 'members only' !== $post->post_title;
 	}
 	public static function request_language( $slug ) {
 		return in_array( $slug, array( 'zh', 'en', 'ja' ), true ) ? $slug : '';
@@ -229,6 +240,7 @@ function get_permalink( $post ) {
 }
 
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-security.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-ontology.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat-api.php';
 
@@ -394,7 +406,7 @@ wx_settings( array( 'wechat_menu' => "Courses: https://example.test/courses/\nSe
 $menu = wx_content( wx_post( wx_message( '菜单', 7001 ) ) );
 check_wx( "Courses: https://example.test/courses/\nSend 精选 for new articles." === $menu && array() === $GLOBALS['aicfab_runs'], 'A follower who sends 菜单 gets the menu, without the model.' );
 check_wx( $menu === wx_content( wx_post( wx_message( ' MENU ', 7002 ) ) ), 'The menu word is matched without case or spaces.' );
-$GLOBALS['aicfab_feature_posts'] = array( (object) array( 'ID' => 11, 'post_title' => '具身智能入门' ), (object) array( 'ID' => 13, 'post_title' => 'members only' ), (object) array( 'ID' => 12, 'post_title' => 'World models &amp; robots' ) );
+$GLOBALS['aicfab_feature_posts'] = array( new WP_Post( 11, '具身智能入门' ), new WP_Post( 13, 'members only' ), new WP_Post( 12, 'World models &amp; robots' ) );
 $featured                        = wx_content( wx_post( wx_message( '精选', 7003 ) ) );
 check_wx( false !== strpos( $featured, "具身智能入门\nhttps://example.test/?p=11" ) && false !== strpos( $featured, 'World models & robots' ) && 0 === strpos( $featured, 'Featured articles:' ) && false === strpos( $featured, 'members only' ) && array() === $GLOBALS['aicfab_runs'], 'Sending 精选 lists the newest public posts with their addresses, without the model.' );
 check_wx( 'publish' === $GLOBALS['aicfab_post_query']['post_status'] && false === $GLOBALS['aicfab_post_query']['has_password'], 'Only published posts without a password are listed.' );

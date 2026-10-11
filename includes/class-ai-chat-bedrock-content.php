@@ -125,8 +125,10 @@ class AI_Chat_Bedrock_Content {
 	 *
 	 * Read from the settings each plugin keeps, since its own logic only runs for the page
 	 * being viewed: Yoast SEO, Rank Math and SEOPress for the post and its post type's
-	 * default, All in One SEO for a post set to noindex on its own. Discouraging search
-	 * engines in Settings > Reading does not count: that is how staging sites are hidden.
+	 * default, All in One SEO for a post set to noindex on its own. WooCommerce's cart,
+	 * checkout and account pages count too: WooCommerce tells search engines not to index
+	 * them, since each visitor sees their own. Discouraging search engines in Settings >
+	 * Reading does not count: that is how staging sites are hidden.
 	 *
 	 * @param WP_Post $post Post.
 	 * @return bool
@@ -172,6 +174,15 @@ class AI_Chat_Bedrock_Content {
 					$noindex = is_object( $meta ) && empty( $meta->robots_default ) && ! empty( $meta->robots_noindex );
 				} catch ( Throwable $error ) {
 					$noindex = false;
+				}
+			}
+		}
+
+		if ( ! $noindex && $post instanceof WP_Post && 'page' === $post->post_type && function_exists( 'wc_get_page_id' ) ) {
+			foreach ( array( 'cart', 'checkout', 'myaccount' ) as $woocommerce_page ) {
+				if ( (int) wc_get_page_id( $woocommerce_page ) === (int) $post->ID ) {
+					$noindex = true;
+					break;
 				}
 			}
 		}

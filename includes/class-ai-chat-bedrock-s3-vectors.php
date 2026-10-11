@@ -353,7 +353,7 @@ class AI_Chat_Bedrock_S3_Vectors {
 			}
 			$post = get_post( $hit['post_id'] );
 			// The index may lag behind the site: the live post decides.
-			if ( ! AI_Chat_Bedrock_Content::is_answerable( $post, $options ) || ! in_array( $post->post_type, AI_Chat_Bedrock_Embeddings::post_types( $options ), true ) ) {
+			if ( ! AI_Chat_Bedrock_Ontology::allows( $post, 'index', $options ) || ! in_array( $post->post_type, AI_Chat_Bedrock_Embeddings::post_types( $options ), true ) ) {
 				continue;
 			}
 

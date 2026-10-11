@@ -417,7 +417,7 @@ function wp_salt() {
 
 class AI_Chat_Bedrock_Content {
 	public static function is_public( $post ) {
-		return 'members' !== $post->post_title;
+		return 'publish' === $post->post_status && '' === (string) $post->post_password && 'members' !== $post->post_title;
 	}
 	public static function render_as_guest( $post ) {
 		$GLOBALS['aicfab_guest_renders'] = isset( $GLOBALS['aicfab_guest_renders'] ) ? $GLOBALS['aicfab_guest_renders'] + 1 : 1;
@@ -442,6 +442,7 @@ require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat-api.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat-game.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-distribution.php';
+require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-ontology.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wechat-drafts.php';
 require dirname( __DIR__ ) . '/includes/class-ai-chat-bedrock-wp-mcp-server.php';
 

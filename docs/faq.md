@@ -215,11 +215,19 @@ refused.
 
 ## What does the site description tell an agent?
 
-Turn on Site description under Answer grounding, and agents get a describe-site ability and an MCP tool of the same name. It lists what the site holds as schema.org types, such as posts as Article, pages as WebPage and WooCommerce products as Product, with published counts per language and how the types relate.
+Turn on Site description under Agents and tools, and agents get a describe-site ability and an MCP tool of the same name. It lists what the site holds as schema.org types, such as posts as Article, pages as WebPage and WooCommerce products as Product, with published counts per language and how the types relate.
 
 Each property has a sensitivity class, with a rule for each use: public content may be quoted, members-only sections never reach a model or an index, personal data such as orders goes only to the signed-in person it is about, and store figures only as totals. Entity IDs are the ones Yoast SEO and WooCommerce print in the page, so an agent and a search engine see the same nodes.
 
 Given a post ID, it describes one published item with its terms and published translations. Passages given to the chat model also say whether they come from a post, page or product, and in which language. Nothing is stored, and drafts, private and password-protected posts are never described.
+
+The rules are not only a description. Since 1.71.0 every part of the plugin that sends a post's text somewhere asks the same policy, `AI_Chat_Bedrock_Ontology::allows( $post, $use )`, with one of five uses: `index`, `visitor_chat`, `agent`, `analytics` and `distribution`, which is sending a public post to a channel such as a WeChat draft or a publishing kit. A published post anyone can read is public; one with a password, or one a membership plugin marks with the `ai_chat_bedrock_is_public_post` filter, is member content; a draft is not site data. The three search uses also leave out pages your SEO plugin keeps out of search engines, unless the site includes them, and every use leaves out products the shop does not list. The policy applies whether or not the description is turned on, and refuses when it cannot be checked. The `ai_chat_bedrock_ontology_allows` filter can withhold a post from one use; it cannot grant one the policy refuses.
+
+## Does the plugin publish an llms.txt file?
+
+Only when llms.txt is turned on under Settings > Agents and tools. The file at `/llms.txt` follows [llms.txt](https://llmstxt.org/): the site name, its tagline, the languages it publishes in, and a section per schema.org type with up to 50 of the most recently updated items, each as a Markdown link with its language on a multilingual site. It lists only what the policy above lets agents see. It is cached for up to twelve hours and written again after a post or the settings change.
+
+It is served only where nothing else answers the address. A real file at the site root is served by the web server before WordPress runs; a page, post or rewrite rule at the address resolves the request first; and the file is answered from the `template_include` filter, so every `template_redirect` handler goes first. A plugin that serves its own llms.txt from `template_include` or later claims the address by returning false from `ai_chat_bedrock_llms_txt_serve`. The `ai_chat_bedrock_llms_txt` filter changes the text before it is cached.
 
 ## Does it work with the AI features in WordPress core?
 

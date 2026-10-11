@@ -3,6 +3,23 @@ Full changelog. The readme lists the latest releases only.
 
 == Changelog ==
 
+= 1.71.0 =
+* llms.txt, under Settings > Agents and tools and off by default: a Markdown file at /llms.txt that tells AI tools what the site holds, listing its public posts, pages and products by type and, on a multilingual site, language. It never names a draft, members-only content, a hidden product or a page kept out of search engines, and is served only where nothing else answers the address: a real llms.txt file, a page there or a plugin answering before the page template loads goes first.
+* The site description's sensitivity policy is now the rule every part of the plugin applies to a post. Indexing, the chat, site abilities, the MCP server, WeChat drafts and replies and publishing kits ask one policy, which refuses when it cannot be checked. A site can withhold a post from one use with the ai_chat_bedrock_ontology_allows filter.
+* A product the shop does not list, such as one hidden from the catalog, is left out of the index, the chat, agents and channels, not only the site description. describe_site no longer describes pages hidden from search engines, as the MCP read tools already did.
+* WooCommerce's cart, checkout and account pages count as hidden from search engines, as WooCommerce tells search engines, so they stay out of answers, agents and llms.txt.
+
+= 1.70.0 =
+* Authorized editors and agents can prepare a separate static WeChat edition with its own title, excerpt and local cover. The published WordPress article stays unchanged.
+* Automatic draft selection requires an explicit public edition and a current independent review bound to its exact source and image bytes. Missing, changed or unknown drafts remain held for reconciliation.
+* The real WordPress abilities and MCP integration is covered by release checks. Final draft preview, publication and follower sending remain with the Official Account owner.
+
+= 1.69.0 =
+* Automatic WeChat drafts require a current editorial review of the exact public article, locally bound image files and conversion source. Reviews cover reader fit, original value, evidence, rights, mobile readability, safety and public-only content; changed or expired inputs require another review.
+* Authorized editors and agents can read the review input and record its attestation through protected WordPress abilities and MCP tools. The publishing pipeline remains responsible for independent review and the final native draft preview.
+* Automatic updates hold missing, unknown or externally changed WeChat drafts for reconciliation instead of recreating them. Final publication and follower sending remain with the Official Account owner.
+* Updated Chinese and Japanese translations and release checks for the review workflow.
+
 = 1.68.0 =
 * MCP settings: switching MCP tools or public access on is saved with a Save button, as on every other screen, not the moment a box is ticked. Saving the tool policy, AI clients or revoking connections now confirms it and returns to that section.
 * Scheduled WeChat drafts and YouTube uploads take their one-at-a-time lock atomically, so two background runs started together can no longer both go ahead and make a duplicate draft or write one upload twice.

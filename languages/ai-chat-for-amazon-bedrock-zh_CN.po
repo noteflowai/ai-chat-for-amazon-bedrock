@@ -7669,3 +7669,28 @@ msgstr "准备微信公开版本"
 #: includes/class-ai-chat-bedrock-wechat-drafts.php:1851
 msgid "Read or prepare a protected static public edition for an existing post. Requires permission to publish posts and edit the post. Does not contact WeChat or change the canonical post."
 msgstr "读取或准备现有文章的受保护静态公开版本。需要发布文章及编辑该文章的权限。不会联系微信或修改原文章。"
+
+msgid "llms.txt"
+msgstr "llms.txt 文件"
+
+msgid "Publish an llms.txt file that tells AI tools what the site holds"
+msgstr "发布 llms.txt 文件，告诉 AI 工具本站有哪些内容"
+
+msgid ""
+"Lists the site's public posts, pages and products by type, in every "
+"language, at the address below. It follows the same rules as the site "
+"description: no members-only content, drafts or pages hidden from search "
+"engines. A real llms.txt file, a page at that address and a plugin that "
+"answers before this one go first; a plugin that answers later can claim the "
+"address with a filter."
+msgstr "在下方地址按类型列出本站所有语言的公开文章、页面和商品。它遵循与站点描述相同的规则：不包含会员专属内容、草稿或对搜索引擎隐藏的页面。真实存在的 llms.txt 文件、该地址上的页面以及先于本插件响应的插件优先；之后响应的插件可以通过过滤器接管该地址。"
+
+msgid ""
+"An llms.txt file is already at the site root, so the web server serves that "
+"file instead."
+msgstr "站点根目录已有 llms.txt 文件，因此由 Web 服务器提供该文件。"
+
+#. translators: %s: language names, separated by commas.
+#, php-format
+msgid "Content is published in: %s."
+msgstr "内容发布语言：%s。"
