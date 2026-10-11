@@ -110,6 +110,53 @@ class AI_Chat_Bedrock_Core_AI {
 		// Core asks before every generation and before every support check, so this decides
 		// whether a call is allowed without spending anything. See can_generate().
 		add_filter( 'wp_ai_client_prevent_prompt', array( __CLASS__, 'prevent_prompt' ), 10, 1 );
+		// The WordPress AI plugin counts a connector as set up only from a key it can read
+		// itself, so a site signing with an IAM role looked to it as having no provider at all.
+		add_filter( 'wpai_has_ai_credentials', array( __CLASS__, 'ai_plugin_has_credentials' ), 10, 1 );
+		add_filter( 'wpai_has_image_generation_support', array( __CLASS__, 'ai_plugin_has_images' ), 10, 1 );
+	}
+
+	/**
+	 * Answer the WordPress AI plugin's question whether any provider is set up.
+	 *
+	 * The AI plugin looks only for a key in the connector's option, constant or environment
+	 * variable, and offers this filter for connectors that authenticate otherwise. Bedrock
+	 * also signs with an IAM role, access keys or a key in this plugin's settings, so it
+	 * answers from the credentials it actually uses. Only ever raises the answer.
+	 *
+	 * @param bool $has Whether a provider was found so far.
+	 * @return bool
+	 */
+	public static function ai_plugin_has_credentials( $has ) {
+		return (bool) $has || self::credentials_found();
+	}
+
+	/**
+	 * Answer the WordPress AI plugin's question whether a provider can generate images: yes
+	 * once Bedrock has credentials and the site chose an image model, the choice that agrees
+	 * to send prompts to the Stability models. Only ever raises the answer.
+	 *
+	 * @param bool $has Whether image generation was found so far.
+	 * @return bool
+	 */
+	public static function ai_plugin_has_images( $has ) {
+		if ( $has ) {
+			return true;
+		}
+		return class_exists( 'AI_Chat_Bedrock_AI_Model_Directory', false ) && AI_Chat_Bedrock_AI_Model_Directory::images_available() && self::credentials_found();
+	}
+
+	/**
+	 * Whether the plugin finds AWS credentials, from any source it signs with.
+	 *
+	 * @return bool
+	 */
+	private static function credentials_found() {
+		if ( ! class_exists( 'AI_Chat_Bedrock_AWS' ) ) {
+			return false;
+		}
+		$aws = new AI_Chat_Bedrock_AWS();
+		return (bool) $aws->has_credentials();
 	}
 
 	/**

@@ -248,6 +248,42 @@ check_core_ai(
 	'A fallback model must be reported as the model that ran.'
 );
 
+// --- The WordPress AI plugin sees Bedrock however it signs ------------------------
+
+if ( ! class_exists( 'AI_Chat_Bedrock_AWS' ) ) {
+	class AI_Chat_Bedrock_AWS {
+		public static $has = false;
+		public function has_credentials() {
+			return self::$has;
+		}
+	}
+}
+if ( ! class_exists( 'AI_Chat_Bedrock_AI_Model_Directory', false ) ) {
+	class AI_Chat_Bedrock_AI_Model_Directory {
+		public static $images = false;
+		public static function images_available() {
+			return self::$images;
+		}
+	}
+}
+AI_Chat_Bedrock_AWS::$has = false;
+check_core_ai( false === AI_Chat_Bedrock_Core_AI::ai_plugin_has_credentials( false ), 'Without credentials Bedrock does not claim to be set up for the AI plugin.' );
+check_core_ai( true === AI_Chat_Bedrock_Core_AI::ai_plugin_has_credentials( true ), 'Another provider the AI plugin found is left as found.' );
+AI_Chat_Bedrock_AWS::$has = true;
+check_core_ai( true === AI_Chat_Bedrock_Core_AI::ai_plugin_has_credentials( false ), 'A site signing with an IAM role, access keys or a key in the plugin settings counts as set up, though no connector key is stored.' );
+AI_Chat_Bedrock_AI_Model_Directory::$images = false;
+check_core_ai( false === AI_Chat_Bedrock_Core_AI::ai_plugin_has_images( false ), 'With credentials but no image model chosen, no image generation is claimed: choosing one is the consent to send prompts to the Stability models.' );
+AI_Chat_Bedrock_AI_Model_Directory::$images = true;
+check_core_ai( true === AI_Chat_Bedrock_Core_AI::ai_plugin_has_images( false ), 'With credentials and an image model chosen, the AI plugin is told images can be generated.' );
+AI_Chat_Bedrock_AWS::$has = false;
+check_core_ai( false === AI_Chat_Bedrock_Core_AI::ai_plugin_has_images( false ) && true === AI_Chat_Bedrock_Core_AI::ai_plugin_has_images( true ), 'Without credentials no image generation is claimed, and another provider\'s answer stands.' );
+$aicfab_init = '';
+if ( preg_match( '/function init\(\).*?\n\t\}/s', (string) file_get_contents( __DIR__ . '/../includes/class-ai-chat-bedrock-core-ai.php' ), $aicfab_im ) ) {
+	$aicfab_init = $aicfab_im[0];
+}
+$aicfab_after_guard = (string) substr( $aicfab_init, (int) strpos( $aicfab_init, 'if ( ! self::core_ai_available() )' ) );
+check_core_ai( false !== strpos( $aicfab_after_guard, "'wpai_has_ai_credentials'" ) && false !== strpos( $aicfab_after_guard, "'wpai_has_image_generation_support'" ), 'Both AI plugin filters are added only where core\'s AI Client exists.' );
+
 // --- A partial AI Client must cost a feature, not the site ---------------------
 
 /*
