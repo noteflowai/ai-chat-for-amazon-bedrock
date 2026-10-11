@@ -75,8 +75,26 @@ class AI_Chat_Bedrock_Llms_Txt {
 	 * @return string The template, unchanged, when the file is not served.
 	 */
 	public function serve( $template = '' ) {
-		if ( ! self::enabled() || ! self::is_request() || self::file_exists() || ! is_404() ) {
+		$response = self::response();
+		if ( null === $response ) {
 			return $template;
+		}
+		status_header( $response['status'] );
+		foreach ( $response['headers'] as $name => $value ) {
+			header( $name . ': ' . $value );
+		}
+		echo $response['body']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Plain text; every value is stripped of tags and Markdown in line().
+		exit;
+	}
+
+	/**
+	 * The response for this request, or null when the plugin does not answer it.
+	 *
+	 * @return array|null Status, headers and body.
+	 */
+	public static function response() {
+		if ( ! self::enabled() || ! self::is_request() || self::file_exists() || ! is_404() ) {
+			return null;
 		}
 
 		/**
@@ -88,13 +106,16 @@ class AI_Chat_Bedrock_Llms_Txt {
 		 * @param bool $serve Whether to serve the file. True when nothing else answered.
 		 */
 		if ( ! apply_filters( 'ai_chat_bedrock_llms_txt_serve', true ) ) {
-			return $template;
+			return null;
 		}
-		status_header( 200 );
-		header( 'Content-Type: text/plain; charset=utf-8' );
-		header( 'X-Content-Type-Options: nosniff' );
-		echo self::text(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Plain text; every value is stripped of tags and Markdown in line().
-		exit;
+		return array(
+			'status'  => 200,
+			'headers' => array(
+				'Content-Type'           => 'text/plain; charset=utf-8',
+				'X-Content-Type-Options' => 'nosniff',
+			),
+			'body'    => self::text(),
+		);
 	}
 
 	/**

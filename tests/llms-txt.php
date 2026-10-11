@@ -259,6 +259,53 @@ ob_start();
 $aicfab_template = ( new AI_Chat_Bedrock_Llms_Txt() )->serve( 'index.php' );
 check_llms( '' === ob_get_clean() && 'index.php' === $aicfab_template && ! AI_Chat_Bedrock_Llms_Txt::enabled(), 'Nothing is served while the setting is off.' );
 
+// --- The response, and its place among other handlers ---------------------------------
+
+$GLOBALS['aicfab_options']['ai_chat_bedrock_settings']['llms_txt'] = true;
+$GLOBALS['aicfab_is_404']                                     = true;
+$_SERVER['REQUEST_URI']                                       = '/llms.txt';
+AI_Chat_Bedrock_Llms_Txt::flush();
+$aicfab_response = AI_Chat_Bedrock_Llms_Txt::response();
+check_llms( is_array( $aicfab_response ) && 200 === $aicfab_response['status'] && 'text/plain; charset=utf-8' === $aicfab_response['headers']['Content-Type'] && 'nosniff' === $aicfab_response['headers']['X-Content-Type-Options'] && $aicfab_response['body'] === AI_Chat_Bedrock_Llms_Txt::text(), 'The file is answered with 200, as plain UTF-8 text that is not sniffed, and the cached body.' );
+
+// WordPress's template loader, reduced to what decides who answers: every template_redirect
+// callback runs, and one that answers stops the request; then template_include filters the
+// template in priority order, and registration order within a priority.
+function aicfab_load_template( $redirects, $includes ) {
+	foreach ( $redirects as $redirect ) {
+		$answer = $redirect();
+		if ( null !== $answer ) {
+			return $answer;
+		}
+	}
+	ksort( $includes );
+	$template = 'index.php';
+	foreach ( $includes as $callbacks ) {
+		foreach ( $callbacks as $callback ) {
+			if ( null === AI_Chat_Bedrock_Llms_Txt::response() || ! in_array( $callback, $GLOBALS['aicfab_ours'], true ) ) {
+				$template = $callback( $template );
+				continue;
+			}
+			return 'plugin llms.txt';
+		}
+	}
+	return $template;
+}
+$aicfab_plugin             = array( new AI_Chat_Bedrock_Llms_Txt(), 'serve' );
+$GLOBALS['aicfab_ours']    = array( $aicfab_plugin );
+$aicfab_seo_redirect       = function () {
+	return 'SEO plugin llms.txt';
+};
+$aicfab_late_include       = function ( $template ) {
+	return 'late plugin llms.txt';
+};
+check_llms( 'SEO plugin llms.txt' === aicfab_load_template( array( $aicfab_seo_redirect ), array( PHP_INT_MAX => array( $aicfab_plugin ) ) ), 'A plugin that answers on template_redirect, at any priority, answers first.' );
+check_llms( 'plugin llms.txt' === aicfab_load_template( array(), array( PHP_INT_MAX => array( $aicfab_plugin ) ) ), 'With no other handler, the plugin answers.' );
+check_llms( 'plugin llms.txt' === aicfab_load_template( array(), array( PHP_INT_MAX => array( $aicfab_plugin, $aicfab_late_include ) ) ), 'A handler registered after it on template_include does not run unless it claims the address, as the settings and FAQ say.' );
+$GLOBALS['aicfab_filters']['ai_chat_bedrock_llms_txt_serve'] = '__return_false';
+check_llms( 'late plugin llms.txt' === aicfab_load_template( array(), array( PHP_INT_MAX => array( $aicfab_plugin, $aicfab_late_include ) ) ), 'Once it claims the address, the later handler answers and the plugin hands the template on unchanged.' );
+unset( $GLOBALS['aicfab_filters']['ai_chat_bedrock_llms_txt_serve'] );
+
 // --- Wiring ---------------------------------------------------------------------------
 
 $root      = dirname( __DIR__ );
