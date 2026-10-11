@@ -666,6 +666,37 @@ class AI_Chat_Bedrock_Ontology {
 	}
 
 	/**
+	 * What AI agents and tools can reach on the site, from the settings: the description, the
+	 * llms.txt file, the site content abilities and the MCP server. Diagnostics shows it, so a
+	 * site owner sees in one place what agents get.
+	 *
+	 * @return array Each surface, with whether it is on and its details.
+	 */
+	public static function agent_surface() {
+		$options   = get_option( 'ai_chat_bedrock_settings', array() );
+		$options   = is_array( $options ) ? $options : array();
+		$abilities = function_exists( 'wp_register_ability' );
+		$llms      = class_exists( 'AI_Chat_Bedrock_Llms_Txt' );
+		return array(
+			'site_description' => array(
+				'on' => $abilities && self::enabled(),
+			),
+			'llms_txt'         => array(
+				'on'   => $llms && AI_Chat_Bedrock_Llms_Txt::enabled(),
+				'file' => $llms && AI_Chat_Bedrock_Llms_Txt::file_exists(),
+				'url'  => $llms ? AI_Chat_Bedrock_Llms_Txt::url() : '',
+			),
+			'site_abilities'   => array(
+				'on' => $abilities && ! empty( $options['site_abilities'] ),
+			),
+			'mcp'              => array(
+				'on'     => (bool) get_option( 'ai_chat_bedrock_enable_mcp', false ),
+				'public' => (bool) get_option( 'ai_chat_bedrock_mcp_public_access', false ),
+			),
+		);
+	}
+
+	/**
 	 * Permission callback, the same as the site's other read-only abilities.
 	 *
 	 * @return bool

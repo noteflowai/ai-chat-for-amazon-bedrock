@@ -7694,3 +7694,41 @@ msgstr "站点根目录已有 llms.txt 文件，因此由 Web 服务器提供该
 #, php-format
 msgid "Content is published in: %s."
 msgstr "内容发布语言：%s。"
+
+msgid "AI agents"
+msgstr "AI 智能体"
+
+msgid "the site description"
+msgstr "站点描述"
+
+msgid "the site content abilities"
+msgstr "站点内容能力"
+
+msgid "the WordPress MCP server"
+msgstr "WordPress MCP 服务器"
+
+#. translators: %s: the llms.txt address.
+#, php-format
+msgid "llms.txt at %s"
+msgstr "位于 %s 的 llms.txt"
+
+msgid ""
+"An llms.txt file at the site root, not written by this plugin, is served to "
+"AI tools."
+msgstr "站点根目录有一个并非本插件生成的 llms.txt 文件，AI 工具读取的是它。"
+
+msgid ""
+"AI agents and tools get nothing from the plugin. The site description, llms."
+"txt, site content abilities and the MCP server are under Settings > Agents "
+"and tools."
+msgstr "AI 智能体和工具目前无法从本插件获取任何内容。站点描述、llms.txt、站点内容能力和 MCP 服务器都在“设置 > Agent 与工具”中开启。"
+
+#. translators: %s: what agents can reach, such as "the site description, llms.txt at https://example.com/llms.txt".
+#, php-format
+msgid "AI agents and tools can use: %s."
+msgstr "AI 智能体和工具可以使用：%s。"
+
+msgid ""
+"Each shows only what the site policy lets agents see: published, public "
+"content, never drafts or members-only text."
+msgstr "每一项都只提供站点规则允许智能体查看的内容：已发布的公开内容，不含草稿或会员专属文字。"

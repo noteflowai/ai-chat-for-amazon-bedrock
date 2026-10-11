@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Chatbot & Agents for Amazon Bedrock 1.71.0\n"
+"Project-Id-Version: AI Chatbot & Agents for Amazon Bedrock 1.71.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-11T03:43:50+00:00\n"
+"POT-Creation-Date: 2026-10-11T11:33:49+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -845,8 +845,8 @@ msgstr ""
 #: admin/class-ai-chat-bedrock-admin.php:1132
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:76
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:176
-#: includes/class-ai-chat-bedrock-diagnostics.php:203
-#: includes/class-ai-chat-bedrock-diagnostics.php:219
+#: includes/class-ai-chat-bedrock-diagnostics.php:206
+#: includes/class-ai-chat-bedrock-diagnostics.php:222
 msgid "Guest access"
 msgstr ""
 
@@ -2088,9 +2088,9 @@ msgid "No region selected"
 msgstr ""
 
 #: admin/partials/ai-chat-bedrock-admin-display.php:76
-#: includes/class-ai-chat-bedrock-diagnostics.php:181
 #: includes/class-ai-chat-bedrock-diagnostics.php:184
-#: includes/class-ai-chat-bedrock-diagnostics.php:186
+#: includes/class-ai-chat-bedrock-diagnostics.php:187
+#: includes/class-ai-chat-bedrock-diagnostics.php:189
 msgid "Streaming"
 msgstr ""
 
@@ -2113,9 +2113,9 @@ msgstr ""
 
 #: admin/partials/ai-chat-bedrock-admin-display.php:86
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:115
-#: includes/class-ai-chat-bedrock-diagnostics.php:450
 #: includes/class-ai-chat-bedrock-diagnostics.php:453
-#: includes/class-ai-chat-bedrock-diagnostics.php:455
+#: includes/class-ai-chat-bedrock-diagnostics.php:456
+#: includes/class-ai-chat-bedrock-diagnostics.php:458
 msgid "MCP tools"
 msgstr ""
 
@@ -4507,245 +4507,285 @@ msgstr ""
 msgid "Open Bedrock diagnostics"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:119
+#: includes/class-ai-chat-bedrock-diagnostics.php:122
 msgid "PHP version"
 msgstr ""
 
 #. translators: %s: PHP version.
-#: includes/class-ai-chat-bedrock-diagnostics.php:123
+#: includes/class-ai-chat-bedrock-diagnostics.php:126
 #, php-format
 msgid "PHP %s meets the plugin requirement."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:124
+#: includes/class-ai-chat-bedrock-diagnostics.php:127
 msgid "PHP 7.4 or newer is required."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:131
-#: includes/class-ai-chat-bedrock-diagnostics.php:151
+#: includes/class-ai-chat-bedrock-diagnostics.php:134
+#: includes/class-ai-chat-bedrock-diagnostics.php:154
 msgid "AWS credentials"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:131
+#: includes/class-ai-chat-bedrock-diagnostics.php:134
 msgid "No usable AWS credentials were found. Paste an Amazon Bedrock API key, add access keys, or enable IAM role credentials."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:137
+#: includes/class-ai-chat-bedrock-diagnostics.php:140
 msgid "Consider wp-config.php constants or an IAM role so keys are not stored in the database."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:142
+#: includes/class-ai-chat-bedrock-diagnostics.php:145
 msgid "This is a short-term key, which stops working within 12 hours. Use a long-term key or an IAM role."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:148
+#: includes/class-ai-chat-bedrock-diagnostics.php:151
 msgid "A Knowledge Base or managed prompt is configured, and those only accept signed requests. Add access keys or an IAM role for them; chat keeps using the API key."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:158
-#: includes/class-ai-chat-bedrock-diagnostics.php:160
+#: includes/class-ai-chat-bedrock-diagnostics.php:161
+#: includes/class-ai-chat-bedrock-diagnostics.php:163
 msgid "AWS region"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:158
+#: includes/class-ai-chat-bedrock-diagnostics.php:161
 msgid "Select a supported AWS region for Amazon Bedrock."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:166
-#: includes/class-ai-chat-bedrock-diagnostics.php:171
-#: includes/class-ai-chat-bedrock-diagnostics.php:173
+#: includes/class-ai-chat-bedrock-diagnostics.php:169
+#: includes/class-ai-chat-bedrock-diagnostics.php:174
+#: includes/class-ai-chat-bedrock-diagnostics.php:176
 msgid "Model selection"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:166
+#: includes/class-ai-chat-bedrock-diagnostics.php:169
 msgid "Select a Bedrock model in the settings."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:171
+#: includes/class-ai-chat-bedrock-diagnostics.php:174
 msgid "The selected model was not returned by the region catalog. Confirm the region offers it and whether an inference profile ID is required."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:181
+#: includes/class-ai-chat-bedrock-diagnostics.php:184
 msgid "Streaming is disabled, so answers appear only when generation finishes."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:184
+#: includes/class-ai-chat-bedrock-diagnostics.php:187
 msgid "The PHP cURL extension is unavailable, so buffered responses are used instead of streaming."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:186
+#: includes/class-ai-chat-bedrock-diagnostics.php:189
 msgid "Streaming responses are enabled with automatic fallback."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:193
+#: includes/class-ai-chat-bedrock-diagnostics.php:196
 msgid "Credential encryption"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:196
+#: includes/class-ai-chat-bedrock-diagnostics.php:199
 msgid "Stored credentials are encrypted with authenticated encryption."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:197
+#: includes/class-ai-chat-bedrock-diagnostics.php:200
 msgid "Sodium is unavailable, so credentials cannot be encrypted in the database. Use wp-config.php constants or an IAM role."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:203
+#: includes/class-ai-chat-bedrock-diagnostics.php:206
 msgid "Only signed-in users can start paid Bedrock requests."
 msgstr ""
 
 #. translators: %s: requests allowed per visitor per minute.
-#: includes/class-ai-chat-bedrock-diagnostics.php:223
+#: includes/class-ai-chat-bedrock-diagnostics.php:226
 #, php-format
 msgid "Guest chat is enabled with %s request per visitor each minute. Confirm AWS Budgets and model pricing."
 msgid_plural "Guest chat is enabled with %s requests per visitor each minute. Confirm AWS Budgets and model pricing."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:240
+#: includes/class-ai-chat-bedrock-diagnostics.php:243
 msgid "Guardrail"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:243
+#: includes/class-ai-chat-bedrock-diagnostics.php:246
 msgid "No guardrail is configured, so nothing is filtered by Amazon Bedrock."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:249
+#: includes/class-ai-chat-bedrock-diagnostics.php:252
 msgid "A guardrail is configured but credentials are missing, so it cannot be verified."
 msgstr ""
 
 #. translators: %s: reason the guardrail could not be read.
-#: includes/class-ai-chat-bedrock-diagnostics.php:260
+#: includes/class-ai-chat-bedrock-diagnostics.php:263
 #, php-format
 msgid "The configured guardrail could not be read, so every chat request will be refused: %s"
 msgstr ""
 
 #. translators: 1: guardrail name, 2: guardrail status reported by AWS.
-#: includes/class-ai-chat-bedrock-diagnostics.php:273
+#: includes/class-ai-chat-bedrock-diagnostics.php:276
 #, php-format
 msgid "Guardrail \"%1$s\" is %2$s rather than READY."
 msgstr ""
 
 #. translators: 1: guardrail name, 2: guardrail version.
-#: includes/class-ai-chat-bedrock-diagnostics.php:286
+#: includes/class-ai-chat-bedrock-diagnostics.php:289
 #, php-format
 msgid "Guardrail \"%1$s\" is ready, version %2$s."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:304
+#: includes/class-ai-chat-bedrock-diagnostics.php:307
 msgid "Knowledge base"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:307
+#: includes/class-ai-chat-bedrock-diagnostics.php:310
 msgid "No Amazon Bedrock knowledge base is configured."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:316
+#: includes/class-ai-chat-bedrock-diagnostics.php:319
 msgid "The knowledge base ID is not the right shape. AWS expects ten letters or digits, or a knowledge base ARN."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:322
+#: includes/class-ai-chat-bedrock-diagnostics.php:325
 msgid "A knowledge base is configured but credentials are missing, so it cannot be verified."
 msgstr ""
 
 #. translators: %s: reason the knowledge base could not be queried.
-#: includes/class-ai-chat-bedrock-diagnostics.php:333
+#: includes/class-ai-chat-bedrock-diagnostics.php:336
 #, php-format
 msgid "The knowledge base could not be queried: %s"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:339
+#: includes/class-ai-chat-bedrock-diagnostics.php:342
 msgid "The knowledge base answered a test query."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:349
+#: includes/class-ai-chat-bedrock-diagnostics.php:352
 msgid "Semantic search index"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:352
+#: includes/class-ai-chat-bedrock-diagnostics.php:355
 msgid "Semantic search is off; answers use keyword search."
 msgstr ""
 
 #. translators: 1: published item count, 2: items compared per question.
-#: includes/class-ai-chat-bedrock-diagnostics.php:363
+#: includes/class-ai-chat-bedrock-diagnostics.php:366
 #, php-format
 msgid "Vectors are stored in the WordPress database, which compares a question with %2$s of the %1$s published items. Amazon S3 Vectors searches all of them."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:369
+#: includes/class-ai-chat-bedrock-diagnostics.php:372
 msgid "Vectors are stored in the WordPress database."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:372
+#: includes/class-ai-chat-bedrock-diagnostics.php:375
 msgid "Amazon S3 Vectors is chosen, but the bucket or index name is missing, so semantic search is off."
 msgstr ""
 
 #. translators: %s: reason the index could not be read.
-#: includes/class-ai-chat-bedrock-diagnostics.php:383
+#: includes/class-ai-chat-bedrock-diagnostics.php:386
 #, php-format
 msgid "The S3 Vectors index could not be read: %s"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:391
+#: includes/class-ai-chat-bedrock-diagnostics.php:394
 msgid "The S3 Vectors index exists and matches the embedding model."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:393
+#: includes/class-ai-chat-bedrock-diagnostics.php:396
 msgid "It is a CLASSIC index, which applies metadata filters during the similarity search. The plugin asks for filtering first on every query; to make that the index default, switch it to ENHANCED with UpdateIndexMode."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:408
+#: includes/class-ai-chat-bedrock-diagnostics.php:411
 msgid "Background tasks"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:422
+#: includes/class-ai-chat-bedrock-diagnostics.php:425
 msgid "WP-Cron is turned off with DISABLE_WP_CRON, so a server cron job has to call wp-cron.php, or run wp cron event run --due-now, every few minutes."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:423
+#: includes/class-ai-chat-bedrock-diagnostics.php:426
 msgid "WP-Cron runs only when someone visits, and a page cache can keep it from running. Have a server cron job call wp-cron.php every few minutes, then set DISABLE_WP_CRON."
 msgstr ""
 
 #. translators: 1: number of tasks, 2: how long ago the oldest was due, such as 3 hours.
-#: includes/class-ai-chat-bedrock-diagnostics.php:431
+#: includes/class-ai-chat-bedrock-diagnostics.php:434
 #, php-format
 msgid "%1$s background task is overdue, by %2$s."
 msgid_plural "%1$s background tasks are overdue, the oldest by %2$s."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:442
+#: includes/class-ai-chat-bedrock-diagnostics.php:445
 msgid "The plugin's background tasks run on time."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:445
+#: includes/class-ai-chat-bedrock-diagnostics.php:448
 msgid "No background tasks are scheduled."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:450
+#: includes/class-ai-chat-bedrock-diagnostics.php:453
 msgid "MCP tools are disabled."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:453
+#: includes/class-ai-chat-bedrock-diagnostics.php:456
 msgid "The built-in WordPress MCP endpoint is publicly readable. Disable public access unless it is required."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:455
+#: includes/class-ai-chat-bedrock-diagnostics.php:458
 msgid "MCP tools are enabled and require authentication."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-diagnostics.php:463
-#: includes/class-ai-chat-bedrock-diagnostics.php:482
+#: includes/class-ai-chat-bedrock-diagnostics.php:467
+msgid "AI agents"
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-diagnostics.php:470
+msgid "the site description"
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-diagnostics.php:473
+msgid "the site content abilities"
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-diagnostics.php:476
+msgid "the WordPress MCP server"
+msgstr ""
+
+#. translators: %s: the llms.txt address.
+#: includes/class-ai-chat-bedrock-diagnostics.php:481
+#, php-format
+msgid "llms.txt at %s"
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-diagnostics.php:483
+msgid "An llms.txt file at the site root, not written by this plugin, is served to AI tools."
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-diagnostics.php:486
+msgid "AI agents and tools get nothing from the plugin. The site description, llms.txt, site content abilities and the MCP server are under Settings > Agents and tools."
+msgstr ""
+
+#. translators: %s: what agents can reach, such as "the site description, llms.txt at https://example.com/llms.txt".
+#: includes/class-ai-chat-bedrock-diagnostics.php:494
+#, php-format
+msgid "AI agents and tools can use: %s."
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-diagnostics.php:495
+msgid "Each shows only what the site policy lets agents see: published, public content, never drafts or members-only text."
+msgstr ""
+
+#: includes/class-ai-chat-bedrock-diagnostics.php:506
+#: includes/class-ai-chat-bedrock-diagnostics.php:525
 msgid "Model invocation"
 msgstr ""
 
 #. translators: %d: round trip duration in milliseconds.
-#: includes/class-ai-chat-bedrock-diagnostics.php:469
+#: includes/class-ai-chat-bedrock-diagnostics.php:512
 #, php-format
 msgid "Round trip took %d ms."
 msgstr ""
 
 #. translators: 1: input token count, 2: output token count.
-#: includes/class-ai-chat-bedrock-diagnostics.php:476
+#: includes/class-ai-chat-bedrock-diagnostics.php:519
 #, php-format
 msgid "Tokens used: %1$d input, %2$d output."
 msgstr ""
@@ -6573,234 +6613,234 @@ msgctxt "between the items of a list"
 msgid ", "
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:245
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:251
 msgid "An older draft of this post, deleted when it was sent again."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:351
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:357
 msgid "Drafts for the WeChat Official Account are off, or its AppID or AppSecret is missing."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:398
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:404
 msgid "No post could be made into an article."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:458
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:464
 msgid "In the WeChat Official Account's draft box; publish it from the Official Accounts Platform."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:891
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:925
 msgid "Tap \"Read more\" for the full article on the site."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:892
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:926
 msgid "If the video does not show, tap \"Read more\" to watch it on the site."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:950
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1001
 msgid "▶ Watch this lesson's video on the site: tap \"Read more\" at the end."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1188
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1239
 msgid "(tap \"Read more\" at the end to open it)"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1378
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1383
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2173
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1429
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1434
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2224
 msgid "The post needs a featured image in JPEG or PNG for the cover."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1390
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1441
 msgid "WeChat did not take the cover image."
 msgstr ""
 
 #. translators: %d: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1557
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1608
 #, php-format
 msgid "%d article is ready in the WeChat draft box"
 msgid_plural "%d articles are ready in the WeChat draft box"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1558
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1609
 msgid "Check them and publish in the WeChat Official Accounts Platform: https://mp.weixin.qq.com/"
 msgstr ""
 
 #. translators: %d: number of posts.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1659
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1710
 #, php-format
 msgid "%d post changed, and its WeChat draft holds your edits"
 msgid_plural "%d posts changed, and their WeChat drafts hold your edits"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1660
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1711
 msgid "These drafts were edited in WeChat, so they were not replaced. Update them in the Official Accounts Platform, or send the post again from its edit screen to replace the draft, edits included."
 msgstr ""
 
 #. translators: %s: date and time of the next run.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1747
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1798
 #, php-format
 msgid "Next scheduled run: %s."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1751
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1802
 msgid "It is overdue: WordPress's scheduler is not running. Have a system cron job request wp-cron.php every few minutes."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1762
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1813
 msgid "You cannot run this."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1810
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1861
 msgid "You cannot send this post."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1813
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1864
 msgid "The post's article in the WeChat draft box was replaced with the current version."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1813
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1864
 msgid "The post is in the WeChat draft box. Publish it from the Official Accounts Platform."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1833
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1884
 msgid "Published posts that anyone can read can be sent to the WeChat draft box."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1836
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1887
 msgid "Send to the WeChat draft box again"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1836
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1887
 msgid "Send to the WeChat draft box"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1839
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1890
 msgid "Sending it again replaces its draft with the current version, including any changes made to it in WeChat. The scheduled update leaves drafts edited in WeChat alone."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1842
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1893
 msgid "WeChat video ID"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1843
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1894
 msgid "WeChat's API takes videos of at most 10 MB and cannot place one in an article. Upload the post's video in the Official Accounts Platform, enter the ID it gets, wxv_ and digits, and save the post: each draft then shows WeChat's player where the video is."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1864
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1915
 msgid "Read the public WeChat edition"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1864
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1915
 msgid "Prepare a public WeChat edition"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1864
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1915
 msgid "Read the current WeChat review input"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1864
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1915
 msgid "Record a curated WeChat review"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1865
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1916
 msgid "Read or prepare a protected static public edition for an existing post. Requires permission to publish posts and edit the post. Does not contact WeChat or change the canonical post."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1865
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1916
 msgid "Read the public version binding or record an editorial attestation for that exact digest. Requires permission to publish posts and edit the post. Does not contact WeChat."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1888
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1939
 msgid "Send posts to the WeChat draft box"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1889
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1940
 msgid "Make one draft in the WeChat Official Account from up to eight published posts with current curated reviews, in order, and note it in their publishing records. Nothing is published: the owner publishes the draft in the Official Accounts Platform."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:1943
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:1994
 #: includes/class-ai-chat-bedrock-wp-mcp-server.php:651
 msgid "This account cannot send those posts."
 msgstr ""
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2164
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2215
 #, php-format
 msgid "WeChat does not accept calls from %s. Add it to the IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform."
 msgstr ""
 
 #. translators: %s: the server's IP address, or "this server's address".
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2164
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2215
 msgid "this server's address"
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2167
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2218
 msgid "The AppID or AppSecret is missing."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2168
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2219
 msgid "WeChat did not accept the AppSecret. Reset it in the WeChat Developers Platform and enter the new one."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2169
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2220
 msgid "WeChat did not accept the AppID."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2170
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2221
 msgid "The AppSecret is frozen in the WeChat Developers Platform."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2171
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2222
 msgid "This account may not use that WeChat interface."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2172
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2223
 msgid "The account reached WeChat's daily limit for this interface. Try again tomorrow."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2174
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2225
 msgid "Only published posts that anyone can read are sent."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2175
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2226
 msgid "The post has too little public text for an article."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2176
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2227
 msgid "No post could be made into an article: each must be published, readable by anyone, and have a featured image or an image in the text, in JPEG or PNG."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2177
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2228
 msgid "The current article needs a valid curated review before an automatic draft can be written."
 msgstr ""
 
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2178
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2229
 msgid "The existing WeChat draft needs reconciliation. Its record was preserved; no replacement draft was created."
 msgstr ""
 
 #. translators: %s: error code.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2184
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2235
 #, php-format
 msgid "WeChat refused the draft (%s)."
 msgstr ""
 
 #. translators: 1: how long ago, 2: what went wrong.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2201
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2252
 #, php-format
 msgid "Last draft %1$s ago failed: %2$s"
 msgstr ""
 
 #. translators: %s: how long ago.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2205
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2256
 #, php-format
 msgid "Last scheduled run %s ago: no new featured post to send."
 msgstr ""
 
 #. translators: 1: how long ago, 2: number of articles.
-#: includes/class-ai-chat-bedrock-wechat-drafts.php:2208
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2259
 #, php-format
 msgid "Last draft %1$s ago: %2$s article is in the WeChat draft box."
 msgid_plural "Last draft %1$s ago: %2$s articles are in the WeChat draft box."

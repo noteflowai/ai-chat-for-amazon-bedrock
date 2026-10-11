@@ -3,6 +3,11 @@ Full changelog. The readme lists the latest releases only.
 
 == Changelog ==
 
+= 1.72.0 =
+* Diagnostics and Site Health have an AI agents line: what agents and tools can reach on the site (the site description, llms.txt with its address, the site content abilities and the WordPress MCP server), that each shows only public content, and where to turn the rest on. A real llms.txt file at the site root, which AI tools get instead, is named as such.
+* The site description reports these surfaces itself, so Diagnostics reads one source rather than each setting.
+* The Live Preview on WordPress.org shows llms.txt and the site description, and leaves out WordPress's sample post and page.
+
 = 1.71.1 =
 * A WeChat editorial review now binds what readers get, the exact article the writer would send with its title, excerpt, cover and image bytes, and no longer the plugin's code files. An update that changes nothing a reader sees keeps the review; one that changes the output still asks for a fresh review. Reviews recorded before this version need one fresh review.
 
