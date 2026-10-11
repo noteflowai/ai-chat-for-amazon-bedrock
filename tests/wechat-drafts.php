@@ -331,7 +331,7 @@ function esc_attr( $text ) {
 	return htmlspecialchars( (string) $text, ENT_QUOTES );
 }
 function esc_html__( $text, $domain = null ) {
-	return $text;
+	return isset( $GLOBALS['aicfab_translations'][ $text ] ) ? $GLOBALS['aicfab_translations'][ $text ] : $text;
 }
 function esc_html( $text ) {
 	return htmlspecialchars( (string) $text, ENT_QUOTES );
@@ -1188,12 +1188,12 @@ drafts_local_article( 5 );
 drafts_review( 1 );
 $done = $drafts->ability_create( array( 'post_ids' => array( 1, 5 ) ) );
 check_drafts( ! is_wp_error( $done ) && array( 1 ) === $done['posts'] && 'review_missing' === $done['skipped'][5] && 1 === count( drafts_sent_body()['articles'] ) && ! AI_Chat_Bedrock_WeChat_Drafts::sent( 5 ), 'A batch writes only the individually current reviewed post; no unreviewed article is mixed in.' );
-foreach ( array( 'content', 'option', 'review', 'edition', 'body_asset', 'cover_asset', 'code' ) as $case ) {
+foreach ( array( 'content', 'option', 'review', 'edition', 'body_asset', 'cover_asset' ) as $case ) {
 	drafts_reset();
 	drafts_settings();
 	drafts_local_article();
 	drafts_review( 1 );
-	$drift_path = 'code' === $case ? $root . '/includes/class-ai-chat-bedrock-content.php' : $aicfab_uploads . '/2026/10/' . ( 'cover_asset' === $case ? 'cover.jpg' : 'robot.jpg' );
+	$drift_path = $aicfab_uploads . '/2026/10/' . ( 'cover_asset' === $case ? 'cover.jpg' : 'robot.jpg' );
 	$drift_bytes = file_get_contents( $drift_path );
 	$GLOBALS['aicfab_on_http'] = function ( $path ) use ( $case, $drift_path, $drift_bytes ) {
 		if ( 'media/uploadimg' !== $path ) {
@@ -1208,7 +1208,7 @@ foreach ( array( 'content', 'option', 'review', 'edition', 'body_asset', 'cover_
 		} elseif ( 'edition' === $case ) {
 			$GLOBALS['aicfab_meta'][1][ AI_Chat_Bedrock_WeChat_Drafts::EDITION_META ]['html'] .= '<p>Edited static edition.</p>';
 		} else {
-			file_put_contents( $drift_path, $drift_bytes . ( 'code' === $case ? "\n// Offline converter drift fixture.\n" : 'asset changed during conversion' ) );
+			file_put_contents( $drift_path, $drift_bytes . 'asset changed during conversion' );
 		}
 	};
 	try {
@@ -1219,6 +1219,75 @@ foreach ( array( 'content', 'option', 'review', 'edition', 'body_asset', 'cover_
 	check_drafts( is_wp_error( $result ) && 'wx_review' === $result->get_error_code() && ! in_array( 'draft/add', drafts_paths(), true ) && ! in_array( 'draft/update', drafts_paths(), true ) && ! AI_Chat_Bedrock_WeChat_Drafts::sent( 1 ), 'Final revalidation refuses native draft write after mid-conversion drift: ' . $case );
 }
 unset( $GLOBALS['aicfab_on_http'] );
+
+// A plugin update that changes no byte a reader gets keeps the review: the digest binds the
+// converted output, not the code files that produced it.
+drafts_reset();
+drafts_settings();
+drafts_local_article();
+drafts_review( 1 );
+$aicfab_before = $drafts->ability_get_review( array( 'post_id' => 1 ) );
+$aicfab_code   = $root . '/includes/class-ai-chat-bedrock-content.php';
+$aicfab_bytes  = file_get_contents( $aicfab_code );
+file_put_contents( $aicfab_code, $aicfab_bytes . "\n// Unrelated code change fixture.\n" );
+try {
+	$aicfab_after = $drafts->ability_get_review( array( 'post_id' => 1 ) );
+} finally {
+	file_put_contents( $aicfab_code, $aicfab_bytes );
+}
+check_drafts( ! is_wp_error( $aicfab_after ) && $aicfab_before['digest'] === $aicfab_after['digest'] && '' === $aicfab_after['shortfall'], 'A code change that alters nothing readers get keeps the current review.' );
+check_drafts( ! array_intersect( array( 'converter', 'projection', 'excerpt_projection' ), array_keys( $aicfab_after['input'] ) ) && 2 === $aicfab_after['input']['version'], 'The review input names its version and holds no code-file hashes.' );
+
+// What the writer adds after converting, such as the Read more line, is part of what the review
+// binds: changing it changes the article readers get, with the converted HTML and images as they were.
+$GLOBALS['aicfab_translations']['Tap "Read more" for the full article on the site.'] = 'A changed closing line.';
+$aicfab_changed = $drafts->ability_get_review( array( 'post_id' => 1 ) );
+unset( $GLOBALS['aicfab_translations'] );
+check_drafts( $aicfab_before['input']['conversion_html'] === $aicfab_changed['input']['conversion_html'] && $aicfab_before['input']['assets'] === $aicfab_changed['input']['assets'] && $aicfab_before['digest'] !== $aicfab_changed['digest'] && '' !== $aicfab_changed['shortfall'], 'A change to what the writer adds after conversion needs a fresh review.' );
+check_drafts( false !== strpos( $aicfab_before['input']['article']['content'], 'https://image.invalid/' ) && false === strpos( $aicfab_before['input']['article']['content'], 'mmbiz' ) && 'news' === $aicfab_before['input']['article']['article_type'], 'The bound article is the writer\'s own, with images standing in as their bytes\' hashes and nothing uploaded.' );
+$aicfab_final = $drafts->ability_get_review( array( 'post_id' => 1 ) );
+check_drafts( $aicfab_before['digest'] === $aicfab_final['digest'] && '' === $aicfab_final['shortfall'], 'Restoring the line restores the reviewed article.' );
+
+// The article is fitted to WeChat's limits with every image address at the same length, so a
+// long article is cut in the same place whatever addresses the images end up with.
+$aicfab_post = new WP_Post( array( 'ID' => 1 ) );
+$aicfab_body               = str_repeat( '<p><img src="a.jpg" alt=""></p><p>' . str_repeat( '字', 300 ) . '</p>', 60 );
+$aicfab_cuts               = array();
+foreach ( array( 'https://image.invalid/' . str_repeat( 'a', 64 ), 'http://mmbiz.qpic.cn/mmbiz_jpg/' . str_repeat( 'b', 120 ) . '/0' ) as $aicfab_address ) {
+	$aicfab_text = AI_Chat_Bedrock_WeChat_Drafts::content(
+		$aicfab_post,
+		array(),
+		array( 'html' => $aicfab_body, 'record' => array(), 'assets' => array() ),
+		function () use ( $aicfab_address ) {
+			return $aicfab_address;
+		}
+	);
+	$aicfab_cuts[] = is_string( $aicfab_text ) ? preg_replace( '#\ssrc="[^"]*"#', '', $aicfab_text ) : $aicfab_text;
+}
+check_drafts( is_string( $aicfab_cuts[0] ) && $aicfab_cuts[0] === $aicfab_cuts[1] && substr_count( $aicfab_cuts[0], str_repeat( '字', 300 ) ) < 60 && substr_count( $aicfab_cuts[0], str_repeat( '字', 300 ) ) > 10, 'A long article is cut in the same place with a short review address and a long WeChat address.' );
+$aicfab_long = AI_Chat_Bedrock_WeChat_Drafts::content(
+	$aicfab_post,
+	array(),
+	array( 'html' => '<p><img src="a.jpg" alt=""></p>', 'record' => array(), 'assets' => array() ),
+	function () {
+		return 'http://mmbiz.qpic.cn/' . str_repeat( 'c', 300 );
+	}
+);
+check_drafts( is_wp_error( $aicfab_long ) && 'image_url_room' === $aicfab_long->get_error_code(), 'An image address longer than its room holds the draft instead of cutting the article elsewhere.' );
+$aicfab_slot   = AI_Chat_Bedrock_WeChat_Drafts::IMAGE_SLOT . str_repeat( '0', AI_Chat_Bedrock_WeChat_Drafts::IMAGE_URL_ROOM - strlen( AI_Chat_Bedrock_WeChat_Drafts::IMAGE_SLOT ) );
+$aicfab_quoted = '<p><img src="a.jpg" alt=""></p><p>' . $aicfab_slot . '</p><p><code>&lt;img src="' . $aicfab_slot . '"&gt;</code></p>';
+$aicfab_out    = array();
+foreach ( array( 'https://image.invalid/' . str_repeat( 'a', 64 ), 'http://mmbiz.qpic.cn/mmbiz_jpg/xyz/0' ) as $aicfab_address ) {
+	$aicfab_out[] = AI_Chat_Bedrock_WeChat_Drafts::content(
+		$aicfab_post,
+		array(),
+		array( 'html' => $aicfab_quoted, 'record' => array(), 'assets' => array() ),
+		function () use ( $aicfab_address ) {
+			return $aicfab_address;
+		}
+	);
+}
+check_drafts( 2 === substr_count( $aicfab_out[0], $aicfab_slot ) && 2 === substr_count( $aicfab_out[1], $aicfab_slot ) && preg_replace( '#<img src="[^"]*"#', '', $aicfab_out[0] ) === preg_replace( '#<img src="[^"]*"#', '', $aicfab_out[1] ) && false !== strpos( $aicfab_out[1], '<img src="http://mmbiz.qpic.cn/mmbiz_jpg/xyz/0"' ), 'Text that matches an image slot stays as written; only the generated image addresses differ.' );
 
 drafts_reset();
 drafts_settings();

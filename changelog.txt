@@ -3,6 +3,9 @@ Full changelog. The readme lists the latest releases only.
 
 == Changelog ==
 
+= 1.71.1 =
+* A WeChat editorial review now binds what readers get, the exact article the writer would send with its title, excerpt, cover and image bytes, and no longer the plugin's code files. An update that changes nothing a reader sees keeps the review; one that changes the output still asks for a fresh review. Reviews recorded before this version need one fresh review.
+
 = 1.71.0 =
 * llms.txt, under Settings > Agents and tools and off by default: a Markdown file at /llms.txt that tells AI tools what the site holds, listing its public posts, pages and products by type and, on a multilingual site, language. It never names a draft, members-only content, a hidden product or a page kept out of search engines, and is served only where nothing else answers the address: a real llms.txt file, a page there or a plugin answering before the page template loads goes first.
 * The site description's sensitivity policy is now the rule every part of the plugin applies to a post. Indexing, the chat, site abilities, the MCP server, WeChat drafts and replies and publishing kits ask one policy, which refuses when it cannot be checked. A site can withhold a post from one use with the ai_chat_bedrock_ontology_allows filter.

@@ -145,8 +145,17 @@ excerpt, resolved static edition HTML and conversion HTML, permalink, article an
 languages, locale, effective author, account AppID (never AppSecret), WeChat video
 choice, edition cover attachment ID, and attachment IDs, selected local filenames,
 MIME types and SHA-256 bytes of the selected cover and all body images. It also
-binds the writer and guest/excerpt projection source files.
-Conversion or projection code changes therefore require fresh reviews.
+binds the article the writer would send: the writer's own rendering, with image
+styles, the WeChat video player, the Read more line, the length fit and the
+payload settings, in which each image stands in as its bytes' hash because the
+WeChat address is known only after upload. The article is fitted to WeChat's
+length limits with every image address counted at a fixed 200 characters, before
+the addresses are filled in, so the review and the writer cut a long article in
+the same place; a WeChat address longer than that holds the draft. So it binds what readers get, not the
+code that produced it: a plugin update that changes the article requires a fresh
+review, and one that changes nothing a reader sees keeps the review. Review input
+version 2 (1.71.1) replaced the earlier code-file hashes with this binding, so
+version 1 reviews need one fresh review.
 
 Explicit edition HTML is bounded as above. Each cover/body image must resolve
 within the existing size rules (10 MiB cover, 1 MiB body); hashes cover the actual

@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai chatbot, ai, connector, woocommerce, mcp
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.71.0
+Stable tag: 1.71.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -437,6 +437,9 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.71.1 =
+* A WeChat editorial review now binds what readers get, the exact article the writer would send with its title, excerpt, cover and image bytes, and no longer the plugin's code files. An update that changes nothing a reader sees keeps the review; one that changes the output still asks for a fresh review. Reviews recorded before this version need one fresh review.
+
 = 1.71.0 =
 * llms.txt, under Settings > Agents and tools and off by default: a Markdown file at /llms.txt that tells AI tools what the site holds, listing its public posts, pages and products by type and, on a multilingual site, language. It never names a draft, members-only content, a hidden product or a page kept out of search engines, and is served only where nothing else answers the address: a real llms.txt file, a page there or a plugin answering before the page template loads goes first.
 * The site description's sensitivity policy is now the rule every part of the plugin applies to a post. Indexing, the chat, site abilities, the MCP server, WeChat drafts and replies and publishing kits ask one policy, which refuses when it cannot be checked. A site can withhold a post from one use with the ai_chat_bedrock_ontology_allows filter.
@@ -461,6 +464,9 @@ what a good answer says.
 * The package's minified files are built only with the pinned esbuild version.
 
 == Upgrade Notice ==
+
+= 1.71.1 =
+Plugin updates no longer invalidate WeChat editorial reviews unless the article readers get changes. Reviews recorded before 1.71.1 need one fresh review.
 
 = 1.71.0 =
 Optional llms.txt written from the site description. Every use of a post now follows the description's sensitivity policy; products hidden from the catalog stay out of answers and agents.

@@ -41,7 +41,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	const VIDEO_MARK      = '[[aicfab-wechat-video]]';
 	const COVER_META      = '_aicfab_wechat_cover';
 	const REVIEW_META     = '_aicfab_wechat_review';
-	const REVIEW_VERSION  = 1;
+	const REVIEW_VERSION  = 2;
 	const REVIEW_TTL      = 604800;
 	const REVIEW_CHECKS   = array( 'topic_fit', 'original_value', 'evidence', 'rights', 'mobile_readability', 'safety', 'public_only' );
 	const EDITION_META    = '_aicfab_wechat_edition';
@@ -69,6 +69,12 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	// WeChat takes less than 20,000 characters, and less than 1 MB, of article HTML.
 	const MAX_CONTENT = 19000;
 	const MAX_BYTES   = 1000000;
+
+	// Room each image address takes while the article is fitted to those limits. The article
+	// is cut before the addresses are known, so the review and the writer cut it in the same
+	// place; a WeChat address longer than this holds the draft rather than cut it elsewhere.
+	const IMAGE_URL_ROOM = 200;
+	const IMAGE_SLOT     = 'https://image.invalid/slot/';
 
 	// Images uploaded for one draft, and the seconds spent on them; the rest are left out, so
 	// one request from the editor or an agent ends well within PHP's and the browser's limits.
@@ -496,6 +502,21 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( is_wp_error( $content ) ) {
 			return $content;
 		}
+		return self::article_fields( $post, $options, $edition, $content, $cover );
+	}
+
+	/**
+	 * The article the writer sends, from its content and cover. The review binds the same
+	 * fields, so what it covers is what WeChat receives.
+	 *
+	 * @param WP_Post    $post    Post.
+	 * @param array      $options Settings.
+	 * @param array|null $edition Edition.
+	 * @param string     $content Article HTML.
+	 * @param string     $cover   Cover media ID.
+	 * @return array
+	 */
+	private static function article_fields( $post, $options, $edition, $content, $cover ) {
 		return array(
 			'article_type'          => 'news',
 			'title'                 => null !== $edition ? $edition['record']['title'] : self::title( html_entity_decode( get_the_title( $post ), ENT_QUOTES, 'UTF-8' ) ),
@@ -649,16 +670,26 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			'video_id'           => self::video_id( $post->ID ),
 			'cover_id'           => $edition['record']['cover_id'],
 			'assets'             => $edition['assets'],
-			// Changes to conversion/projection code require a fresh editorial review.
-			'converter'          => hash_file( 'sha256', __FILE__ ),
-			'projection'         => hash_file( 'sha256', __DIR__ . '/class-ai-chat-bedrock-content.php' ),
-			'excerpt_projection' => hash_file( 'sha256', __DIR__ . '/class-ai-chat-bedrock-distribution.php' ),
 		);
-		foreach ( array( 'converter', 'projection', 'excerpt_projection' ) as $key ) {
-			if ( ! is_string( $input[ $key ] ) || ! preg_match( '/^[a-f0-9]{64}$/D', $input[ $key ] ) ) {
-				return new WP_Error( 'review_input', 'Conversion source could not be hashed.' );
+
+		// The review binds what readers get, not the code that made it: the article the writer
+		// would send, rendered by the writer's own code with each image standing in as its
+		// bytes' hash, since WeChat's address is only known after upload. A code change that
+		// alters the article needs a fresh review; one that changes nothing a reader sees keeps it.
+		$article = self::content(
+			$post,
+			array(),
+			$edition,
+			static function ( $src ) {
+				$file = self::local_image( $src, self::IMAGE_BYTES );
+				return null === $file ? '' : 'https://image.invalid/' . hash_file( 'sha256', $file['path'] );
 			}
+		);
+		if ( is_wp_error( $article ) ) {
+			return $article;
 		}
+		$input['article'] = self::article_fields( $post, $options, $edition, $article, 'cover:' . $edition['record']['cover_id'] );
+
 		$json = wp_json_encode( $input, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
 		if ( ! is_string( $json ) ) {
 			return new WP_Error( 'review_input', 'Review input could not be encoded.' );
@@ -867,11 +898,14 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * The article's HTML: what a signed-out visitor sees, with the tags WeChat shows, links as
 	 * plain text, and images uploaded to WeChat.
 	 *
-	 * @param WP_Post $post    Post.
-	 * @param array   $account Account.
-	 * @return string
+	 * @param WP_Post       $post    Post.
+	 * @param array         $account Account.
+	 * @param array|null    $edition Edition.
+	 * @param callable|null $resolve Image address for a source, instead of uploading it; the
+	 *                               review renders the article with one, so it binds the result.
+	 * @return string|WP_Error
 	 */
-	public static function content( $post, $account, $edition = null ) {
+	public static function content( $post, $account, $edition = null, $resolve = null ) {
 		if ( null === $edition && metadata_exists( 'post', $post->ID, self::EDITION_META ) ) {
 			$edition = self::edition_for_post( $post );
 		}
@@ -896,14 +930,15 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 
 		$left  = self::MAX_IMAGES;
 		$error = null;
+		$urls  = array();
 		$html  = preg_replace_callback(
 			'#<img\b[^>]*>#i',
-			function ( $tag ) use ( $post, $account, $edition, &$left, &$error ) {
+			function ( $tag ) use ( $post, $account, $edition, $resolve, &$left, &$error, &$urls ) {
 				$src = preg_match( '#\ssrc="([^"]+)"#i', $tag[0], $found ) ? html_entity_decode( $found[1], ENT_QUOTES, 'UTF-8' ) : '';
 				if ( $left < 1 || '' === $src ) {
 					return '';
 				}
-				$url = self::upload_image( $src, $account, $post->ID, null !== $edition );
+				$url = null !== $resolve ? (string) call_user_func( $resolve, $src ) : self::upload_image( $src, $account, $post->ID, null !== $edition );
 				if ( '' === $url ) {
 					if ( null !== $edition ) {
 						$error = new WP_Error( 'review_assets', 'A reviewed edition image could not be uploaded; no draft was written.' );
@@ -911,8 +946,16 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 					return '';
 				}
 				--$left;
-				$alt = preg_match( '#\salt="([^"]*)"#i', $tag[0], $found ) ? $found[1] : '';
-				return '<img src="' . esc_url( $url ) . '" alt="' . esc_attr( html_entity_decode( $alt, ENT_QUOTES, 'UTF-8' ) ) . '" style="' . self::STYLES['img'] . '">';
+				$url = esc_url( $url );
+				if ( strlen( $url ) > self::IMAGE_URL_ROOM ) {
+					$error = new WP_Error( 'image_url_room', 'An image address is longer than the room the article keeps for it; no draft was written.' );
+					return '';
+				}
+				// A slot of the room's length until the article is fitted, then the address.
+				$slot          = self::IMAGE_SLOT . str_pad( (string) count( $urls ), self::IMAGE_URL_ROOM - strlen( self::IMAGE_SLOT ), '0', STR_PAD_LEFT );
+				$urls[ $slot ] = $url;
+				$alt           = preg_match( '#\salt="([^"]*)"#i', $tag[0], $found ) ? $found[1] : '';
+				return '<img src="' . $slot . '" alt="' . esc_attr( html_entity_decode( $alt, ENT_QUOTES, 'UTF-8' ) ) . '" style="' . self::STYLES['img'] . '">';
 			},
 			$html
 		);
@@ -924,7 +967,15 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( '' !== $video ) {
 			$html = preg_replace( '#<p\b[^>]*>' . preg_quote( self::VIDEO_MARK, '#' ) . '</p>#', self::player( $video ) . '<p style="' . self::STYLES['caption'] . '">' . $fallback . '</p>', $html, 1 );
 		}
-		return self::fit( $html, $more );
+		// Only the image tags made above get their address: the same text written in the
+		// article stays as written.
+		return preg_replace_callback(
+			'#<img src="(' . preg_quote( self::IMAGE_SLOT, '#' ) . '[0-9]+)"#',
+			function ( $found ) use ( $urls ) {
+				return isset( $urls[ $found[1] ] ) ? '<img src="' . $urls[ $found[1] ] . '"' : $found[0];
+			},
+			self::fit( $html, $more )
+		);
 	}
 
 	/**
