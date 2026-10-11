@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai chatbot, ai, connector, woocommerce, mcp
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.72.0
+Stable tag: 1.72.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -346,7 +346,7 @@ All content tools are optional, require the capability to edit the item, and are
 
 On WordPress 7.0 and later, Bedrock is registered with core's AI Client, so `wp_ai_client_prompt()` reaches it from any plugin that knows nothing about AWS. Those calls use this plugin's request path, so the guardrail, model, region, token ceiling, daily limit and usage accounting configured here apply to them.
 
-On 7.1 and later, Amazon Bedrock also appears under Settings > Connectors. On AWS it shows as connected with nothing entered, because the IAM role is used. Elsewhere, paste an Amazon Bedrock API key there: it is checked with Bedrock before it is kept, and stored encrypted. A key in the plugin settings or `wp-config.php` takes precedence.
+On 7.1 and later, Amazon Bedrock also appears under Settings > Connectors. On AWS it shows as connected with nothing entered, because the IAM role is used. Elsewhere, paste an Amazon Bedrock API key there: it is checked with Bedrock before it is kept, and stored encrypted. A key in the plugin settings or `wp-config.php` takes precedence. The official AI plugin counts Bedrock as connected however it signs, with an IAM role, access keys or a key in these settings, and offers its image generation once you choose an image model.
 
 Core asks for a model by what it must do, and the plugin describes each Bedrock model truthfully: image input only on models that read images, image generation only on the Stability models, and embeddings only on WordPress 7.2 and later. [More on model capabilities](https://github.com/noteflowai/ai-chat-for-amazon-bedrock/blob/main/docs/faq.md#does-it-work-with-the-ai-features-in-wordpress-core).
 
@@ -437,6 +437,9 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.72.1 =
+* The official WordPress AI plugin now sees Amazon Bedrock as connected on sites that sign with an IAM role, access keys or a key in this plugin's settings. It looked only for a key stored on Settings > Connectors, so on those sites every AI plugin feature asked to connect a provider. Its image generation is offered once an image model is chosen, the choice that agrees to send prompts to the Stability models.
+
 = 1.72.0 =
 * Diagnostics and Site Health have an AI agents line: what is turned on for agents and tools (the site description, llms.txt with its address, the site content abilities, and the WordPress MCP server with how it is reached), which of them follow the public-content rule, and where to turn the rest on. A real llms.txt file at the site root, which AI tools get instead, is named as such.
 * Developers: AI_Chat_Bedrock_Ontology::agent_surface() returns these settings in one place, and Diagnostics reads them from it.
@@ -462,13 +465,10 @@ what a good answer says.
 * Automatic updates hold missing, unknown or externally changed WeChat drafts for reconciliation instead of recreating them. Final publication and follower sending remain with the Official Account owner.
 * Updated Chinese and Japanese translations and release checks for the review workflow.
 
-= 1.68.0 =
-* MCP settings: switching MCP tools or public access on is saved with a Save button, as on every other screen, not the moment a box is ticked. Saving the tool policy, AI clients or revoking connections now confirms it and returns to that section.
-* Scheduled WeChat drafts and YouTube uploads take their one-at-a-time lock atomically, so two background runs started together can no longer both go ahead and make a duplicate draft or write one upload twice.
-* Saving an EncodingAESKey without the Official Account's AppID warns that safe mode cannot read messages without it.
-* The package's minified files are built only with the pinned esbuild version.
-
 == Upgrade Notice ==
+
+= 1.72.1 =
+The WordPress AI plugin now works with Bedrock on sites that sign with an IAM role or keys in this plugin's settings.
 
 = 1.72.0 =
 Diagnostics shows what AI agents and tools can reach on your site, and where to turn the rest on.
