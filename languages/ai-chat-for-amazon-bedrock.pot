@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-11T03:02:15+00:00\n"
+"POT-Creation-Date: 2026-10-11T03:26:06+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: ai-chat-for-amazon-bedrock\n"
@@ -1110,7 +1110,7 @@ msgid "Publish an llms.txt file that tells AI tools what the site holds"
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:1341
-msgid "Lists the site's public posts, pages and products by type, in every language, at the address below. It follows the same rules as the site description: no members-only content, drafts or pages hidden from search engines. A real llms.txt file, or one from another plugin, is never replaced."
+msgid "Lists the site's public posts, pages and products by type, in every language, at the address below. It follows the same rules as the site description: no members-only content, drafts or pages hidden from search engines. A real llms.txt file, or one another plugin serves, goes first."
 msgstr ""
 
 #: admin/class-ai-chat-bedrock-admin.php:1344
@@ -5316,7 +5316,7 @@ msgid "AI chat contact requests"
 msgstr ""
 
 #. translators: %s: language names, separated by commas.
-#: includes/class-ai-chat-bedrock-llms-txt.php:119
+#: includes/class-ai-chat-bedrock-llms-txt.php:134
 #, php-format
 msgid "Content is published in: %s."
 msgstr ""

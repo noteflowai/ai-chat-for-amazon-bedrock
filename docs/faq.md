@@ -227,7 +227,7 @@ The rules are not only a description. Since 1.71.0 every part of the plugin that
 
 Only when llms.txt is turned on under Settings > Agents and tools. The file at `/llms.txt` follows [llms.txt](https://llmstxt.org/): the site name, its tagline, the languages it publishes in, and a section per schema.org type with up to 50 of the most recently updated items, each as a Markdown link with its language on a multilingual site. It lists only what the policy above lets agents see. It is cached for up to twelve hours and written again after a post or the settings change.
 
-It never replaces another llms.txt. A real file at the site root is served by the web server before WordPress runs, and this one answers last, so an SEO plugin that serves the address itself goes first. The `ai_chat_bedrock_llms_txt` filter changes the text before it is cached.
+It is served only where nothing else answers the address. A real file at the site root is served by the web server before WordPress runs; a page, post or rewrite rule at the address resolves the request first; and this handler runs last on `template_redirect`, so a plugin answering there goes first. A plugin that serves its own llms.txt later in the request can claim the address by returning false from `ai_chat_bedrock_llms_txt_serve`. The `ai_chat_bedrock_llms_txt` filter changes the text before it is cached.
 
 ## Does it work with the AI features in WordPress core?
 

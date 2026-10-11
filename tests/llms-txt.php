@@ -143,6 +143,10 @@ function set_transient( $key, $value, $ttl ) {
 	$GLOBALS['aicfab_transients'][ $key ] = $value;
 	return true;
 }
+function is_404() {
+	return $GLOBALS['aicfab_is_404'];
+}
+$GLOBALS['aicfab_is_404'] = true;
 function delete_transient( $key ) {
 	unset( $GLOBALS['aicfab_transients'][ $key ] );
 	return true;
@@ -236,6 +240,20 @@ check_llms( AI_Chat_Bedrock_Llms_Txt::file_exists() && '' === $served, 'A real l
 unlink( ABSPATH . 'llms.txt' );
 rmdir( ABSPATH );
 
+$GLOBALS['aicfab_is_404'] = false;
+ob_start();
+( new AI_Chat_Bedrock_Llms_Txt() )->serve();
+check_llms( '' === ob_get_clean(), 'When a page, post or rewrite rule answers the address, it is left to answer.' );
+$GLOBALS['aicfab_is_404']                                = true;
+$GLOBALS['aicfab_filters']['ai_chat_bedrock_llms_txt_serve'] = '__return_false';
+function __return_false() {
+	return false;
+}
+ob_start();
+( new AI_Chat_Bedrock_Llms_Txt() )->serve();
+check_llms( '' === ob_get_clean(), 'A plugin that serves its own llms.txt later can claim the address.' );
+unset( $GLOBALS['aicfab_filters']['ai_chat_bedrock_llms_txt_serve'] );
+
 $GLOBALS['aicfab_options']['ai_chat_bedrock_settings']['llms_txt'] = false;
 ob_start();
 ( new AI_Chat_Bedrock_Llms_Txt() )->serve();
@@ -245,7 +263,7 @@ check_llms( '' === ob_get_clean() && ! AI_Chat_Bedrock_Llms_Txt::enabled(), 'Not
 
 $root      = dirname( __DIR__ );
 $bootstrap = (string) file_get_contents( $root . '/includes/class-ai-chat-bedrock.php' );
-check_llms( false !== strpos( $bootstrap, "add_action( 'template_redirect', \$llms_txt, 'serve', 999 )" ), 'It answers last, after any other plugin that serves llms.txt.' );
+check_llms( false !== strpos( $bootstrap, "add_action( 'template_redirect', \$llms_txt, 'serve', PHP_INT_MAX )" ), 'It answers last on template_redirect, after any other handler there.' );
 foreach ( array( 'save_post', 'deleted_post', 'update_option_ai_chat_bedrock_settings' ) as $hook ) {
 	check_llms( false !== strpos( $bootstrap, "add_action( '{$hook}', 'AI_Chat_Bedrock_Llms_Txt', 'flush' )" ), 'The cache is forgotten on ' . $hook . '.' );
 }

@@ -1338,7 +1338,7 @@ class AI_Chat_Bedrock_Admin {
 	public function llms_txt_render() {
 		$checked = ! empty( $this->option( 'llms_txt', false ) );
 		echo '<label><input type="checkbox" name="ai_chat_bedrock_settings[llms_txt]" value="1" ' . checked( $checked, true, false ) . '> ' . esc_html__( 'Publish an llms.txt file that tells AI tools what the site holds', 'ai-chat-for-amazon-bedrock' ) . '</label>';
-		echo '<p class="description">' . esc_html__( 'Lists the site\'s public posts, pages and products by type, in every language, at the address below. It follows the same rules as the site description: no members-only content, drafts or pages hidden from search engines. A real llms.txt file, or one from another plugin, is never replaced.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Lists the site\'s public posts, pages and products by type, in every language, at the address below. It follows the same rules as the site description: no members-only content, drafts or pages hidden from search engines. A real llms.txt file, or one another plugin serves, goes first.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
 		if ( class_exists( 'AI_Chat_Bedrock_Llms_Txt' ) ) {
 			if ( AI_Chat_Bedrock_Llms_Txt::file_exists() ) {
 				echo '<p class="description">' . esc_html__( 'An llms.txt file is already at the site root, so the web server serves that file instead.', 'ai-chat-for-amazon-bedrock' ) . '</p>';
