@@ -113,6 +113,26 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 
 	const SCHEDULES = array( 'off', 'daily', 'weekly' );
 
+	// The day's one curated article for each Official Account. Days are Asia/Singapore dates,
+	// whatever the site's timezone setting, so the limit does not move with it.
+	const PICK_META      = '_aicfab_wechat_pick';
+	const PICK_VERSION   = 1;
+	const DAILY_OPTION   = 'aicfab_wechat_daily';
+	const DAILY_LOCK     = 'aicfab_wechat_daily_lock';
+	const DAILY_LOCK_TTL = 120;
+	const DAILY_ZONE     = 'Asia/Singapore';
+	// A day in one of these states takes the account's one draft; the day is reserved before the
+	// draft is sent, and stays reserved or unknown until the owner reconciles a lost answer.
+	const DAILY_TAKEN = array( 'reserved', 'accepted', 'unknown' );
+
+	/**
+	 * The day this run has taken, while it is making its draft, so the posts in it do not count
+	 * as sent to the run itself.
+	 *
+	 * @var array|null
+	 */
+	private static $reservation = null;
+
 	/**
 	 * Whether drafts can be made: on, with the account's AppID and AppSecret.
 	 *
@@ -322,7 +342,230 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				return true;
 			}
 		}
+		// A draft whose answer was lost may hold the post in WeChat: the post counts as sent until
+		// the owner has reconciled that day.
+		foreach ( self::daily_drafts() as $account_id => $days ) {
+			foreach ( $days as $date => $entry ) {
+				if ( self::$reservation && self::$reservation['account'] === $account_id && self::$reservation['date'] === $date ) {
+					continue;
+				}
+				if ( isset( $entry['status'] ) && in_array( $entry['status'], array( 'reserved', 'unknown' ), true ) && in_array( (int) $post_id, array_map( 'intval', isset( $entry['post_ids'] ) ? (array) $entry['post_ids'] : array() ), true ) ) {
+					return true;
+				}
+			}
+		}
 		return false;
+	}
+
+	/**
+	 * Today's date for the daily limit, in Asia/Singapore.
+	 *
+	 * @param int|null $time Unix time; now when null.
+	 * @return string Y-m-d.
+	 */
+	public static function today( $time = null ) {
+		$date = new DateTime( '@' . ( null === $time ? time() : (int) $time ) );
+		$date->setTimezone( new DateTimeZone( self::DAILY_ZONE ) );
+		return $date->format( 'Y-m-d' );
+	}
+
+	/**
+	 * The daily ledger: for each Official Account and day, the day's one draft and the day's pick.
+	 *
+	 * @return array
+	 */
+	public static function ledger() {
+		$ledger = get_option( self::DAILY_OPTION, array() );
+		return is_array( $ledger ) ? $ledger : array();
+	}
+
+	private static function save_ledger( $ledger ) {
+		update_option( self::DAILY_OPTION, $ledger, false );
+	}
+
+	/**
+	 * The drafts of the ledger, by account and day.
+	 *
+	 * @return array
+	 */
+	public static function daily_drafts() {
+		$ledger = self::ledger();
+		return isset( $ledger['drafts'] ) && is_array( $ledger['drafts'] ) ? $ledger['drafts'] : array();
+	}
+
+	/**
+	 * The post picked for an account and day, or null.
+	 *
+	 * @param string $account_id AppID.
+	 * @param string $date       Y-m-d, Asia/Singapore.
+	 * @return array|null
+	 */
+	public static function pick_for( $account_id, $date ) {
+		$ledger = self::ledger();
+		return isset( $ledger['picks'][ $account_id ][ $date ] ) && is_array( $ledger['picks'][ $account_id ][ $date ] ) ? $ledger['picks'][ $account_id ][ $date ] : null;
+	}
+
+	/**
+	 * Why no new draft may be made for the account today, or an empty string.
+	 *
+	 * @param string     $account_id AppID.
+	 * @param string     $date       Today, Y-m-d.
+	 * @param array|null $ledger     The ledger, when already read.
+	 * @return string wx_daily_done, wx_daily_unknown, or ''.
+	 */
+	public static function daily_block( $account_id, $date, $ledger = null ) {
+		$ledger = null === $ledger ? self::ledger() : $ledger;
+		$days   = isset( $ledger['drafts'][ $account_id ] ) && is_array( $ledger['drafts'][ $account_id ] ) ? $ledger['drafts'][ $account_id ] : array();
+		foreach ( $days as $day => $entry ) {
+			// An earlier day whose draft has no known result holds every later day, until the owner
+			// has looked at the draft box; a day's end does not settle it.
+			if ( $day !== $date && isset( $entry['status'] ) && in_array( $entry['status'], array( 'reserved', 'unknown' ), true ) ) {
+				return 'wx_daily_unknown';
+			}
+		}
+		if ( isset( $days[ $date ]['status'] ) && in_array( $days[ $date ]['status'], self::DAILY_TAKEN, true ) ) {
+			return 'wx_daily_done';
+		}
+		return '';
+	}
+
+	/**
+	 * Take the day for one new draft, under the one lock every way of making a draft shares.
+	 *
+	 * @param array  $options  Settings.
+	 * @param int[]  $post_ids Posts the draft is for.
+	 * @param string $source   manual, agent or schedule.
+	 * @return array|WP_Error The reservation, or why the day is not available.
+	 */
+	private static function reserve( $options, $post_ids, $source ) {
+		$account_id = AI_Chat_Bedrock_WeChat::app_id( $options );
+		$date       = self::today();
+		$lock       = AI_Chat_Bedrock_Security::acquire_lock( self::DAILY_LOCK, self::DAILY_LOCK_TTL );
+		if ( '' === $lock ) {
+			return new WP_Error( 'wx_daily_busy', 'Another draft is being made.' );
+		}
+		try {
+			$ledger = self::ledger();
+			$block  = self::daily_block( $account_id, $date, $ledger );
+			if ( '' !== $block ) {
+				return new WP_Error( $block, 'The day is taken.' );
+			}
+			$ledger['drafts'][ $account_id ][ $date ] = array(
+				'status'   => 'reserved',
+				'post_ids' => array_values( array_map( 'intval', (array) $post_ids ) ),
+				'source'   => $source,
+				'at'       => time(),
+			);
+			self::save_ledger( $ledger );
+		} finally {
+			AI_Chat_Bedrock_Security::release_lock( self::DAILY_LOCK, $lock );
+		}
+		self::$reservation = array(
+			'account' => $account_id,
+			'date'    => $date,
+		);
+		return self::$reservation;
+	}
+
+	/**
+	 * Record how the day's draft ended: accepted, unknown, refused, or nothing (no draft was sent).
+	 *
+	 * @param array|null $reservation From reserve(); nothing happens for null.
+	 * @param string     $status      New status.
+	 * @param array      $extra       media_id, code, post_ids.
+	 */
+	private static function settle( $reservation, $status, $extra = array() ) {
+		self::$reservation = null;
+		if ( ! is_array( $reservation ) ) {
+			return;
+		}
+		$ledger = self::ledger();
+		$entry  = isset( $ledger['drafts'][ $reservation['account'] ][ $reservation['date'] ] ) && is_array( $ledger['drafts'][ $reservation['account'] ][ $reservation['date'] ] ) ? $ledger['drafts'][ $reservation['account'] ][ $reservation['date'] ] : array();
+		$ledger['drafts'][ $reservation['account'] ][ $reservation['date'] ] = array_merge(
+			$entry,
+			$extra,
+			array(
+				'status'      => $status,
+				'answered_at' => time(),
+			)
+		);
+		self::save_ledger( $ledger );
+	}
+
+	/**
+	 * Whether WeChat answered a draft request, so that nothing was created: an errcode, or a
+	 * failure before the request. A transport error or a timeout leaves the result unknown.
+	 *
+	 * @param WP_Error $error The error.
+	 * @return bool
+	 */
+	private static function answer_known( $error ) {
+		$code = (string) $error->get_error_code();
+		return (bool) preg_match( '/^wx_\d+$/', $code ) || in_array( $code, array( 'wx_secret', 'wx_token', 'wx_nothing' ), true );
+	}
+
+	/**
+	 * The scheduled run's one candidate: the post picked for today, while it still qualifies and
+	 * its review still binds the article readers would get. No pick, no draft.
+	 *
+	 * @param array|null $options Settings.
+	 * @return int[]
+	 */
+	public static function daily_candidates( $options = null ) {
+		$options = self::options( $options );
+		$pick    = self::pick_for( AI_Chat_Bedrock_WeChat::app_id( $options ), self::today() );
+		if ( ! $pick || empty( $pick['post_id'] ) ) {
+			return array();
+		}
+		$post = get_post( (int) $pick['post_id'] );
+		if ( ! $post instanceof WP_Post || self::sent( $post->ID ) || '' !== self::shortfall( $post, $options ) ) {
+			return array();
+		}
+		$snapshot = self::review_snapshot( $post, $options );
+		if ( is_wp_error( $snapshot ) || ! isset( $pick['review_digest'] ) || ! hash_equals( (string) $pick['review_digest'], $snapshot['digest'] ) ) {
+			return array();
+		}
+		return array( (int) $post->ID );
+	}
+
+	/**
+	 * The day's state, in words for the settings screen.
+	 *
+	 * @return string Empty while drafts are off.
+	 */
+	public static function daily_summary() {
+		$options = self::options( null );
+		if ( ! self::enabled( $options ) ) {
+			return '';
+		}
+		$account_id = AI_Chat_Bedrock_WeChat::app_id( $options );
+		$date       = self::today();
+		$ledger     = self::ledger();
+		$pick       = self::pick_for( $account_id, $date );
+		$days       = isset( $ledger['drafts'][ $account_id ] ) && is_array( $ledger['drafts'][ $account_id ] ) ? $ledger['drafts'][ $account_id ] : array();
+		$parts      = array();
+		if ( $pick && ! empty( $pick['post_id'] ) ) {
+			/* translators: 1: today's date, 2: post ID. */
+			$parts[] = sprintf( __( 'Today (%1$s, Singapore time): post %2$s is picked for the WeChat draft.', 'ai-chat-for-amazon-bedrock' ), $date, number_format_i18n( (int) $pick['post_id'] ) );
+		} else {
+			/* translators: %s: today's date. */
+			$parts[] = sprintf( __( 'Today (%s, Singapore time): no post is picked, so the scheduled run makes no draft.', 'ai-chat-for-amazon-bedrock' ), $date );
+		}
+		if ( isset( $days[ $date ]['status'] ) ) {
+			/* translators: %s: reserved, accepted, unknown, refused or nothing. */
+			$parts[] = sprintf( __( 'Today\'s draft: %s.', 'ai-chat-for-amazon-bedrock' ), $days[ $date ]['status'] );
+		}
+		$unknown = 0;
+		foreach ( $days as $day => $entry ) {
+			if ( $day !== $date && isset( $entry['status'] ) && in_array( $entry['status'], array( 'reserved', 'unknown' ), true ) ) {
+				++$unknown;
+			}
+		}
+		if ( $unknown ) {
+			/* translators: %s: number of days. */
+			$parts[] = sprintf( _n( '%s earlier day\'s draft has no known result; reconcile it in the Official Accounts Platform before new drafts are made.', '%s earlier days\' drafts have no known result; reconcile them in the Official Accounts Platform before new drafts are made.', $unknown, 'ai-chat-for-amazon-bedrock' ), number_format_i18n( $unknown ) );
+		}
+		return implode( ' ', $parts );
 	}
 
 	/**
@@ -356,7 +599,18 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( ! self::enabled( $options ) ) {
 			return self::note( new WP_Error( 'wx_secret', __( 'Drafts for the WeChat Official Account are off, or its AppID or AppSecret is missing.', 'ai-chat-for-amazon-bedrock' ) ), $source );
 		}
-		foreach ( array_slice( array_values( array_unique( array_map( 'absint', (array) $post_ids ) ) ), 0, self::MAX_ARTICLES ) as $post_id ) {
+		$ids = array_slice( array_values( array_unique( array_map( 'absint', (array) $post_ids ) ) ), 0, self::MAX_ARTICLES );
+		// A new draft is the account's one draft for the day, whichever way it is made; replacing
+		// the article in a post's own current draft is not. The day is taken before anything is
+		// uploaded, and settled with WeChat's answer below.
+		$reservation = null;
+		if ( 1 !== count( $ids ) || null === self::draft_of( $ids[0] ) ) {
+			$reservation = self::reserve( $options, $ids, $source );
+			if ( is_wp_error( $reservation ) ) {
+				return self::note( $reservation, $source );
+			}
+		}
+		foreach ( $ids as $post_id ) {
 			$post = get_post( $post_id );
 			if ( ! self::sendable( $post ) ) {
 				$skipped[ $post_id ] = 'not_public';
@@ -372,10 +626,12 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				if ( self::sent( $post_id ) ) {
 					$draft = self::draft_of( $post_id );
 					if ( 1 !== count( $post_ids ) || null === $draft ) {
+						self::settle( $reservation, 'nothing', array( 'code' => 'wx_reconcile' ) );
 						return self::note( new WP_Error( 'wx_reconcile', 'Existing WeChat record requires reconciliation.' ), $source );
 					}
 					self::$draft_times = null;
 					if ( 'current' !== self::draft_state( $draft, $options ) ) {
+						self::settle( $reservation, 'nothing', array( 'code' => 'wx_reconcile' ) );
 						return self::note( new WP_Error( 'wx_reconcile', 'Native draft is missing, unknown or edited; reconcile before updating.' ), $source );
 					}
 				}
@@ -383,6 +639,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				$current  = get_post( $post_id );
 				$snapshot = self::review_snapshot( $current, $options );
 				if ( is_wp_error( $snapshot ) || '' !== self::review_shortfall( $current, $options ) ) {
+					self::settle( $reservation, 'nothing', array( 'code' => 'wx_review' ) );
 					return self::note( new WP_Error( 'wx_review', 'The curated review changed before conversion.' ), $source );
 				}
 				$post                 = $current;
@@ -391,6 +648,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			$article = self::article( $post, $options );
 			// WeChat refusing the account, as for an address not in the IP whitelist, stops here.
 			if ( is_wp_error( $article ) && 0 === strpos( (string) $article->get_error_code(), 'wx_' ) ) {
+				self::settle( $reservation, 'nothing', array( 'code' => $article->get_error_code() ) );
 				return self::note( $article, $source, $skipped );
 			}
 			if ( is_wp_error( $article ) ) {
@@ -402,6 +660,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		}
 		if ( ! $articles ) {
 			$error = new WP_Error( 'wx_nothing', __( 'No post could be made into an article.', 'ai-chat-for-amazon-bedrock' ), array( 'skipped' => $skipped ) );
+			self::settle( $reservation, 'nothing', array( 'code' => 'wx_nothing' ) );
 			return self::note( $error, $source, $skipped );
 		}
 		if ( $automatic ) {
@@ -410,6 +669,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				$current  = get_post( $post->ID );
 				$snapshot = self::review_snapshot( $current, $current_options );
 				if ( is_wp_error( $snapshot ) || '' !== self::review_shortfall( $current, $current_options ) || ! hash_equals( $reviewed[ $post->ID ], $snapshot['digest'] ) ) {
+					self::settle( $reservation, 'nothing', array( 'code' => 'wx_review' ) );
 					return self::note( new WP_Error( 'wx_review', 'The curated version changed during conversion; no draft was written.' ), $source );
 				}
 			}
@@ -440,14 +700,25 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			$media_id = is_wp_error( $updated ) ? '' : $earlier['media_id'];
 		}
 		if ( '' === $media_id ) {
+			if ( null === $reservation ) {
+				// The post's own draft is published or gone, so this is a new draft: it takes the day.
+				$reservation = self::reserve( $options, wp_list_pluck( $posts, 'ID' ), $source );
+				if ( is_wp_error( $reservation ) ) {
+					return self::note( $reservation, $source, $skipped );
+				}
+			}
 			$result = AI_Chat_Bedrock_WeChat_API::call( 'draft/add', wp_json_encode( array( 'articles' => $articles ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ), self::account( $options ), 30 );
 			if ( is_wp_error( $result ) ) {
+				// An errcode means WeChat made nothing; a lost answer may have left a draft, which
+				// only the owner can tell from the draft box.
+				self::settle( $reservation, self::answer_known( $result ) ? 'refused' : 'unknown', array( 'code' => $result->get_error_code() ) );
 				return self::note( $result, $source, $skipped );
 			}
 			$media_id = isset( $result['media_id'] ) ? (string) $result['media_id'] : '';
 			$earlier  = null;
 		}
 		if ( '' === $media_id ) {
+			self::settle( $reservation, 'unknown', array( 'code' => 'wx_http' ) );
 			return self::note( new WP_Error( 'wx_http', 'No media_id' ), $source, $skipped );
 		}
 		foreach ( $posts as $index => $post ) {
@@ -466,6 +737,14 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				'wechat'
 			);
 		}
+		self::settle(
+			$reservation,
+			'accepted',
+			array(
+				'media_id' => $media_id,
+				'post_ids' => array_map( 'intval', wp_list_pluck( $posts, 'ID' ) ),
+			)
+		);
 		// Older drafts of a post sent on its own are stale copies: they go, unless another post
 		// shares them.
 		if ( ! $automatic && 1 === count( $posts ) ) {
@@ -1578,7 +1857,8 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			$refreshed = self::refresh_changed( $options );
 			self::tell_held( $options );
 		}
-		$ids = self::candidates( $options );
+		// The day's one curated article: the post picked for today, or nothing.
+		$ids = self::daily_candidates( $options );
 		if ( ! $ids ) {
 			// A refresh that could not ask WeChat has noted why; that stays on the settings screen.
 			if ( 0 === $refreshed ) {
@@ -1930,6 +2210,46 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				)
 			);
 		}
+		wp_register_ability(
+			'ai-chat-bedrock/pick-wechat-post',
+			array(
+				'label'               => __( 'Pick the day\'s WeChat article', 'ai-chat-for-amazon-bedrock' ),
+				'description'         => __( 'Choose the one post the scheduled run drafts for the WeChat Official Account today (Singapore date), with the reason. The post needs its public edition and a current curated review of the exact digest given. One post per account and day; the pick does not contact WeChat.', 'ai-chat-for-amazon-bedrock' ),
+				'input_schema'        => self::pick_schema(),
+				'output_schema'       => array( 'type' => 'object' ),
+				'execute_callback'    => array( $this, 'ability_pick' ),
+				'permission_callback' => array( $this, 'can_review' ),
+				'category'            => AI_Chat_Bedrock_Abilities::CATEGORY,
+				'meta'                => array(
+					'annotations' => array(
+						'readonly'    => false,
+						'destructive' => false,
+						'idempotent'  => true,
+					),
+					'public'      => true,
+				),
+			)
+		);
+		wp_register_ability(
+			'ai-chat-bedrock/reconcile-wechat-draft',
+			array(
+				'label'               => __( 'Reconcile a day\'s WeChat draft', 'ai-chat-for-amazon-bedrock' ),
+				'description'         => __( 'For a day whose draft request got no answer: say what the Official Accounts Platform shows. Accepted with the draft\'s media_id checks that draft against the reviewed articles and records it; not landed frees the account for a new draft. Reads a draft; never makes, updates or deletes one. Requires permission to manage options.', 'ai-chat-for-amazon-bedrock' ),
+				'input_schema'        => self::reconcile_schema(),
+				'output_schema'       => array( 'type' => 'object' ),
+				'execute_callback'    => array( $this, 'ability_reconcile' ),
+				'permission_callback' => array( $this, 'can_reconcile' ),
+				'category'            => AI_Chat_Bedrock_Abilities::CATEGORY,
+				'meta'                => array(
+					'annotations' => array(
+						'readonly'    => false,
+						'destructive' => false,
+						'idempotent'  => true,
+					),
+					'public'      => true,
+				),
+			)
+		);
 		if ( ! self::enabled() ) {
 			return;
 		}
@@ -2137,7 +2457,204 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		$record                = get_post_meta( $post->ID, self::REVIEW_META, true );
 		$snapshot['review']    = self::valid_attestation( $record ) ? $record : null;
 		$snapshot['shortfall'] = self::shortfall( $post, $options );
+		$pick                  = get_post_meta( $post->ID, self::PICK_META, true );
+		$snapshot['pick']      = is_array( $pick ) ? $pick : null;
 		return $snapshot;
+	}
+
+	public static function pick_schema() {
+		return array(
+			'type'                 => 'object',
+			'properties'           => array(
+				'post_id'       => array(
+					'type'    => 'integer',
+					'minimum' => 1,
+				),
+				'review_digest' => array(
+					'type'    => 'string',
+					'pattern' => '^[a-f0-9]{64}$',
+				),
+				'pick_identity' => array(
+					'type'      => 'string',
+					'minLength' => 3,
+					'maxLength' => 160,
+				),
+				'reason'        => array(
+					'type'      => 'string',
+					'minLength' => 20,
+					'maxLength' => 2000,
+				),
+			),
+			'required'             => array( 'post_id', 'review_digest', 'pick_identity', 'reason' ),
+			'additionalProperties' => false,
+		);
+	}
+
+	public static function reconcile_schema() {
+		return array(
+			'type'                 => 'object',
+			'properties'           => array(
+				'date'     => array(
+					'type'    => 'string',
+					'pattern' => '^\\d{4}-\\d{2}-\\d{2}$',
+				),
+				'outcome'  => array(
+					'type' => 'string',
+					'enum' => array( 'accepted', 'not-landed' ),
+				),
+				'media_id' => array(
+					'type'      => 'string',
+					'minLength' => 1,
+					'maxLength' => 200,
+				),
+				'evidence' => array(
+					'type'      => 'string',
+					'minLength' => 20,
+					'maxLength' => 2000,
+				),
+			),
+			'required'             => array( 'date', 'outcome', 'evidence' ),
+			'additionalProperties' => false,
+		);
+	}
+
+	public function can_reconcile( $input = array() ) {
+		return get_current_user_id() > 0 && current_user_can( 'manage_options' ) && is_array( $input ) && isset( $input['date'], $input['outcome'], $input['evidence'] );
+	}
+
+	/**
+	 * Pick the one post the scheduled run drafts for the account today. The picker chooses for
+	 * quality; the plugin checks only that the post qualifies now and binds the exact review.
+	 *
+	 * @param array $input post_id, review_digest, pick_identity, reason.
+	 * @return array|WP_Error The pick.
+	 */
+	public function ability_pick( $input ) {
+		if ( ! $this->can_review( $input ) ) {
+			return self::preparation_error( 'forbidden', 'Permission to publish and edit this post is required.', 403 );
+		}
+		if ( ! isset( $input['review_digest'], $input['pick_identity'], $input['reason'] ) || ! is_string( $input['review_digest'] ) || ! preg_match( '/^[a-f0-9]{64}$/D', $input['review_digest'] ) || ! self::review_text( $input['pick_identity'], 3, 160 ) || ! self::review_text( $input['reason'], 20, 2000 ) ) {
+			return self::preparation_error( 'pick_invalid', 'A pick needs the review digest, who picked and a specific reason.' );
+		}
+		$options = self::options( null );
+		$post    = get_post( $input['post_id'] );
+		$reason  = self::shortfall( $post, $options );
+		if ( '' !== $reason ) {
+			return self::preparation_error( $reason, 'The post does not qualify for a WeChat draft.', 409 );
+		}
+		if ( self::sent( $post->ID ) ) {
+			return self::preparation_error( 'already_sent', 'The post was sent to the account before.', 409 );
+		}
+		$snapshot = self::review_snapshot( $post, $options );
+		if ( is_wp_error( $snapshot ) ) {
+			return $snapshot;
+		}
+		if ( ! hash_equals( $snapshot['digest'], $input['review_digest'] ) ) {
+			return self::preparation_error( 'review_changed', 'Pick the current version: its digest differs.', 409 );
+		}
+		if ( 'zh' !== AI_Chat_Bedrock_Content::language( $post ) && '' !== self::language() ) {
+			return self::preparation_error( 'wrong_language', 'The account takes the site\'s Chinese posts.', 409 );
+		}
+		$account_id = AI_Chat_Bedrock_WeChat::app_id( $options );
+		$date       = self::today();
+		$lock       = AI_Chat_Bedrock_Security::acquire_lock( self::DAILY_LOCK, self::DAILY_LOCK_TTL );
+		if ( '' === $lock ) {
+			return self::preparation_error( 'wx_daily_busy', 'Another draft or pick is being recorded.', 409 );
+		}
+		try {
+			$ledger  = self::ledger();
+			$current = self::pick_for( $account_id, $date );
+			if ( $current && (int) $current['post_id'] !== (int) $post->ID ) {
+				return self::preparation_error( 'pick_taken', 'Another post is picked for this account today.', 409 );
+			}
+			$record = array(
+				'version'           => self::PICK_VERSION,
+				'post_id'           => (int) $post->ID,
+				'date'              => $date,
+				'account'           => $account_id,
+				'review_digest'     => $input['review_digest'],
+				'picked_by_user_id' => get_current_user_id(),
+				'pick_identity'     => $input['pick_identity'],
+				'reason'            => $input['reason'],
+				'picked_at'         => time(),
+			);
+
+			$ledger['picks'][ $account_id ][ $date ] = $record;
+			self::save_ledger( $ledger );
+			update_post_meta( $post->ID, self::PICK_META, wp_slash( $record ) );
+		} finally {
+			AI_Chat_Bedrock_Security::release_lock( self::DAILY_LOCK, $lock );
+		}
+		return $record;
+	}
+
+	/**
+	 * Settle a day whose draft request got no answer, from what the owner saw in the draft box.
+	 *
+	 * @param array $input date, outcome, media_id, evidence.
+	 * @return array|WP_Error The day's entry.
+	 */
+	public function ability_reconcile( $input ) {
+		if ( ! $this->can_reconcile( $input ) ) {
+			return self::preparation_error( 'forbidden', 'Permission to manage options is required.', 403 );
+		}
+		if ( ! is_string( $input['date'] ) || ! preg_match( '/^\\d{4}-\\d{2}-\\d{2}$/D', $input['date'] ) || ! in_array( $input['outcome'], array( 'accepted', 'not-landed' ), true ) || ! self::review_text( $input['evidence'], 20, 2000 ) ) {
+			return self::preparation_error( 'reconcile_invalid', 'Say which day, whether the draft is there, and what was checked.' );
+		}
+		$options    = self::options( null );
+		$account_id = AI_Chat_Bedrock_WeChat::app_id( $options );
+		$ledger     = self::ledger();
+		$entry      = isset( $ledger['drafts'][ $account_id ][ $input['date'] ] ) && is_array( $ledger['drafts'][ $account_id ][ $input['date'] ] ) ? $ledger['drafts'][ $account_id ][ $input['date'] ] : null;
+		if ( ! $entry || ! in_array( $entry['status'], array( 'reserved', 'unknown' ), true ) ) {
+			return self::preparation_error( 'nothing_to_reconcile', 'That day has no draft with an unknown result.', 409 );
+		}
+		$post_ids = array_map( 'intval', isset( $entry['post_ids'] ) ? (array) $entry['post_ids'] : array() );
+		if ( 'accepted' === $input['outcome'] ) {
+			$media_id = isset( $input['media_id'] ) && is_string( $input['media_id'] ) ? sanitize_text_field( $input['media_id'] ) : '';
+			if ( '' === $media_id || ! $post_ids ) {
+				return self::preparation_error( 'reconcile_invalid', 'An accepted draft needs its media_id from the Official Accounts Platform.' );
+			}
+			$draft = AI_Chat_Bedrock_WeChat_API::call( 'draft/get', wp_json_encode( array( 'media_id' => $media_id ) ), self::account( $options ), 10 );
+			if ( is_wp_error( $draft ) ) {
+				return new WP_Error( $draft->get_error_code(), self::describe( $draft ), array( 'status' => 502 ) );
+			}
+			$items = isset( $draft['news_item'] ) && is_array( $draft['news_item'] ) ? $draft['news_item'] : array();
+			if ( count( $items ) !== count( $post_ids ) ) {
+				return self::preparation_error( 'draft_differs', 'That draft does not hold the reviewed articles.', 409 );
+			}
+			foreach ( $post_ids as $index => $post_id ) {
+				$post    = get_post( $post_id );
+				$edition = $post instanceof WP_Post && metadata_exists( 'post', $post_id, self::EDITION_META ) ? self::edition_for_post( $post ) : null;
+				$title   = is_array( $edition ) ? self::title( $edition['record']['title'] ) : '';
+				if ( ! $post instanceof WP_Post || ! isset( $items[ $index ]['content_source_url'], $items[ $index ]['title'] ) || (string) get_permalink( $post ) !== (string) $items[ $index ]['content_source_url'] || ( '' !== $title && $title !== (string) $items[ $index ]['title'] ) ) {
+					return self::preparation_error( 'draft_differs', 'That draft does not hold the reviewed articles.', 409 );
+				}
+			}
+			foreach ( $post_ids as $index => $post_id ) {
+				AI_Chat_Bedrock_Distribution::record(
+					$post_id,
+					array(
+						'platform' => 'wechat',
+						'item_id'  => $media_id,
+						'status'   => 'planned',
+						'version'  => 'idx:' . $index,
+						'title'    => get_the_title( $post_id ),
+						'language' => AI_Chat_Bedrock_Content::language( get_post( $post_id ) ),
+						'note'     => __( 'In the WeChat Official Account\'s draft box; publish it from the Official Accounts Platform.', 'ai-chat-for-amazon-bedrock' ),
+					),
+					'wechat'
+				);
+			}
+			$entry['media_id'] = $media_id;
+		}
+		$entry['status']        = $input['outcome'];
+		$entry['reconciled_at'] = time();
+		$entry['reconciled_by'] = get_current_user_id();
+		$entry['evidence']      = $input['evidence'];
+
+		$ledger['drafts'][ $account_id ][ $input['date'] ] = $entry;
+		self::save_ledger( $ledger );
+		return $entry;
 	}
 
 	public function ability_review( $input ) {
@@ -2215,18 +2732,21 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			return sprintf( __( 'WeChat does not accept calls from %s. Add it to the IP whitelist under Basic Information > Developer Key in the WeChat Developers Platform.', 'ai-chat-for-amazon-bedrock' ), '' !== $ip ? $ip : __( 'this server\'s address', 'ai-chat-for-amazon-bedrock' ) );
 		}
 		$known = array(
-			'wx_secret'    => __( 'The AppID or AppSecret is missing.', 'ai-chat-for-amazon-bedrock' ),
-			'wx_40125'     => __( 'WeChat did not accept the AppSecret. Reset it in the WeChat Developers Platform and enter the new one.', 'ai-chat-for-amazon-bedrock' ),
-			'wx_40013'     => __( 'WeChat did not accept the AppID.', 'ai-chat-for-amazon-bedrock' ),
-			'wx_40243'     => __( 'The AppSecret is frozen in the WeChat Developers Platform.', 'ai-chat-for-amazon-bedrock' ),
-			'wx_48001'     => __( 'This account may not use that WeChat interface.', 'ai-chat-for-amazon-bedrock' ),
-			'wx_45009'     => __( 'The account reached WeChat\'s daily limit for this interface. Try again tomorrow.', 'ai-chat-for-amazon-bedrock' ),
-			'no_cover'     => __( 'The post needs a featured image in JPEG or PNG for the cover.', 'ai-chat-for-amazon-bedrock' ),
-			'not_public'   => __( 'Only published posts that anyone can read are sent.', 'ai-chat-for-amazon-bedrock' ),
-			'too_short'    => __( 'The post has too little public text for an article.', 'ai-chat-for-amazon-bedrock' ),
-			'wx_nothing'   => __( 'No post could be made into an article: each must be published, readable by anyone, and have a featured image or an image in the text, in JPEG or PNG.', 'ai-chat-for-amazon-bedrock' ),
-			'wx_review'    => __( 'The current article needs a valid curated review before an automatic draft can be written.', 'ai-chat-for-amazon-bedrock' ),
-			'wx_reconcile' => __( 'The existing WeChat draft needs reconciliation. Its record was preserved; no replacement draft was created.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_secret'        => __( 'The AppID or AppSecret is missing.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_40125'         => __( 'WeChat did not accept the AppSecret. Reset it in the WeChat Developers Platform and enter the new one.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_40013'         => __( 'WeChat did not accept the AppID.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_40243'         => __( 'The AppSecret is frozen in the WeChat Developers Platform.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_48001'         => __( 'This account may not use that WeChat interface.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_45009'         => __( 'The account reached WeChat\'s daily limit for this interface. Try again tomorrow.', 'ai-chat-for-amazon-bedrock' ),
+			'no_cover'         => __( 'The post needs a featured image in JPEG or PNG for the cover.', 'ai-chat-for-amazon-bedrock' ),
+			'not_public'       => __( 'Only published posts that anyone can read are sent.', 'ai-chat-for-amazon-bedrock' ),
+			'too_short'        => __( 'The post has too little public text for an article.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_nothing'       => __( 'No post could be made into an article: each must be published, readable by anyone, and have a featured image or an image in the text, in JPEG or PNG.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_review'        => __( 'The current article needs a valid curated review before an automatic draft can be written.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_reconcile'     => __( 'The existing WeChat draft needs reconciliation. Its record was preserved; no replacement draft was created.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_daily_done'    => __( 'The Official Account already has its one draft for today, Singapore time. The next can be made tomorrow.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_daily_unknown' => __( 'An earlier day\'s draft request got no answer. Check the draft box and reconcile that day before another draft is made.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_daily_busy'    => __( 'Another draft is being made right now. Try again in a moment.', 'ai-chat-for-amazon-bedrock' ),
 		);
 		if ( isset( $known[ $code ] ) ) {
 			return $known[ $code ];

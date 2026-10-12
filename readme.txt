@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai chatbot, ai, connector, woocommerce, mcp
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.72.2
+Stable tag: 1.73.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -436,6 +436,9 @@ what a good answer says.
 15. Settings > Channels, one page per account: a WeChat Official Account answered from the site's pages, with whether WeChat reaches it, and featured posts sent to its draft box.
 
 == Changelog ==
+
+= 1.73.0 =
+* The scheduled WeChat run makes one draft a day, Singapore time, of the post an editor picked for the day through the pick-wechat-post ability, bound to its exact reviewed version; no pick, no draft. Every way of making a draft (schedule, editor, agent) takes the day under one lock before anything is sent, so the account gets one new draft a day; a draft request without an answer holds that day and later ones until the owner reconciles it from the draft box (reconcile-wechat-draft), and nothing is sent again on a guess.
 
 = 1.72.2 =
 * Renamed AI Chatbot, Agents & MCP for Amazon Bedrock, naming the built-in WordPress MCP server.

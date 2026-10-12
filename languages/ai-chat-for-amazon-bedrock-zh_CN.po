@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Chatbot & Agents for Amazon Bedrock 1.70.0\n"
+"Project-Id-Version: AI Chatbot, Agents & MCP for Amazon Bedrock 1.73.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "POT-Creation-Date: 2026-10-08T14:03:11+00:00\n"
 "PO-Revision-Date: 2026-10-08T14:03:21+00:00\n"
@@ -6998,10 +6998,6 @@ msgstr "把最新精选文章汇集成草稿"
 msgid "Never; only when sent from a post or by an agent"
 msgstr "从不；只在从文章或由 Agent 发送时"
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:104
-msgid "Every day at 9:00"
-msgstr "每天 9:00"
-
 #: admin/trait-ai-chat-bedrock-admin-channels.php:105
 msgid "Every week"
 msgstr "每周"
@@ -7738,3 +7734,60 @@ msgstr "WordPress MCP 服务器（无需登录即可读取）"
 
 msgid "AI Chatbot, Agents & MCP for Amazon Bedrock"
 msgstr "AI Chatbot, Agents & MCP for Amazon Bedrock"
+
+#: admin/trait-ai-chat-bedrock-admin-channels.php:104
+msgid "Every day at 9:00, the post picked for the day"
+msgstr "每天 9:00，发送当天选定的文章"
+
+#. translators: 1: today's date, 2: post ID.
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:549
+#, php-format
+msgid "Today (%1$s, Singapore time): post %2$s is picked for the WeChat draft."
+msgstr "今天（%1$s，新加坡时间）：已选定文章 %2$s 作为微信草稿。"
+
+#. translators: %s: today's date.
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:552
+#, php-format
+msgid "Today (%s, Singapore time): no post is picked, so the scheduled run makes no draft."
+msgstr "今天（%s，新加坡时间）：没有选定文章，定时运行不会生成草稿。"
+
+#. translators: %s: reserved, accepted, unknown, refused or nothing.
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:556
+#, php-format
+msgid "Today's draft: %s."
+msgstr "今天的草稿：%s。"
+
+#. translators: %s: number of days.
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:566
+#, php-format
+msgid "%s earlier day's draft has no known result; reconcile it in the Official Accounts Platform before new drafts are made."
+msgid_plural "%s earlier days' drafts have no known result; reconcile them in the Official Accounts Platform before new drafts are made."
+msgstr[0] "此前有 %s 天的草稿结果未知；请先在公众号平台核对并处理，再生成新草稿。"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2216
+msgid "Pick the day's WeChat article"
+msgstr "选定当天的微信文章"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2217
+msgid "Choose the one post the scheduled run drafts for the WeChat Official Account today (Singapore date), with the reason. The post needs its public edition and a current curated review of the exact digest given. One post per account and day; the pick does not contact WeChat."
+msgstr "选定今天（新加坡日期）定时运行要为微信公众号生成草稿的那一篇文章，并写明理由。文章需要有公开版本，以及对所给精确摘要的当前精选审核。每个账号每天只选一篇；选定不会联系微信。"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2236
+msgid "Reconcile a day's WeChat draft"
+msgstr "核对某一天的微信草稿"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2237
+msgid "For a day whose draft request got no answer: say what the Official Accounts Platform shows. Accepted with the draft's media_id checks that draft against the reviewed articles and records it; not landed frees the account for a new draft. Reads a draft; never makes, updates or deletes one. Requires permission to manage options."
+msgstr "针对草稿请求没有收到回应的某一天：说明公众号平台中的实际情况。选择“已接受”并给出草稿的 media_id 时，会核对该草稿与已审核文章是否一致并记录；选择“未落地”则允许该账号生成新草稿。只读取草稿，绝不新建、更新或删除。需要管理选项的权限。"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2745
+msgid "The Official Account already has its one draft for today, Singapore time. The next can be made tomorrow."
+msgstr "该公众号今天（新加坡时间）已经生成了当天唯一的一份草稿。下一份明天再生成。"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2746
+msgid "An earlier day's draft request got no answer. Check the draft box and reconcile that day before another draft is made."
+msgstr "此前某一天的草稿请求没有收到回应。请先查看草稿箱并核对那一天，再生成新草稿。"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2747
+msgid "Another draft is being made right now. Try again in a moment."
+msgstr "另一份草稿正在生成中，请稍后再试。"

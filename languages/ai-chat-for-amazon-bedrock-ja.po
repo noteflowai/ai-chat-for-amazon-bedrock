@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: AI Chatbot & Agents for Amazon Bedrock 1.70.0\n"
+"Project-Id-Version: AI Chatbot, Agents & MCP for Amazon Bedrock 1.73.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ai-chat-for-amazon-bedrock\n"
 "POT-Creation-Date: 2026-10-08T14:03:11+00:00\n"
 "PO-Revision-Date: 2026-10-08T14:03:21+00:00\n"
@@ -6998,10 +6998,6 @@ msgstr "最新のおすすめ記事を下書きにまとめる"
 msgid "Never; only when sent from a post or by an agent"
 msgstr "しない（投稿画面またはエージェントから送ったときだけ）"
 
-#: admin/trait-ai-chat-bedrock-admin-channels.php:104
-msgid "Every day at 9:00"
-msgstr "毎日 9:00"
-
 #: admin/trait-ai-chat-bedrock-admin-channels.php:105
 msgid "Every week"
 msgstr "毎週"
@@ -7738,3 +7734,60 @@ msgstr "WordPress MCP サーバー（ログインなしで読み取り可能）"
 
 msgid "AI Chatbot, Agents & MCP for Amazon Bedrock"
 msgstr "AI Chatbot, Agents & MCP for Amazon Bedrock"
+
+#: admin/trait-ai-chat-bedrock-admin-channels.php:104
+msgid "Every day at 9:00, the post picked for the day"
+msgstr "毎日 9:00 に、その日に選ばれた記事を"
+
+#. translators: 1: today's date, 2: post ID.
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:549
+#, php-format
+msgid "Today (%1$s, Singapore time): post %2$s is picked for the WeChat draft."
+msgstr "本日（%1$s、シンガポール時間）：WeChat 下書きには記事 %2$s が選ばれています。"
+
+#. translators: %s: today's date.
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:552
+#, php-format
+msgid "Today (%s, Singapore time): no post is picked, so the scheduled run makes no draft."
+msgstr "本日（%s、シンガポール時間）：記事が選ばれていないため、定期実行は下書きを作りません。"
+
+#. translators: %s: reserved, accepted, unknown, refused or nothing.
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:556
+#, php-format
+msgid "Today's draft: %s."
+msgstr "本日の下書き：%s。"
+
+#. translators: %s: number of days.
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:566
+#, php-format
+msgid "%s earlier day's draft has no known result; reconcile it in the Official Accounts Platform before new drafts are made."
+msgid_plural "%s earlier days' drafts have no known result; reconcile them in the Official Accounts Platform before new drafts are made."
+msgstr[0] "これまでの %s 日分の下書きは結果が不明です。新しい下書きを作る前に、公式アカウント管理画面で確認して処理してください。"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2216
+msgid "Pick the day's WeChat article"
+msgstr "その日の WeChat 記事を選ぶ"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2217
+msgid "Choose the one post the scheduled run drafts for the WeChat Official Account today (Singapore date), with the reason. The post needs its public edition and a current curated review of the exact digest given. One post per account and day; the pick does not contact WeChat."
+msgstr "本日（シンガポール日付）に定期実行が WeChat 公式アカウントの下書きにする記事を 1 本選び、理由を記録します。記事には公開版と、指定した正確なダイジェストに対する有効なキュレーション審査が必要です。アカウントごとに 1 日 1 本。選択では WeChat に接続しません。"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2236
+msgid "Reconcile a day's WeChat draft"
+msgstr "ある日の WeChat 下書きを照合する"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2237
+msgid "For a day whose draft request got no answer: say what the Official Accounts Platform shows. Accepted with the draft's media_id checks that draft against the reviewed articles and records it; not landed frees the account for a new draft. Reads a draft; never makes, updates or deletes one. Requires permission to manage options."
+msgstr "下書き要求への応答が得られなかった日について、公式アカウント管理画面に表示されている内容を記録します。「承認済み」に下書きの media_id を添えると、その下書きを審査済みの記事と照合して記録します。「未反映」はアカウントで新しい下書きを作れるようにします。下書きの読み取りのみで、作成・更新・削除は行いません。オプション管理権限が必要です。"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2745
+msgid "The Official Account already has its one draft for today, Singapore time. The next can be made tomorrow."
+msgstr "この公式アカウントには本日（シンガポール時間）の下書きがすでに 1 件あります。次は明日作成できます。"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2746
+msgid "An earlier day's draft request got no answer. Check the draft box and reconcile that day before another draft is made."
+msgstr "以前のある日の下書き要求に応答がありませんでした。下書きボックスを確認してその日を照合してから、次の下書きを作成してください。"
+
+#: includes/class-ai-chat-bedrock-wechat-drafts.php:2747
+msgid "Another draft is being made right now. Try again in a moment."
+msgstr "別の下書きを作成中です。しばらくしてからもう一度お試しください。"
