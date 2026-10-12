@@ -3,6 +3,9 @@ Full changelog. The readme lists the latest releases only.
 
 == Changelog ==
 
+= 1.72.3 =
+* The bundled Japanese translation follows the ja.wordpress.org translation style guide: half-width parentheses, colons, question and exclamation marks with the guide's spacing, and a space between half-width words and Japanese text. Wording, placeholders and links are unchanged.
+
 = 1.72.2 =
 * Renamed AI Chatbot, Agents & MCP for Amazon Bedrock, naming the built-in WordPress MCP server.
 * A step-by-step guide for WordPress sites on AWS, in English and Japanese, and the readme says which AWS plans include Bedrock and how new-account credits apply.

@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai chatbot, ai, connector, woocommerce, mcp
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.72.2
+Stable tag: 1.72.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -436,6 +436,9 @@ what a good answer says.
 15. Settings > Channels, one page per account: a WeChat Official Account answered from the site's pages, with whether WeChat reaches it, and featured posts sent to its draft box.
 
 == Changelog ==
+
+= 1.72.3 =
+* The bundled Japanese translation follows the ja.wordpress.org translation style guide: half-width parentheses, colons, question and exclamation marks with the guide's spacing, and a space between half-width words and Japanese text. Wording, placeholders and links are unchanged.
 
 = 1.72.2 =
 * Renamed AI Chatbot, Agents & MCP for Amazon Bedrock, naming the built-in WordPress MCP server.
