@@ -1140,12 +1140,37 @@ drafts_pick( 1 );
 AI_Chat_Bedrock_WeChat_Drafts::run();
 $aicfab_day = AI_Chat_Bedrock_WeChat_Drafts::daily_drafts()[ AICFAB_APP_ID ][ $aicfab_today ];
 check_drafts( 'accepted' === $aicfab_day['status'] && 'schedule' === $aicfab_day['source'] && 1 === $aicfab_day['pick']['post_id'] && AI_Chat_Bedrock_WeChat_Drafts::pick_for( AICFAB_APP_ID, $aicfab_today )['review_digest'] === $aicfab_day['pick']['review_digest'] && 'Changed edition C' === drafts_sent_body()['articles'][0]['title'], 'Picked again at its current review, the post is sent, and the day\'s record names the pick it fulfilled.' );
+// A pick can be for tomorrow: the content pipeline publishes after 09:00, so its pick feeds the next
+// run. Never further than tomorrow; today's and tomorrow's picks are independent; a reader sees both.
+drafts_fresh_day( $long );
+$aicfab_tomorrow = AI_Chat_Bedrock_WeChat_Drafts::today( time() + DAY_IN_SECONDS );
+$aicfab_yesterday = AI_Chat_Bedrock_WeChat_Drafts::today( time() - DAY_IN_SECONDS );
+$aicfab_far = AI_Chat_Bedrock_WeChat_Drafts::today( time() + 2 * DAY_IN_SECONDS );
+$aicfab_pick_tomorrow = drafts_pick( 5, array( 'date' => $aicfab_tomorrow ) );
+$aicfab_pick_past = drafts_pick( 1, array( 'date' => $aicfab_yesterday ) );
+$aicfab_pick_far = drafts_pick( 1, array( 'date' => $aicfab_far ) );
+$aicfab_pick_bad = drafts_pick( 1, array( 'date' => 'tomorrow' ) );
+check_drafts( ! is_wp_error( $aicfab_pick_tomorrow ) && $aicfab_tomorrow === $aicfab_pick_tomorrow['date'] && 5 === AI_Chat_Bedrock_WeChat_Drafts::pick_for( AICFAB_APP_ID, $aicfab_tomorrow )['post_id'] && null === AI_Chat_Bedrock_WeChat_Drafts::pick_for( AICFAB_APP_ID, $aicfab_today ) && array() === AI_Chat_Bedrock_WeChat_Drafts::daily_candidates() && is_wp_error( $aicfab_pick_past ) && 'pick_date' === $aicfab_pick_past->get_error_code() && is_wp_error( $aicfab_pick_far ) && 'pick_date' === $aicfab_pick_far->get_error_code() && is_wp_error( $aicfab_pick_bad ) && 'pick_date' === $aicfab_pick_bad->get_error_code(), 'A pick for tomorrow is recorded for tomorrow and is not today\'s candidate; yesterday, the day after tomorrow and a malformed date are refused.' );
+$aicfab_pick_other_tomorrow = drafts_pick( 1, array( 'date' => $aicfab_tomorrow ) );
+$aicfab_pick_today = drafts_pick( 1 );
+check_drafts( is_wp_error( $aicfab_pick_other_tomorrow ) && 'pick_taken' === $aicfab_pick_other_tomorrow->get_error_code() && ! is_wp_error( $aicfab_pick_today ) && 1 === AI_Chat_Bedrock_WeChat_Drafts::pick_for( AICFAB_APP_ID, $aicfab_today )['post_id'] && 5 === AI_Chat_Bedrock_WeChat_Drafts::pick_for( AICFAB_APP_ID, $aicfab_tomorrow )['post_id'] && array( 1 ) === AI_Chat_Bedrock_WeChat_Drafts::daily_candidates(), 'Each day has its own one pick: tomorrow stays taken by post 5 while today takes post 1.' );
+$aicfab_read_today = $drafts->ability_get_pick( array() );
+$aicfab_read_tomorrow = $drafts->ability_get_pick( array( 'date' => $aicfab_tomorrow ) );
+$aicfab_read_far = $drafts->ability_get_pick( array( 'date' => $aicfab_far ) );
+$GLOBALS['aicfab_caps']['publish_posts'] = false;
+$aicfab_read_denied = $drafts->ability_get_pick( array() );
+$GLOBALS['aicfab_caps']['publish_posts'] = true;
+check_drafts( ! is_wp_error( $aicfab_read_today ) && 1 === $aicfab_read_today['pick']['post_id'] && $aicfab_today === $aicfab_read_today['date'] && AICFAB_APP_ID === $aicfab_read_today['account'] && null === $aicfab_read_today['draft'] && 5 === $aicfab_read_tomorrow['pick']['post_id'] && is_wp_error( $aicfab_read_far ) && 'pick_date' === $aicfab_read_far->get_error_code() && is_wp_error( $aicfab_read_denied ) && 'forbidden' === $aicfab_read_denied->get_error_code() && array() === $GLOBALS['aicfab_http'], 'The pick of today or tomorrow can be read, with the day\'s draft record, by an editor and without contacting WeChat.' );
+AI_Chat_Bedrock_WeChat_Drafts::run();
+$aicfab_read_after = $drafts->ability_get_pick( array() );
+check_drafts( 'accepted' === $aicfab_read_after['draft']['status'] && array( 1 ) === $aicfab_read_after['draft']['post_ids'] && ! isset( $aicfab_read_after['draft']['attempt'], $aicfab_read_after['draft']['payload'] ), 'After the run the reader sees the day\'s accepted draft without the writer\'s attempt or frozen payload.' );
 check_drafts( false !== strpos( AI_Chat_Bedrock_WeChat_Drafts::describe( new WP_Error( 'wx_pick' ) ), 'picked' ) && false !== strpos( AI_Chat_Bedrock_WeChat_Drafts::describe( new WP_Error( 'wx_settle' ) ), 'Reconcile' ) && false !== strpos( AI_Chat_Bedrock_WeChat_Drafts::describe( new WP_Error( 'wx_daily_lost' ) ), 'nothing was written' ), 'The screen explains the new outcomes.' );
 
 // Wiring.
 $aicfab_abilities = isset( $GLOBALS['aicfab_registered_abilities'] ) ? $GLOBALS['aicfab_registered_abilities'] : array();
 $drafts->register_abilities();
 check_drafts( isset( $GLOBALS['aicfab_registered_abilities']['ai-chat-bedrock/pick-wechat-post'], $GLOBALS['aicfab_registered_abilities']['ai-chat-bedrock/reconcile-wechat-draft'] ) && array( $drafts, 'can_review' ) === $GLOBALS['aicfab_registered_abilities']['ai-chat-bedrock/pick-wechat-post']['permission_callback'] && array( $drafts, 'can_reconcile' ) === $GLOBALS['aicfab_registered_abilities']['ai-chat-bedrock/reconcile-wechat-draft']['permission_callback'], 'Picking and reconciling are abilities with the editor\'s and the owner\'s permission checks.' );
+check_drafts( isset( $GLOBALS['aicfab_registered_abilities']['ai-chat-bedrock/get-wechat-pick'] ) && true === $GLOBALS['aicfab_registered_abilities']['ai-chat-bedrock/get-wechat-pick']['meta']['annotations']['readonly'] && array( $drafts, 'can_read_pick' ) === $GLOBALS['aicfab_registered_abilities']['ai-chat-bedrock/get-wechat-pick']['permission_callback'], 'Reading the pick is a read-only ability with the editor\'s permission check.' );
 $GLOBALS['aicfab_registered_abilities'] = $aicfab_abilities;
 $GLOBALS['aicfab_caps']['publish_posts'] = false;
 check_drafts( 'forbidden' === drafts_pick( 5 )->get_error_code() && ! $drafts->can_reconcile( array( 'date' => $aicfab_today, 'outcome' => 'not-landed' ) ), 'Picking needs the right to publish; reconciling needs its fields and the owner.' );

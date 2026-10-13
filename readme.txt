@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai chatbot, ai, connector, woocommerce, mcp
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.73.0
+Stable tag: 1.73.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -437,6 +437,9 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.73.1 =
+* pick-wechat-post takes an optional date: today or tomorrow (Singapore time). The content pipeline publishes after the 09:00 run, so its pick is for the next morning; the scheduled run still drafts only the post picked for its own day.
+
 = 1.73.0 =
 * The scheduled WeChat run makes one draft a day, Singapore time, of the post an editor picked for the day through the pick-wechat-post ability, bound to its exact reviewed version; no pick, no draft. Every way of making a draft (schedule, editor, agent) takes the day under one lock before anything is sent, so the account gets one new draft a day; a draft request without an answer holds that day and later ones until the owner reconciles it from the draft box (reconcile-wechat-draft), and nothing is sent again on a guess. Reservation, settlement and the owner's reconciliation are serialized under one ledger lock and bound to the attempt, so an in-flight draft is never cleared or counted twice; a reservation the database did not keep sends nothing; the day's record freezes the sent articles, so only that draft can be adopted from the draft box; and the scheduled run sends the pick exactly as picked.
 
@@ -463,11 +466,6 @@ what a good answer says.
 * The site description's sensitivity policy is now the rule every part of the plugin applies to a post. Indexing, the chat, site abilities, the MCP server, WeChat drafts and replies and publishing kits ask one policy, which refuses when it cannot be checked. A site can withhold a post from one use with the ai_chat_bedrock_ontology_allows filter.
 * A product the shop does not list, such as one hidden from the catalog, is left out of the index, the chat, agents and channels, not only the site description. describe_site no longer describes pages hidden from search engines, as the MCP read tools already did.
 * WooCommerce's cart, checkout and account pages count as hidden from search engines, as WooCommerce tells search engines, so they stay out of answers, agents and llms.txt.
-
-= 1.70.0 =
-* Authorized editors and agents can prepare a separate static WeChat edition with its own title, excerpt and local cover. The published WordPress article stays unchanged.
-* Automatic draft selection requires an explicit public edition and a current independent review bound to its exact source and image bytes. Missing, changed or unknown drafts remain held for reconciliation.
-* The real WordPress abilities and MCP integration is covered by release checks. Final draft preview, publication and follower sending remain with the Official Account owner.
 
 == Upgrade Notice ==
 
