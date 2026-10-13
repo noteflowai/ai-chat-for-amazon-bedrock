@@ -144,8 +144,8 @@ if ( ! function_exists( 'wp_get_abilities' ) ) {
 	aicfab_live( array() === $aicfab_silent, 'every ability declares its behaviour', implode( ', ', $aicfab_silent ) );
 	sort( $aicfab_writers );
 	aicfab_live(
-		array( 'ai-chat-bedrock/create-draft', 'ai-chat-bedrock/review-wechat-post', 'ai-chat-bedrock/set-wechat-edition' ) === $aicfab_writers,
-		'only draft creation, protected edition preparation and review declare writes',
+		array( 'ai-chat-bedrock/create-draft', 'ai-chat-bedrock/pick-wechat-post', 'ai-chat-bedrock/reconcile-wechat-draft', 'ai-chat-bedrock/review-wechat-post', 'ai-chat-bedrock/set-wechat-edition' ) === $aicfab_writers,
+		'only draft creation, protected edition preparation, review, the day\'s pick and its reconciliation declare writes',
 		$aicfab_writers ? implode( ', ', $aicfab_writers ) : 'none declared'
 	);
 	$aicfab_actor = get_current_user_id();

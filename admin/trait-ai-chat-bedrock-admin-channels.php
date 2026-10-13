@@ -101,7 +101,7 @@ trait AI_Chat_Bedrock_Admin_Channels {
 		echo '<br><label for="aicfab_field_wechat_drafts_schedule">' . esc_html__( 'Collect the newest featured posts into a draft', 'ai-chat-for-amazon-bedrock' ) . '</label> <select id="aicfab_field_wechat_drafts_schedule" name="ai_chat_bedrock_settings[wechat_drafts_schedule]">';
 		foreach ( array(
 			'off'    => __( 'Never; only when sent from a post or by an agent', 'ai-chat-for-amazon-bedrock' ),
-			'daily'  => __( 'Every day at 9:00', 'ai-chat-for-amazon-bedrock' ),
+			'daily'  => __( 'Every day at 9:00, the post picked for the day', 'ai-chat-for-amazon-bedrock' ),
 			'weekly' => __( 'Every week', 'ai-chat-for-amazon-bedrock' ),
 		) as $aicfab_value => $aicfab_label ) {
 			echo '<option value="' . esc_attr( $aicfab_value ) . '" ' . selected( AI_Chat_Bedrock_WeChat_Drafts::schedule( $options ), $aicfab_value, false ) . '>' . esc_html( $aicfab_label ) . '</option>';
@@ -119,6 +119,10 @@ trait AI_Chat_Bedrock_Admin_Channels {
 		$status = AI_Chat_Bedrock_WeChat_Drafts::status_summary();
 		if ( '' !== $status ) {
 			echo '<p><strong>' . esc_html( $status ) . '</strong></p>';
+		}
+		$daily = AI_Chat_Bedrock_WeChat_Drafts::daily_summary();
+		if ( '' !== $daily ) {
+			echo '<p>' . esc_html( $daily ) . '</p>';
 		}
 		$next = AI_Chat_Bedrock_WeChat_Drafts::schedule_summary();
 		if ( '' !== $next ) {
