@@ -121,6 +121,12 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	const DAILY_LOCK     = 'aicfab_wechat_daily_lock';
 	const DAILY_LOCK_TTL = 120;
 	const DAILY_ZONE     = 'Asia/Singapore';
+
+	// How long settlement waits for the ledger lock, and how long a reservation counts as a live
+	// writer's: a draft takes at most IMAGE_SECONDS of uploads plus two 30-second calls.
+	const DAILY_LOCK_WAIT_MS = 3000;
+	const DAILY_GRACE        = 600;
+
 	// A day in one of these states takes the account's one draft; the day is reserved before the
 	// draft is sent, and stays reserved or unknown until the owner reconciles a lost answer.
 	const DAILY_TAKEN = array( 'reserved', 'accepted', 'unknown' );
@@ -379,8 +385,55 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		return is_array( $ledger ) ? $ledger : array();
 	}
 
+	/**
+	 * Store the ledger and read it back: true only when storage now holds exactly this ledger.
+	 * update_option() alone says false both for an unchanged value and for a failed write.
+	 *
+	 * @param array $ledger The whole ledger.
+	 * @return bool
+	 */
 	private static function save_ledger( $ledger ) {
 		update_option( self::DAILY_OPTION, $ledger, false );
+		if ( function_exists( 'wp_cache_delete' ) ) {
+			wp_cache_delete( self::DAILY_OPTION, 'options' );
+			wp_cache_delete( 'alloptions', 'options' );
+		}
+		return get_option( self::DAILY_OPTION, null ) === $ledger;
+	}
+
+	/**
+	 * The ledger lock, waiting a bounded time for another request to let go.
+	 *
+	 * @param int $wait_ms How long to keep trying; 0 tries once.
+	 * @return string The lock to release, or '' when it stayed taken.
+	 */
+	private static function lock_ledger( $wait_ms = 0 ) {
+		$until = microtime( true ) + $wait_ms / 1000;
+		do {
+			$lock = AI_Chat_Bedrock_Security::acquire_lock( self::DAILY_LOCK, self::DAILY_LOCK_TTL );
+			if ( '' !== $lock ) {
+				return $lock;
+			}
+			if ( microtime( true ) >= $until ) {
+				return '';
+			}
+			usleep( 50000 );
+		} while ( true );
+	}
+
+	/**
+	 * The ledger entry a reservation stands for, while it is still that attempt's and unsettled.
+	 *
+	 * @param array $ledger      The ledger, read under the lock.
+	 * @param array $reservation From reserve().
+	 * @return array|null The entry, or null when another operation changed or settled the day.
+	 */
+	private static function reserved_entry( $ledger, $reservation ) {
+		$entry = isset( $ledger['drafts'][ $reservation['account'] ][ $reservation['date'] ] ) ? $ledger['drafts'][ $reservation['account'] ][ $reservation['date'] ] : null;
+		if ( ! is_array( $entry ) || 'reserved' !== ( isset( $entry['status'] ) ? $entry['status'] : '' ) || ! isset( $entry['attempt'], $reservation['attempt'] ) || ! hash_equals( (string) $entry['attempt'], (string) $reservation['attempt'] ) ) {
+			return null;
+		}
+		return $entry;
 	}
 
 	/**
@@ -440,7 +493,8 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	private static function reserve( $options, $post_ids, $source ) {
 		$account_id = AI_Chat_Bedrock_WeChat::app_id( $options );
 		$date       = self::today();
-		$lock       = AI_Chat_Bedrock_Security::acquire_lock( self::DAILY_LOCK, self::DAILY_LOCK_TTL );
+		$attempt    = bin2hex( random_bytes( 8 ) );
+		$lock       = self::lock_ledger();
 		if ( '' === $lock ) {
 			return new WP_Error( 'wx_daily_busy', 'Another draft is being made.' );
 		}
@@ -452,17 +506,22 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			}
 			$ledger['drafts'][ $account_id ][ $date ] = array(
 				'status'   => 'reserved',
+				'attempt'  => $attempt,
 				'post_ids' => array_values( array_map( 'intval', (array) $post_ids ) ),
 				'source'   => $source,
 				'at'       => time(),
 			);
-			self::save_ledger( $ledger );
+			// Nothing is uploaded or sent unless the reservation is durably there to block a replay.
+			if ( ! self::save_ledger( $ledger ) ) {
+				return new WP_Error( 'wx_daily_store', 'The day could not be reserved.' );
+			}
 		} finally {
 			AI_Chat_Bedrock_Security::release_lock( self::DAILY_LOCK, $lock );
 		}
 		self::$reservation = array(
 			'account' => $account_id,
 			'date'    => $date,
+			'attempt' => $attempt,
 		);
 		return self::$reservation;
 	}
@@ -470,26 +529,128 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	/**
 	 * Record how the day's draft ended: accepted, unknown, refused, or nothing (no draft was sent).
 	 *
+	 * Only this attempt's own, still reserved entry is written, under the ledger lock and from a
+	 * fresh read, so a concurrent pick or an owner's reconciliation is never overwritten.
+	 *
 	 * @param array|null $reservation From reserve(); nothing happens for null.
 	 * @param string     $status      New status.
 	 * @param array      $extra       media_id, code, post_ids.
+	 * @return bool Whether the answer is now durably recorded; true for a null reservation.
 	 */
 	private static function settle( $reservation, $status, $extra = array() ) {
 		self::$reservation = null;
 		if ( ! is_array( $reservation ) ) {
-			return;
+			return true;
 		}
-		$ledger = self::ledger();
-		$entry  = isset( $ledger['drafts'][ $reservation['account'] ][ $reservation['date'] ] ) && is_array( $ledger['drafts'][ $reservation['account'] ][ $reservation['date'] ] ) ? $ledger['drafts'][ $reservation['account'] ][ $reservation['date'] ] : array();
-		$ledger['drafts'][ $reservation['account'] ][ $reservation['date'] ] = array_merge(
-			$entry,
-			$extra,
-			array(
-				'status'      => $status,
-				'answered_at' => time(),
-			)
+		$lock = self::lock_ledger( self::DAILY_LOCK_WAIT_MS );
+		if ( '' === $lock ) {
+			return false;
+		}
+		try {
+			$ledger = self::ledger();
+			$entry  = self::reserved_entry( $ledger, $reservation );
+			if ( null === $entry ) {
+				return false;
+			}
+			$ledger['drafts'][ $reservation['account'] ][ $reservation['date'] ] = array_merge(
+				$entry,
+				$extra,
+				array(
+					'status'      => $status,
+					'answered_at' => time(),
+				)
+			);
+			return self::save_ledger( $ledger );
+		} finally {
+			AI_Chat_Bedrock_Security::release_lock( self::DAILY_LOCK, $lock );
+		}
+	}
+
+	/**
+	 * Freeze what is about to be sent into the day's reservation, so that the owner can later tell
+	 * this draft from any other in the draft box: each article's title, address and text, the
+	 * reviews it was converted from, and for the scheduled run the pick it fulfils.
+	 *
+	 * @param array      $reservation From reserve().
+	 * @param array      $articles    The outbound articles.
+	 * @param array      $reviewed    Post ID => review digest, for automatic sources.
+	 * @param array|null $pick        The day's pick, for the scheduled run.
+	 * @return bool Whether the reservation is still this attempt's and now carries the payload.
+	 */
+	private static function bind( $reservation, $articles, $reviewed, $pick ) {
+		if ( ! is_array( $reservation ) ) {
+			return true;
+		}
+		$lock = self::lock_ledger( self::DAILY_LOCK_WAIT_MS );
+		if ( '' === $lock ) {
+			return false;
+		}
+		try {
+			$ledger = self::ledger();
+			$entry  = self::reserved_entry( $ledger, $reservation );
+			if ( null === $entry ) {
+				return false;
+			}
+			$entry['payload'] = array_map( array( __CLASS__, 'article_identity' ), array_values( $articles ) );
+			$entry['reviews'] = array_map( 'strval', $reviewed );
+			if ( is_array( $pick ) ) {
+				$entry['pick'] = array(
+					'post_id'       => (int) $pick['post_id'],
+					'review_digest' => (string) $pick['review_digest'],
+				);
+			}
+			$entry['bound_at'] = time();
+
+			$ledger['drafts'][ $reservation['account'] ][ $reservation['date'] ] = $entry;
+			return self::save_ledger( $ledger );
+		} finally {
+			AI_Chat_Bedrock_Security::release_lock( self::DAILY_LOCK, $lock );
+		}
+	}
+
+	/**
+	 * What identifies an article across WeChat's own rewriting of its HTML: title, source address,
+	 * and the hash of its text with markup, entities and whitespace taken out.
+	 *
+	 * @param array $article An outbound or native article (title, content_source_url, content).
+	 * @return array title, content_source_url, text_sha256.
+	 */
+	public static function article_identity( $article ) {
+		return array(
+			'title'              => isset( $article['title'] ) ? (string) $article['title'] : '',
+			'content_source_url' => isset( $article['content_source_url'] ) ? (string) $article['content_source_url'] : '',
+			'text_sha256'        => hash( 'sha256', self::article_text( isset( $article['content'] ) ? (string) $article['content'] : '' ) ),
 		);
-		self::save_ledger( $ledger );
+	}
+
+	/**
+	 * The readable text of article HTML, with tags, entities and all whitespace removed.
+	 *
+	 * @param string $html Article HTML.
+	 * @return string
+	 */
+	public static function article_text( $html ) {
+		$text = preg_replace( '/<(script|style)\b[^>]*>.*?<\/\1>/is', '', $html );
+		$text = html_entity_decode( wp_strip_all_tags( (string) $text ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$text = str_replace( "\xC2\xA0", ' ', $text );
+		return (string) preg_replace( '/\s+/u', '', $text );
+	}
+
+	/**
+	 * The scheduled run writes only the day's pick, as picked: the same post, with the review it
+	 * was picked at still the current one.
+	 *
+	 * @param array   $options Settings.
+	 * @param WP_Post $post    The post about to be converted or sent.
+	 * @param string  $digest  Its current review digest.
+	 * @return array|null The pick, or null when the pick is missing, another post's or stale.
+	 */
+	private static function pick_binding( $options, $post, $digest ) {
+		$pick = self::pick_for( AI_Chat_Bedrock_WeChat::app_id( $options ), self::today() );
+		if ( ! is_array( $pick ) || (int) $pick['post_id'] !== (int) $post->ID || ! isset( $pick['review_digest'] ) || ! hash_equals( (string) $pick['review_digest'], (string) $digest ) ) {
+			return null;
+		}
+		return $pick;
 	}
 
 	/**
@@ -642,6 +803,10 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 					self::settle( $reservation, 'nothing', array( 'code' => 'wx_review' ) );
 					return self::note( new WP_Error( 'wx_review', 'The curated review changed before conversion.' ), $source );
 				}
+				if ( 'schedule' === $source && null !== $reservation && null === self::pick_binding( $options, $current, $snapshot['digest'] ) ) {
+					self::settle( $reservation, 'nothing', array( 'code' => 'wx_pick' ) );
+					return self::note( new WP_Error( 'wx_pick', 'The scheduled run writes only the post picked for today, as picked.' ), $source );
+				}
 				$post                 = $current;
 				$reviewed[ $post_id ] = $snapshot['digest'];
 			}
@@ -663,6 +828,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			self::settle( $reservation, 'nothing', array( 'code' => 'wx_nothing' ) );
 			return self::note( $error, $source, $skipped );
 		}
+		$pick = null;
 		if ( $automatic ) {
 			$current_options = self::options( null );
 			foreach ( $posts as $post ) {
@@ -671,6 +837,13 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				if ( is_wp_error( $snapshot ) || '' !== self::review_shortfall( $current, $current_options ) || ! hash_equals( $reviewed[ $post->ID ], $snapshot['digest'] ) ) {
 					self::settle( $reservation, 'nothing', array( 'code' => 'wx_review' ) );
 					return self::note( new WP_Error( 'wx_review', 'The curated version changed during conversion; no draft was written.' ), $source );
+				}
+				if ( 'schedule' === $source && null !== $reservation ) {
+					$pick = self::pick_binding( $current_options, $current, $snapshot['digest'] );
+					if ( null === $pick ) {
+						self::settle( $reservation, 'nothing', array( 'code' => 'wx_pick' ) );
+						return self::note( new WP_Error( 'wx_pick', 'The pick changed during conversion; no draft was written.' ), $source );
+					}
 				}
 			}
 		}
@@ -706,6 +879,18 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				if ( is_wp_error( $reservation ) ) {
 					return self::note( $reservation, $source, $skipped );
 				}
+				if ( 'schedule' === $source ) {
+					$pick = self::pick_binding( self::options( null ), $posts[0], $reviewed[ $posts[0]->ID ] );
+					if ( null === $pick ) {
+						self::settle( $reservation, 'nothing', array( 'code' => 'wx_pick' ) );
+						return self::note( new WP_Error( 'wx_pick', 'The scheduled run writes only the post picked for today, as picked.' ), $source, $skipped );
+					}
+				}
+			}
+			// The reservation must still be this attempt's, and carry exactly what is sent, before
+			// WeChat is asked for anything: a day cleared or settled meanwhile sends nothing.
+			if ( ! self::bind( $reservation, $articles, $reviewed, $pick ) ) {
+				return self::note( new WP_Error( 'wx_daily_lost', 'The day\'s reservation changed before the draft was sent; nothing was written.' ), $source, $skipped );
 			}
 			$result = AI_Chat_Bedrock_WeChat_API::call( 'draft/add', wp_json_encode( array( 'articles' => $articles ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ), self::account( $options ), 30 );
 			if ( is_wp_error( $result ) ) {
@@ -737,7 +922,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				'wechat'
 			);
 		}
-		self::settle(
+		$recorded = self::settle(
 			$reservation,
 			'accepted',
 			array(
@@ -745,6 +930,11 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 				'post_ids' => array_map( 'intval', wp_list_pluck( $posts, 'ID' ) ),
 			)
 		);
+		if ( ! $recorded ) {
+			// WeChat has the draft and the posts' records say so, but the day's entry could not be
+			// settled: it stays reserved, holding later days, until the owner reconciles it.
+			return self::note( new WP_Error( 'wx_settle', 'WeChat accepted the draft, but the day\'s record could not be settled; reconcile it from the draft box.', array( 'media_id' => $media_id ) ), $source, $skipped );
+		}
 		// Older drafts of a post sent on its own are stale copies: they go, unless another post
 		// shares them.
 		if ( ! $automatic && 1 === count( $posts ) ) {
@@ -2557,7 +2747,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		}
 		$account_id = AI_Chat_Bedrock_WeChat::app_id( $options );
 		$date       = self::today();
-		$lock       = AI_Chat_Bedrock_Security::acquire_lock( self::DAILY_LOCK, self::DAILY_LOCK_TTL );
+		$lock       = self::lock_ledger( self::DAILY_LOCK_WAIT_MS );
 		if ( '' === $lock ) {
 			return self::preparation_error( 'wx_daily_busy', 'Another draft or pick is being recorded.', 409 );
 		}
@@ -2580,7 +2770,9 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			);
 
 			$ledger['picks'][ $account_id ][ $date ] = $record;
-			self::save_ledger( $ledger );
+			if ( ! self::save_ledger( $ledger ) ) {
+				return self::preparation_error( 'ledger_store', 'The pick could not be stored.', 500 );
+			}
 			update_post_meta( $post->ID, self::PICK_META, wp_slash( $record ) );
 		} finally {
 			AI_Chat_Bedrock_Security::release_lock( self::DAILY_LOCK, $lock );
@@ -2608,52 +2800,78 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		if ( ! $entry || ! in_array( $entry['status'], array( 'reserved', 'unknown' ), true ) ) {
 			return self::preparation_error( 'nothing_to_reconcile', 'That day has no draft with an unknown result.', 409 );
 		}
+		// A fresh reservation is a writer still at work: its own answer settles it, not the owner.
+		if ( 'reserved' === $entry['status'] && time() - (int) ( isset( $entry['at'] ) ? $entry['at'] : 0 ) < self::DAILY_GRACE ) {
+			return self::preparation_error( 'reservation_live', 'A draft is being made for that day right now; reconcile it only if it is still unsettled in ten minutes.', 409 );
+		}
 		$post_ids = array_map( 'intval', isset( $entry['post_ids'] ) ? (array) $entry['post_ids'] : array() );
+		$media_id = '';
 		if ( 'accepted' === $input['outcome'] ) {
 			$media_id = isset( $input['media_id'] ) && is_string( $input['media_id'] ) ? sanitize_text_field( $input['media_id'] ) : '';
 			if ( '' === $media_id || ! $post_ids ) {
 				return self::preparation_error( 'reconcile_invalid', 'An accepted draft needs its media_id from the Official Accounts Platform.' );
 			}
+			// Only what this attempt froze before asking WeChat can be recognised; a day whose
+			// request never got that far cannot have landed as the reviewed draft.
+			$payload = isset( $entry['payload'] ) && is_array( $entry['payload'] ) ? array_values( $entry['payload'] ) : array();
+			if ( count( $payload ) !== count( $post_ids ) ) {
+				return self::preparation_error( 'reconcile_unbound', 'No draft request with the reviewed articles was sent for that day; it cannot be recorded as accepted.', 409 );
+			}
 			$draft = AI_Chat_Bedrock_WeChat_API::call( 'draft/get', wp_json_encode( array( 'media_id' => $media_id ) ), self::account( $options ), 10 );
 			if ( is_wp_error( $draft ) ) {
 				return new WP_Error( $draft->get_error_code(), self::describe( $draft ), array( 'status' => 502 ) );
 			}
-			$items = isset( $draft['news_item'] ) && is_array( $draft['news_item'] ) ? $draft['news_item'] : array();
-			if ( count( $items ) !== count( $post_ids ) ) {
+			$items = isset( $draft['news_item'] ) && is_array( $draft['news_item'] ) ? array_values( $draft['news_item'] ) : array();
+			if ( count( $items ) !== count( $payload ) ) {
 				return self::preparation_error( 'draft_differs', 'That draft does not hold the reviewed articles.', 409 );
 			}
-			foreach ( $post_ids as $index => $post_id ) {
-				$post    = get_post( $post_id );
-				$edition = $post instanceof WP_Post && metadata_exists( 'post', $post_id, self::EDITION_META ) ? self::edition_for_post( $post ) : null;
-				$title   = is_array( $edition ) ? self::title( $edition['record']['title'] ) : '';
-				if ( ! $post instanceof WP_Post || ! isset( $items[ $index ]['content_source_url'], $items[ $index ]['title'] ) || (string) get_permalink( $post ) !== (string) $items[ $index ]['content_source_url'] || ( '' !== $title && $title !== (string) $items[ $index ]['title'] ) ) {
+			foreach ( $payload as $index => $frozen ) {
+				$native = is_array( $items[ $index ] ) ? self::article_identity( $items[ $index ] ) : null;
+				if ( null === $native || $native !== $frozen ) {
 					return self::preparation_error( 'draft_differs', 'That draft does not hold the reviewed articles.', 409 );
 				}
 			}
-			foreach ( $post_ids as $index => $post_id ) {
-				AI_Chat_Bedrock_Distribution::record(
-					$post_id,
-					array(
-						'platform' => 'wechat',
-						'item_id'  => $media_id,
-						'status'   => 'planned',
-						'version'  => 'idx:' . $index,
-						'title'    => get_the_title( $post_id ),
-						'language' => AI_Chat_Bedrock_Content::language( get_post( $post_id ) ),
-						'note'     => __( 'In the WeChat Official Account\'s draft box; publish it from the Official Accounts Platform.', 'ai-chat-for-amazon-bedrock' ),
-					),
-					'wechat'
-				);
-			}
-			$entry['media_id'] = $media_id;
 		}
-		$entry['status']        = $input['outcome'];
-		$entry['reconciled_at'] = time();
-		$entry['reconciled_by'] = get_current_user_id();
-		$entry['evidence']      = $input['evidence'];
+		$lock = self::lock_ledger( self::DAILY_LOCK_WAIT_MS );
+		if ( '' === $lock ) {
+			return self::preparation_error( 'wx_daily_busy', 'Another draft or pick is being recorded.', 409 );
+		}
+		try {
+			$ledger  = self::ledger();
+			$current = isset( $ledger['drafts'][ $account_id ][ $input['date'] ] ) && is_array( $ledger['drafts'][ $account_id ][ $input['date'] ] ) ? $ledger['drafts'][ $account_id ][ $input['date'] ] : null;
+			if ( $current !== $entry ) {
+				return self::preparation_error( 'reconcile_changed', 'That day\'s record changed while it was being checked; read it again.', 409 );
+			}
+			if ( '' !== $media_id ) {
+				foreach ( $post_ids as $index => $post_id ) {
+					AI_Chat_Bedrock_Distribution::record(
+						$post_id,
+						array(
+							'platform' => 'wechat',
+							'item_id'  => $media_id,
+							'status'   => 'planned',
+							'version'  => 'idx:' . $index,
+							'title'    => get_the_title( $post_id ),
+							'language' => AI_Chat_Bedrock_Content::language( get_post( $post_id ) ),
+							'note'     => __( 'In the WeChat Official Account\'s draft box; publish it from the Official Accounts Platform.', 'ai-chat-for-amazon-bedrock' ),
+						),
+						'wechat'
+					);
+				}
+				$entry['media_id'] = $media_id;
+			}
+			$entry['status']        = $input['outcome'];
+			$entry['reconciled_at'] = time();
+			$entry['reconciled_by'] = get_current_user_id();
+			$entry['evidence']      = $input['evidence'];
 
-		$ledger['drafts'][ $account_id ][ $input['date'] ] = $entry;
-		self::save_ledger( $ledger );
+			$ledger['drafts'][ $account_id ][ $input['date'] ] = $entry;
+			if ( ! self::save_ledger( $ledger ) ) {
+				return self::preparation_error( 'ledger_store', 'The day\'s record could not be stored.', 500 );
+			}
+		} finally {
+			AI_Chat_Bedrock_Security::release_lock( self::DAILY_LOCK, $lock );
+		}
 		return $entry;
 	}
 
@@ -2747,6 +2965,10 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			'wx_daily_done'    => __( 'The Official Account already has its one draft for today, Singapore time. The next can be made tomorrow.', 'ai-chat-for-amazon-bedrock' ),
 			'wx_daily_unknown' => __( 'An earlier day\'s draft request got no answer. Check the draft box and reconcile that day before another draft is made.', 'ai-chat-for-amazon-bedrock' ),
 			'wx_daily_busy'    => __( 'Another draft is being made right now. Try again in a moment.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_daily_store'   => __( 'The day could not be reserved in the database, so nothing was sent. Try again.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_daily_lost'    => __( 'The day\'s reservation was changed by another operation before the draft was sent, so nothing was written. Check the day\'s record.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_settle'        => __( 'WeChat accepted the draft, but the day\'s record could not be settled. Reconcile the day from the draft box before another draft is made.', 'ai-chat-for-amazon-bedrock' ),
+			'wx_pick'          => __( 'The scheduled run writes only the post picked for today, as it was picked. Pick the current version again.', 'ai-chat-for-amazon-bedrock' ),
 		);
 		if ( isset( $known[ $code ] ) ) {
 			return $known[ $code ];

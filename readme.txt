@@ -438,7 +438,7 @@ what a good answer says.
 == Changelog ==
 
 = 1.73.0 =
-* The scheduled WeChat run makes one draft a day, Singapore time, of the post an editor picked for the day through the pick-wechat-post ability, bound to its exact reviewed version; no pick, no draft. Every way of making a draft (schedule, editor, agent) takes the day under one lock before anything is sent, so the account gets one new draft a day; a draft request without an answer holds that day and later ones until the owner reconciles it from the draft box (reconcile-wechat-draft), and nothing is sent again on a guess.
+* The scheduled WeChat run makes one draft a day, Singapore time, of the post an editor picked for the day through the pick-wechat-post ability, bound to its exact reviewed version; no pick, no draft. Every way of making a draft (schedule, editor, agent) takes the day under one lock before anything is sent, so the account gets one new draft a day; a draft request without an answer holds that day and later ones until the owner reconciles it from the draft box (reconcile-wechat-draft), and nothing is sent again on a guess. Reservation, settlement and the owner's reconciliation are serialized under one ledger lock and bound to the attempt, so an in-flight draft is never cleared or counted twice; a reservation the database did not keep sends nothing; the day's record freezes the sent articles, so only that draft can be adopted from the draft box; and the scheduled run sends the pick exactly as picked.
 
 = 1.72.3 =
 * The bundled Japanese translation follows the ja.wordpress.org translation style guide: half-width parentheses, colons, question and exclamation marks with the guide's spacing, and a space between half-width words and Japanese text. Wording, placeholders and links are unchanged.
@@ -468,12 +468,6 @@ what a good answer says.
 * Authorized editors and agents can prepare a separate static WeChat edition with its own title, excerpt and local cover. The published WordPress article stays unchanged.
 * Automatic draft selection requires an explicit public edition and a current independent review bound to its exact source and image bytes. Missing, changed or unknown drafts remain held for reconciliation.
 * The real WordPress abilities and MCP integration is covered by release checks. Final draft preview, publication and follower sending remain with the Official Account owner.
-
-= 1.69.0 =
-* Automatic WeChat drafts require a current editorial review of the exact public article, locally bound image files and conversion source. Reviews cover reader fit, original value, evidence, rights, mobile readability, safety and public-only content; changed or expired inputs require another review.
-* Authorized editors and agents can read the review input and record its attestation through protected WordPress abilities and MCP tools. The publishing pipeline remains responsible for independent review and the final native draft preview.
-* Automatic updates hold missing, unknown or externally changed WeChat drafts for reconciliation instead of recreating them. Final publication and follower sending remain with the Official Account owner.
-* Updated Chinese and Japanese translations and release checks for the review workflow.
 
 == Upgrade Notice ==
 

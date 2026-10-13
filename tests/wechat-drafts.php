@@ -109,6 +109,12 @@ function delete_option( $name ) {
 	return true;
 }
 function update_option( $name, $value, $autoload = null ) {
+	if ( isset( $GLOBALS['aicfab_before_option_write'] ) && is_callable( $GLOBALS['aicfab_before_option_write'] ) ) {
+		call_user_func( $GLOBALS['aicfab_before_option_write'], $name, $value );
+	}
+	if ( isset( $GLOBALS['aicfab_option_fail'] ) && is_callable( $GLOBALS['aicfab_option_fail'] ) && call_user_func( $GLOBALS['aicfab_option_fail'], $name, $value ) ) {
+		return false;
+	}
 	$GLOBALS['aicfab_store'][ $name ] = $value;
 	return true;
 }
@@ -510,8 +516,23 @@ function drafts_reset() {
 	$GLOBALS['aicfab_replies']    = array();
 	$GLOBALS['aicfab_queries']    = array();
 	$GLOBALS['aicfab_mail']       = array();
-	unset( $GLOBALS['aicfab_on_http'] );
+	unset( $GLOBALS['aicfab_on_http'], $GLOBALS['aicfab_before_option_write'], $GLOBALS['aicfab_option_fail'] );
 	drafts_posts();
+}
+// WeChat's copy of the day's draft, as draft/get would return it: the sent articles, rewritten the
+// way the platform does (styles, image addresses), with the fields given replaced.
+function drafts_native_copy( $changes = array(), $index = 0 ) {
+	$sent = drafts_sent_body()['articles'];
+	$items = array();
+	foreach ( $sent as $i => $article ) {
+		$item = array(
+			'title'              => $article['title'],
+			'content_source_url' => $article['content_source_url'],
+			'content'            => '<section style="font-size:16px"><p>' . str_replace( 'https://example.test/wp-content/uploads/', 'https://mmbiz.qpic.cn/mmbiz_jpg/', $article['content'] ) . "</p>\n</section>",
+		);
+		$items[] = $i === $index ? array_merge( $item, $changes ) : $item;
+	}
+	return json_encode( array( 'news_item' => $items ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
 }
 function drafts_paths() {
 	return array_column( $GLOBALS['aicfab_http'], 'path' );
@@ -953,7 +974,10 @@ $aicfab_more = $drafts->ability_reconcile( $aicfab_reconcile_input );
 $GLOBALS['aicfab_replies']['draft/get'] = array( '{"news_item":[{"title":"' . $aicfab_title . '","content_source_url":"https://example.test/?p=77"}]}' );
 $aicfab_elsewhere = $drafts->ability_reconcile( $aicfab_reconcile_input );
 check_drafts( is_wp_error( $aicfab_more ) && 'draft_differs' === $aicfab_more->get_error_code() && is_wp_error( $aicfab_elsewhere ) && 'draft_differs' === $aicfab_elsewhere->get_error_code() && 'unknown' === AI_Chat_Bedrock_WeChat_Drafts::daily_drafts()[ AICFAB_APP_ID ][ $aicfab_today ]['status'], 'A draft with more articles than the day\'s, or the right title over another post\'s address, settles nothing.' );
-$GLOBALS['aicfab_replies']['draft/get'] = array( '{"news_item":[{"title":"' . $aicfab_title . '","content_source_url":"https://example.test/?p=1"}]}' );
+$GLOBALS['aicfab_replies']['draft/get'] = array( drafts_native_copy( array( 'content' => '<p>Same title and address, other text.</p>' ) ) );
+$aicfab_other_text = $drafts->ability_reconcile( $aicfab_reconcile_input );
+check_drafts( is_wp_error( $aicfab_other_text ) && 'draft_differs' === $aicfab_other_text->get_error_code() && 'unknown' === AI_Chat_Bedrock_WeChat_Drafts::daily_drafts()[ AICFAB_APP_ID ][ $aicfab_today ]['status'] && ! AI_Chat_Bedrock_WeChat_Drafts::draft_of( 1 ), 'A draft with the right title and address but other text is not the reviewed article: nothing is adopted.' );
+$GLOBALS['aicfab_replies']['draft/get'] = array( drafts_native_copy() );
 $aicfab_settled = $drafts->ability_reconcile( $aicfab_reconcile_input );
 check_drafts( ! is_wp_error( $aicfab_settled ) && 'accepted' === $aicfab_settled['status'] && 'RECOVERED_DRAFT_1' === $aicfab_settled['media_id'] && 'RECOVERED_DRAFT_1' === AI_Chat_Bedrock_WeChat_Drafts::draft_of( 1 )['media_id'] && AI_Chat_Bedrock_WeChat_Drafts::sent( 1 ) && 'wx_daily_done' === AI_Chat_Bedrock_WeChat_Drafts::daily_block( AICFAB_APP_ID, $aicfab_today ) && '' === AI_Chat_Bedrock_WeChat_Drafts::daily_block( AICFAB_APP_ID, '2099-01-01' ) && 'draft/get' === end( $GLOBALS['aicfab_http'] )['path'], 'A matching draft is adopted into the post\'s record; the day is done and later days are free; only a read went to WeChat.' );
 $GLOBALS['aicfab_store'][ AI_Chat_Bedrock_WeChat_Drafts::DAILY_OPTION ]['drafts'][ AICFAB_APP_ID ]['2001-01-01'] = array( 'status' => 'unknown', 'post_ids' => array( 5 ), 'source' => 'schedule', 'at' => 978307200, 'code' => 'wx_timeout' );
@@ -981,6 +1005,142 @@ drafts_local_article( 2, array( 'html' => '<p>' . str_repeat( '机器人实验�
 drafts_review( 2 );
 $aicfab_history = drafts_pick( 2 );
 check_drafts( AI_Chat_Bedrock_WeChat_Drafts::sent( 2 ) && null === AI_Chat_Bedrock_WeChat_Drafts::draft_of( 2 ) && is_wp_error( $aicfab_history ) && 'already_sent' === $aicfab_history->get_error_code() && ! in_array( 2, AI_Chat_Bedrock_WeChat_Drafts::candidates(), true ), 'A recorded outside draft keeps its post out of picks and drafts, without the plugin touching that draft.' );
+
+
+// --- The day's record under contention (R58-1..4) ----------------------------------------------
+
+function drafts_fresh_day( $long ) {
+	drafts_reset();
+	drafts_settings( array( 'wechat_drafts_schedule' => 'daily', 'wechat_drafts_count' => 2 ) );
+	$GLOBALS['aicfab_posts'][5] = $long;
+	drafts_local_article();
+	drafts_local_article( 5 );
+	drafts_review( 1 );
+	drafts_review( 5 );
+}
+
+// Reconciliation keeps out of a ledger another request holds, like every other ledger write.
+drafts_fresh_day( $long );
+$GLOBALS['aicfab_replies']['draft/add'] = array( 'lost answer, not JSON' );
+$aicfab_unknown = $drafts->ability_create( array( 'post_ids' => array( 1 ) ) );
+$aicfab_held = ( time() + 120 ) . '|independent-writer-holder';
+$GLOBALS['aicfab_store'][ AI_Chat_Bedrock_WeChat_Drafts::DAILY_LOCK ] = $aicfab_held;
+$aicfab_not_landed_input = array( 'date' => $aicfab_today, 'outcome' => 'not-landed', 'evidence' => 'Draft box opened in the Official Accounts Platform; no draft of that day.' );
+$aicfab_locked_out = $drafts->ability_reconcile( $aicfab_not_landed_input );
+check_drafts( is_wp_error( $aicfab_unknown ) && 'unknown' === AI_Chat_Bedrock_WeChat_Drafts::daily_drafts()[ AICFAB_APP_ID ][ $aicfab_today ]['status'] && is_wp_error( $aicfab_locked_out ) && 'wx_daily_busy' === $aicfab_locked_out->get_error_code() && 'unknown' === AI_Chat_Bedrock_WeChat_Drafts::daily_drafts()[ AICFAB_APP_ID ][ $aicfab_today ]['status'] && $aicfab_held === get_option( AI_Chat_Bedrock_WeChat_Drafts::DAILY_LOCK ), 'While another request holds the ledger, the owner\'s reconciliation waits its turn and changes nothing.' );
+unset( $GLOBALS['aicfab_store'][ AI_Chat_Bedrock_WeChat_Drafts::DAILY_LOCK ] );
+
+// A reservation a writer is still working on cannot be cleared from under it: while the first
+// draft/add is in flight, the owner's not-landed is refused and a second create finds the day taken.
+drafts_fresh_day( $long );
+$aicfab_inner = array();
+$GLOBALS['aicfab_on_http'] = function ( $path ) use ( &$aicfab_inner, $drafts, $aicfab_not_landed_input ) {
+	if ( 'draft/add' !== $path ) {
+		return;
+	}
+	unset( $GLOBALS['aicfab_on_http'] );
+	$entry = AI_Chat_Bedrock_WeChat_Drafts::daily_drafts()[ AICFAB_APP_ID ][ AI_Chat_Bedrock_WeChat_Drafts::today() ];
+	$aicfab_inner['reserved'] = 'reserved' === $entry['status'] && isset( $entry['attempt'], $entry['payload'][0]['text_sha256'] );
+	$aicfab_inner['reconcile'] = $drafts->ability_reconcile( $aicfab_not_landed_input );
+	$aicfab_inner['second'] = AI_Chat_Bedrock_WeChat_Drafts::create( array( 5 ), null, 'manual' );
+};
+$aicfab_first = AI_Chat_Bedrock_WeChat_Drafts::create( array( 1 ), null, 'agent' );
+$aicfab_day = AI_Chat_Bedrock_WeChat_Drafts::daily_drafts()[ AICFAB_APP_ID ][ $aicfab_today ];
+check_drafts( $aicfab_inner['reserved'] && is_wp_error( $aicfab_inner['reconcile'] ) && 'reservation_live' === $aicfab_inner['reconcile']->get_error_code() && is_wp_error( $aicfab_inner['second'] ) && 'wx_daily_done' === $aicfab_inner['second']->get_error_code() && ! is_wp_error( $aicfab_first ) && 1 === count( array_filter( drafts_paths(), function ( $p ) { return 'draft/add' === $p; } ) ) && 'accepted' === $aicfab_day['status'] && array( 1 ) === $aicfab_day['post_ids'], 'A live reservation is neither reconciled away nor taken over: one draft/add, and the day settles to the writer that made it.' );
+
+// A reservation whose writer died is the owner's to clear, but only after the grace period.
+drafts_fresh_day( $long );
+$GLOBALS['aicfab_store'][ AI_Chat_Bedrock_WeChat_Drafts::DAILY_OPTION ] = array( 'drafts' => array( AICFAB_APP_ID => array( $aicfab_today => array( 'status' => 'reserved', 'attempt' => 'dead0000dead0000', 'post_ids' => array( 1 ), 'source' => 'agent', 'at' => time() - AI_Chat_Bedrock_WeChat_Drafts::DAILY_GRACE - 1 ) ) ) );
+$aicfab_dead_accepted = $drafts->ability_reconcile( array( 'date' => $aicfab_today, 'outcome' => 'accepted', 'media_id' => 'SOMETHING_IN_THE_BOX', 'evidence' => 'Draft box opened in the Official Accounts Platform; one draft dated today.' ) );
+$aicfab_dead_cleared = $drafts->ability_reconcile( $aicfab_not_landed_input );
+check_drafts( is_wp_error( $aicfab_dead_accepted ) && 'reconcile_unbound' === $aicfab_dead_accepted->get_error_code() && ! in_array( 'draft/get', drafts_paths(), true ) && ! is_wp_error( $aicfab_dead_cleared ) && 'not-landed' === $aicfab_dead_cleared['status'] && '' === AI_Chat_Bedrock_WeChat_Drafts::daily_block( AICFAB_APP_ID, $aicfab_today ), 'A dead reservation that never asked WeChat anything cannot be recorded as accepted, and the owner clears it after the grace period.' );
+
+// A reservation the database did not keep sends nothing: no upload, no draft/add.
+drafts_fresh_day( $long );
+$calls = count( $GLOBALS['aicfab_http'] );
+$GLOBALS['aicfab_option_fail'] = function ( $name ) {
+	return AI_Chat_Bedrock_WeChat_Drafts::DAILY_OPTION === $name;
+};
+$aicfab_unkept = AI_Chat_Bedrock_WeChat_Drafts::create( array( 1 ), null, 'agent' );
+unset( $GLOBALS['aicfab_option_fail'] );
+check_drafts( is_wp_error( $aicfab_unkept ) && 'wx_daily_store' === $aicfab_unkept->get_error_code() && count( $GLOBALS['aicfab_http'] ) === $calls && ! isset( AI_Chat_Bedrock_WeChat_Drafts::daily_drafts()[ AICFAB_APP_ID ][ $aicfab_today ] ) && false !== strpos( AI_Chat_Bedrock_WeChat_Drafts::describe( $aicfab_unkept ), 'nothing was sent' ), 'When the reservation is not durably stored, nothing is uploaded or sent and the day stays open.' );
+
+// WeChat accepted, but the day's settlement could not be stored: the acceptance is not reported
+// as recorded, the post's record keeps the draft, and the day stays reserved for the owner.
+drafts_fresh_day( $long );
+$GLOBALS['aicfab_option_fail'] = function ( $name, $value ) {
+	return AI_Chat_Bedrock_WeChat_Drafts::DAILY_OPTION === $name && 'accepted' === ( $value['drafts'][ AICFAB_APP_ID ][ AI_Chat_Bedrock_WeChat_Drafts::today() ]['status'] ?? '' );
+};
+$aicfab_unsettled = AI_Chat_Bedrock_WeChat_Drafts::create( array( 1 ), null, 'agent' );
+unset( $GLOBALS['aicfab_option_fail'] );
+$aicfab_day = AI_Chat_Bedrock_WeChat_Drafts::daily_drafts()[ AICFAB_APP_ID ][ $aicfab_today ];
+check_drafts( is_wp_error( $aicfab_unsettled ) && 'wx_settle' === $aicfab_unsettled->get_error_code() && '' !== $aicfab_unsettled->get_error_data()['media_id'] && 'reserved' === $aicfab_day['status'] && AI_Chat_Bedrock_WeChat_Drafts::sent( 1 ) && 'wx_daily_done' === AI_Chat_Bedrock_WeChat_Drafts::daily_block( AICFAB_APP_ID, $aicfab_today ) && 'wx_daily_unknown' === AI_Chat_Bedrock_WeChat_Drafts::daily_block( AICFAB_APP_ID, '2099-01-01' ), 'An accepted draft whose settlement failed is reported as unsettled, not as recorded; the day holds until reconciled.' );
+
+// A pick saved by a concurrent request between settlement's read and write survives it.
+drafts_fresh_day( $long );
+$aicfab_concurrent_pick = null;
+$GLOBALS['aicfab_before_option_write'] = function ( $name, $value ) use ( &$aicfab_concurrent_pick ) {
+	if ( AI_Chat_Bedrock_WeChat_Drafts::DAILY_OPTION === $name && 'accepted' === ( $value['drafts'][ AICFAB_APP_ID ][ AI_Chat_Bedrock_WeChat_Drafts::today() ]['status'] ?? '' ) ) {
+		unset( $GLOBALS['aicfab_before_option_write'] );
+		$aicfab_concurrent_pick = drafts_pick( 5 );
+	}
+};
+$aicfab_settled_draft = AI_Chat_Bedrock_WeChat_Drafts::create( array( 1 ), null, 'agent' );
+check_drafts( ! is_wp_error( $aicfab_settled_draft ) && is_wp_error( $aicfab_concurrent_pick ) && 'wx_daily_busy' === $aicfab_concurrent_pick->get_error_code() && 'accepted' === AI_Chat_Bedrock_WeChat_Drafts::daily_drafts()[ AICFAB_APP_ID ][ $aicfab_today ]['status'], 'Settlement holds the ledger from read to write, so a pick arriving in between is told to wait rather than being lost.' );
+$aicfab_late_pick = drafts_pick( 5 );
+check_drafts( ! is_wp_error( $aicfab_late_pick ) && 5 === AI_Chat_Bedrock_WeChat_Drafts::pick_for( AICFAB_APP_ID, $aicfab_today )['post_id'] && 'accepted' === AI_Chat_Bedrock_WeChat_Drafts::daily_drafts()[ AICFAB_APP_ID ][ $aicfab_today ]['status'], 'The pick made afterwards and the settled day both stand.' );
+
+// Reconciliation recognises the frozen draft only: same title and address with other text, or an
+// unrelated title once the local edition is gone, settle nothing.
+drafts_fresh_day( $long );
+$GLOBALS['aicfab_replies']['draft/add'] = array( 'lost answer, not JSON' );
+$drafts->ability_create( array( 'post_ids' => array( 5 ) ) );
+$aicfab_accept_input = array( 'date' => $aicfab_today, 'outcome' => 'accepted', 'media_id' => 'OFFLINE_RECOVERED', 'evidence' => 'Draft box opened in the Official Accounts Platform; one draft dated today.' );
+$GLOBALS['aicfab_replies']['draft/get'] = array( drafts_native_copy( array( 'content' => '<p>Unreviewed changed body: offline negative fixture.</p>' ) ) );
+$aicfab_body_differs = $drafts->ability_reconcile( $aicfab_accept_input );
+unset( $GLOBALS['aicfab_meta'][5][ AI_Chat_Bedrock_WeChat_Drafts::EDITION_META ] );
+$GLOBALS['aicfab_replies']['draft/get'] = array( drafts_native_copy( array( 'title' => 'Unrelated unreviewed title', 'content' => '<p>Different body.</p>' ) ) );
+$aicfab_title_differs = $drafts->ability_reconcile( $aicfab_accept_input );
+$GLOBALS['aicfab_replies']['draft/get'] = array( drafts_native_copy( array( 'title' => 'Unrelated unreviewed title' ) ) );
+$aicfab_title_only = $drafts->ability_reconcile( $aicfab_accept_input );
+check_drafts( is_wp_error( $aicfab_body_differs ) && 'draft_differs' === $aicfab_body_differs->get_error_code() && is_wp_error( $aicfab_title_differs ) && 'draft_differs' === $aicfab_title_differs->get_error_code() && is_wp_error( $aicfab_title_only ) && 'draft_differs' === $aicfab_title_only->get_error_code() && 'unknown' === AI_Chat_Bedrock_WeChat_Drafts::daily_drafts()[ AICFAB_APP_ID ][ $aicfab_today ]['status'] && null === AI_Chat_Bedrock_WeChat_Drafts::draft_of( 5 ), 'Other text behind the same title and address, or another title with the edition gone, is not the reviewed draft: nothing is adopted.' );
+$GLOBALS['aicfab_replies']['draft/get'] = array( drafts_native_copy() );
+$aicfab_frozen_match = $drafts->ability_reconcile( $aicfab_accept_input );
+check_drafts( ! is_wp_error( $aicfab_frozen_match ) && 'accepted' === $aicfab_frozen_match['status'] && 'OFFLINE_RECOVERED' === AI_Chat_Bedrock_WeChat_Drafts::draft_of( 5 )['media_id'], 'The draft WeChat rewrote but did not change in text, title or address is the frozen one, even with the local edition gone.' );
+check_drafts( 'abc' === AI_Chat_Bedrock_WeChat_Drafts::article_text( "<p>a&nbsp;b</p>\n<img src=\"x\"> <b>c</b><script>no()</script>" ), 'Article text drops markup, entities and whitespace before hashing.' );
+
+// The scheduled run writes the pick as picked: a newer reviewed edition of the picked post is not
+// sent on the old pick, before uploads or right before draft/add.
+drafts_reset();
+drafts_settings( array( 'wechat_drafts_schedule' => 'daily', 'wechat_drafts_count' => 2 ) );
+$GLOBALS['aicfab_posts'][5] = $long;
+drafts_local_article();
+drafts_review( 1 );
+drafts_pick( 1 );
+$aicfab_selected = AI_Chat_Bedrock_WeChat_Drafts::daily_candidates();
+drafts_local_article( 1, array( 'title' => 'Changed edition B' ) );
+drafts_review( 1 );
+$calls = count( $GLOBALS['aicfab_http'] );
+$aicfab_stale = AI_Chat_Bedrock_WeChat_Drafts::create( $aicfab_selected, null, 'schedule' );
+check_drafts( array( 1 ) === $aicfab_selected && array() === AI_Chat_Bedrock_WeChat_Drafts::daily_candidates() && is_wp_error( $aicfab_stale ) && 'wx_pick' === $aicfab_stale->get_error_code() && count( $GLOBALS['aicfab_http'] ) === $calls && 'nothing' === AI_Chat_Bedrock_WeChat_Drafts::daily_drafts()[ AICFAB_APP_ID ][ $aicfab_today ]['status'] && ! AI_Chat_Bedrock_WeChat_Drafts::sent( 1 ), 'A scheduled write of a post whose review moved on from the pick uploads and sends nothing; the day stays open.' );
+drafts_new_day();
+drafts_pick( 1 );
+$GLOBALS['aicfab_on_http'] = function ( $path ) {
+	if ( 0 === strpos( $path, 'material/add_material' ) || 'media/uploadimg' === $path ) {
+		unset( $GLOBALS['aicfab_on_http'] );
+		drafts_local_article( 1, array( 'title' => 'Changed edition C' ) );
+		drafts_review( 1 );
+	}
+};
+$aicfab_moved = AI_Chat_Bedrock_WeChat_Drafts::create( array( 1 ), null, 'schedule' );
+unset( $GLOBALS['aicfab_on_http'] );
+check_drafts( is_wp_error( $aicfab_moved ) && in_array( $aicfab_moved->get_error_code(), array( 'wx_pick', 'wx_review' ), true ) && ! in_array( 'draft/add', drafts_paths(), true ) && ! AI_Chat_Bedrock_WeChat_Drafts::sent( 1 ), 'A pick or review that moves during the uploads stops the scheduled draft before draft/add.' );
+drafts_new_day();
+drafts_pick( 1 );
+AI_Chat_Bedrock_WeChat_Drafts::run();
+$aicfab_day = AI_Chat_Bedrock_WeChat_Drafts::daily_drafts()[ AICFAB_APP_ID ][ $aicfab_today ];
+check_drafts( 'accepted' === $aicfab_day['status'] && 'schedule' === $aicfab_day['source'] && 1 === $aicfab_day['pick']['post_id'] && AI_Chat_Bedrock_WeChat_Drafts::pick_for( AICFAB_APP_ID, $aicfab_today )['review_digest'] === $aicfab_day['pick']['review_digest'] && 'Changed edition C' === drafts_sent_body()['articles'][0]['title'], 'Picked again at its current review, the post is sent, and the day\'s record names the pick it fulfilled.' );
+check_drafts( false !== strpos( AI_Chat_Bedrock_WeChat_Drafts::describe( new WP_Error( 'wx_pick' ) ), 'picked' ) && false !== strpos( AI_Chat_Bedrock_WeChat_Drafts::describe( new WP_Error( 'wx_settle' ) ), 'Reconcile' ) && false !== strpos( AI_Chat_Bedrock_WeChat_Drafts::describe( new WP_Error( 'wx_daily_lost' ) ), 'nothing was written' ), 'The screen explains the new outcomes.' );
 
 // Wiring.
 $aicfab_abilities = isset( $GLOBALS['aicfab_registered_abilities'] ) ? $GLOBALS['aicfab_registered_abilities'] : array();
