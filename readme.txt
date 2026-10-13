@@ -440,6 +440,9 @@ what a good answer says.
 = 1.73.0 =
 * The scheduled WeChat run makes one draft a day, Singapore time, of the post an editor picked for the day through the pick-wechat-post ability, bound to its exact reviewed version; no pick, no draft. Every way of making a draft (schedule, editor, agent) takes the day under one lock before anything is sent, so the account gets one new draft a day; a draft request without an answer holds that day and later ones until the owner reconciles it from the draft box (reconcile-wechat-draft), and nothing is sent again on a guess.
 
+= 1.72.3 =
+* The bundled Japanese translation follows the ja.wordpress.org translation style guide: half-width parentheses, colons, question and exclamation marks with the guide's spacing, and a space between half-width words and Japanese text. Wording, placeholders and links are unchanged.
+
 = 1.72.2 =
 * Renamed AI Chatbot, Agents & MCP for Amazon Bedrock, naming the built-in WordPress MCP server.
 * A step-by-step guide for WordPress sites on AWS, in English and Japanese, and the readme says which AWS plans include Bedrock and how new-account credits apply.
