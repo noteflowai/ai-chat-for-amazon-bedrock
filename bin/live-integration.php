@@ -150,7 +150,7 @@ if ( ! function_exists( 'wp_get_abilities' ) ) {
 	);
 	$aicfab_actor = get_current_user_id();
 	wp_set_current_user( 0 );
-	foreach ( array( 'get-wechat-review' => true, 'review-wechat-post' => false, 'get-wechat-edition' => true, 'set-wechat-edition' => false ) as $aicfab_review_name => $aicfab_readonly ) {
+	foreach ( array( 'get-wechat-review' => true, 'review-wechat-post' => false, 'get-wechat-edition' => true, 'set-wechat-edition' => false, 'get-wechat-pick' => true ) as $aicfab_review_name => $aicfab_readonly ) {
 		$aicfab_review = isset( $aicfab_ours[ 'ai-chat-bedrock/' . $aicfab_review_name ] ) ? $aicfab_ours[ 'ai-chat-bedrock/' . $aicfab_review_name ] : null;
 		$aicfab_meta   = $aicfab_review ? (array) $aicfab_review->get_meta() : array();
 		$aicfab_ann    = isset( $aicfab_meta['annotations'] ) ? (array) $aicfab_meta['annotations'] : array();

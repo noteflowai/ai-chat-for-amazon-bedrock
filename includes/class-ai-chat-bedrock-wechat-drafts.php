@@ -2401,6 +2401,26 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			);
 		}
 		wp_register_ability(
+			'ai-chat-bedrock/get-wechat-pick',
+			array(
+				'label'               => __( 'Read the day\'s WeChat pick', 'ai-chat-for-amazon-bedrock' ),
+				'description'         => __( 'The post picked for the WeChat Official Account on a day (today by default, or tomorrow, Singapore date) and that day\'s draft record, if any. Reads the ledger only; does not contact WeChat. Requires permission to publish posts.', 'ai-chat-for-amazon-bedrock' ),
+				'input_schema'        => self::pick_read_schema(),
+				'output_schema'       => array( 'type' => 'object' ),
+				'execute_callback'    => array( $this, 'ability_get_pick' ),
+				'permission_callback' => array( $this, 'can_read_pick' ),
+				'category'            => AI_Chat_Bedrock_Abilities::CATEGORY,
+				'meta'                => array(
+					'annotations' => array(
+						'readonly'    => true,
+						'destructive' => false,
+						'idempotent'  => true,
+					),
+					'public'      => true,
+				),
+			)
+		);
+		wp_register_ability(
 			'ai-chat-bedrock/pick-wechat-post',
 			array(
 				'label'               => __( 'Pick the day\'s WeChat article', 'ai-chat-for-amazon-bedrock' ),
@@ -2674,9 +2694,60 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 					'minLength' => 20,
 					'maxLength' => 2000,
 				),
+				'date'          => array(
+					'type'        => 'string',
+					'pattern'     => '^\\d{4}-\\d{2}-\\d{2}$',
+					'description' => 'The day the pick is for, Singapore time: today (default) or tomorrow, so a pick made after 09:00 feeds the next scheduled run.',
+				),
 			),
 			'required'             => array( 'post_id', 'review_digest', 'pick_identity', 'reason' ),
 			'additionalProperties' => false,
+		);
+	}
+
+	public static function pick_read_schema() {
+		return array(
+			'type'                 => 'object',
+			'properties'           => array(
+				'date' => array(
+					'type'    => 'string',
+					'pattern' => '^\\d{4}-\\d{2}-\\d{2}$',
+				),
+			),
+			'additionalProperties' => false,
+		);
+	}
+
+	public function can_read_pick( $input = array() ) {
+		return get_current_user_id() > 0 && current_user_can( 'publish_posts' ) && is_array( $input );
+	}
+
+	/**
+	 * The pick and the draft record of a day, for the editorial pipeline and the owner.
+	 *
+	 * @param array $input date (optional; today or tomorrow, Singapore time).
+	 * @return array|WP_Error account, date, pick, draft.
+	 */
+	public function ability_get_pick( $input ) {
+		if ( ! $this->can_read_pick( $input ) ) {
+			return self::preparation_error( 'forbidden', 'Permission to publish posts is required.', 403 );
+		}
+		$date = isset( $input['date'] ) ? $input['date'] : self::today();
+		if ( ! is_string( $date ) || ! in_array( $date, array( self::today(), self::today( time() + DAY_IN_SECONDS ) ), true ) ) {
+			return self::preparation_error( 'pick_date', 'A pick is for today or tomorrow, Singapore time.', 409 );
+		}
+		$account_id = AI_Chat_Bedrock_WeChat::app_id( self::options( null ) );
+		$ledger     = self::ledger();
+		$draft      = isset( $ledger['drafts'][ $account_id ][ $date ] ) && is_array( $ledger['drafts'][ $account_id ][ $date ] ) ? $ledger['drafts'][ $account_id ][ $date ] : null;
+		if ( is_array( $draft ) ) {
+			// The record for readers: no attempt id or frozen payload, which are the writer's.
+			$draft = array_intersect_key( $draft, array_flip( array( 'status', 'post_ids', 'source', 'at', 'media_id', 'code', 'answered_at', 'reconciled_at' ) ) );
+		}
+		return array(
+			'account' => $account_id,
+			'date'    => $date,
+			'pick'    => self::pick_for( $account_id, $date ),
+			'draft'   => $draft,
 		);
 	}
 
@@ -2716,7 +2787,7 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 	 * Pick the one post the scheduled run drafts for the account today. The picker chooses for
 	 * quality; the plugin checks only that the post qualifies now and binds the exact review.
 	 *
-	 * @param array $input post_id, review_digest, pick_identity, reason.
+	 * @param array $input post_id, review_digest, pick_identity, reason, and optionally date (today or tomorrow).
 	 * @return array|WP_Error The pick.
 	 */
 	public function ability_pick( $input ) {
@@ -2725,6 +2796,11 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 		}
 		if ( ! isset( $input['review_digest'], $input['pick_identity'], $input['reason'] ) || ! is_string( $input['review_digest'] ) || ! preg_match( '/^[a-f0-9]{64}$/D', $input['review_digest'] ) || ! self::review_text( $input['pick_identity'], 3, 160 ) || ! self::review_text( $input['reason'], 20, 2000 ) ) {
 			return self::preparation_error( 'pick_invalid', 'A pick needs the review digest, who picked and a specific reason.' );
+		}
+		// The day's run is at 09:00; a pick made later in the day is for tomorrow. Never further.
+		$date = isset( $input['date'] ) ? $input['date'] : self::today();
+		if ( ! is_string( $date ) || ! in_array( $date, array( self::today(), self::today( time() + DAY_IN_SECONDS ) ), true ) ) {
+			return self::preparation_error( 'pick_date', 'A pick is for today or tomorrow, Singapore time.', 409 );
 		}
 		$options = self::options( null );
 		$post    = get_post( $input['post_id'] );
@@ -2746,7 +2822,6 @@ class AI_Chat_Bedrock_WeChat_Drafts {
 			return self::preparation_error( 'wrong_language', 'The account takes the site\'s Chinese posts.', 409 );
 		}
 		$account_id = AI_Chat_Bedrock_WeChat::app_id( $options );
-		$date       = self::today();
 		$lock       = self::lock_ledger( self::DAILY_LOCK_WAIT_MS );
 		if ( '' === $lock ) {
 			return self::preparation_error( 'wx_daily_busy', 'Another draft or pick is being recorded.', 409 );
