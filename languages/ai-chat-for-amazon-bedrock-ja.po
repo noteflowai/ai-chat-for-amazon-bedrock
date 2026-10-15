@@ -5166,7 +5166,7 @@ msgstr "コンテンツ、質問、AI 使用量、ストアの数値を表示し
 
 #: admin/class-ai-chat-bedrock-admin.php:1353
 msgid "Adds a Business insights screen with periods, comparisons, charts, a CSV download and questions in words, and a read-only query-metrics ability and MCP tool. Figures are read from data the site already keeps, including WooCommerce Analytics. Figures from fewer than five questions or orders are withheld, question figures stay on the screen, and no figure is sent to Amazon Bedrock."
-msgstr "期間、比較、グラフ、CSV ダウンロード、文章での質問を備えた「ビジネスインサイト」画面と、読み取り専用の query-metrics アビリティおよび MCP ツールを追加します。数値は、WooCommerce アナリティクスを含め、サイトが既に持っているデータから読み取ります。5件未満の質問や注文から得た数値は伏せられ、質問に関する数値は画面上だけに表示され、数値が Amazon Bedrock に送られることはありません。"
+msgstr "期間、比較、グラフ、CSV ダウンロード、文章での質問を備えた「ビジネスインサイト」画面と、読み取り専用の query-metrics アビリティおよび MCP ツールを追加します。数値は、WooCommerce アナリティクスを含め、サイトがすでに持っているデータから読み取ります。5件未満の質問や注文から得た数値は伏せられ、質問に関する数値は画面上だけに表示され、数値が Amazon Bedrock に送られることはありません。"
 
 
 #: admin/partials/ai-chat-bedrock-admin-metrics.php:15
@@ -5210,7 +5210,7 @@ msgstr "比較対象 %1$s (%2$s – %3$s)"
 
 #: admin/partials/ai-chat-bedrock-admin-metrics.php:108
 msgid "Figures for the site over a period, read from data it already keeps: published content, the conversation log, AI usage and, with WooCommerce, its Analytics. Figures counted from fewer than five questions or orders are withheld, so that no one can be picked out."
-msgstr "サイトが既に持っているデータから読み取った、期間ごとのサイトの数値です。対象は公開済みコンテンツ、会話ログ、AI 使用量、そして WooCommerce があればそのアナリティクスです。5件未満の質問や注文から数えた数値は、個人が特定されないよう伏せられます。"
+msgstr "サイトがすでに持っているデータから読み取った、期間ごとのサイトの数値です。対象は公開済みコンテンツ、会話ログ、AI 使用量、そして WooCommerce があればそのアナリティクスです。5件未満の質問や注文から数えた数値は、個人が特定されないよう伏せられます。"
 
 
 #: admin/partials/ai-chat-bedrock-admin-metrics.php:112
