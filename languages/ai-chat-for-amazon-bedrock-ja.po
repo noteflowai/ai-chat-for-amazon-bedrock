@@ -1420,7 +1420,8 @@ msgstr "CSV をエクスポート"
 
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:285
 msgid "Delete every stored conversation? This cannot be undone."
-msgstr "保存されているすべての会話を削除しますか ?この操作は取り消せません。"
+msgstr "保存されているすべての会話を削除しますか ? この操作は取り消せません。"
+
 
 #: admin/partials/ai-chat-bedrock-admin-conversations.php:288
 msgid "Delete all stored conversations"
@@ -2241,7 +2242,8 @@ msgstr "選択項目を取り消す"
 
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:184
 msgid "Disconnect every AI client? Each one has to be authorised again."
-msgstr "すべての AI クライアントを切断しますか ?各クライアントで再度認可が必要になります。"
+msgstr "すべての AI クライアントを切断しますか ? 各クライアントで再度認可が必要になります。"
+
 
 #: admin/partials/ai-chat-bedrock-admin-mcp-tab.php:184
 msgid "Revoke all connections"
@@ -2434,7 +2436,8 @@ msgstr "編集"
 
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:93
 msgid "Delete this profile? Chats that use it fall back to the main settings."
-msgstr "このプロファイルを削除しますか ?このプロファイルを使用しているチャットにはメイン設定が適用されます。"
+msgstr "このプロファイルを削除しますか ? このプロファイルを使用しているチャットにはメイン設定が適用されます。"
+
 
 #: admin/partials/ai-chat-bedrock-admin-leads.php:172
 #: admin/partials/ai-chat-bedrock-admin-profiles.php:97
@@ -2586,7 +2589,8 @@ msgstr "設定セクション"
 
 #: admin/partials/ai-chat-bedrock-admin-settings.php:122
 msgid "Delete the index? Answers use keyword search until the content is indexed again."
-msgstr "インデックスを削除しますか ?コンテンツを再度インデックス化するまで、回答にはキーワード検索が使用されます。"
+msgstr "インデックスを削除しますか ? コンテンツを再度インデックス化するまで、回答にはキーワード検索が使用されます。"
+
 
 #: admin/partials/ai-chat-bedrock-admin-settings.php:130
 msgid "Production guidance"
@@ -4278,7 +4282,8 @@ msgstr "説明として使う"
 
 #: includes/class-ai-chat-bedrock-woocommerce.php:1349
 msgid "Replace the current text in the editor? It is not saved until you update the product."
-msgstr "エディターの現在のテキストを置き換えますか ?商品を更新するまで保存されません。"
+msgstr "エディターの現在のテキストを置き換えますか ? 商品を更新するまで保存されません。"
+
 
 #: includes/class-ai-chat-bedrock-woocommerce.php:1350
 msgid "Inserted. Update the product to save it."
@@ -4390,7 +4395,8 @@ msgstr "Amazon Bedrock へのリクエストに失敗しました。"
 #: public/class-ai-chat-bedrock-public.php:126
 #: public/partials/ai-chat-bedrock-public-display.php:15
 msgid "Hello! How can I help you today?"
-msgstr "こんにちは !今日はどのようなご用件でしょうか ?"
+msgstr "こんにちは ! 今日はどのようなご用件でしょうか ?"
+
 
 #: public/class-ai-chat-bedrock-public.php:143
 msgid "Answer stopped."
@@ -5160,7 +5166,8 @@ msgstr "コンテンツ、質問、AI 使用量、ストアの数値を表示し
 
 #: admin/class-ai-chat-bedrock-admin.php:1353
 msgid "Adds a Business insights screen with periods, comparisons, charts, a CSV download and questions in words, and a read-only query-metrics ability and MCP tool. Figures are read from data the site already keeps, including WooCommerce Analytics. Figures from fewer than five questions or orders are withheld, question figures stay on the screen, and no figure is sent to Amazon Bedrock."
-msgstr "期間、比較、グラフ、CSV ダウンロード、文章での質問を備えた「ビジネスインサイト」画面と、読み取り専用の query-metrics アビリティおよび MCP ツールを追加します。数値はサイトが既に持っているデータ (WooCommerce アナリティクスを含む) から読み取ります。5件未満の質問や注文から得た数値は伏せられ、質問に関する数値は画面上だけに表示され、数値が Amazon Bedrock に送られることはありません。"
+msgstr "期間、比較、グラフ、CSV ダウンロード、文章での質問を備えた「ビジネスインサイト」画面と、読み取り専用の query-metrics アビリティおよび MCP ツールを追加します。数値は、WooCommerce アナリティクスを含め、サイトが既に持っているデータから読み取ります。5件未満の質問や注文から得た数値は伏せられ、質問に関する数値は画面上だけに表示され、数値が Amazon Bedrock に送られることはありません。"
+
 
 #: admin/partials/ai-chat-bedrock-admin-metrics.php:15
 #: admin/partials/ai-chat-bedrock-admin-metrics.php:59
@@ -5203,7 +5210,8 @@ msgstr "比較対象 %1$s (%2$s – %3$s)"
 
 #: admin/partials/ai-chat-bedrock-admin-metrics.php:108
 msgid "Figures for the site over a period, read from data it already keeps: published content, the conversation log, AI usage and, with WooCommerce, its Analytics. Figures counted from fewer than five questions or orders are withheld, so that no one can be picked out."
-msgstr "サイトが既に持っているデータから読み取った、期間ごとのサイトの数値です: 公開済みコンテンツ、会話ログ、AI 使用量、そして WooCommerce があればそのアナリティクス。5件未満の質問や注文から数えた数値は、個人が特定されないよう伏せられます。"
+msgstr "サイトが既に持っているデータから読み取った、期間ごとのサイトの数値です。対象は公開済みコンテンツ、会話ログ、AI 使用量、そして WooCommerce があればそのアナリティクスです。5件未満の質問や注文から数えた数値は、個人が特定されないよう伏せられます。"
+
 
 #: admin/partials/ai-chat-bedrock-admin-metrics.php:112
 msgid "Your account cannot see any of these figures."
@@ -6419,7 +6427,8 @@ msgstr "YouTube チャンネルを接続"
 #: admin/trait-ai-chat-bedrock-admin-channels.php:232
 #, php-format
 msgid "Off until a channel is connected. In Google Cloud, enable the YouTube Data API v3, create an OAuth client of type Web application with the authorized redirect URI %s, and enter its ID and secret here; then connect the channel. Uploads run in the background from the Published elsewhere box of a post, with the publishing record on, and are added to it. Google keeps videos uploaded from a project that has not passed YouTube's audit private, and each upload uses 1,600 of the 10,000 quota units a project gets a day."
-msgstr "チャンネルを接続するまでは無効です。Google Cloud で YouTube Data API v3 を有効にし、承認済みのリダイレクト URI を %s とした「ウェブ アプリケーション」の OAuth クライアントを作成し、その ID とシークレットをここに入力してからチャンネルを接続します。公開記録をオンにすると、投稿の「他で公開」ボックスからアップロードでき、バックグラウンドで実行されて記録に追加されます。YouTube の審査を通っていない Google Cloud プロジェクトからアップロードした動画は非公開のままになり、アップロード1回でプロジェクトの1日10,000ユニットのうち1,600ユニットを使います。"
+msgstr "チャンネルを接続するまでは無効です。Google Cloud で YouTube Data API v3 を有効にし、承認済みのリダイレクト URI を %s とした「ウェブアプリケーション」の OAuth クライアントを作成し、その ID とシークレットをここに入力してからチャンネルを接続します。公開記録をオンにすると、投稿の「他で公開」ボックスからアップロードでき、バックグラウンドで実行されて記録に追加されます。YouTube の審査を通っていない Google Cloud プロジェクトからアップロードした動画は非公開のままになり、アップロード1回でプロジェクトの1日10,000ユニットのうち1,600ユニットを使います。"
+
 
 #: admin/trait-ai-chat-bedrock-admin-channels.php:238
 msgid "Embed Bilibili videos from their links, as WordPress does for YouTube"
@@ -6827,7 +6836,8 @@ msgstr "定型回答 (1行に1件、キーワード = 回答)"
 
 #: admin/trait-ai-chat-bedrock-admin-channels.php:154
 msgid "recharge, payment = Payments are handled by WeChat Pay. Send your order number if one is missing."
-msgstr "チャージ, 支払い = 支払いは WeChat Pay で処理されます。反映されない場合は注文番号を送ってください。"
+msgstr "チャージ、支払い = 支払いは WeChat Pay で処理されます。反映されない場合は注文番号を送ってください。"
+
 
 #: admin/trait-ai-chat-bedrock-admin-channels.php:155
 msgid "Reply when no answer matches (optional)"
@@ -6962,7 +6972,8 @@ msgstr "WeChat 公式アカウントの下書き"
 
 #: admin/trait-ai-chat-bedrock-admin-channels.php:63
 msgid "Menu, sent to followers who write 菜单, 目录 or menu, and after the welcome"
-msgstr "メニュー (フォロワーが 菜单、目录、menu と送ったときと、あいさつの後に送信)"
+msgstr "メニュー (フォロワーが菜单、目录、menu と送ったときと、あいさつの後に送信)"
+
 
 #: admin/trait-ai-chat-bedrock-admin-channels.php:63
 msgid ""
