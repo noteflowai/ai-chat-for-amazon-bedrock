@@ -424,6 +424,82 @@ class AI_Chat_Bedrock_Usage {
 	}
 
 	/**
+	 * Count one successful chat answer by whether site content was behind it.
+	 *
+	 * The grounded flag is the one Chat_Request::build() set for the question. Only one of two
+	 * integer counters in today's bucket changes. No question, answer, visitor, model or source
+	 * is stored, and conversation logging does not have to be on.
+	 *
+	 * @param bool $grounded Whether retrieval found usable site content. Cast to bool.
+	 * @return void
+	 */
+	public static function record_coverage( $grounded ) {
+		$key    = (bool) $grounded ? 'grounded_answers' : 'ungrounded_answers';
+		$today  = self::today();
+		$totals = self::all();
+
+		if ( ! isset( $totals[ $today ] ) || ! is_array( $totals[ $today ] ) ) {
+			$totals[ $today ] = array(
+				'requests'      => 0,
+				'input_tokens'  => 0,
+				'output_tokens' => 0,
+				'models'        => array(),
+			);
+		}
+
+		$totals[ $today ][ $key ] = self::coverage_count( $totals[ $today ], $key ) + 1;
+
+		update_option( self::OPTION, self::prune( $totals ), false );
+	}
+
+	/**
+	 * Share of counted chat answers that had site content behind them, over a number of days.
+	 *
+	 * Day buckets written before these counters existed count as zero.
+	 *
+	 * @param int $days Days to include, including today. Clamped to 1..RETENTION_DAYS.
+	 * @return array status (measured or unknown), grounded, ungrounded, total and percent.
+	 */
+	public static function coverage_summary( $days = 7 ) {
+		$days       = max( 1, min( self::RETENTION_DAYS, absint( $days ) ) );
+		$totals     = self::all();
+		$grounded   = 0;
+		$ungrounded = 0;
+
+		for ( $offset = 0; $offset < $days; $offset++ ) {
+			$day = gmdate( 'Y-m-d', time() - ( $offset * DAY_IN_SECONDS ) );
+			if ( ! isset( $totals[ $day ] ) || ! is_array( $totals[ $day ] ) ) {
+				continue;
+			}
+			$grounded   += self::coverage_count( $totals[ $day ], 'grounded_answers' );
+			$ungrounded += self::coverage_count( $totals[ $day ], 'ungrounded_answers' );
+		}
+
+		$total = $grounded + $ungrounded;
+		return array(
+			'status'     => $total > 0 ? 'measured' : 'unknown',
+			'grounded'   => $grounded,
+			'ungrounded' => $ungrounded,
+			'total'      => $total,
+			'percent'    => $total > 0 ? (int) round( ( $grounded * 100 ) / $total ) : 0,
+		);
+	}
+
+	/**
+	 * One non-negative coverage counter from a stored day bucket.
+	 *
+	 * @param array  $entry Day bucket.
+	 * @param string $key   grounded_answers or ungrounded_answers.
+	 * @return int
+	 */
+	private static function coverage_count( $entry, $key ) {
+		if ( ! is_array( $entry ) || ! isset( $entry[ $key ] ) || ! is_numeric( $entry[ $key ] ) ) {
+			return 0;
+		}
+		return max( 0, (int) $entry[ $key ] );
+	}
+
+	/**
 	 * Keep only allowlisted failure categories with positive counts.
 	 *
 	 * @param mixed $failures Stored failure map.
@@ -668,7 +744,7 @@ class AI_Chat_Bedrock_Usage {
 				'output_tokens' => isset( $entry['output_tokens'] ) ? (int) $entry['output_tokens'] : 0,
 				'models'        => $models,
 			);
-			foreach ( array( 'cache_read_tokens', 'cache_write_tokens', 'embedding_requests', 'embedding_tokens', 'rerank_requests', 'speech_requests', 'speech_characters' ) as $counter ) {
+			foreach ( array( 'cache_read_tokens', 'cache_write_tokens', 'embedding_requests', 'embedding_tokens', 'rerank_requests', 'speech_requests', 'speech_characters', 'grounded_answers', 'ungrounded_answers' ) as $counter ) {
 				if ( ! empty( $entry[ $counter ] ) ) {
 					$clean[ $day ][ $counter ] = (int) $entry[ $counter ];
 				}

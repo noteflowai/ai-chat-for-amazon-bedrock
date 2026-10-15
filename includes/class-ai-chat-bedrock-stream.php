@@ -162,6 +162,11 @@ class AI_Chat_Bedrock_Stream {
 			)
 		);
 
+		// A counter only, kept whether or not conversation logging is on.
+		if ( ! empty( $response['success'] ) && is_callable( array( 'AI_Chat_Bedrock_Usage', 'record_coverage' ) ) ) {
+			AI_Chat_Bedrock_Usage::record_coverage( ! empty( $built['grounded'] ) );
+		}
+
 		AI_Chat_Bedrock_Chat_History::append( get_current_user_id(), $profile, $built['message'], $answer, $built['sources'] );
 
 		$done = array( 'message' => $answer );

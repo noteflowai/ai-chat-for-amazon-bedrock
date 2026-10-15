@@ -322,6 +322,8 @@ $aicfab_next     = AI_Chat_Bedrock_Setup_Steps::next( $aicfab_state );
 			}
 			?>
 		</p>
+
+		<?php require __DIR__ . '/ai-chat-bedrock-admin-coverage.php'; ?>
 	</div>
 
 	<div class="aicfab-columns">

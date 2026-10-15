@@ -438,6 +438,10 @@ class AI_Chat_Bedrock_Public {
 		$response = AI_Chat_Bedrock_Tool_Runner::run( $aws, $built['messages'], $built['message'] );
 
 		if ( ! empty( $response['success'] ) ) {
+			// A counter only, kept whether or not conversation logging is on.
+			if ( is_callable( array( 'AI_Chat_Bedrock_Usage', 'record_coverage' ) ) ) {
+				AI_Chat_Bedrock_Usage::record_coverage( ! empty( $built['grounded'] ) );
+			}
 			$entry = AI_Chat_Bedrock_Conversations::record(
 				$built['message'],
 				isset( $response['data']['message'] ) ? $response['data']['message'] : '',

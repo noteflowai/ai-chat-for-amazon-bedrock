@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai chatbot, ai, connector, woocommerce, mcp
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.73.1
+Stable tag: 1.74.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -176,6 +176,10 @@ Claude, Amazon Nova and Titan, Meta Llama, Mistral, DeepSeek and the other chat 
 = What is an Amazon Bedrock API key, and should I use one? =
 
 It is a single credential created in the Amazon Bedrock console and sent as a bearer token, so there is no IAM user or access key pair to manage. It is the quickest way to get a first answer, especially on hosting outside AWS. On an EC2 instance, ECS or EKS an IAM role is still the better choice, because nothing long-lived is stored at all. If a key stops working, check that it has not expired or been revoked and that its identity is allowed `bedrock:CallWithBearerToken`; the IAM policy that Diagnostics generates includes it when a key is configured.
+
+= How often are answers backed by my site's content? =
+
+Open **AI Chat Bedrock** and look at the usage panel. Under the usage figures there is a line such as "Answers with site content (7 days): 12 of 20 (60%)." Each successful streamed or non-streamed chat answer adds to one of two daily counters, even with conversation logging off. No question, answer, visitor or source is stored, and failed requests are not counted. The line says whether the question matched site content, not whether the answer was right. Until an answer is counted, it reads unknown.
 
 = Does the plugin use prompt caching? =
 
@@ -437,6 +441,9 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.74.0 =
+* The dashboard usage panel shows how many chat answers in the last seven days had site content behind them, for example "Answers with site content (7 days): 12 of 20 (60%)." Each successful streamed or non-streamed chat answer adds to a daily counter, even with conversation logging off. No question, answer, visitor or source is stored, and failed requests are not counted. Until an answer is counted the figure is unknown.
+
 = 1.73.1 =
 * pick-wechat-post takes an optional date: today or tomorrow (Singapore time). The content pipeline publishes after the 09:00 run, so its pick is for the next morning; the scheduled run still drafts only the post picked for its own day.
 
@@ -468,6 +475,9 @@ what a good answer says.
 * WooCommerce's cart, checkout and account pages count as hidden from search engines, as WooCommerce tells search engines, so they stay out of answers, agents and llms.txt.
 
 == Upgrade Notice ==
+
+= 1.74.0 =
+The dashboard shows how many chat answers had site content behind them over seven days. Counters only, with conversation logging off; no text is stored.
 
 = 1.72.2 =
 New name and a getting-started guide for sites on AWS; no change to how the plugin works.
