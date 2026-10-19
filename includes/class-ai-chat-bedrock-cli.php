@@ -224,7 +224,9 @@ class AI_Chat_Bedrock_CLI {
 	/**
 	 * Show Bedrock usage recorded by this plugin.
 	 *
-	 * The default per-day mode ends with a Time to first text line for streamed answers: how
+	 * When chat requests still failed after any fallback model in the window, the default per-day
+	 * mode prints a Failed requests line counting them by cause; with none recorded the line is
+	 * left out. It then ends with a Time to first text line for streamed answers: how
 	 * many were measured, their average in ms and the median band. Data that is missing or was
 	 * not measured reads unknown, never 0 ms.
 	 *
@@ -232,11 +234,12 @@ class AI_Chat_Bedrock_CLI {
 	 *
 	 * [--days=<number>]
 	 * : Days to include, including today. Defaults to 7. The Time to first text line covers at
-	 * most 30 days, the retention period.
+	 * most 30 days, the retention period, and so does the Failed requests line.
 	 *
 	 * [--by-model]
 	 * : Break the totals down per model instead of per day. This mode leaves out the Time to
-	 * first text line, because latency is not recorded per model.
+	 * first text line and the Failed requests line, because latency and failures are not
+	 * recorded per model.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -288,9 +291,63 @@ class AI_Chat_Bedrock_CLI {
 			WP_CLI::log( sprintf( 'Prompt cache: %d input tokens read, %d written.', (int) $totals['cache_read_tokens'], (int) $totals['cache_write_tokens'] ) );
 		}
 
-		// Latency counters are kept for the retention period only, so the window is capped there.
+		// Failure and latency counters are kept for the retention period only, so the window is capped there.
 		$window = min( AI_Chat_Bedrock_Usage::RETENTION_DAYS, $days );
+		// Printed only when a failure was recorded, like the Prompt cache line.
+		$failure_line = self::failure_line( AI_Chat_Bedrock_Usage::failure_totals( $window ), $window );
+		if ( '' !== $failure_line ) {
+			WP_CLI::log( $failure_line );
+		}
 		WP_CLI::log( self::first_token_line( AI_Chat_Bedrock_Usage::first_token_summary( $window ), $window ) );
+	}
+
+	/**
+	 * One plain line counting chat requests that still failed after any fallback model.
+	 *
+	 * Categories follow AI_Chat_Bedrock_Usage::FAILURE_CATEGORIES with the dashboard's labels.
+	 * Zero, invalid and unknown counters are left out, and when nothing valid is recorded it
+	 * returns an empty string so the caller prints no line. It only ever holds category names
+	 * and counts.
+	 *
+	 * @param mixed $totals Result of AI_Chat_Bedrock_Usage::failure_totals().
+	 * @param int   $window Days the totals cover, 1..RETENTION_DAYS.
+	 * @return string
+	 */
+	private static function failure_line( $totals, $window ) {
+		$window = (int) $window;
+		$prefix = sprintf( 'Failed requests (%s): ', 1 === $window ? '1 day' : $window . ' days' );
+		$by     = is_array( $totals ) && isset( $totals['by_category'] ) && is_array( $totals['by_category'] ) ? $totals['by_category'] : array();
+
+		// Same labels as the dashboard.
+		$labels = array(
+			'throttled'     => 'throttled',
+			'access_denied' => 'access denied',
+			'validation'    => 'rejected',
+			'unavailable'   => 'unavailable',
+			'network'       => 'network',
+			'other'         => 'other',
+		);
+
+		$parts = array();
+		$total = 0;
+		foreach ( AI_Chat_Bedrock_Usage::FAILURE_CATEGORIES as $category ) {
+			if ( ! isset( $by[ $category ] ) || ! is_numeric( $by[ $category ] ) ) {
+				continue;
+			}
+			$count = (int) $by[ $category ];
+			if ( $count < 1 ) {
+				continue;
+			}
+			$label   = isset( $labels[ $category ] ) ? $labels[ $category ] : str_replace( '_', ' ', $category );
+			$parts[] = $label . ' ' . $count;
+			$total  += $count;
+		}
+
+		if ( empty( $parts ) ) {
+			return '';
+		}
+
+		return $prefix . sprintf( '%d after any fallback model: %s.', $total, implode( ', ', $parts ) );
 	}
 
 	/**

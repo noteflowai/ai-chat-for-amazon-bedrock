@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai chatbot, ai, connector, woocommerce, mcp
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.73.1
+Stable tag: 1.74.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -187,7 +187,7 @@ The "Time to first text (streamed, 7 days)" line under the usage panel shows how
 
 "Unknown, no streamed answers recorded yet" means no streamed answer has been measured in the last seven days, for example on a new installation, right after an upgrade or reset, or when streaming is off. It never reports 0 ms for an empty period. Only a count, a sum of milliseconds and five band counters are kept for each day, with no prompt, answer, visitor or request ID. They follow the same 30-day retention as the other usage counters and are cleared when usage is reset.
 
-From a terminal or a scheduled report, `wp ai-chat-bedrock usage` prints the same figure as its last line, for example `Time to first text (streamed, 7 days): 12 answers, average 1840 ms, median 1 to 2 s.` It covers the days asked for, up to the 30 that are kept, reads `average unknown` or `median unknown` when a stored figure is missing or invalid, and exits zero when nothing was measured. `--by-model` leaves the line out, because latency is not recorded per model.
+From a terminal or a scheduled report, `wp ai-chat-bedrock usage` prints the same figure as its last line, for example `Time to first text (streamed, 7 days): 12 answers, average 1840 ms, median 1 to 2 s.` It covers the days asked for, up to the 30 that are kept, reads `average unknown` or `median unknown` when a stored figure is missing or invalid, and exits zero when nothing was measured. `--by-model` leaves the line out, because latency is not recorded per model. The line just before it counts chat requests that still failed after any fallback model, by cause, over the same days. For example, `Failed requests (7 days): 3 after any fallback model: throttled 2, access denied 1.` When nothing failed in those days the line is left out, as it is with `--by-model`.
 
 = Why do I receive AccessDeniedException or a model access error? =
 
@@ -437,6 +437,9 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.74.0 =
+* `wp ai-chat-bedrock usage` counts chat requests that still failed after any fallback model, by cause, over the days asked (up to 30), on a line just before Time to first text. The line is left out when none were recorded.
+
 = 1.73.1 =
 * pick-wechat-post takes an optional date: today or tomorrow (Singapore time). The content pipeline publishes after the 09:00 run, so its pick is for the next morning; the scheduled run still drafts only the post picked for its own day.
 
@@ -468,6 +471,9 @@ what a good answer says.
 * WooCommerce's cart, checkout and account pages count as hidden from search engines, as WooCommerce tells search engines, so they stay out of answers, agents and llms.txt.
 
 == Upgrade Notice ==
+
+= 1.74.0 =
+`wp ai-chat-bedrock usage` shows failed requests by cause. This changes command output only; stored data is the same.
 
 = 1.72.2 =
 New name and a getting-started guide for sites on AWS; no change to how the plugin works.
