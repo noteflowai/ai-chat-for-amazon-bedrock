@@ -57,6 +57,18 @@ Time to first text (streamed, 7 days): 12 answers, average 1840 ms, median 1 to 
 
 The median band is one of under 1 s, 1 to 2 s, 2 to 5 s, 5 to 10 s, or 10 s and over, as on the dashboard. Counters are kept for 30 days, so `--days=90` reports `(streamed, 30 days)` for this line while the table still covers the days asked for. With no streamed answer measured in the window the line reads `unknown, no streamed answers recorded.`, and a stored sum or band that is missing or invalid reads `average unknown` or `median unknown`, never 0 ms. Unknown is reported, not an error, so the command still exits zero. `--by-model` leaves the line out, because latency is not recorded per model. The line reads only the stored counters: no prompt, answer, visitor or request ID, and no Bedrock request.
 
+## How do I see how many chat answers came from site content?
+
+Run `wp ai-chat-bedrock usage`. Just before any `Failed requests` line, so that time to first text stays last, it reports the share of website chat answers that had site content behind them over the same window:
+
+```
+Website chat answers from site content (7 days): 2 of 3 (67%), 1 with no site content.
+```
+
+An answer counts as from site content when retrieval found passages from the site for it, the same grounded flag the conversation log stores. It says nothing about whether the answer used those passages correctly. Only successful, non-empty answers from the website chat are counted, whether streamed or buffered. Failed requests, setup errors, whitespace-only answers, WeChat replies, the editor assistant, abilities and the mini game are left out.
+
+The counter works with the conversation log off, which is the default. Each day stores two non-negative integers, answers with and without site content, and nothing else: no question, answer, URL, post ID, visitor, IP address or request ID. Counters are kept for 30 days, so `--days=90` reports `(30 days)` for this line, and they are cleared with the other usage counters when usage is reset. With no answers counted in the window the line is left out, like the Failed requests line, and the command exits zero. A malformed stored value counts as zero. `--by-model` leaves the line out, because coverage is not recorded per model. Days before 1.75.0 have no counters and count as no answers; rolling back drops the counters on the next usage write and changes nothing else.
+
 ## Can a visitor ask for a person?
 
 Yes, under Chat > Contact requests, which is off by default. A **Contact a person** button appears below the chat, after a thumbs-down the chat offers it, and the assistant is told to point to it when it cannot answer instead of asking for contact details itself. The form asks for a name, an email address or a phone number and a message, prefilled with the last question; a signed-in visitor can leave the email empty and the account's address is used, read on the server so it never appears in a cached page. Including the conversation is the visitor's choice, and nothing is stored until they agree.

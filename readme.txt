@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai chatbot, ai, connector, woocommerce, mcp
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.74.0
+Stable tag: 1.75.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -188,6 +188,12 @@ The "Time to first text (streamed, 7 days)" line under the usage panel shows how
 "Unknown, no streamed answers recorded yet" means no streamed answer has been measured in the last seven days, for example on a new installation, right after an upgrade or reset, or when streaming is off. It never reports 0 ms for an empty period. Only a count, a sum of milliseconds and five band counters are kept for each day, with no prompt, answer, visitor or request ID. They follow the same 30-day retention as the other usage counters and are cleared when usage is reset.
 
 From a terminal or a scheduled report, `wp ai-chat-bedrock usage` prints the same figure as its last line, for example `Time to first text (streamed, 7 days): 12 answers, average 1840 ms, median 1 to 2 s.` It covers the days asked for, up to the 30 that are kept, reads `average unknown` or `median unknown` when a stored figure is missing or invalid, and exits zero when nothing was measured. `--by-model` leaves the line out, because latency is not recorded per model. The line just before it counts chat requests that still failed after any fallback model, by cause, over the same days. For example, `Failed requests (7 days): 3 after any fallback model: throttled 2, access denied 1.` When nothing failed in those days the line is left out, as it is with `--by-model`.
+
+= How can I see how many answers came from my own pages without keeping the conversation log? =
+
+Run `wp ai-chat-bedrock usage`. Just before any Failed requests line it prints, for example, `Website chat answers from site content (7 days): 2 of 3 (67%), 1 with no site content.` An answer counts as from site content when the chat found passages from the site to give the model, the same flag the conversation log records as grounded; it does not judge whether the answer used them correctly. Only successful, non-empty answers from the website chat are counted, streamed or not; failed requests, setup errors, WeChat, the editor assistant, abilities and the mini game are not. With no answers counted in the window the line is left out, like the Failed requests line, so it never reports 0%, and the command still exits zero. `--by-model` leaves the line out too.
+
+It works with the conversation log off, which is the default. Each day keeps two whole numbers, answers with and without site content, and nothing else: no question, answer, link, post, visitor or request ID. They follow the 30-day retention of the other usage counters, so `--days=90` reports at most 30 days for this line, and are cleared when usage is reset. Days before 1.75.0 count as no answers.
 
 = Why do I receive AccessDeniedException or a model access error? =
 
@@ -437,6 +443,9 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.75.0 =
+* `wp ai-chat-bedrock usage` shows how many website chat answers came from site content, even with the conversation log off. Only two daily counts are kept.
+
 = 1.74.0 =
 * `wp ai-chat-bedrock usage` counts chat requests that still failed after any fallback model, by cause, over the days asked (up to 30), on a line just before Time to first text. The line is left out when none were recorded.
 
@@ -471,6 +480,9 @@ what a good answer says.
 * WooCommerce's cart, checkout and account pages count as hidden from search engines, as WooCommerce tells search engines, so they stay out of answers, agents and llms.txt.
 
 == Upgrade Notice ==
+
+= 1.75.0 =
+`wp ai-chat-bedrock usage` shows how many website chat answers came from site content, even with the conversation log off. Only two daily counts are stored; days before the update count as no answers.
 
 = 1.74.0 =
 `wp ai-chat-bedrock usage` shows failed requests by cause. This changes command output only; stored data is the same.

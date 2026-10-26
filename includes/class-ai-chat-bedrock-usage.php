@@ -681,8 +681,106 @@ class AI_Chat_Bedrock_Usage {
 			if ( ! empty( $first_token ) ) {
 				$clean[ $day ]['first_token'] = $first_token;
 			}
+			$grounding = self::clean_grounding( isset( $entry['grounding'] ) ? $entry['grounding'] : array() );
+			if ( ! empty( $grounding ) ) {
+				$clean[ $day ]['grounding'] = $grounding;
+			}
 		}
 		return $clean;
+	}
+
+	/**
+	 * Count one website chat answer: from site content, or with no site content.
+	 *
+	 * Only two integers per day are kept. No question, answer, URL, post, visitor or request
+	 * identifier is stored.
+	 *
+	 * @param bool $grounded Whether the answer had retrieved site content behind it.
+	 * @return void
+	 */
+	public static function record_grounding( $grounded ) {
+		$today  = self::today();
+		$totals = self::all();
+
+		if ( ! isset( $totals[ $today ] ) || ! is_array( $totals[ $today ] ) ) {
+			$totals[ $today ] = array(
+				'requests'      => 0,
+				'input_tokens'  => 0,
+				'output_tokens' => 0,
+				'models'        => array(),
+			);
+		}
+
+		$counts = self::clean_grounding( isset( $totals[ $today ]['grounding'] ) ? $totals[ $today ]['grounding'] : array() );
+		$counts = array_merge(
+			array(
+				'site' => 0,
+				'none' => 0,
+			),
+			$counts
+		);
+		$key    = $grounded ? 'site' : 'none';
+
+		$counts[ $key ]                = (int) $counts[ $key ] + 1;
+		$totals[ $today ]['grounding'] = $counts;
+
+		update_option( self::OPTION, self::prune( $totals ), false );
+	}
+
+	/**
+	 * Website chat answers from site content over the last days.
+	 *
+	 * @param int $days Days to cover, clamped to 1..RETENTION_DAYS.
+	 * @return array answers, site, none, and percent (int, or null when nothing was counted).
+	 */
+	public static function grounding_summary( $days = 7 ) {
+		$days   = max( 1, min( self::RETENTION_DAYS, absint( $days ) ) );
+		$totals = self::all();
+		$totals = is_array( $totals ) ? $totals : array();
+		$site   = 0;
+		$none   = 0;
+
+		for ( $offset = 0; $offset < $days; $offset++ ) {
+			$day = gmdate( 'Y-m-d', time() - $offset * DAY_IN_SECONDS );
+			if ( ! isset( $totals[ $day ] ) || ! is_array( $totals[ $day ] ) || ! isset( $totals[ $day ]['grounding'] ) ) {
+				continue;
+			}
+			$counts = self::clean_grounding( $totals[ $day ]['grounding'] );
+			if ( empty( $counts ) ) {
+				continue;
+			}
+			$site += $counts['site'];
+			$none += $counts['none'];
+		}
+
+		$answers = $site + $none;
+		return array(
+			'answers' => $answers,
+			'site'    => $site,
+			'none'    => $none,
+			'percent' => $answers > 0 ? (int) round( $site * 100 / $answers ) : null,
+		);
+	}
+
+	/**
+	 * Keep only non-negative integer site and none counters; anything else counts as zero.
+	 *
+	 * @param mixed $value Stored grounding map.
+	 * @return array Empty when nothing valid and non-zero is stored.
+	 */
+	private static function clean_grounding( $value ) {
+		if ( ! is_array( $value ) ) {
+			return array();
+		}
+		$site = isset( $value['site'] ) && is_int( $value['site'] ) && $value['site'] > 0 ? $value['site'] : 0;
+		$none = isset( $value['none'] ) && is_int( $value['none'] ) && $value['none'] > 0 ? $value['none'] : 0;
+		if ( 0 === $site && 0 === $none ) {
+			return array();
+		}
+		return array(
+			'site' => $site,
+			'none' => $none,
+		);
 	}
 
 	private static function today() {

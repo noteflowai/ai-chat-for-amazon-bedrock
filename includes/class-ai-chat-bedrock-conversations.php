@@ -55,6 +55,9 @@ class AI_Chat_Bedrock_Conversations {
 	 * @return void
 	 */
 	public static function record( $question, $answer, $context = array() ) {
+		// Counted before the log check, so coverage is known with the log off. Only counts are kept.
+		self::count_grounding( $answer, $context );
+
 		if ( ! self::enabled() ) {
 			return;
 		}
@@ -88,6 +91,35 @@ class AI_Chat_Bedrock_Conversations {
 		update_option( self::OPTION_LOG, self::prune( $entries ), false );
 
 		return $entry['id'];
+	}
+
+	/**
+	 * Count one website chat answer as grounded in site content or not.
+	 *
+	 * The source is normalized exactly as a log entry's source is, and grounded is the same
+	 * expression the log stores, so with the log on these counts match the logged stream and
+	 * chat entries that have an answer. Nothing but the two counters is stored.
+	 *
+	 * @param string $answer  Model answer.
+	 * @param array  $context Context passed to record().
+	 * @return void
+	 */
+	private static function count_grounding( $answer, $context ) {
+		$context = is_array( $context ) ? $context : array();
+		$source  = isset( $context['source'] ) ? sanitize_key( $context['source'] ) : 'chat';
+		if ( ! in_array( $source, array( 'chat', 'stream', 'editor', 'ability', 'wechat', 'wxgame' ), true ) ) {
+			$source = 'chat';
+		}
+		if ( ! in_array( $source, array( 'stream', 'chat' ), true ) ) {
+			return;
+		}
+		if ( '' === trim( (string) $answer ) ) {
+			return;
+		}
+		if ( ! class_exists( 'AI_Chat_Bedrock_Usage' ) ) {
+			return;
+		}
+		AI_Chat_Bedrock_Usage::record_grounding( ! empty( $context['grounded'] ) );
 	}
 
 	/**

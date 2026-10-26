@@ -224,6 +224,11 @@ class AI_Chat_Bedrock_CLI {
 	/**
 	 * Show Bedrock usage recorded by this plugin.
 	 *
+	 * After the Total line, the default per-day mode prints a Website chat answers from site
+	 * content line: how many successful website chat answers had site content behind them, as a
+	 * count and a percentage. It works with the conversation log off, and it is left out when no
+	 * answer was counted in the window.
+	 *
 	 * When chat requests still failed after any fallback model in the window, the default per-day
 	 * mode prints a Failed requests line counting them by cause; with none recorded the line is
 	 * left out. It then ends with a Time to first text line for streamed answers: how
@@ -293,12 +298,44 @@ class AI_Chat_Bedrock_CLI {
 
 		// Failure and latency counters are kept for the retention period only, so the window is capped there.
 		$window = min( AI_Chat_Bedrock_Usage::RETENTION_DAYS, $days );
+		// Counts only, from the usage store, so it works with the conversation log off. Printed
+		// only when an answer was counted, so a site without chat answers sees the same output as before.
+		$grounding_line = self::grounding_line( AI_Chat_Bedrock_Usage::grounding_summary( $window ), $window );
+		if ( '' !== $grounding_line ) {
+			WP_CLI::log( $grounding_line );
+		}
 		// Printed only when a failure was recorded, like the Prompt cache line.
 		$failure_line = self::failure_line( AI_Chat_Bedrock_Usage::failure_totals( $window ), $window );
 		if ( '' !== $failure_line ) {
 			WP_CLI::log( $failure_line );
 		}
 		WP_CLI::log( self::first_token_line( AI_Chat_Bedrock_Usage::first_token_summary( $window ), $window ) );
+	}
+
+	/**
+	 * One plain line counting website chat answers that had site content behind them.
+	 *
+	 * With nothing counted in the window it returns an empty string, so the caller prints no
+	 * line and never reports 0%.
+	 *
+	 * @param mixed $summary Result of AI_Chat_Bedrock_Usage::grounding_summary().
+	 * @param int   $window  Days the summary covers, 1..RETENTION_DAYS.
+	 * @return string
+	 */
+	private static function grounding_line( $summary, $window ) {
+		$summary = is_array( $summary ) ? $summary : array();
+		$window  = (int) $window;
+		$prefix  = sprintf( 'Website chat answers from site content (%s): ', 1 === $window ? '1 day' : $window . ' days' );
+		$site    = isset( $summary['site'] ) && is_int( $summary['site'] ) && $summary['site'] > 0 ? $summary['site'] : 0;
+		$none    = isset( $summary['none'] ) && is_int( $summary['none'] ) && $summary['none'] > 0 ? $summary['none'] : 0;
+		$answers = $site + $none;
+
+		if ( $answers < 1 ) {
+			return '';
+		}
+
+		$percent = (int) round( $site * 100 / $answers );
+		return $prefix . sprintf( '%d of %d (%d%%), %d with no site content.', $site, $answers, $percent, $none );
 	}
 
 	/**
