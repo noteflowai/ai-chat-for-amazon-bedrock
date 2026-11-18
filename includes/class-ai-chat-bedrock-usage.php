@@ -95,6 +95,12 @@ class AI_Chat_Bedrock_Usage {
 			$totals[ $today ]['requests']      = (int) $totals[ $today ]['requests'] + 1;
 			$totals[ $today ]['input_tokens']  = (int) $totals[ $today ]['input_tokens'] + $input;
 			$totals[ $today ]['output_tokens'] = (int) $totals[ $today ]['output_tokens'] + $output;
+
+			// Bedrock did not report both counts as numbers, so this request's tokens are unknown.
+			// The counts it did report are still added above; only this request is marked.
+			if ( ! isset( $usage['input_tokens'], $usage['output_tokens'] ) || ! is_numeric( $usage['input_tokens'] ) || ! is_numeric( $usage['output_tokens'] ) ) {
+				$totals[ $today ]['usage_unknown_requests'] = ( isset( $totals[ $today ]['usage_unknown_requests'] ) ? max( 0, (int) $totals[ $today ]['usage_unknown_requests'] ) : 0 ) + 1;
+			}
 		}
 
 		// Days recorded before 1.46.0 have no cache counters, so they start from zero here.
@@ -308,17 +314,18 @@ class AI_Chat_Bedrock_Usage {
 		$days   = max( 1, min( self::RETENTION_DAYS, absint( $days ) ) );
 		$totals = self::all();
 		$result = array(
-			'requests'           => 0,
-			'input_tokens'       => 0,
-			'output_tokens'      => 0,
-			'cache_read_tokens'  => 0,
-			'cache_write_tokens' => 0,
-			'embedding_requests' => 0,
-			'embedding_tokens'   => 0,
-			'rerank_requests'    => 0,
-			'speech_requests'    => 0,
-			'speech_characters'  => 0,
-			'days'               => $days,
+			'requests'               => 0,
+			'input_tokens'           => 0,
+			'output_tokens'          => 0,
+			'cache_read_tokens'      => 0,
+			'cache_write_tokens'     => 0,
+			'embedding_requests'     => 0,
+			'embedding_tokens'       => 0,
+			'rerank_requests'        => 0,
+			'speech_requests'        => 0,
+			'speech_characters'      => 0,
+			'usage_unknown_requests' => 0,
+			'days'                   => $days,
 		);
 
 		for ( $offset = 0; $offset < $days; $offset++ ) {
@@ -331,6 +338,12 @@ class AI_Chat_Bedrock_Usage {
 			$result['output_tokens'] += isset( $totals[ $day ]['output_tokens'] ) ? (int) $totals[ $day ]['output_tokens'] : 0;
 			foreach ( array( 'cache_read_tokens', 'cache_write_tokens', 'embedding_requests', 'embedding_tokens', 'rerank_requests', 'speech_requests', 'speech_characters' ) as $counter ) {
 				$result[ $counter ] += isset( $totals[ $day ][ $counter ] ) ? (int) $totals[ $day ][ $counter ] : 0;
+			}
+			// Chat requests whose token counts Bedrock did not fully report. Days recorded before
+			// 1.74.1 have no counter and add nothing; a corrupted value adds nothing either.
+			$unknown = isset( $totals[ $day ]['usage_unknown_requests'] ) ? $totals[ $day ]['usage_unknown_requests'] : 0;
+			if ( is_numeric( $unknown ) && (int) $unknown > 0 ) {
+				$result['usage_unknown_requests'] += (int) $unknown;
 			}
 		}
 		return $result;
@@ -668,7 +681,7 @@ class AI_Chat_Bedrock_Usage {
 				'output_tokens' => isset( $entry['output_tokens'] ) ? (int) $entry['output_tokens'] : 0,
 				'models'        => $models,
 			);
-			foreach ( array( 'cache_read_tokens', 'cache_write_tokens', 'embedding_requests', 'embedding_tokens', 'rerank_requests', 'speech_requests', 'speech_characters' ) as $counter ) {
+			foreach ( array( 'cache_read_tokens', 'cache_write_tokens', 'embedding_requests', 'embedding_tokens', 'rerank_requests', 'speech_requests', 'speech_characters', 'usage_unknown_requests' ) as $counter ) {
 				if ( ! empty( $entry[ $counter ] ) ) {
 					$clean[ $day ][ $counter ] = (int) $entry[ $counter ];
 				}

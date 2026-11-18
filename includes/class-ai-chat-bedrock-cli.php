@@ -230,6 +230,10 @@ class AI_Chat_Bedrock_CLI {
 	 * many were measured, their average in ms and the median band. Data that is missing or was
 	 * not measured reads unknown, never 0 ms.
 	 *
+	 * When Bedrock did not report complete token counts for some chat requests in the window, a
+	 * line directly after Total says how many, so the token totals read as a lower bound. With
+	 * none it is left out. Requests recorded before 1.74.1 were not classified and are not counted.
+	 *
 	 * ## OPTIONS
 	 *
 	 * [--days=<number>]
@@ -287,6 +291,13 @@ class AI_Chat_Bedrock_CLI {
 
 		$totals = AI_Chat_Bedrock_Usage::totals( $days );
 		WP_CLI::log( sprintf( 'Total: %d requests, %d input tokens, %d output tokens.', (int) $totals['requests'], (int) $totals['input_tokens'], (int) $totals['output_tokens'] ) );
+		// Only the unknown count is claimed. Days recorded before 1.74.1 were never classified, so
+		// no denominator is shown that would present them as measured.
+		$unknown = isset( $totals['usage_unknown_requests'] ) ? max( 0, (int) $totals['usage_unknown_requests'] ) : 0;
+		$unknown = min( $unknown, max( 0, (int) $totals['requests'] ) );
+		if ( $unknown > 0 ) {
+			WP_CLI::log( sprintf( 'Token usage unknown for %s in this window: Bedrock did not report complete token counts for them, so the token totals above are a lower bound.', 1 === $unknown ? '1 request' : $unknown . ' requests' ) );
+		}
 		if ( ! empty( $totals['cache_read_tokens'] ) || ! empty( $totals['cache_write_tokens'] ) ) {
 			WP_CLI::log( sprintf( 'Prompt cache: %d input tokens read, %d written.', (int) $totals['cache_read_tokens'], (int) $totals['cache_write_tokens'] ) );
 		}

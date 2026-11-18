@@ -3,7 +3,7 @@ Contributors: glay, glayguo
 Tags: ai chatbot, ai, connector, woocommerce, mcp
 Requires at least: 6.4
 Tested up to: 7.1
-Stable tag: 1.74.0
+Stable tag: 1.74.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -188,6 +188,8 @@ The "Time to first text (streamed, 7 days)" line under the usage panel shows how
 "Unknown, no streamed answers recorded yet" means no streamed answer has been measured in the last seven days, for example on a new installation, right after an upgrade or reset, or when streaming is off. It never reports 0 ms for an empty period. Only a count, a sum of milliseconds and five band counters are kept for each day, with no prompt, answer, visitor or request ID. They follow the same 30-day retention as the other usage counters and are cleared when usage is reset.
 
 From a terminal or a scheduled report, `wp ai-chat-bedrock usage` prints the same figure as its last line, for example `Time to first text (streamed, 7 days): 12 answers, average 1840 ms, median 1 to 2 s.` It covers the days asked for, up to the 30 that are kept, reads `average unknown` or `median unknown` when a stored figure is missing or invalid, and exits zero when nothing was measured. `--by-model` leaves the line out, because latency is not recorded per model. The line just before it counts chat requests that still failed after any fallback model, by cause, over the same days. For example, `Failed requests (7 days): 3 after any fallback model: throttled 2, access denied 1.` When nothing failed in those days the line is left out, as it is with `--by-model`.
+
+Directly after its Total line, `wp ai-chat-bedrock usage` also says when Bedrock did not report complete token counts for some chat requests, for example `Token usage unknown for 2 requests in this window: Bedrock did not report complete token counts for them, so the token totals above are a lower bound.` A chat request is counted when its input or output token count was missing or not a number; any count it did report is still added to the totals. Embedding, rerank and speech requests are not counted. Requests recorded before 1.74.1 were never classified, so they are not counted and the line gives no "N of M" figure. The line is left out when there is nothing to report, and with `--by-model`. Only a per-day count is stored, under the same 30-day retention.
 
 = Why do I receive AccessDeniedException or a model access error? =
 
@@ -437,6 +439,9 @@ what a good answer says.
 
 == Changelog ==
 
+= 1.74.1 =
+* `wp ai-chat-bedrock usage` says, after Total, how many chat requests had incomplete Bedrock token counts, so token totals read as a lower bound. Requests recorded before 1.74.1 are not classified. Not in `--by-model`.
+
 = 1.74.0 =
 * `wp ai-chat-bedrock usage` counts chat requests that still failed after any fallback model, by cause, over the days asked (up to 30), on a line just before Time to first text. The line is left out when none were recorded.
 
@@ -471,6 +476,9 @@ what a good answer says.
 * WooCommerce's cart, checkout and account pages count as hidden from search engines, as WooCommerce tells search engines, so they stay out of answers, agents and llms.txt.
 
 == Upgrade Notice ==
+
+= 1.74.1 =
+`wp ai-chat-bedrock usage` flags chat requests whose token counts Bedrock did not fully report. Requests recorded before this version are not classified.
 
 = 1.74.0 =
 `wp ai-chat-bedrock usage` shows failed requests by cause. This changes command output only; stored data is the same.
